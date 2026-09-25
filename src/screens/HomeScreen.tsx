@@ -17,6 +17,7 @@ import { CreatePostScreen } from './CreatePostScreen';
 import { CommentsScreen } from './CommentsScreen';
 import { EditPostModal } from '../components/Feed/EditPostModal';
 import { PostOptionsModal } from '../components/Feed/PostOptionsModal';
+import { SearchScreen } from './SearchScreen';
 import { Post } from '../types/post';
 import { useAuth } from '../context/AuthContext';
 import { deletePost } from '../services/postsService';
@@ -135,17 +136,29 @@ export const HomeScreen: React.FC = () => {
           />
         </Animated.View>
 
-        {/* Live Feed with natural aspect media & thin hairline dividers */}
-        <FeedList
-          onCommentPress={handleCommentPress}
-          onRequireAuth={handleOpenAuth}
-          onOptionsPress={(post) => setSelectedPostForOptions(post)}
-          onEditPress={(post) => setSelectedPostForEdit(post)}
-          onDeletePress={handleDeletePost}
-          onScrollDirectionChange={handleScrollDirectionChange}
-          contentPaddingTop={HEADER_HEIGHT + (Platform.OS === 'android' ? 4 : 2)}
-          contentPaddingBottom={TABBAR_HEIGHT + (Platform.OS === 'ios' ? 14 : 4)}
-        />
+        {/* Tab Content: Buscar vs Principal Feed */}
+        {activeTab === 'buscar' ? (
+          <SearchScreen
+            onCommentPress={handleCommentPress}
+            onRequireAuth={handleOpenAuth}
+            onOptionsPress={(post) => setSelectedPostForOptions(post)}
+            onEditPress={(post) => setSelectedPostForEdit(post)}
+            onDeletePress={handleDeletePost}
+            contentPaddingTop={HEADER_HEIGHT + (Platform.OS === 'android' ? 4 : 2)}
+            contentPaddingBottom={TABBAR_HEIGHT + (Platform.OS === 'ios' ? 14 : 4)}
+          />
+        ) : (
+          <FeedList
+            onCommentPress={handleCommentPress}
+            onRequireAuth={handleOpenAuth}
+            onOptionsPress={(post) => setSelectedPostForOptions(post)}
+            onEditPress={(post) => setSelectedPostForEdit(post)}
+            onDeletePress={handleDeletePost}
+            onScrollDirectionChange={handleScrollDirectionChange}
+            contentPaddingTop={HEADER_HEIGHT + (Platform.OS === 'android' ? 4 : 2)}
+            contentPaddingBottom={TABBAR_HEIGHT + (Platform.OS === 'ios' ? 14 : 4)}
+          />
+        )}
 
         {/* Animated Bottom Tab Bar (Collapses down on scroll down) */}
         <Animated.View
