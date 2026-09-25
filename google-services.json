@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "67176257419",
+    "project_id": "entre-nosotros-742c0",
+    "storage_bucket": "entre-nosotros-742c0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:67176257419:android:781d29ae1cf56e3b28418e",
+        "android_client_info": {
+          "package_name": "com.example.entrenosotros"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAEx7EZaGStofaV_RYyrHBJPgUfecQTUlw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

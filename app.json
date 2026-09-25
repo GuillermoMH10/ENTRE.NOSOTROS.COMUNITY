@@ -1,0 +1,43 @@
+{
+  "expo": {
+    "name": "Entre Nosotros",
+    "slug": "entre-nosotros",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "icon": "./assets/logoappE.png",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/logoappE.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FAF7F5"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.entrenosotros.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/logoappE.png",
+        "backgroundColor": "#FAF7F5"
+      },
+      "splash": {
+        "image": "./assets/logoappE.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#FAF7F5"
+      }
+    },
+    "web": {
+      "favicon": "./assets/logoappE.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-font"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "543778f4-b6e6-413c-aa13-4b63dd2396a3"
+      }
+    }
+  }
+}
