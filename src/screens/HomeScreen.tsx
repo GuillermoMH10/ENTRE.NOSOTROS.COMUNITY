@@ -122,19 +122,21 @@ export const HomeScreen: React.FC = () => {
         backgroundColor={colors.white}
       />
       <View style={styles.container}>
-        {/* Animated Top Header (Collapses up on scroll down) */}
-        <Animated.View
-          style={[
-            styles.animatedHeaderWrapper,
-            { transform: [{ translateY: headerTranslateY }] },
-          ]}
-        >
-          <AppHeader
-            onOpenMenu={handleOpenMenu}
-            onJoinPress={handleOpenAuth}
-            onProfilePress={handleOpenProfile}
-          />
-        </Animated.View>
+        {/* Animated Top Header (Collapses up on scroll down) - Only in Principal tab */}
+        {activeTab === 'principal' && (
+          <Animated.View
+            style={[
+              styles.animatedHeaderWrapper,
+              { transform: [{ translateY: headerTranslateY }] },
+            ]}
+          >
+            <AppHeader
+              onOpenMenu={handleOpenMenu}
+              onJoinPress={handleOpenAuth}
+              onProfilePress={handleOpenProfile}
+            />
+          </Animated.View>
+        )}
 
         {/* Tab Content: Buscar vs Principal Feed */}
         {activeTab === 'buscar' ? (
@@ -144,7 +146,8 @@ export const HomeScreen: React.FC = () => {
             onOptionsPress={(post) => setSelectedPostForOptions(post)}
             onEditPress={(post) => setSelectedPostForEdit(post)}
             onDeletePress={handleDeletePost}
-            contentPaddingTop={HEADER_HEIGHT + (Platform.OS === 'android' ? 4 : 2)}
+            onOpenMenu={handleOpenMenu}
+            contentPaddingTop={10}
             contentPaddingBottom={TABBAR_HEIGHT + (Platform.OS === 'ios' ? 14 : 4)}
           />
         ) : (

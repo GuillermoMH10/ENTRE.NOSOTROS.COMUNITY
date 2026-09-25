@@ -36,6 +36,7 @@ interface SearchScreenProps {
   onOptionsPress?: (post: Post) => void;
   onEditPress?: (post: Post) => void;
   onDeletePress?: (post: Post) => void;
+  onOpenMenu?: () => void;
   contentPaddingTop?: number;
   contentPaddingBottom?: number;
 }
@@ -50,7 +51,8 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
   onOptionsPress,
   onEditPress,
   onDeletePress,
-  contentPaddingTop = 70,
+  onOpenMenu,
+  contentPaddingTop = 8,
   contentPaddingBottom = 80,
 }) => {
   const { user } = useAuth();
@@ -180,25 +182,38 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
     <View style={styles.container}>
       {/* Search Bar Header */}
       <View style={[styles.headerContainer, { paddingTop: contentPaddingTop }]}>
-        <View style={styles.searchBarWrapper}>
-          <Ionicons name="search" size={18} color={colors.coffeePrimary} style={styles.searchIcon} />
-          <TextInput
-            ref={searchInputRef}
-            style={styles.searchInput}
-            placeholder="Buscar usuarios, #hashtags o publicaciones..."
-            placeholderTextColor={colors.textMuted}
-            value={searchQuery}
-            onChangeText={handleQueryChange}
-            onSubmitEditing={handleSubmitEditing}
-            returnKeyType="search"
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
-          {hasQuery ? (
-            <TouchableOpacity onPress={handleClearInput} style={styles.clearBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-              <Ionicons name="close-circle" size={19} color={colors.textMuted} />
+        <View style={styles.searchBarRow}>
+          {onOpenMenu ? (
+            <TouchableOpacity
+              onPress={onOpenMenu}
+              style={styles.menuButton}
+              activeOpacity={0.6}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Ionicons name="menu-outline" size={26} color={colors.coffeeDark} />
             </TouchableOpacity>
           ) : null}
+
+          <View style={styles.searchBarWrapper}>
+            <Ionicons name="search" size={18} color={colors.coffeePrimary} style={styles.searchIcon} />
+            <TextInput
+              ref={searchInputRef}
+              style={styles.searchInput}
+              placeholder="Buscar usuarios, #hashtags o posts..."
+              placeholderTextColor={colors.textMuted}
+              value={searchQuery}
+              onChangeText={handleQueryChange}
+              onSubmitEditing={handleSubmitEditing}
+              returnKeyType="search"
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            {hasQuery ? (
+              <TouchableOpacity onPress={handleClearInput} style={styles.clearBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <Ionicons name="close-circle" size={19} color={colors.textMuted} />
+              </TouchableOpacity>
+            ) : null}
+          </View>
         </View>
 
         {/* Filter Category Chips (Active when search query exists) */}
@@ -515,7 +530,16 @@ const styles = StyleSheet.create({
     borderBottomColor: '#F0EBE6',
     zIndex: 10,
   },
+  searchBarRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  menuButton: {
+    marginRight: 10,
+    padding: 2,
+  },
   searchBarWrapper: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FAF7F5',
