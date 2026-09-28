@@ -23,6 +23,7 @@ import { PostCard } from '../components/Feed/PostCard';
 import { CommentsScreen } from './CommentsScreen';
 import { PostOptionsModal } from '../components/Feed/PostOptionsModal';
 import { EditPostModal } from '../components/Feed/EditPostModal';
+import { ImageViewerModal } from '../components/UI/ImageViewerModal';
 import {
   uploadMediaToStorage,
   deletePost,
@@ -72,6 +73,17 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
   // Active Comment Post Modal
   const [activeCommentPost, setActiveCommentPost] = useState<Post | null>(null);
+
+  // Full-screen Image Viewer (Cover & Avatar)
+  const [viewerImages, setViewerImages] = useState<string[]>([]);
+  const [viewerIndex, setViewerIndex] = useState(0);
+  const [viewerVisible, setViewerVisible] = useState(false);
+
+  const handleOpenImageViewer = (imagesList: string[], idx = 0) => {
+    setViewerImages(imagesList);
+    setViewerIndex(idx);
+    setViewerVisible(true);
+  };
 
   // Real-time subscriptions based on active tab
   useEffect(() => {
@@ -242,6 +254,14 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose} statusBarTranslucent>
       <View style={styles.rootContainer}>
+        {/* Full-screen Image Viewer */}
+        <ImageViewerModal
+          visible={viewerVisible}
+          images={viewerImages}
+          initialIndex={viewerIndex}
+          onClose={() => setViewerVisible(false)}
+        />
+
         {/* Comments Modal if active */}
         <CommentsScreen
           visible={activeCommentPost !== null}
@@ -325,18 +345,24 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
         <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollBody}>
           {/* 1. Cover Photo Banner */}
-          <TouchableOpacity
-            style={styles.coverBanner}
-            onPress={handlePickCoverPhoto}
-            activeOpacity={0.9}
-          >
+          <View style={styles.coverBanner}>
             {user.coverPhotoUrl ? (
-              <Image source={{ uri: user.coverPhotoUrl }} style={styles.coverImage} resizeMode="cover" />
+              <TouchableOpacity
+                style={styles.coverImageTouchable}
+                onPress={() => handleOpenImageViewer([user.coverPhotoUrl!])}
+                activeOpacity={0.9}
+              >
+                <Image source={{ uri: user.coverPhotoUrl }} style={styles.coverImage} resizeMode="cover" />
+              </TouchableOpacity>
             ) : (
-              <View style={styles.coverPlaceholder}>
+              <TouchableOpacity
+                style={styles.coverPlaceholder}
+                onPress={handlePickCoverPhoto}
+                activeOpacity={0.8}
+              >
                 <Ionicons name="camera-outline" size={22} color="rgba(255, 255, 255, 0.7)" />
                 <Text style={styles.coverPlaceholderText}>Actualiza tu foto de portada</Text>
-              </View>
+              </TouchableOpacity>
             )}
 
             {isUploadingCover ? (
@@ -344,28 +370,44 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 <ActivityIndicator size="small" color={colors.white} />
               </View>
             ) : (
-              <View style={styles.coverEditBadge}>
+              <TouchableOpacity
+                style={styles.coverEditBadge}
+                onPress={handlePickCoverPhoto}
+                activeOpacity={0.8}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
                 <Ionicons name="camera" size={14} color={colors.white} />
-              </View>
+              </TouchableOpacity>
             )}
-          </TouchableOpacity>
+          </View>
 
           {/* 2. Avatar & Header Profile Info */}
           <View style={styles.profileHeaderContent}>
             {/* Overlapping Avatar */}
             <View style={styles.avatarContainer}>
-              <TouchableOpacity onPress={handlePickAvatar} activeOpacity={0.85} style={styles.avatarTouchable}>
-                <Image source={{ uri: user.avatarUrl }} style={styles.avatarImage} resizeMode="cover" />
+              <View style={styles.avatarTouchable}>
+                <TouchableOpacity
+                  onPress={() => user.avatarUrl && handleOpenImageViewer([user.avatarUrl])}
+                  activeOpacity={0.85}
+                >
+                  <Image source={{ uri: user.avatarUrl }} style={styles.avatarImage} resizeMode="cover" />
+                </TouchableOpacity>
+
                 {isUploadingAvatar ? (
                   <View style={styles.avatarLoadingOverlay}>
                     <ActivityIndicator size="small" color={colors.white} />
                   </View>
                 ) : (
-                  <View style={styles.avatarEditBadge}>
+                  <TouchableOpacity
+                    style={styles.avatarEditBadge}
+                    onPress={handlePickAvatar}
+                    activeOpacity={0.8}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
                     <Ionicons name="camera" size={13} color={colors.white} />
-                  </View>
+                  </TouchableOpacity>
                 )}
-              </TouchableOpacity>
+              </View>
             </View>
 
             {/* Username */}
@@ -594,6 +636,10 @@ const styles = StyleSheet.create({
     position: 'relative',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  coverImageTouchable: {
+    width: '100%',
+    height: '100%',
   },
   coverImage: {
     width: '100%',

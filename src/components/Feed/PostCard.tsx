@@ -23,6 +23,7 @@ interface PostCardProps {
   onOptionsPress?: (post: Post) => void;
   onEditPress?: (post: Post) => void;
   onDeletePress?: (post: Post) => void;
+  onUserPress?: (userId: string, username: string, avatarUrl: string) => void;
 }
 
 export const PostCard: React.FC<PostCardProps> = ({
@@ -32,6 +33,7 @@ export const PostCard: React.FC<PostCardProps> = ({
   onOptionsPress,
   onEditPress,
   onDeletePress,
+  onUserPress,
 }) => {
   const { user } = useAuth();
   const [showReactionPicker, setShowReactionPicker] = useState(false);
@@ -131,15 +133,25 @@ export const PostCard: React.FC<PostCardProps> = ({
 
       {/* Header: Author Avatar, Username, Time & Author Options */}
       <View style={styles.headerRow}>
-        <Image
-          source={{ uri: post.authorAvatarUrl }}
-          style={styles.authorAvatar}
-          resizeMode="cover"
-        />
-        <View style={styles.authorInfo}>
-          <Text style={styles.authorUsername}>@{post.authorUsername}</Text>
-          <Text style={styles.postTime}>{formatTimeAgo(post.timestamp)}</Text>
-        </View>
+        <TouchableOpacity
+          style={styles.authorTouchable}
+          onPress={() => onUserPress && onUserPress(post.authorId, post.authorUsername, (user && user.id === post.authorId && user.avatarUrl) ? user.avatarUrl : post.authorAvatarUrl)}
+          activeOpacity={0.7}
+        >
+          <Image
+            source={{
+              uri: (user && user.id === post.authorId && user.avatarUrl)
+                ? user.avatarUrl
+                : post.authorAvatarUrl,
+            }}
+            style={styles.authorAvatar}
+            resizeMode="cover"
+          />
+          <View style={styles.authorInfo}>
+            <Text style={styles.authorUsername}>@{post.authorUsername}</Text>
+            <Text style={styles.postTime}>{formatTimeAgo(post.timestamp)}</Text>
+          </View>
+        </TouchableOpacity>
 
         {/* Author Options: Editar / Eliminar */}
         {user && user.id === post.authorId && (onOptionsPress || onEditPress || onDeletePress) && (
@@ -313,6 +325,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 8,
+  },
+  authorTouchable: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
   },
   authorAvatar: {
     width: 38,

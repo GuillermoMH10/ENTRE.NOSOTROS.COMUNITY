@@ -173,7 +173,14 @@ export const CommentsScreen: React.FC<CommentsScreenProps> = ({
           ListHeaderComponent={
             <View style={styles.postContextCard}>
               <View style={styles.postContextAuthorRow}>
-                <Image source={{ uri: post.authorAvatarUrl }} style={styles.contextAvatar} />
+                <Image
+                  source={{
+                    uri: (user && user.id === post.authorId && user.avatarUrl)
+                      ? user.avatarUrl
+                      : post.authorAvatarUrl,
+                  }}
+                  style={styles.contextAvatar}
+                />
                 <View>
                   <Text style={styles.contextUsername}>@{post.authorUsername}</Text>
                   <Text style={styles.contextTagline}>Publicación original</Text>
@@ -208,7 +215,14 @@ export const CommentsScreen: React.FC<CommentsScreenProps> = ({
           }
           renderItem={({ item }) => (
             <View style={styles.commentCard}>
-              <Image source={{ uri: item.authorAvatarUrl }} style={styles.commentAvatar} />
+              <Image
+                source={{
+                  uri: (user && user.id === item.authorId && user.avatarUrl)
+                    ? user.avatarUrl
+                    : item.authorAvatarUrl,
+                }}
+                style={styles.commentAvatar}
+              />
               <View style={styles.commentBody}>
                 <View style={styles.commentHeader}>
                   <Text style={styles.commentUsername}>@{item.authorUsername}</Text>

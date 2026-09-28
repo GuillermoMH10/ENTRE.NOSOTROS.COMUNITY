@@ -18,6 +18,7 @@ import { CommentsScreen } from './CommentsScreen';
 import { EditPostModal } from '../components/Feed/EditPostModal';
 import { PostOptionsModal } from '../components/Feed/PostOptionsModal';
 import { SearchScreen } from './SearchScreen';
+import { UserProfileScreen } from './UserProfileScreen';
 import { Post } from '../types/post';
 import { useAuth } from '../context/AuthContext';
 import { deletePost } from '../services/postsService';
@@ -37,6 +38,11 @@ export const HomeScreen: React.FC = () => {
   const [selectedPostForComments, setSelectedPostForComments] = useState<Post | null>(null);
   const [selectedPostForOptions, setSelectedPostForOptions] = useState<Post | null>(null);
   const [selectedPostForEdit, setSelectedPostForEdit] = useState<Post | null>(null);
+  const [selectedUserForProfile, setSelectedUserForProfile] = useState<{
+    userId: string;
+    username?: string;
+    avatarUrl?: string;
+  } | null>(null);
 
   // Animated bars offset
   const headerTranslateY = useRef(new Animated.Value(0)).current;
@@ -115,6 +121,15 @@ export const HomeScreen: React.FC = () => {
     await deletePost(post.id);
   };
 
+  // Open user profile
+  const handleOpenUserProfile = (userId: string, username?: string, avatarUrl?: string) => {
+    if (user && user.id === userId) {
+      setIsProfileOpen(true);
+    } else {
+      setSelectedUserForProfile({ userId, username, avatarUrl });
+    }
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar
@@ -146,6 +161,7 @@ export const HomeScreen: React.FC = () => {
             onOptionsPress={(post) => setSelectedPostForOptions(post)}
             onEditPress={(post) => setSelectedPostForEdit(post)}
             onDeletePress={handleDeletePost}
+            onUserPress={handleOpenUserProfile}
             onOpenMenu={handleOpenMenu}
             contentPaddingTop={10}
             contentPaddingBottom={TABBAR_HEIGHT + (Platform.OS === 'ios' ? 14 : 4)}
@@ -157,6 +173,7 @@ export const HomeScreen: React.FC = () => {
             onOptionsPress={(post) => setSelectedPostForOptions(post)}
             onEditPress={(post) => setSelectedPostForEdit(post)}
             onDeletePress={handleDeletePost}
+            onUserPress={handleOpenUserProfile}
             onScrollDirectionChange={handleScrollDirectionChange}
             contentPaddingTop={HEADER_HEIGHT + (Platform.OS === 'android' ? 4 : 2)}
             contentPaddingBottom={TABBAR_HEIGHT + (Platform.OS === 'ios' ? 14 : 4)}
@@ -221,6 +238,17 @@ export const HomeScreen: React.FC = () => {
           visible={selectedPostForEdit !== null}
           post={selectedPostForEdit}
           onClose={() => setSelectedPostForEdit(null)}
+        />
+
+        {/* Other User Profile Screen (Shows ONLY their posts) */}
+        <UserProfileScreen
+          visible={selectedUserForProfile !== null}
+          userId={selectedUserForProfile?.userId || null}
+          initialUsername={selectedUserForProfile?.username}
+          initialAvatarUrl={selectedUserForProfile?.avatarUrl}
+          onClose={() => setSelectedUserForProfile(null)}
+          onCommentPress={handleCommentPress}
+          onRequireAuth={handleOpenAuth}
         />
       </View>
     </SafeAreaView>

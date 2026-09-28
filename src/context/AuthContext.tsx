@@ -13,6 +13,7 @@ import { db } from '../services/firebase';
 import { hashPassword } from '../utils/crypto';
 import { generateRandomAvatar } from '../utils/avatar';
 import { UserProfile, AuthContextType } from '../types/auth';
+import { syncUserAvatarInPosts } from '../services/postsService';
 
 const STORAGE_KEY = '@entre_nosotros_session_v1';
 
@@ -197,6 +198,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       setUser(updatedUser);
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updatedUser));
+
+      // If avatarUrl was updated, sync all existing posts in background
+      if (updates.avatarUrl) {
+        syncUserAvatarInPosts(user.id, updates.avatarUrl).catch((err) =>
+          console.warn('Error background syncing avatar:', err)
+        );
+      }
+
       return { success: true };
     } catch (error: any) {
       console.error('Error al actualizar perfil:', error);

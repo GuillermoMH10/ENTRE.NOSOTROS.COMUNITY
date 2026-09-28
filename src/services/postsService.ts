@@ -470,3 +470,37 @@ export function subscribeToReactedPosts(
   );
 }
 
+/**
+ * Updates authorAvatarUrl across all posts created by a user
+ */
+export async function syncUserAvatarInPosts(userId: string, newAvatarUrl: string): Promise<void> {
+  try {
+    const q = query(collection(db, 'posts'), where('authorId', '==', userId));
+    const snap = await getDocs(q);
+    const updates = snap.docs.map((docSnap) =>
+      updateDoc(docSnap.ref, { authorAvatarUrl: newAvatarUrl })
+    );
+    await Promise.all(updates);
+  } catch (error) {
+    console.warn('Error sincronizando avatar en publicaciones:', error);
+  }
+}
+
+/**
+ * Fetches public user profile information by userId
+ */
+export async function fetchUserProfile(userId: string): Promise<any | null> {
+  try {
+    const userDocRef = doc(db, 'users', userId);
+    const snap = await getDoc(userDocRef);
+    if (snap.exists()) {
+      return { id: snap.id, ...snap.data() };
+    }
+    return null;
+  } catch (error) {
+    console.warn('Error al obtener perfil de usuario:', error);
+    return null;
+  }
+}
+
+

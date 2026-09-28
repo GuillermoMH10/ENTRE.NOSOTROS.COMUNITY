@@ -19,6 +19,7 @@ interface FeedListProps {
   onOptionsPress?: (post: Post) => void;
   onEditPress?: (post: Post) => void;
   onDeletePress?: (post: Post) => void;
+  onUserPress?: (userId: string, username: string, avatarUrl: string) => void;
   onScrollDirectionChange?: (direction: 'up' | 'down') => void;
   contentPaddingTop?: number;
   contentPaddingBottom?: number;
@@ -30,6 +31,7 @@ export const FeedList: React.FC<FeedListProps> = ({
   onOptionsPress,
   onEditPress,
   onDeletePress,
+  onUserPress,
   onScrollDirectionChange,
   contentPaddingTop = 56,
   contentPaddingBottom = 64,
@@ -97,6 +99,7 @@ export const FeedList: React.FC<FeedListProps> = ({
           onOptionsPress={onOptionsPress}
           onEditPress={onEditPress}
           onDeletePress={onDeletePress}
+          onUserPress={onUserPress}
         />
       )}
       contentContainerStyle={[

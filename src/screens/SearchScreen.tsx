@@ -36,6 +36,7 @@ interface SearchScreenProps {
   onOptionsPress?: (post: Post) => void;
   onEditPress?: (post: Post) => void;
   onDeletePress?: (post: Post) => void;
+  onUserPress?: (userId: string, username: string, avatarUrl: string) => void;
   onOpenMenu?: () => void;
   contentPaddingTop?: number;
   contentPaddingBottom?: number;
@@ -51,6 +52,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
   onOptionsPress,
   onEditPress,
   onDeletePress,
+  onUserPress,
   onOpenMenu,
   contentPaddingTop = 8,
   contentPaddingBottom = 80,
@@ -163,9 +165,13 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
 
   // Select a suggested user
   const handleSelectUser = (suggestedUser: UserProfile) => {
-    const query = `@${suggestedUser.username}`;
-    setSearchQuery(query);
-    performSearch(query, true);
+    if (onUserPress) {
+      onUserPress(suggestedUser.id, suggestedUser.username, suggestedUser.avatarUrl);
+    } else {
+      const query = `@${suggestedUser.username}`;
+      setSearchQuery(query);
+      performSearch(query, true);
+    }
   };
 
   // Clear search bar
@@ -385,6 +391,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
                           onOptionsPress={onOptionsPress}
                           onEditPress={onEditPress}
                           onDeletePress={onDeletePress}
+                          onUserPress={onUserPress}
                         />
                       ))}
                     </View>
@@ -505,6 +512,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
                       onOptionsPress={onOptionsPress}
                       onEditPress={onEditPress}
                       onDeletePress={onDeletePress}
+                      onUserPress={onUserPress}
                     />
                   ))}
                 </View>
