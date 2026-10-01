@@ -17,15 +17,32 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
 
+import { TabId } from '../Navigation/BottomTabBar';
+import { useAuth } from '../../context/AuthContext';
+
 interface HamburgerMenuProps {
   visible: boolean;
   onClose: () => void;
+  onNavigate?: (tabId: TabId) => void;
+  onOpenProfile?: () => void;
+  onOpenPsychologists?: () => void;
+  onOpenRules?: () => void;
+  onRequireAuth?: () => void;
 }
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const DRAWER_WIDTH = Math.min(SCREEN_WIDTH * 0.72, 270);
 
-export const HamburgerMenu: React.FC<HamburgerMenuProps> = ({ visible, onClose }) => {
+export const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
+  visible,
+  onClose,
+  onNavigate,
+  onOpenProfile,
+  onOpenPsychologists,
+  onOpenRules,
+  onRequireAuth,
+}) => {
+  const { user, logout } = useAuth();
   const slideAnim = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
@@ -62,19 +79,44 @@ export const HamburgerMenu: React.FC<HamburgerMenuProps> = ({ visible, onClose }
 
   // Main 4 accesses
   const mainNavItems = [
-    { id: 'principal', label: 'Principal', icon: 'home-outline' as const },
-    { id: 'blog', label: 'Blog', icon: 'newspaper-outline' as const },
-    { id: 'buscar', label: 'Buscar', icon: 'search-outline' as const },
-    { id: 'crear', label: 'Crear', icon: 'add-circle-outline' as const },
+    { id: 'principal' as const, label: 'Principal', icon: 'home-outline' as const },
+    { id: 'blog' as const, label: 'Blog', icon: 'newspaper-outline' as const },
+    { id: 'buscar' as const, label: 'Buscar', icon: 'search-outline' as const },
+    { id: 'crear' as const, label: 'Crear', icon: 'add-circle-outline' as const },
   ];
 
   // Secondary accesses
   const secondaryNavItems = [
     { id: 'perfil', label: 'Perfil', icon: 'person-outline' as const },
     { id: 'psicologos', label: 'Psicólogos', icon: 'heart-outline' as const },
-    { id: 'necesito_ayuda', label: 'Necesito ayuda', icon: 'help-buoy-outline' as const },
     { id: 'reglas', label: 'Reglas "Entre Nosotros"', icon: 'shield-checkmark-outline' as const },
+    { id: 'necesito_ayuda', label: 'Necesito ayuda', icon: 'help-buoy-outline' as const },
+    ...(user
+      ? [{ id: 'logout', label: 'Cerrar Sesión', icon: 'log-out-outline' as const, isDanger: true }]
+      : [{ id: 'login', label: 'Iniciar Sesión', icon: 'log-in-outline' as const, isAccent: true }]),
   ];
+
+  const handleMainItemPress = (item: typeof mainNavItems[number]) => {
+    onClose();
+    if (onNavigate) {
+      onNavigate(item.id);
+    }
+  };
+
+  const handleSecondaryItemPress = async (id: string) => {
+    onClose();
+    if (id === 'perfil' && onOpenProfile) {
+      onOpenProfile();
+    } else if (id === 'psicologos' && onOpenPsychologists) {
+      onOpenPsychologists();
+    } else if (id === 'reglas' && onOpenRules) {
+      onOpenRules();
+    } else if (id === 'logout') {
+      await logout();
+    } else if (id === 'login' && onRequireAuth) {
+      onRequireAuth();
+    }
+  };
 
   if (!visible) {
     return null;
@@ -125,7 +167,7 @@ export const HamburgerMenu: React.FC<HamburgerMenuProps> = ({ visible, onClose }
                     key={item.id}
                     style={styles.compactMenuItem}
                     activeOpacity={0.6}
-                    onPress={onClose} // Closes on item click
+                    onPress={() => handleMainItemPress(item)}
                   >
                     <Ionicons
                       name={item.icon}
@@ -145,22 +187,46 @@ export const HamburgerMenu: React.FC<HamburgerMenuProps> = ({ visible, onClose }
 
               {/* SECTION 2: Secondary items */}
               <View style={styles.section}>
-                {secondaryNavItems.map((item) => (
-                  <TouchableOpacity
-                    key={item.id}
-                    style={styles.compactMenuItem}
-                    activeOpacity={0.6}
-                    onPress={onClose} // Closes on item click
-                  >
-                    <Ionicons
-                      name={item.icon}
-                      size={20}
-                      color={colors.coffeeDark}
-                      style={styles.itemIcon}
-                    />
-                    <Text style={styles.itemText}>{item.label}</Text>
-                  </TouchableOpacity>
-                ))}
+                {secondaryNavItems.map((item) => {
+                  const iconColor = (item as any).isDanger
+                    ? '#DC2626'
+                    : (item as any).isAccent
+                    ? colors.coffeePrimary
+                    : colors.coffeeDark;
+                  const textColor = (item as any).isDanger
+                    ? '#DC2626'
+                    : (item as any).isAccent
+                    ? colors.coffeePrimary
+                    : colors.coffeeDark;
+
+                  return (
+                    <TouchableOpacity
+                      key={item.id}
+                      style={[
+                        styles.compactMenuItem,
+                        (item as any).isDanger && { marginTop: 6 },
+                      ]}
+                      activeOpacity={0.6}
+                      onPress={() => handleSecondaryItemPress(item.id)}
+                    >
+                      <Ionicons
+                        name={item.icon}
+                        size={20}
+                        color={iconColor}
+                        style={styles.itemIcon}
+                      />
+                      <Text
+                        style={[
+                          styles.itemText,
+                          { color: textColor },
+                          (item as any).isDanger && { fontWeight: '700' },
+                        ]}
+                      >
+                        {item.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
             </ScrollView>
 

@@ -5,7 +5,6 @@ import {
   StyleSheet,
   Animated,
   Dimensions,
-  Text,
 } from 'react-native';
 import { colors } from '../../theme/colors';
 
@@ -62,12 +61,11 @@ export const AppSplashScreen: React.FC<AppSplashScreenProps> = ({ onFinish }) =>
         ]}
       >
         <Image
-          source={require('../../../assets/logoappE.png')}
+          source={require('../../../assets/splash-icon.png')}
           style={styles.logoImage}
           resizeMode="contain"
           accessibilityLabel="Logo Entre Nosotros"
         />
-        <Text style={styles.taglineText}>Tu espacio seguro para expresarte</Text>
       </Animated.View>
     </Animated.View>
   );
@@ -88,16 +86,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   logoImage: {
-    width: Math.min(SCREEN_WIDTH * 0.72, 300),
-    height: Math.min(SCREEN_WIDTH * 0.72, 300) * 0.7,
-    marginBottom: 16,
-  },
-  taglineText: {
-    fontSize: 13.5,
-    fontWeight: '600',
-    color: colors.coffeePrimary,
-    letterSpacing: 0.4,
-    opacity: 0.85,
-    textAlign: 'center',
+    width: Math.min(SCREEN_WIDTH * 0.65, 260),
+    height: Math.min(SCREEN_WIDTH * 0.65, 260),
+    borderRadius: Math.min(SCREEN_WIDTH * 0.65, 260) / 2,
+    shadowColor: colors.coffeeDeep,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.18,
+    shadowRadius: 14,
+    elevation: 8,
   },
 });
+

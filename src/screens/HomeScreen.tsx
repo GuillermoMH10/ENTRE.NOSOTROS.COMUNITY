@@ -18,7 +18,11 @@ import { CommentsScreen } from './CommentsScreen';
 import { EditPostModal } from '../components/Feed/EditPostModal';
 import { PostOptionsModal } from '../components/Feed/PostOptionsModal';
 import { SearchScreen } from './SearchScreen';
+import { BlogScreen } from './BlogScreen';
+import { PsychologistsScreen } from './PsychologistsScreen';
+import { RulesScreen } from './RulesScreen';
 import { UserProfileScreen } from './UserProfileScreen';
+import { MonthDetailModal } from '../components/Blog/MonthDetailModal';
 import { Post } from '../types/post';
 import { useAuth } from '../context/AuthContext';
 import { deletePost } from '../services/postsService';
@@ -35,6 +39,10 @@ export const HomeScreen: React.FC = () => {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isPsychologistsOpen, setIsPsychologistsOpen] = useState(false);
+  const [isRulesOpen, setIsRulesOpen] = useState(false);
+  const [isMonthModalOpen, setIsMonthModalOpen] = useState(false);
+  const [selectedMonthIndex, setSelectedMonthIndex] = useState<number>(new Date().getMonth());
   const [selectedPostForComments, setSelectedPostForComments] = useState<Post | null>(null);
   const [selectedPostForOptions, setSelectedPostForOptions] = useState<Post | null>(null);
   const [selectedPostForEdit, setSelectedPostForEdit] = useState<Post | null>(null);
@@ -55,8 +63,30 @@ export const HomeScreen: React.FC = () => {
   const handleOpenAuth = () => setIsAuthOpen(true);
   const handleCloseAuth = () => setIsAuthOpen(false);
 
-  const handleOpenProfile = () => setIsProfileOpen(true);
+  const handleOpenProfile = () => {
+    if (!user) {
+      setIsAuthOpen(true);
+    } else {
+      setIsProfileOpen(true);
+    }
+  };
   const handleCloseProfile = () => setIsProfileOpen(false);
+
+  const handleOpenPsychologists = () => {
+    setIsRulesOpen(false);
+    setIsPsychologistsOpen(true);
+  };
+  const handleClosePsychologists = () => {
+    setIsPsychologistsOpen(false);
+  };
+
+  const handleOpenRules = () => {
+    setIsPsychologistsOpen(false);
+    setIsRulesOpen(true);
+  };
+  const handleCloseRules = () => {
+    setIsRulesOpen(false);
+  };
 
   // Handle scroll direction change to collapse or show bars
   const handleScrollDirectionChange = (direction: 'up' | 'down') => {
@@ -93,6 +123,8 @@ export const HomeScreen: React.FC = () => {
 
   // Tab navigation handler
   const handleTabPress = (tabId: TabId) => {
+    setIsPsychologistsOpen(false);
+    setIsRulesOpen(false);
     setActiveTab(tabId);
     if (tabId === 'crear') {
       if (!user) {
@@ -138,7 +170,7 @@ export const HomeScreen: React.FC = () => {
       />
       <View style={styles.container}>
         {/* Animated Top Header (Collapses up on scroll down) - Only in Principal tab */}
-        {activeTab === 'principal' && (
+        {activeTab === 'principal' && !isRulesOpen && !isPsychologistsOpen && (
           <Animated.View
             style={[
               styles.animatedHeaderWrapper,
@@ -153,8 +185,25 @@ export const HomeScreen: React.FC = () => {
           </Animated.View>
         )}
 
-        {/* Tab Content: Buscar vs Principal Feed */}
-        {activeTab === 'buscar' ? (
+        {/* Tab Content: Reglas vs Psicólogos vs Buscar vs Blog vs Principal Feed */}
+        {isRulesOpen ? (
+          <RulesScreen
+            onOpenMenu={handleOpenMenu}
+            onJoinPress={handleOpenAuth}
+            onProfilePress={handleOpenProfile}
+            onOpenPsychologists={handleOpenPsychologists}
+            contentPaddingTop={0}
+            contentPaddingBottom={TABBAR_HEIGHT + (Platform.OS === 'ios' ? 14 : 4)}
+          />
+        ) : isPsychologistsOpen ? (
+          <PsychologistsScreen
+            onOpenMenu={handleOpenMenu}
+            onJoinPress={handleOpenAuth}
+            onProfilePress={handleOpenProfile}
+            contentPaddingTop={0}
+            contentPaddingBottom={TABBAR_HEIGHT + (Platform.OS === 'ios' ? 14 : 4)}
+          />
+        ) : activeTab === 'buscar' ? (
           <SearchScreen
             onCommentPress={handleCommentPress}
             onRequireAuth={handleOpenAuth}
@@ -166,6 +215,15 @@ export const HomeScreen: React.FC = () => {
             contentPaddingTop={10}
             contentPaddingBottom={TABBAR_HEIGHT + (Platform.OS === 'ios' ? 14 : 4)}
           />
+        ) : activeTab === 'blog' ? (
+          <BlogScreen
+            onOpenMenu={handleOpenMenu}
+            onJoinPress={handleOpenAuth}
+            onProfilePress={handleOpenProfile}
+            onOpenPsychologists={handleOpenPsychologists}
+            contentPaddingTop={0}
+            contentPaddingBottom={TABBAR_HEIGHT + (Platform.OS === 'ios' ? 14 : 4)}
+          />
         ) : (
           <FeedList
             onCommentPress={handleCommentPress}
@@ -175,6 +233,10 @@ export const HomeScreen: React.FC = () => {
             onDeletePress={handleDeletePost}
             onUserPress={handleOpenUserProfile}
             onScrollDirectionChange={handleScrollDirectionChange}
+            onOpenMonthDetail={(monthIdx) => {
+              setSelectedMonthIndex(monthIdx);
+              setIsMonthModalOpen(true);
+            }}
             contentPaddingTop={HEADER_HEIGHT + (Platform.OS === 'android' ? 4 : 2)}
             contentPaddingBottom={TABBAR_HEIGHT + (Platform.OS === 'ios' ? 14 : 4)}
           />
@@ -194,7 +256,15 @@ export const HomeScreen: React.FC = () => {
         </Animated.View>
 
         {/* Sliding Hamburger Drawer */}
-        <HamburgerMenu visible={isMenuOpen} onClose={handleCloseMenu} />
+        <HamburgerMenu
+          visible={isMenuOpen}
+          onClose={handleCloseMenu}
+          onNavigate={handleTabPress}
+          onOpenProfile={handleOpenProfile}
+          onOpenPsychologists={handleOpenPsychologists}
+          onOpenRules={handleOpenRules}
+          onRequireAuth={handleOpenAuth}
+        />
 
         {/* Authentication Modal (Login & Register) */}
         <AuthScreen visible={isAuthOpen} onClose={handleCloseAuth} />
@@ -249,6 +319,13 @@ export const HomeScreen: React.FC = () => {
           onClose={() => setSelectedUserForProfile(null)}
           onCommentPress={handleCommentPress}
           onRequireAuth={handleOpenAuth}
+        />
+
+        {/* Monthly Awareness & Psychology Calendar Modal */}
+        <MonthDetailModal
+          visible={isMonthModalOpen}
+          initialMonthIndex={selectedMonthIndex}
+          onClose={() => setIsMonthModalOpen(false)}
         />
       </View>
     </SafeAreaView>

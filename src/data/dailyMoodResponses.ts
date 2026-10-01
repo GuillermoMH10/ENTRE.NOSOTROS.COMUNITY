@@ -1,0 +1,198 @@
+export type MoodType = 'feliz' | 'tranquilo' | 'ansioso' | 'triste' | 'agotado';
+
+export interface MoodOption {
+  id: MoodType;
+  label: string;
+  emoji: string;
+  color: string;
+  lightBg: string;
+}
+
+export const MOOD_OPTIONS: MoodOption[] = [
+  {
+    id: 'feliz',
+    label: 'Feliz',
+    emoji: '😊',
+    color: '#D97706',
+    lightBg: '#FEF3C7',
+  },
+  {
+    id: 'tranquilo',
+    label: 'Tranquilo',
+    emoji: '😌',
+    color: '#059669',
+    lightBg: '#D1FAE5',
+  },
+  {
+    id: 'ansioso',
+    label: 'Ansioso',
+    emoji: '😰',
+    color: '#EA580C',
+    lightBg: '#FFEDD5',
+  },
+  {
+    id: 'triste',
+    label: 'Triste',
+    emoji: '😔',
+    color: '#2563EB',
+    lightBg: '#DBEAFE',
+  },
+  {
+    id: 'agotado',
+    label: 'Agotado',
+    emoji: '😮‍💨',
+    color: '#7C3AED',
+    lightBg: '#EDE9FE',
+  },
+];
+
+export const MOOD_RESPONSES: Record<MoodType, string[]> = {
+  feliz: [
+    'Tu alegría ilumina tu entorno. Disfruta cada instante de esta energía positiva y compártela con quienes te rodean.',
+    'Qué hermoso que hoy te sientas feliz. Guarda esta sensación en tu memoria como un refugio cálido para los días difíciles.',
+    'La felicidad florece cuando valoramos los pequeños detalles. Celebra este momento, ¡te lo mereces!',
+    'Que tu sonrisa de hoy sea el reflejo de la paz y el bienestar que estás cultivando en tu interior.',
+    'Disfruta la plenitud de este día. La alegría genuina es un bálsamo que nutre el alma.',
+    'Hoy tienes una luz especial. Permítete saborear tu bienestar y agradecer por todo lo bueno que hay en tu vida.',
+    'Cuando estás feliz, inspiras a los demás a buscar su propia alegría. ¡Sigue brillando con esa energía!',
+    'Celebra tus momentos felices. Son la prueba de que vale la pena cada paso y cada aprendizaje en el camino.',
+    'Tu bienestar de hoy es fruto de tu crecimiento personal. Disfruta cada minuto con una sonrisa abierta.',
+    'Haz algo hoy que prolongue esta linda sensación: escucha tu música favorita o comparte un abrazo sincero.',
+    'La alegría no siempre hace ruido; a veces es una suave certeza de que la vida tiene cosas maravillosas.',
+    'Atesora este día en tu corazón. La felicidad es el arte de disfrutar el presente tal como es.',
+    'Qué maravilla que sientas esta ligereza en tu pecho. ¡Permítete ser feliz sin reservas ni dudas!',
+    'Tu entusiasmo es contagioso. Recuerda que mereces sentirte así de bien hoy y siempre.',
+    'Hoy es un día perfecto para agradecer, sonreír y recordarte lo valiosa que es tu existencia.',
+    'Vive este día con el corazón abierto. Tu alegría presente es una semilla de esperanza para tu futuro.',
+    'La felicidad se multiplica cuando se comparte. Regálale una palabra amable a alguien hoy.',
+    'Siente la gratitud recorrer tu cuerpo. Estar feliz es celebrar el milagro de estar aquí y ahora.',
+    'Que esta bonita energía te acompañe a lo largo de toda tu jornada. ¡Disfrútala al máximo!',
+    'Qué gran regalo es sentirse bien. Respira hondo y ancla esta sensación de plenitud en tu interior.',
+    'Tu felicidad es un recordatorio de que después de cualquier tormenta, la luz siempre regresa.',
+    'Sonríe con ganas: hoy tu corazón late en armonía y el mundo es un lugar mejor con tu presencia.',
+    'Disfruta de tus logros, de tu paz y de tu felicidad. Te has esforzado por construir tu bienestar.',
+    'Que cada paso que des hoy esté lleno de satisfacción y calidez. ¡A disfrutar la vida!',
+    'Hoy es un gran día porque tú decidiste abrazar la alegría. ¡Sigue disfrutando con plenitud!',
+  ],
+
+  tranquilo: [
+    'La tranquilidad es uno de los mayores tesoros. Disfruta de la paz que habita hoy en tu interior.',
+    'En la calma encontramos la claridad que la prisa nos quita. Disfruta de este momento de serenidad.',
+    'Estar en paz contigo mismo es un logro inmenso. Respira profundo y agradece esta quietud.',
+    'La serenidad no es ausencia de problemas, sino la confianza profunda en que todo estará bien.',
+    'Qué bendición es sentirse en calma. Permite que esta paz relaje cada músculo y aclare tus ideas.',
+    'En el silencio y la tranquilidad tu mente descansa y tu alma se renueva. Disfruta tu día.',
+    'Tu paz interior es tu mayor escudo. Protégela y no permitas que el ruido exterior te la arrebate.',
+    'Hoy respiras con calma y eso es suficiente. Avanzar a tu propio ritmo es la forma más sabia de vivir.',
+    'Aprecia este instante sin prisas. La tranquilidad es el espacio donde florece la verdadera creatividad.',
+    'Sentirse tranquilo es haber aprendido a soltar lo que no puedes controlar. ¡Bien hecho!',
+    'Disfruta del fluir sereno de las cosas hoy. No hay urgencia cuando estás presente en el ahora.',
+    'La paz mental es el mejor hogar que puedes construir para ti. Disfruta de estar en casa.',
+    'Que la tranquilidad de hoy sea el timón que guíe tus decisiones y tus relaciones.',
+    'Respira suavemente: este momento es perfecto tal y como es. No te falta nada aquí y ahora.',
+    'Qué reconfortante es no tener que correr. Disfruta tu taza de café, el aire fresco y tu propia compañía.',
+    'La serenidad interior es el regalo que te das cuando decides no cargar con lo que no te pertenece.',
+    'Hoy tu corazón late con calma y sabiduría. Confía en el orden natural de tus procesos.',
+    'Mantén esta serenidad como tu centro a lo largo del día. Eres más fuerte cuando estás en paz.',
+    'Encuentra deleite en lo sencillo: el silencio, la brisa y la tranquilidad de este día.',
+    'Estar tranquilo es el mayor síntoma de madurez emocional. Sigue cuidando tu espacio interior.',
+    'La calma te permite ver soluciones donde antes solo veías obstáculos. Confía en tu claridad.',
+    'Hoy eliges la paz sobre la razón y la serenidad sobre la prisa. ¡Gran decisión!',
+    'Permite que esta tranquilidad repare tus energías y prepare tu mente para nuevos proyectos.',
+    'Disfruta de este día sereno. Tu bienestar silencioso es un bálsamo invaluable para tu salud.',
+    'Que esta paz te acompañe durante toda la semana. ¡Respira y sigue disfrutando tu tranquilidad!',
+  ],
+
+  ansioso: [
+    'Respira profundamente: inhala en 4 segundos, retén 4 y exhala en 6. Este momento pasará y estás a salvo.',
+    'No tienes que resolver todo hoy. Concéntrate solo en tu siguiente paso y suelta el futuro por un momento.',
+    'La ansiedad te cuenta historias sobre el futuro que casi nunca se cumplen. Vuelve a tus pies sobre el suelo.',
+    'Pon tu mano sobre tu pecho y siente tu respiración. Eres más grande y fuerte que cualquier pensamiento ansioso.',
+    'Está bien pausar. Date permiso de soltar las exigencias y descansar unos minutos en un lugar tranquilo.',
+    'Un pensamiento es solo un evento mental, no una verdad absoluta. Obsérvalo sin identificarte con él.',
+    'Bebe un poco de agua fresca, mira a tu alrededor y nombra 3 cosas que puedas ver. Estás aquí y ahora.',
+    'No estás solo con lo que sientes. La ansiedad es una respuesta de tu cuerpo, pero pronto recuperará la calma.',
+    'Recuerda las veces que sentiste miedo en el pasado y cómo lograste salir adelante. También superarás esto.',
+    'Tus emociones no son un defecto; son una señal de que necesitas detenerte y cuidar de ti con amabilidad.',
+    'Divide esa gran montaña de pendientes en un solo paso pequeño. No necesitas correr para llegar.',
+    'Suelta los hombros, relaja la mandíbula y respira lento. Tu cuerpo sabe cómo volver al equilibrio.',
+    'La prisa mental no cambia los resultados. Trátate con la misma compasión con la que tratarías a un ser querido.',
+    'El control total no existe, pero sí tu capacidad de adaptarte y confiar en ti mismo paso a paso.',
+    'Si sientes demasiado ruido en la cabeza, sal a caminar unos minutos o escucha los sonidos a tu alrededor.',
+    'Permítete sentir la emoción sin juzgarla: «Siento ansiedad, pero sé que es temporal y voy a estar bien».',
+    'No te exijas tener todas las respuestas ahora mismo. Mañana tendrás nueva energía y mayor claridad.',
+    'Haz una pausa consciente: estira tus brazos, suelta el aire con fuerza y recuerda que estás haciendo lo mejor posible.',
+    'La incertidumbre es difícil, pero has demostrado tener resiliencia para enfrentar cada nuevo reto.',
+    'Date un abrazo cálido y un respiro. No tienes que demostrarle nada a nadie en este momento.',
+    'Baja el volumen a las preocupaciones enfocándote en una actividad manual o en un pasatiempo que disfrutes.',
+    'Toma este momento con calma. La tormenta en tu mente se disipará y la claridad volverá a su cauce.',
+    'Háblate con voz suave: «Estoy a salvo, puedo manejar esto y me permito ir despacio».',
+    'Tu valor no depende de cuántas cosas puedas resolver bajo presión. Primero está tu bienestar.',
+    'Confía en tu respiración. Cada inhalación te renueva y cada exhalación libera la tensión acumulada.',
+  ],
+
+  triste: [
+    'Tu tristeza merece respeto y espacio. No tienes que fingir estar bien; sentir también es parte de sanar.',
+    'Llorar y desahogarte es la forma en que tu corazón limpia el dolor. Permítete soltar lo que pesa.',
+    'Un mal día o una temporada difícil no significan una mala vida. Tu historia aún tiene hermosos capítulos por escribir.',
+    'Aunque hoy veas el cielo gris, el sol sigue brillando detrás de las nubes. La esperanza volverá a florecer.',
+    'Eres una persona profundamente valiosa y amada, incluso en los días donde te sientes más vulnerable.',
+    'Trátate con infinita ternura hoy. Si todo lo que lograste hacer hoy fue respirar y levantarte, ya es un gran logro.',
+    'El dolor que sientes es temporal, pero tu fortaleza es infinita. No estás solo en este camino.',
+    'Permítete recibir apoyo. Hablar con alguien de confianza o pedir ayuda es el mayor acto de valentía.',
+    'No te apresures a salir de la tristeza; escúchala, abrázate y recuerda que todo en la vida es cíclico.',
+    'Has superado el 100% de tus días más difíciles hasta hoy. Eres mucho más fuerte de lo que crees.',
+    'Tu sensibilidad es un don, no una debilidad. Sentir intensamente significa que tu corazón está vivo.',
+    'Haz algo hoy que sea un mimo para ti: una ducha caliente, tu cobija preferida o una bebida reconfortante.',
+    'No tienes que cargar con todo el peso del mundo. Puedes dejar caer las cargas pesadas y descansar.',
+    'Tus lágrimas no son señal de derrota; son el tributo que el alma rinde a lo que fue importante.',
+    'Recuerda que los momentos hermosos del pasado son la prueba de que volverás a sonreír y disfrutar.',
+    'No te juzgues por sentirte desanimado. El invierno prepara la tierra para la primavera que viene.',
+    'Aquí estamos contigo. Tu presencia en este mundo hace una diferencia real y eres muy importante.',
+    'Date permiso de ir lento. La sanación del corazón no tiene fecha límite ni prisa.',
+    'Mañana el sol volverá a salir y con él llegarán nuevas oportunidades de paz y consuelo.',
+    'Abraza a tu niño interior y dile: «Aquí estoy contigo, todo va a salir bien».',
+    'El dolor disminuye cuando dejamos de luchar contra él y nos permitimos sentirlo con autocompasión.',
+    'Eres digno de amor y comprensión, especialmente en los momentos en que te cuesta dártelos a ti mismo.',
+    'La tristeza pasará como pasan las tormentas. Confía en el tiempo y en tu capacidad de renacer.',
+    'No tienes que tener todas las respuestas hoy. Solo da un paso suave a la vez con cariño hacia ti.',
+    'Gracias por ser honesto con lo que sientes. Tu vulnerabilidad es hermosa y digna de todo respeto.',
+  ],
+
+  agotado: [
+    'El descanso no es un premio que ganas al terminar todo; es una necesidad vital para seguir viviendo.',
+    'Has dado mucho de ti y tu cuerpo te está pidiendo una pausa. Escúchalo y regálate un verdadero descanso.',
+    'No tienes que ser fuerte todo el tiempo. Hoy es momento de soltar el control y dejarte sostener.',
+    'Decir «hasta aquí por hoy» es una decisión sabia y madura. Tu salud está antes que cualquier pendiente.',
+    'El mundo puede esperar un momento. Ahora mismo lo más importante es que recargues tu energía vital.',
+    'Dormir, desconectar y no hacer nada productivo también es cuidar de tu futuro.',
+    'Tu valor como ser humano no se mide por tu lista de tareas cumplidas. Eres valioso solo por existir.',
+    'Apaga las pantallas, ponte cómodo y permite que tu cuerpo descanse profundamente esta noche.',
+    'Has cargado con muchas responsabilidades. Hoy date permiso de delegar o simplemente posponer lo no urgente.',
+    'La fatiga mental es real. Reconócela sin culpa y bríndate un espacio de absoluto silencio y confort.',
+    'A veces avanzar significa detenerse por completo para recuperar fuerzas. No tengas miedo de parar.',
+    'Regálate una noche tranquila sin exigencias: una cena ligera, música suave y un sueño reparador.',
+    'El cansancio te está diciendo: «Te amo demasiado como para permitirte seguir sobrecargándote». Hazle caso.',
+    'No te sientas culpable por necesitar una pausa. Hasta las máquinas más potentes necesitan mantenimiento.',
+    'Suelta las expectativas ajenas y concéntrate únicamente en nutrir tu propio bienestar hoy.',
+    'Mañana será otro día con nueva luz y energía renovada. Por hoy, tu único trabajo es descansar.',
+    'Respira hondo y siente cómo con cada exhalación se libera la pesadez de tus hombros y espalda.',
+    'Date las gracias por todo el esfuerzo que has puesto, pero ahora abraza la quietud sin remordimientos.',
+    'El autocuidado no es egoísmo; es la única forma de asegurarte de no vaciar tu copa por completo.',
+    'Tómate un respiro largo. El universo seguirá girando aunque tú decidas descansar toda la tarde.',
+    'Permítete no estar disponible para nadie más que para ti mismo durante las próximas horas.',
+    'Tu cuerpo es tu templo sagrado: hónralo con sueño de calidad, buena hidratación y paz mental.',
+    'Descansa con la certeza de que has hecho lo suficiente por hoy. Suelta las preocupaciones al viento.',
+    'Recuperar tu energía es tu máxima prioridad. Abraza tu descanso con gratitud y tranquilidad.',
+    'Mañana despertarás con una nueva perspectiva. Hoy, descansa en paz sabiendo que diste lo mejor de ti.',
+  ],
+};
+
+export const getRandomMoodResponse = (mood: MoodType): string => {
+  const responses = MOOD_RESPONSES[mood];
+  if (!responses || responses.length === 0) {
+    return 'Gracias por compartir cómo te sientes hoy. Recuerda que cada emoción es válida y estamos contigo.';
+  }
+  const randomIndex = Math.floor(Math.random() * responses.length);
+  return responses[randomIndex];
+};

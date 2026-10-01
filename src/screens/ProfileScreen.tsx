@@ -220,23 +220,18 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     }
   };
 
+  // Logout confirmation state
+  const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
+
   // Logout with confirmation
   const handleLogoutPress = () => {
-    Alert.alert(
-      'Cerrar Sesión',
-      '¿Estás seguro de que deseas salir de tu cuenta?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Cerrar Sesión',
-          style: 'destructive',
-          onPress: async () => {
-            await logout();
-            onClose();
-          },
-        },
-      ]
-    );
+    setIsLogoutConfirmOpen(true);
+  };
+
+  const handleConfirmLogout = async () => {
+    setIsLogoutConfirmOpen(false);
+    await logout();
+    onClose();
   };
 
   if (!visible || !user) return null;
@@ -566,8 +561,58 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             </View>
           )}
 
+          {/* Bottom Clear Logout Option */}
+          <View style={styles.bottomLogoutContainer}>
+            <TouchableOpacity
+              style={styles.bottomLogoutBtn}
+              onPress={handleLogoutPress}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="log-out-outline" size={18} color="#DC2626" style={{ marginRight: 8 }} />
+              <Text style={styles.bottomLogoutText}>Cerrar Sesión</Text>
+            </TouchableOpacity>
+          </View>
+
           <View style={{ height: 40 }} />
         </ScrollView>
+
+        {/* Logout Confirmation Modal (100% Reliable Cross-Platform) */}
+        {isLogoutConfirmOpen && (
+          <Modal
+            transparent
+            visible={isLogoutConfirmOpen}
+            animationType="fade"
+            onRequestClose={() => setIsLogoutConfirmOpen(false)}
+          >
+            <View style={styles.editModalBackdrop}>
+              <View style={styles.logoutModalCard}>
+                <View style={styles.logoutIconCircle}>
+                  <Ionicons name="log-out-outline" size={26} color="#DC2626" />
+                </View>
+                <Text style={styles.logoutModalTitle}>¿Cerrar Sesión?</Text>
+                <Text style={styles.logoutModalMessage}>
+                  ¿Estás seguro de que deseas salir de tu cuenta?
+                </Text>
+                <View style={styles.logoutModalActions}>
+                  <TouchableOpacity
+                    style={styles.logoutCancelBtn}
+                    onPress={() => setIsLogoutConfirmOpen(false)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.logoutCancelBtnText}>Cancelar</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.logoutConfirmBtn}
+                    onPress={handleConfirmLogout}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.logoutConfirmBtnText}>Cerrar Sesión</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </Modal>
+        )}
 
         {/* Post Options Bottom Sheet (Edit & Delete for Author) */}
         <PostOptionsModal
@@ -945,5 +990,103 @@ const styles = StyleSheet.create({
     fontSize: 13.5,
     color: colors.white,
     fontWeight: '700',
+  },
+  // Bottom Logout Button
+  bottomLogoutContainer: {
+    paddingHorizontal: 20,
+    marginTop: 20,
+    alignItems: 'center',
+  },
+  bottomLogoutBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 14,
+    backgroundColor: '#FEF2F2',
+    borderWidth: 1,
+    borderColor: '#FECACA',
+    width: '100%',
+  },
+  bottomLogoutText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#DC2626',
+  },
+  // Logout Modal Card
+  logoutModalCard: {
+    width: '100%',
+    maxWidth: 320,
+    backgroundColor: colors.white,
+    borderRadius: 22,
+    padding: 22,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  logoutIconCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: '#FEF2F2',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: '#FEE2E2',
+  },
+  logoutModalTitle: {
+    fontSize: 17,
+    fontWeight: '800',
+    color: colors.coffeeDark,
+    marginBottom: 6,
+    textAlign: 'center',
+  },
+  logoutModalMessage: {
+    fontSize: 13.5,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 19,
+    marginBottom: 20,
+  },
+  logoutModalActions: {
+    flexDirection: 'row',
+    gap: 10,
+    width: '100%',
+  },
+  logoutCancelBtn: {
+    flex: 1,
+    paddingVertical: 11,
+    borderRadius: 12,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoutCancelBtnText: {
+    fontSize: 13.5,
+    fontWeight: '700',
+    color: colors.textSecondary,
+  },
+  logoutConfirmBtn: {
+    flex: 1,
+    paddingVertical: 11,
+    borderRadius: 12,
+    backgroundColor: '#DC2626',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#DC2626',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  logoutConfirmBtnText: {
+    fontSize: 13.5,
+    fontWeight: '700',
+    color: colors.white,
   },
 });

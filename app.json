@@ -5,10 +5,10 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
-    "icon": "./assets/logoappE.png",
+    "icon": "./assets/icon.png",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/logoappE.png",
+      "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#FAF7F5"
     },
@@ -18,17 +18,17 @@
     "android": {
       "package": "com.entrenosotros.app",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/logoappE.png",
+        "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FAF7F5"
       },
       "splash": {
-        "image": "./assets/logoappE.png",
+        "image": "./assets/splash-icon.png",
         "resizeMode": "contain",
         "backgroundColor": "#FAF7F5"
       }
     },
     "web": {
-      "favicon": "./assets/logoappE.png",
+      "favicon": "./assets/icon.png",
       "bundler": "metro"
     },
     "plugins": [
