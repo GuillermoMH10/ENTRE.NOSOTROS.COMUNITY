@@ -3,11 +3,10 @@ import { db } from './firebase';
 import { hashPassword } from '../utils/crypto';
 
 // Configuration keys for EmailJS
-// Reemplaza estos valores con los de tu cuenta de EmailJS
 export const EMAILJS_CONFIG = {
-  serviceId: 'service_entre_nosotros', // Tu Service ID de EmailJS
-  templateId: 'template_reset_pwd',    // Tu Template ID de EmailJS
-  publicKey: 'YOUR_PUBLIC_KEY',         // Tu Public Key de EmailJS (Account > API Keys)
+  serviceId: 'service_zw9chuh',
+  templateId: 'template_e0n0nfn',
+  publicKey: 'q2bawUSFByczMAn5H',
 };
 
 export interface ResetCodeResult {
