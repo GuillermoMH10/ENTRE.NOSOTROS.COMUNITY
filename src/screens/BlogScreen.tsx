@@ -115,23 +115,16 @@ export const BlogScreen: React.FC<BlogScreenProps> = ({
               <View style={styles.titleRow}>
                 <Ionicons
                   name="calendar-outline"
-                  size={19}
+                  size={20}
                   color={colors.coffeePrimary}
-                  style={{ marginRight: 6 }}
+                  style={{ marginRight: 7 }}
                 />
-                <Text style={styles.sectionTitle} numberOfLines={1}>
+                <Text style={styles.sectionTitle}>
                   Calendario de Conciencia y Cuidado
                 </Text>
               </View>
-              <Text style={styles.sectionSubText} numberOfLines={1}>
+              <Text style={styles.sectionSubText}>
                 Reflexión y bienestar emocional
-              </Text>
-            </View>
-
-            {/* Clean Counter Badge */}
-            <View style={styles.pageCounterBadge}>
-              <Text style={styles.pageCounterText}>
-                {carouselActiveIndex + 1} / {MONTHS_DATA.length}
               </Text>
             </View>
           </View>
@@ -385,49 +378,27 @@ const styles = StyleSheet.create({
     marginBottom: 22,
   },
   sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     marginBottom: 14,
     paddingHorizontal: 2,
   },
   titleContainer: {
-    flex: 1,
-    marginRight: 12,
+    width: '100%',
   },
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: 16.5,
     fontWeight: '800',
     color: colors.textPrimary,
     letterSpacing: -0.2,
   },
   sectionSubText: {
-    fontSize: 12,
+    fontSize: 12.5,
     color: colors.textSecondary,
     fontWeight: '500',
-    marginTop: 2.5,
-  },
-  pageCounterBadge: {
-    backgroundColor: colors.white,
-    paddingHorizontal: 10,
-    paddingVertical: 4.5,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.borderLight,
-    shadowColor: colors.coffeeDeep,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 3,
-    elevation: 1.5,
-  },
-  pageCounterText: {
-    fontSize: 11.5,
-    fontWeight: '700',
-    color: colors.coffeePrimary,
+    marginTop: 3,
   },
   carouselScrollContent: {
     gap: 14,
