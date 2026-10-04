@@ -87,28 +87,6 @@ export const BlogScreen: React.FC<BlogScreenProps> = ({
     }
   };
 
-  const handlePrevMonth = () => {
-    if (carouselActiveIndex > 0) {
-      const prevIdx = carouselActiveIndex - 1;
-      setCarouselActiveIndex(prevIdx);
-      carouselScrollRef.current?.scrollTo({
-        x: prevIdx * (SINGLE_CARD_WIDTH + 14),
-        animated: true,
-      });
-    }
-  };
-
-  const handleNextMonth = () => {
-    if (carouselActiveIndex < MONTHS_DATA.length - 1) {
-      const nextIdx = carouselActiveIndex + 1;
-      setCarouselActiveIndex(nextIdx);
-      carouselScrollRef.current?.scrollTo({
-        x: nextIdx * (SINGLE_CARD_WIDTH + 14),
-        animated: true,
-      });
-    }
-  };
-
   return (
     <View style={styles.container}>
       {/* Top Header Bar identical to Principal */}
@@ -135,57 +113,26 @@ export const BlogScreen: React.FC<BlogScreenProps> = ({
           <View style={styles.sectionHeader}>
             <View style={styles.titleContainer}>
               <View style={styles.titleRow}>
-                <Ionicons name="calendar-outline" size={20} color={colors.coffeePrimary} style={{ marginRight: 6 }} />
-                <Text style={styles.sectionTitle}>
+                <Ionicons
+                  name="calendar-outline"
+                  size={19}
+                  color={colors.coffeePrimary}
+                  style={{ marginRight: 6 }}
+                />
+                <Text style={styles.sectionTitle} numberOfLines={1}>
                   Calendario de Conciencia y Cuidado
                 </Text>
               </View>
-              <Text style={styles.sectionSubText}>
-                12 meses de reflexión, apoyo y bienestar emocional
+              <Text style={styles.sectionSubText} numberOfLines={1}>
+                Reflexión y bienestar emocional
               </Text>
             </View>
 
-            {/* Navigation & Page Counter */}
-            <View style={styles.navControlsRow}>
-              <TouchableOpacity
-                style={[
-                  styles.navArrowBtn,
-                  carouselActiveIndex === 0 && styles.navArrowBtnDisabled,
-                ]}
-                activeOpacity={0.7}
-                onPress={handlePrevMonth}
-                disabled={carouselActiveIndex === 0}
-                accessibilityLabel="Mes anterior"
-              >
-                <Ionicons
-                  name="chevron-back"
-                  size={18}
-                  color={carouselActiveIndex === 0 ? colors.textMuted : colors.coffeePrimary}
-                />
-              </TouchableOpacity>
-
-              <View style={styles.pageCounterBadge}>
-                <Text style={styles.pageCounterText}>
-                  {carouselActiveIndex + 1}/{MONTHS_DATA.length}
-                </Text>
-              </View>
-
-              <TouchableOpacity
-                style={[
-                  styles.navArrowBtn,
-                  carouselActiveIndex === MONTHS_DATA.length - 1 && styles.navArrowBtnDisabled,
-                ]}
-                activeOpacity={0.7}
-                onPress={handleNextMonth}
-                disabled={carouselActiveIndex === MONTHS_DATA.length - 1}
-                accessibilityLabel="Siguiente mes"
-              >
-                <Ionicons
-                  name="chevron-forward"
-                  size={18}
-                  color={carouselActiveIndex === MONTHS_DATA.length - 1 ? colors.textMuted : colors.coffeePrimary}
-                />
-              </TouchableOpacity>
+            {/* Clean Counter Badge */}
+            <View style={styles.pageCounterBadge}>
+              <Text style={styles.pageCounterText}>
+                {carouselActiveIndex + 1} / {MONTHS_DATA.length}
+              </Text>
             </View>
           </View>
 
@@ -435,70 +382,52 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   carouselSection: {
-    marginBottom: 24,
+    marginBottom: 22,
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 14,
+    paddingHorizontal: 2,
   },
   titleContainer: {
     flex: 1,
-    paddingRight: 8,
+    marginRight: 12,
   },
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   sectionTitle: {
-    fontSize: 16.5,
+    fontSize: 16,
     fontWeight: '800',
     color: colors.textPrimary,
-    letterSpacing: 0.1,
+    letterSpacing: -0.2,
   },
   sectionSubText: {
-    fontSize: 11.5,
+    fontSize: 12,
     color: colors.textSecondary,
     fontWeight: '500',
-    marginTop: 2,
-  },
-  navControlsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  navArrowBtn: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: colors.white,
-    borderWidth: 1,
-    borderColor: colors.borderLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: colors.coffeeDeep,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  navArrowBtnDisabled: {
-    opacity: 0.4,
-    backgroundColor: colors.surface,
+    marginTop: 2.5,
   },
   pageCounterBadge: {
     backgroundColor: colors.white,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 4.5,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: colors.borderLight,
+    shadowColor: colors.coffeeDeep,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 1.5,
   },
   pageCounterText: {
     fontSize: 11.5,
     fontWeight: '700',
-    color: colors.textSecondary,
+    color: colors.coffeePrimary,
   },
   carouselScrollContent: {
     gap: 14,
