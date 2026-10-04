@@ -4,7 +4,8 @@ import { hashPassword } from '../utils/crypto';
 
 // Configuration keys for EmailJS
 export const EMAILJS_CONFIG = {
-  serviceId: 'service_zw9chuh',
+  serviceId: 'service_zw9chuh', // Gmail
+  fallbackServiceId: 'service_kuv9dkm', // Outlook
   templateId: 'template_e0n0nfn',
   publicKey: 'q2bawUSFByczMAn5H',
 };
@@ -16,7 +17,36 @@ export interface ResetCodeResult {
 }
 
 /**
- * Sends a 6-digit password reset verification code via EmailJS
+ * Helper to call EmailJS REST API
+ */
+async function sendEmailViaEmailJS(
+  serviceId: string,
+  templateId: string,
+  publicKey: string,
+  params: Record<string, any>
+): Promise<{ ok: boolean; errorText?: string }> {
+  const response = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      service_id: serviceId,
+      template_id: templateId,
+      user_id: publicKey,
+      template_params: params,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    return { ok: false, errorText };
+  }
+  return { ok: true };
+}
+
+/**
+ * Sends a 6-digit password reset verification code via EmailJS with automatic service fallback
  */
 export async function sendPasswordResetCode(email: string): Promise<ResetCodeResult> {
   try {
@@ -53,41 +83,48 @@ export async function sendPasswordResetCode(email: string): Promise<ResetCodeRes
       createdAt: Date.now(),
     });
 
-    // Send email via EmailJS REST API
-    const response = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        service_id: EMAILJS_CONFIG.serviceId,
-        template_id: EMAILJS_CONFIG.templateId,
-        user_id: EMAILJS_CONFIG.publicKey,
-        template_params: {
-          email: cleanEmail,
-          to_name: username,
-          code: code,
-          passcode: code,
-          link: code,
-          app_name: 'Entre Nosotros',
-        },
-      }),
-    });
+    const templateParams = {
+      email: cleanEmail,
+      to_name: username,
+      code: code,
+      passcode: code,
+      link: code,
+      app_name: 'Entre Nosotros',
+    };
 
-    if (!response.ok) {
-      const errText = await response.text();
-      console.warn('EmailJS API response not OK:', errText);
-      // If EmailJS has placeholder keys, we provide guidance
-      if (EMAILJS_CONFIG.publicKey === 'YOUR_PUBLIC_KEY') {
+    // Try primary service first (Gmail)
+    let emailResult = await sendEmailViaEmailJS(
+      EMAILJS_CONFIG.serviceId,
+      EMAILJS_CONFIG.templateId,
+      EMAILJS_CONFIG.publicKey,
+      templateParams
+    );
+
+    // If primary failed (e.g. Gmail token expired), try fallback (Outlook)
+    if (!emailResult.ok && EMAILJS_CONFIG.fallbackServiceId) {
+      console.warn(
+        `Primary service ${EMAILJS_CONFIG.serviceId} failed (${emailResult.errorText}), trying fallback ${EMAILJS_CONFIG.fallbackServiceId}...`
+      );
+      emailResult = await sendEmailViaEmailJS(
+        EMAILJS_CONFIG.fallbackServiceId,
+        EMAILJS_CONFIG.templateId,
+        EMAILJS_CONFIG.publicKey,
+        templateParams
+      );
+    }
+
+    if (!emailResult.ok) {
+      console.warn('EmailJS error:', emailResult.errorText);
+      if (emailResult.errorText?.includes('Invalid grant')) {
         return {
-          success: true,
-          username,
-          error: 'Configura tus credenciales de EmailJS en src/services/passwordResetService.ts',
+          success: false,
+          error:
+            'Tu servicio de Gmail en EmailJS necesita ser reconectado. Entra a EmailJS > Email Services > Reconectar cuenta de Gmail.',
         };
       }
       return {
         success: false,
-        error: 'No se pudo enviar el correo de recuperación. Verifica la configuración de EmailJS.',
+        error: `Error de EmailJS: ${emailResult.errorText || 'No se pudo enviar el correo.'}`,
       };
     }
 
