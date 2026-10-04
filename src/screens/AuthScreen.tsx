@@ -16,6 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 import { useAuth } from '../context/AuthContext';
+import { ForgotPasswordModal } from '../components/Auth/ForgotPasswordModal';
 
 interface AuthScreenProps {
   visible: boolean;
@@ -27,6 +28,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ visible, onClose }) => {
 
   // Mode: 'login' | 'register'
   const [mode, setMode] = useState<'login' | 'register'>('login');
+  const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
 
   // Form Fields
   const [email, setEmail] = useState('');
@@ -121,11 +123,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ visible, onClose }) => {
   };
 
   const handleForgotPassword = () => {
-    Alert.alert(
-      'Recuperar Contraseña',
-      'Ingresa tu correo y te enviaremos las instrucciones de recuperación.',
-      [{ text: 'Entendido' }]
-    );
+    setIsForgotPasswordOpen(true);
   };
 
   if (!visible) return null;
@@ -439,6 +437,17 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ visible, onClose }) => {
           </View>
         </View>
       </KeyboardAvoidingView>
+
+      {/* Password Reset Modal */}
+      <ForgotPasswordModal
+        visible={isForgotPasswordOpen}
+        initialEmail={email}
+        onClose={() => setIsForgotPasswordOpen(false)}
+        onSuccess={() => {
+          setIsForgotPasswordOpen(false);
+          setMode('login');
+        }}
+      />
     </Modal>
   );
 };
