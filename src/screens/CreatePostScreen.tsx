@@ -15,13 +15,11 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { Video, ResizeMode } from 'expo-av';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 import { useAuth } from '../context/AuthContext';
 import { createPost, fetchHashtags } from '../services/postsService';
 import { HashtagItem } from '../types/post';
-import { isVideoUrl } from '../components/Feed/PostMediaView';
 
 interface CreatePostScreenProps {
   visible: boolean;
@@ -50,28 +48,25 @@ export const CreatePostScreen: React.FC<CreatePostScreenProps> = ({
     }
   }, [visible]);
 
-  // Pick image or video for a specific slot (0, 1 or 2)
+  // Pick image for a specific slot (0, 1 or 2)
   const handleSlotPress = async (slotIndex: number) => {
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permiso necesario', 'Se requiere permiso para acceder a tus archivos multimedia.');
+        Alert.alert('Permiso necesario', 'Se requiere permiso para acceder a tu galería de fotos.');
         return;
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images', 'videos'],
+        mediaTypes: ['images'],
         allowsMultipleSelection: false,
         quality: 0.35, // High visual fidelity, low payload size
-        videoMaxDuration: 120, // Max 2 minutes
-        videoExportPreset: ImagePicker.VideoExportPreset.H264_960x540,
         base64: true,
       });
 
       if (!result.canceled && result.assets && result.assets[0]) {
         const asset = result.assets[0];
-        const isVideo = asset.type === 'video';
-        const finalUri = (!isVideo && asset.base64)
+        const finalUri = asset.base64
           ? `data:image/jpeg;base64,${asset.base64}`
           : asset.uri;
 
@@ -82,7 +77,7 @@ export const CreatePostScreen: React.FC<CreatePostScreenProps> = ({
         });
       }
     } catch (err) {
-      console.warn('Error al seleccionar medio:', err);
+      console.warn('Error al seleccionar imagen:', err);
     }
   };
 
@@ -123,7 +118,7 @@ export const CreatePostScreen: React.FC<CreatePostScreenProps> = ({
     const attachedMedia = photoSlots.filter((uri): uri is string => uri !== null);
 
     if (!content.trim() && attachedMedia.length === 0) {
-      Alert.alert('Publicación vacía', 'Por favor escribe algo o agrega una foto/video.');
+      Alert.alert('Publicación vacía', 'Por favor escribe algo o agrega una foto.');
       return;
     }
 
@@ -230,33 +225,18 @@ export const CreatePostScreen: React.FC<CreatePostScreenProps> = ({
             autoFocus
           />
 
-          {/* 3 Ready-to-Use Media Slots */}
+          {/* 3 Ready-to-Use Photo Slots */}
           <View style={styles.photosSection}>
-            <Text style={styles.sectionHeading}>Fotos o Videos (hasta 3):</Text>
+            <Text style={styles.sectionHeading}>Fotos (hasta 3):</Text>
             <View style={styles.slotsRow}>
               {[0, 1, 2].map((slotIndex) => {
                 const mediaUri = photoSlots[slotIndex];
-                const isVideo = mediaUri ? isVideoUrl(mediaUri) : false;
 
                 return (
                   <View key={slotIndex} style={styles.slotWrapper}>
                     {mediaUri ? (
                       <View style={styles.slotImageContainer}>
-                        {isVideo ? (
-                          <Video
-                            source={{ uri: mediaUri }}
-                            style={styles.slotImage}
-                            resizeMode={ResizeMode.COVER}
-                            shouldPlay={false}
-                          />
-                        ) : (
-                          <Image source={{ uri: mediaUri }} style={styles.slotImage} />
-                        )}
-                        {isVideo && (
-                          <View style={styles.slotVideoBadge}>
-                            <Ionicons name="videocam" size={14} color={colors.white} />
-                          </View>
-                        )}
+                        <Image source={{ uri: mediaUri }} style={styles.slotImage} />
                         <TouchableOpacity
                           style={styles.removeSlotBtn}
                           onPress={() => handleRemoveSlotImage(slotIndex)}
@@ -272,9 +252,9 @@ export const CreatePostScreen: React.FC<CreatePostScreenProps> = ({
                         activeOpacity={0.7}
                       >
                         <View style={styles.slotIconCircle}>
-                          <Ionicons name="images-outline" size={18} color={colors.coffeePrimary} />
+                          <Ionicons name="image-outline" size={18} color={colors.coffeePrimary} />
                         </View>
-                        <Text style={styles.slotLabel}>Medio {slotIndex + 1}</Text>
+                        <Text style={styles.slotLabel}>Foto {slotIndex + 1}</Text>
                       </TouchableOpacity>
                     )}
                   </View>
@@ -488,14 +468,6 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     backgroundColor: colors.surface,
-  },
-  slotVideoBadge: {
-    position: 'absolute',
-    bottom: 5,
-    left: 5,
-    backgroundColor: 'rgba(0,0,0,0.65)',
-    borderRadius: 6,
-    padding: 3,
   },
   removeSlotBtn: {
     position: 'absolute',
