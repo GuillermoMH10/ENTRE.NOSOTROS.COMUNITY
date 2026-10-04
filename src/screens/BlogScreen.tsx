@@ -43,7 +43,6 @@ export const BlogScreen: React.FC<BlogScreenProps> = ({
 }) => {
   // Current month index (0 = Enero, ... 11 = Diciembre)
   const currentMonthIndex = new Date().getMonth();
-  const currentMonthData: MonthTheme = MONTHS_DATA[currentMonthIndex] || MONTHS_DATA[0];
 
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [selectedMonthForDetail, setSelectedMonthForDetail] = useState<number>(currentMonthIndex);
@@ -62,6 +61,19 @@ export const BlogScreen: React.FC<BlogScreenProps> = ({
     return () => unsubscribe();
   }, []);
 
+  // Center/scroll to current month on initial mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (carouselScrollRef.current) {
+        carouselScrollRef.current.scrollTo({
+          x: currentMonthIndex * (SINGLE_CARD_WIDTH + 14),
+          animated: false,
+        });
+      }
+    }, 120);
+    return () => clearTimeout(timer);
+  }, [currentMonthIndex]);
+
   const handleOpenMonth = (index: number) => {
     setSelectedMonthForDetail(index);
     setIsDetailModalOpen(true);
@@ -72,6 +84,28 @@ export const BlogScreen: React.FC<BlogScreenProps> = ({
     const index = Math.round(contentOffsetX / (SINGLE_CARD_WIDTH + 14));
     if (index >= 0 && index < MONTHS_DATA.length && index !== carouselActiveIndex) {
       setCarouselActiveIndex(index);
+    }
+  };
+
+  const handlePrevMonth = () => {
+    if (carouselActiveIndex > 0) {
+      const prevIdx = carouselActiveIndex - 1;
+      setCarouselActiveIndex(prevIdx);
+      carouselScrollRef.current?.scrollTo({
+        x: prevIdx * (SINGLE_CARD_WIDTH + 14),
+        animated: true,
+      });
+    }
+  };
+
+  const handleNextMonth = () => {
+    if (carouselActiveIndex < MONTHS_DATA.length - 1) {
+      const nextIdx = carouselActiveIndex + 1;
+      setCarouselActiveIndex(nextIdx);
+      carouselScrollRef.current?.scrollTo({
+        x: nextIdx * (SINGLE_CARD_WIDTH + 14),
+        animated: true,
+      });
     }
   };
 
@@ -96,114 +130,71 @@ export const BlogScreen: React.FC<BlogScreenProps> = ({
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {/* CURRENT MONTH HERO SPOTLIGHT CARD */}
-        <View style={styles.heroSection}>
-          <TouchableOpacity
-            style={[
-              styles.heroCardOuter,
-              {
-                borderColor: currentMonthData.primaryColor,
-                shadowColor: currentMonthData.primaryColor,
-              },
-            ]}
-            activeOpacity={0.93}
-            onPress={() => handleOpenMonth(currentMonthIndex)}
-          >
-            <ImageBackground
-              source={{ uri: currentMonthData.imageUrl }}
-              style={styles.heroImageBg}
-              imageStyle={styles.heroImageBgStyle}
-              resizeMode="cover"
-            >
-              {/* Dark Ambient Glassmorphic Overlay */}
-              <View style={styles.heroDarkOverlay}>
-                {/* Header Row: Month Badge (Clean, No Icon) */}
-                <View style={styles.heroTopRow}>
-                  <View
-                    style={[
-                      styles.heroMonthBadge,
-                      {
-                        backgroundColor: currentMonthData.primaryColor + 'D9',
-                        borderColor: currentMonthData.accentColor + '80',
-                      },
-                    ]}
-                  >
-                    <Text style={styles.heroMonthBadgeText}>
-                      {currentMonthData.name.toUpperCase()}
-                    </Text>
-                  </View>
-                </View>
-
-                {/* Main Titles */}
-                <Text style={styles.heroThemeTitle}>
-                  {currentMonthData.themeTitle}
-                </Text>
-                <Text style={styles.heroThemeSubtitle}>
-                  {currentMonthData.subtitle}
-                </Text>
-
-                {/* Discrete Speech Box with Heart at the End */}
-                <View
-                  style={[
-                    styles.heroSpeechCard,
-                    { borderLeftColor: currentMonthData.primaryColor },
-                  ]}
-                >
-                  <Text style={styles.heroSpeechText} numberOfLines={4}>
-                    "{currentMonthData.speech}"{' '}
-                    <Ionicons
-                      name="heart"
-                      size={14}
-                      color={currentMonthData.accentColor}
-                    />
-                  </Text>
-                </View>
-
-                {/* Subtle & Elegant "Conocer más" Button */}
-                <View style={styles.heroFooterRow}>
-                  <TouchableOpacity
-                    style={[
-                      styles.sleekHeroButton,
-                      {
-                        borderColor: currentMonthData.primaryColor + '80',
-                        backgroundColor: 'rgba(255, 255, 255, 0.18)',
-                      },
-                    ]}
-                    activeOpacity={0.8}
-                    onPress={() => handleOpenMonth(currentMonthIndex)}
-                  >
-                    <Text style={styles.sleekHeroButtonText}>Conocer más</Text>
-                    <Ionicons
-                      name="arrow-forward-outline"
-                      size={16}
-                      color={colors.white}
-                    />
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </ImageBackground>
-          </TouchableOpacity>
-        </View>
-
         {/* 12 MONTHS SINGLE-CARD HORIZONTAL CAROUSEL */}
         <View style={styles.carouselSection}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>
-              Calendario Psicológico Anual
-            </Text>
-            {/* Page Counter */}
-            <View style={styles.pageCounterBadge}>
-              <Text style={styles.pageCounterText}>
-                {carouselActiveIndex + 1} / {MONTHS_DATA.length}
+            <View style={styles.titleContainer}>
+              <View style={styles.titleRow}>
+                <Ionicons name="calendar-outline" size={20} color={colors.coffeePrimary} style={{ marginRight: 6 }} />
+                <Text style={styles.sectionTitle}>
+                  Calendario de Conciencia y Cuidado
+                </Text>
+              </View>
+              <Text style={styles.sectionSubText}>
+                12 meses de reflexión, apoyo y bienestar emocional
               </Text>
+            </View>
+
+            {/* Navigation & Page Counter */}
+            <View style={styles.navControlsRow}>
+              <TouchableOpacity
+                style={[
+                  styles.navArrowBtn,
+                  carouselActiveIndex === 0 && styles.navArrowBtnDisabled,
+                ]}
+                activeOpacity={0.7}
+                onPress={handlePrevMonth}
+                disabled={carouselActiveIndex === 0}
+                accessibilityLabel="Mes anterior"
+              >
+                <Ionicons
+                  name="chevron-back"
+                  size={18}
+                  color={carouselActiveIndex === 0 ? colors.textMuted : colors.coffeePrimary}
+                />
+              </TouchableOpacity>
+
+              <View style={styles.pageCounterBadge}>
+                <Text style={styles.pageCounterText}>
+                  {carouselActiveIndex + 1}/{MONTHS_DATA.length}
+                </Text>
+              </View>
+
+              <TouchableOpacity
+                style={[
+                  styles.navArrowBtn,
+                  carouselActiveIndex === MONTHS_DATA.length - 1 && styles.navArrowBtnDisabled,
+                ]}
+                activeOpacity={0.7}
+                onPress={handleNextMonth}
+                disabled={carouselActiveIndex === MONTHS_DATA.length - 1}
+                accessibilityLabel="Siguiente mes"
+              >
+                <Ionicons
+                  name="chevron-forward"
+                  size={18}
+                  color={carouselActiveIndex === MONTHS_DATA.length - 1 ? colors.textMuted : colors.coffeePrimary}
+                />
+              </TouchableOpacity>
             </View>
           </View>
 
-          {/* Horizontal Snap Scroll with 1 Single Card Per View */}
+          {/* Horizontal Snap Scroll with 1 Single Card Per View starting at current month */}
           <ScrollView
             ref={carouselScrollRef}
             horizontal
             showsHorizontalScrollIndicator={false}
+            contentOffset={{ x: currentMonthIndex * (SINGLE_CARD_WIDTH + 14), y: 0 }}
             contentContainerStyle={styles.carouselScrollContent}
             snapToInterval={SINGLE_CARD_WIDTH + 14}
             snapToAlignment="center"
@@ -230,7 +221,7 @@ export const BlogScreen: React.FC<BlogScreenProps> = ({
                   <ImageBackground
                     source={{ uri: item.imageUrl }}
                     style={styles.singleCardImageBg}
-                    imageStyle={styles.heroImageBgStyle}
+                    imageStyle={styles.singleCardImageBgStyle}
                     resizeMode="cover"
                   >
                     {/* Clearer Ambient Backdrop */}
@@ -443,125 +434,6 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 16,
   },
-  heroSection: {
-    marginBottom: 24,
-  },
-  heroCardOuter: {
-    borderRadius: 24,
-    borderWidth: 1.5,
-    overflow: 'hidden',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.18,
-    shadowRadius: 14,
-    elevation: 6,
-    backgroundColor: '#1C1917',
-  },
-  heroImageBg: {
-    width: '100%',
-    minHeight: 330,
-  },
-  heroImageBgStyle: {
-    borderRadius: 22,
-  },
-  heroDarkOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(12, 10, 8, 0.38)',
-    padding: 20,
-    justifyContent: 'space-between',
-    borderRadius: 22,
-  },
-  heroTopRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 14,
-  },
-  heroMonthBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 5.5,
-    borderRadius: 14,
-    borderWidth: 1,
-  },
-  heroMonthBadgeText: {
-    color: colors.white,
-    fontSize: 12,
-    fontWeight: '800',
-    letterSpacing: 0.8,
-  },
-  discreteDotWrapper: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  discreteDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  heroThemeTitle: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: colors.white,
-    letterSpacing: -0.3,
-    lineHeight: 28,
-    marginBottom: 4,
-    textShadowColor: 'rgba(0, 0, 0, 0.7)',
-    textShadowOffset: { width: 0, height: 1.5 },
-    textShadowRadius: 4,
-  },
-  heroThemeSubtitle: {
-    fontSize: 13.5,
-    color: '#FFFFFF',
-    fontWeight: '600',
-    marginBottom: 16,
-    textShadowColor: 'rgba(0, 0, 0, 0.7)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
-  },
-  heroSpeechCard: {
-    padding: 14,
-    borderRadius: 14,
-    borderLeftWidth: 3.5,
-    backgroundColor: 'rgba(10, 8, 6, 0.45)',
-    marginBottom: 18,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.16)',
-  },
-  heroSpeechText: {
-    fontSize: 13.5,
-    lineHeight: 20,
-    color: '#FFFFFF',
-    fontStyle: 'italic',
-    textShadowColor: 'rgba(0, 0, 0, 0.6)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-  heroFooterRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-  },
-  sleekHeroButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 14,
-    borderWidth: 1,
-    gap: 6,
-  },
-  sleekHeroButtonText: {
-    color: colors.white,
-    fontSize: 13,
-    fontWeight: '700',
-    letterSpacing: 0.2,
-  },
   carouselSection: {
     marginBottom: 24,
   },
@@ -571,22 +443,54 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 14,
   },
+  titleContainer: {
+    flex: 1,
+    paddingRight: 8,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   sectionTitle: {
-    fontSize: 17,
+    fontSize: 16.5,
     fontWeight: '800',
     color: colors.textPrimary,
     letterSpacing: 0.1,
   },
   sectionSubText: {
-    fontSize: 12,
+    fontSize: 11.5,
     color: colors.textSecondary,
     fontWeight: '500',
     marginTop: 2,
   },
+  navControlsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  navArrowBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: colors.coffeeDeep,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  navArrowBtnDisabled: {
+    opacity: 0.4,
+    backgroundColor: colors.surface,
+  },
   pageCounterBadge: {
     backgroundColor: colors.white,
-    paddingHorizontal: 9,
-    paddingVertical: 3.5,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
     borderRadius: 10,
     borderWidth: 1,
     borderColor: colors.borderLight,
@@ -616,6 +520,9 @@ const styles = StyleSheet.create({
   singleCardImageBg: {
     width: '100%',
     minHeight: 280,
+  },
+  singleCardImageBgStyle: {
+    borderRadius: 20,
   },
   singleCardDarkOverlay: {
     flex: 1,

@@ -59,8 +59,8 @@ export const MonthDetailModal: React.FC<MonthDetailModalProps> = ({
             <Ionicons name="close" size={24} color={colors.textPrimary} />
           </TouchableOpacity>
           <View style={styles.headerTitleWrapper}>
-            <Text style={styles.headerTitle}>Calendario de Conciencia</Text>
-            <Text style={styles.headerSubtitle}>12 Meses de Salud Mental</Text>
+            <Text style={styles.headerTitle}>Calendario de Conciencia y Cuidado</Text>
+            <Text style={styles.headerSubtitle}>12 Meses de Apoyo y Bienestar Emocional</Text>
           </View>
           <View style={styles.headerSpacer} />
         </View>
