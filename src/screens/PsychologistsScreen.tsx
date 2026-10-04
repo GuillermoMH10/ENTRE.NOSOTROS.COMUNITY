@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,9 +8,8 @@ import {
   Image,
   ActivityIndicator,
   RefreshControl,
-  Dimensions,
-  Modal,
-  Animated,
+  Linking,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Psychologist } from '../types/psychologist';
@@ -28,8 +27,6 @@ interface PsychologistsScreenProps {
   contentPaddingBottom?: number;
 }
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
 export const PsychologistsScreen: React.FC<PsychologistsScreenProps> = ({
   onOpenMenu,
   onJoinPress,
@@ -40,14 +37,7 @@ export const PsychologistsScreen: React.FC<PsychologistsScreenProps> = ({
   const [psychologists, setPsychologists] = useState<Psychologist[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-
-  // Preview before full profile (5-second countdown)
-  const [previewPsico, setPreviewPsico] = useState<Psychologist | null>(null);
-  const [countdown, setCountdown] = useState(5);
   const [selectedPsico, setSelectedPsico] = useState<Psychologist | null>(null);
-
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const progressAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     const unsubscribe = subscribeToPsychologists((data) => {
@@ -59,108 +49,167 @@ export const PsychologistsScreen: React.FC<PsychologistsScreenProps> = ({
     return () => unsubscribe();
   }, []);
 
-  // Handle 5-second countdown timer for description preview
-  useEffect(() => {
-    if (previewPsico) {
-      setCountdown(5);
-      progressAnim.setValue(0);
-
-      // Animate progress bar smoothly over 5000ms
-      Animated.timing(progressAnim, {
-        toValue: 1,
-        duration: 5000,
-        useNativeDriver: false,
-      }).start();
-
-      let secondsLeft = 5;
-      timerRef.current = setInterval(() => {
-        secondsLeft -= 1;
-        setCountdown(secondsLeft);
-
-        if (secondsLeft <= 0) {
-          if (timerRef.current) clearInterval(timerRef.current);
-          const target = previewPsico;
-          setPreviewPsico(null);
-          setSelectedPsico(target);
-        }
-      }, 1000);
-    } else {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-    }
-
-    return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-    };
-  }, [previewPsico]);
-
   const onRefresh = () => {
     setRefreshing(true);
     setTimeout(() => setRefreshing(false), 800);
   };
 
-  const handleCardPress = (psico: Psychologist) => {
-    setPreviewPsico(psico);
+  const handleOpenWhatsApp = (whatsapp?: string, name?: string) => {
+    if (!whatsapp) {
+      Alert.alert('Contacto', 'Este especialista no tiene registrado un número de WhatsApp.');
+      return;
+    }
+    const cleanNumber = whatsapp.replace(/[^\d]/g, '');
+    const message = encodeURIComponent(
+      `Hola ${name || 'Especialista'}, te contacto desde la aplicación Entre Nosotros. Me gustaría solicitar informes para una consulta.`
+    );
+    const url = `https://wa.me/${cleanNumber}?text=${message}`;
+    Linking.openURL(url).catch(() => {
+      Alert.alert('WhatsApp', `No se pudo abrir WhatsApp: ${whatsapp}`);
+    });
   };
 
-  const handleOpenFullNow = () => {
-    if (timerRef.current) clearInterval(timerRef.current);
-    const target = previewPsico;
-    setPreviewPsico(null);
-    setSelectedPsico(target);
-  };
-
-  const handleClosePreview = () => {
-    if (timerRef.current) clearInterval(timerRef.current);
-    setPreviewPsico(null);
+  const handleOpenEmail = (correo?: string, name?: string) => {
+    if (!correo) {
+      Alert.alert('Contacto', 'Este especialista no tiene registrado un correo electrónico.');
+      return;
+    }
+    const subject = encodeURIComponent('Consulta Psicológica - Entre Nosotros');
+    const body = encodeURIComponent(
+      `Hola ${name || 'Especialista'},\n\nTe contacto a través de la aplicación Entre Nosotros para solicitar información sobre tus consultas.\n\nSaludos.`
+    );
+    Linking.openURL(`mailto:${correo}?subject=${subject}&body=${body}`).catch(() => {
+      Alert.alert('Correo', correo);
+    });
   };
 
   const renderHeader = () => (
-    <View style={styles.topHeaderTitleContainer}>
-      <Text style={styles.screenMainTitle}>Psicólogos</Text>
+    <View style={styles.headerTitleContainer}>
+      <View style={styles.titleRow}>
+        <Ionicons name="medical-outline" size={22} color={colors.coffeePrimary} style={{ marginRight: 8 }} />
+        <Text style={styles.screenMainTitle}>Especialistas en Psicología</Text>
+      </View>
+      <Text style={styles.screenSubTitle}>
+        Profesionales calificados y verificados listos para acompañarte en tu bienestar emocional
+      </Text>
     </View>
   );
 
   const renderItem = ({ item }: { item: Psychologist }) => {
+    const topicsToShow = (item.temas || []).slice(0, 3);
+    const remainingTopicsCount = (item.temas || []).length - 3;
+
     return (
-      <TouchableOpacity
-        style={styles.gridCard}
-        activeOpacity={0.85}
-        onPress={() => handleCardPress(item)}
-      >
-        {/* Circular Avatar */}
-        <View style={styles.avatarContainer}>
-          <Image
-            source={{ uri: item.imagen }}
-            style={styles.gridAvatar}
-            resizeMode="cover"
-          />
-          <View style={styles.verifiedBadge}>
-            <Ionicons name="checkmark" size={11} color={colors.white} />
-          </View>
+      <View style={styles.cardContainer}>
+        <View style={styles.cardTopContent}>
+          {/* Left Column: Circular Avatar with verified badge */}
+          <TouchableOpacity
+            style={styles.avatarLeftCol}
+            activeOpacity={0.88}
+            onPress={() => setSelectedPsico(item)}
+          >
+            <View style={styles.avatarWrapper}>
+              <Image source={{ uri: item.imagen }} style={styles.avatarImage} resizeMode="cover" />
+              <View style={styles.avatarVerifiedBadge}>
+                <Ionicons name="checkmark" size={12} color={colors.white} />
+              </View>
+            </View>
+
+            {/* Modalidad Badge under avatar */}
+            <View style={styles.modalidadPill}>
+              <Ionicons
+                name={
+                  item.modalidad?.includes('línea') || item.modalidad?.includes('Línea')
+                    ? 'videocam-outline'
+                    : 'business-outline'
+                }
+                size={11}
+                color={colors.coffeePrimary}
+              />
+              <Text style={styles.modalidadPillText} numberOfLines={1}>
+                {item.modalidad || 'Presencial/Línea'}
+              </Text>
+            </View>
+          </TouchableOpacity>
+
+          {/* Right Column: Name, Specialty, Topics, and Quick Info */}
+          <TouchableOpacity
+            style={styles.infoRightCol}
+            activeOpacity={0.88}
+            onPress={() => setSelectedPsico(item)}
+          >
+            {/* Name with Verified Checkmark */}
+            <View style={styles.nameRow}>
+              <Text style={styles.nameText} numberOfLines={1}>
+                {item.nombre}
+              </Text>
+              <Ionicons name="checkmark-circle" size={17} color="#2563EB" style={{ marginLeft: 4 }} />
+            </View>
+
+            {/* Specialty */}
+            <Text style={styles.specialtyText} numberOfLines={2}>
+              {item.especialidad}
+            </Text>
+
+            {/* Topics (Max 3 + Counter) */}
+            {topicsToShow.length > 0 ? (
+              <View style={styles.topicsRow}>
+                {topicsToShow.map((tema, idx) => (
+                  <View key={idx} style={styles.topicChip}>
+                    <Text style={styles.topicChipText} numberOfLines={1}>
+                      {tema}
+                    </Text>
+                  </View>
+                ))}
+                {remainingTopicsCount > 0 && (
+                  <View style={styles.remainingTopicChip}>
+                    <Text style={styles.remainingTopicText}>+{remainingTopicsCount}</Text>
+                  </View>
+                )}
+              </View>
+            ) : null}
+          </TouchableOpacity>
         </View>
 
-        {/* Name */}
-        <Text style={styles.gridNameText} numberOfLines={2}>
-          {item.nombre}
-        </Text>
+        {/* Bottom Actions Row: WhatsApp, Email, Ver Perfil */}
+        <View style={styles.cardActionsRow}>
+          {/* WhatsApp Button */}
+          <TouchableOpacity
+            style={styles.whatsappBtn}
+            activeOpacity={0.85}
+            onPress={() => handleOpenWhatsApp(item.whatsapp || item.telefono, item.nombre)}
+          >
+            <Ionicons name="logo-whatsapp" size={16} color={colors.white} />
+            <Text style={styles.whatsappBtnText}>WhatsApp</Text>
+          </TouchableOpacity>
 
-        {/* Specialty */}
-        <Text style={styles.gridSpecialtyText} numberOfLines={2}>
-          {item.especialidad}
-        </Text>
-      </TouchableOpacity>
+          {/* Email Button */}
+          <TouchableOpacity
+            style={styles.emailBtn}
+            activeOpacity={0.85}
+            onPress={() => handleOpenEmail(item.correo, item.nombre)}
+          >
+            <Ionicons name="mail" size={15} color="#EA4335" />
+            <Text style={styles.emailBtnText}>Correo</Text>
+          </TouchableOpacity>
+
+          {/* View Profile Button */}
+          <TouchableOpacity
+            style={styles.viewProfileBtn}
+            activeOpacity={0.85}
+            onPress={() => setSelectedPsico(item)}
+          >
+            <Text style={styles.viewProfileBtnText}>Ver perfil</Text>
+            <Ionicons name="arrow-forward" size={14} color={colors.white} />
+          </TouchableOpacity>
+        </View>
+      </View>
     );
   };
 
   return (
     <View style={styles.container}>
-      {/* App Header (identical to home, search, blog) */}
+      {/* App Header */}
       <AppHeader
         onOpenMenu={onOpenMenu}
         onJoinPress={onJoinPress}
@@ -177,8 +226,6 @@ export const PsychologistsScreen: React.FC<PsychologistsScreenProps> = ({
           keyExtractor={(item) => item.id}
           ListHeaderComponent={renderHeader}
           renderItem={renderItem}
-          numColumns={2}
-          columnWrapperStyle={styles.columnWrapper}
           contentContainerStyle={[
             styles.listContent,
             {
@@ -197,7 +244,7 @@ export const PsychologistsScreen: React.FC<PsychologistsScreenProps> = ({
           }
           ListEmptyComponent={
             <View style={styles.emptyCard}>
-              <Ionicons name="people-outline" size={40} color={colors.coffeePrimary} />
+              <Ionicons name="people-outline" size={42} color={colors.coffeePrimary} />
               <Text style={styles.emptyTitle}>Próximamente especialistas</Text>
               <Text style={styles.emptySubtitle}>
                 Estamos integrando a los mejores profesionales en psicología para brindarte el apoyo que necesitas.
@@ -207,83 +254,7 @@ export const PsychologistsScreen: React.FC<PsychologistsScreenProps> = ({
         />
       )}
 
-      {/* 5-SECOND DESCRIPTION PREVIEW MODAL */}
-      {previewPsico !== null && (
-        <Modal
-          transparent
-          visible={previewPsico !== null}
-          animationType="fade"
-          onRequestClose={handleClosePreview}
-        >
-          <View style={styles.previewBackdrop}>
-            <View style={styles.previewCard}>
-              {/* Close Button */}
-              <TouchableOpacity
-                style={styles.previewCloseBtn}
-                onPress={handleClosePreview}
-                activeOpacity={0.7}
-              >
-                <Ionicons name="close" size={20} color={colors.textPrimary} />
-              </TouchableOpacity>
-
-              {/* Psychologist Header */}
-              <View style={styles.previewAvatarContainer}>
-                <Image
-                  source={{ uri: previewPsico.imagen }}
-                  style={styles.previewAvatar}
-                  resizeMode="cover"
-                />
-              </View>
-
-              <Text style={styles.previewNameText}>{previewPsico.nombre}</Text>
-              <Text style={styles.previewSpecialtyText}>
-                {previewPsico.especialidad}
-              </Text>
-
-              {/* Description Content */}
-              <View style={styles.previewDescriptionBox}>
-                <Text style={styles.previewDescriptionHeading}>Descripción</Text>
-                <Text style={styles.previewDescriptionBody}>
-                  {previewPsico.descripcion ||
-                    'Especialista enfocado en acompañamiento emocional y bienestar integral.'}
-                </Text>
-              </View>
-
-              {/* 5-Second Countdown Timer & Progress Bar */}
-              <View style={styles.countdownContainer}>
-                <View style={styles.progressBarBackground}>
-                  <Animated.View
-                    style={[
-                      styles.progressBarFill,
-                      {
-                        width: progressAnim.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: ['0%', '100%'],
-                        }),
-                      },
-                    ]}
-                  />
-                </View>
-                <Text style={styles.countdownText}>
-                  Abriendo perfil completo en {countdown}s...
-                </Text>
-              </View>
-
-              {/* Direct Open Button */}
-              <TouchableOpacity
-                style={styles.openFullNowBtn}
-                onPress={handleOpenFullNow}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.openFullNowBtnText}>Ver perfil completo ahora</Text>
-                <Ionicons name="arrow-forward" size={15} color={colors.white} />
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
-      )}
-
-      {/* Full Detail Modal */}
+      {/* Full Psychologist Profile Modal */}
       <PsychologistDetailModal
         visible={selectedPsico !== null}
         psychologist={selectedPsico}
@@ -304,220 +275,237 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   listContent: {
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
   },
-  topHeaderTitleContainer: {
-    paddingVertical: 12,
-    paddingHorizontal: 4,
-    marginBottom: 6,
+  headerTitleContainer: {
+    marginBottom: 16,
+    paddingHorizontal: 2,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   screenMainTitle: {
-    fontSize: 22,
+    fontSize: 19,
     fontWeight: '800',
     color: colors.coffeeDark,
-    letterSpacing: -0.3,
+    letterSpacing: -0.2,
   },
-  columnWrapper: {
-    gap: 12,
-    marginBottom: 12,
+  screenSubTitle: {
+    fontSize: 12.5,
+    color: colors.textSecondary,
+    fontWeight: '500',
+    marginTop: 3,
+    lineHeight: 18,
   },
-  gridCard: {
-    flex: 1,
+  /* Card Container */
+  cardContainer: {
     backgroundColor: colors.white,
-    borderRadius: 20,
-    paddingVertical: 18,
-    paddingHorizontal: 12,
-    alignItems: 'center',
+    borderRadius: 22,
     borderWidth: 1.2,
     borderColor: colors.borderLight,
+    padding: 16,
+    marginBottom: 14,
     shadowColor: colors.coffeeDeep,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    elevation: 2.5,
   },
-  avatarContainer: {
+  cardTopContent: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 14,
+  },
+  /* Left Column */
+  avatarLeftCol: {
+    alignItems: 'center',
+    width: 78,
+  },
+  avatarWrapper: {
     position: 'relative',
-    marginBottom: 12,
+    marginBottom: 6,
   },
-  gridAvatar: {
-    width: 74,
-    height: 74,
-    borderRadius: 37,
-    backgroundColor: colors.surface,
+  avatarImage: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     borderWidth: 2,
     borderColor: colors.coffeePrimary,
+    backgroundColor: colors.surface,
   },
-  verifiedBadge: {
+  avatarVerifiedBadge: {
     position: 'absolute',
     bottom: 0,
     right: 0,
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: colors.coffeePrimary,
+    backgroundColor: '#2563EB',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
     borderColor: colors.white,
   },
-  gridNameText: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: colors.coffeeDark,
-    textAlign: 'center',
-    marginBottom: 4,
-    letterSpacing: -0.1,
-  },
-  gridSpecialtyText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: colors.coffeePrimary,
-    textAlign: 'center',
-    lineHeight: 16,
-  },
-  emptyCard: {
-    backgroundColor: colors.white,
-    borderRadius: 20,
-    padding: 28,
+  modalidadPill: {
+    flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: colors.surface,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 8,
     borderWidth: 1,
     borderColor: colors.borderLight,
-    borderStyle: 'dashed',
-    marginTop: 20,
+    gap: 3,
+    maxWidth: 78,
   },
-  emptyTitle: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: colors.coffeeDark,
-    marginTop: 12,
-    marginBottom: 6,
-  },
-  emptySubtitle: {
-    fontSize: 12.5,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 18,
-    paddingHorizontal: 16,
-  },
-  // Preview Modal Styles
-  previewBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.55)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 20,
-  },
-  previewCard: {
-    width: '100%',
-    maxWidth: 340,
-    backgroundColor: colors.white,
-    borderRadius: 24,
-    padding: 22,
-    alignItems: 'center',
-    position: 'relative',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 16,
-    elevation: 10,
-  },
-  previewCloseBtn: {
-    position: 'absolute',
-    top: 14,
-    right: 14,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 10,
-  },
-  previewAvatarContainer: {
-    marginBottom: 10,
-  },
-  previewAvatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    borderWidth: 2.5,
-    borderColor: colors.coffeePrimary,
-    backgroundColor: colors.surface,
-  },
-  previewNameText: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: colors.coffeeDark,
-    textAlign: 'center',
-    marginBottom: 2,
-  },
-  previewSpecialtyText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.coffeePrimary,
-    textAlign: 'center',
-    marginBottom: 14,
-  },
-  previewDescriptionBox: {
-    width: '100%',
-    backgroundColor: colors.surface,
-    borderRadius: 16,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: colors.borderLight,
-    marginBottom: 16,
-  },
-  previewDescriptionHeading: {
-    fontSize: 11.5,
+  modalidadPillText: {
+    fontSize: 9.5,
     fontWeight: '700',
     color: colors.coffeePrimary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 4,
   },
-  previewDescriptionBody: {
-    fontSize: 13,
-    color: colors.textPrimary,
-    lineHeight: 19,
+  /* Right Column */
+  infoRightCol: {
+    flex: 1,
   },
-  countdownContainer: {
-    width: '100%',
+  nameRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 14,
+    marginBottom: 2,
   },
-  progressBarBackground: {
-    width: '100%',
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: colors.borderLight,
-    overflow: 'hidden',
-    marginBottom: 6,
+  nameText: {
+    fontSize: 15.5,
+    fontWeight: '800',
+    color: colors.coffeeDark,
+    flexShrink: 1,
   },
-  progressBarFill: {
-    height: '100%',
-    backgroundColor: colors.coffeePrimary,
-    borderRadius: 2,
-  },
-  countdownText: {
-    fontSize: 11.5,
-    color: colors.textSecondary,
+  specialtyText: {
+    fontSize: 12.5,
+    color: colors.coffeePrimary,
     fontWeight: '600',
+    lineHeight: 17,
+    marginBottom: 8,
   },
-  openFullNowBtn: {
+  topicsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 5,
+  },
+  topicChip: {
+    backgroundColor: '#F3EAE3',
+    paddingHorizontal: 8,
+    paddingVertical: 3.5,
+    borderRadius: 8,
+    borderWidth: 0.8,
+    borderColor: '#E5D5C8',
+  },
+  topicChipText: {
+    fontSize: 10.5,
+    fontWeight: '600',
+    color: colors.coffeeDark,
+  },
+  remainingTopicChip: {
+    backgroundColor: colors.surface,
+    paddingHorizontal: 6,
+    paddingVertical: 3.5,
+    borderRadius: 8,
+    borderWidth: 0.8,
+    borderColor: colors.borderLight,
+  },
+  remainingTopicText: {
+    fontSize: 10.5,
+    fontWeight: '700',
+    color: colors.textSecondary,
+  },
+  /* Bottom Actions */
+  cardActionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 14,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: colors.borderLight,
+  },
+  whatsappBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#25D366',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+    gap: 5,
+    shadowColor: '#25D366',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  whatsappBtnText: {
+    color: colors.white,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  emailBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFF5F5',
+    borderWidth: 1,
+    borderColor: '#FECDCA',
+    paddingHorizontal: 10,
+    paddingVertical: 7.5,
+    borderRadius: 12,
+    gap: 4,
+  },
+  emailBtnText: {
+    color: '#D92D20',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  viewProfileBtn: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.coffeePrimary,
-    paddingVertical: 11,
-    paddingHorizontal: 18,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
     borderRadius: 12,
-    gap: 6,
-    width: '100%',
+    gap: 5,
+    shadowColor: colors.coffeeDeep,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  openFullNowBtnText: {
+  viewProfileBtnText: {
     color: colors.white,
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '700',
+  },
+  /* Empty State */
+  emptyCard: {
+    backgroundColor: colors.white,
+    borderRadius: 20,
+    padding: 30,
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: colors.borderLight,
+    borderStyle: 'dashed',
+    marginTop: 20,
+    gap: 8,
+  },
+  emptyTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: colors.coffeeDark,
+  },
+  emptySubtitle: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 19,
   },
 });

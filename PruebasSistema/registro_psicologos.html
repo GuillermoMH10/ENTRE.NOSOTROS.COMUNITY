@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel de Administración | Registro de Psicólogos - Entre Nosotros</title>
+  <!-- Google Fonts & Tailwind CDN -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            coffee: {
+              50: '#FAF7F5',
+              100: '#F3EAE3',
+              200: '#E5D5C8',
+              300: '#C6A487',
+              400: '#A88365',
+              500: '#8C684B',
+              600: '#6F5038',
+              700: '#4A3E3D',
+              800: '#2E2423',
+              900: '#1C1917',
+            }
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { 
+      getFirestore, 
+      collection, 
+      addDoc, 
+      getDocs, 
+      doc, 
+      setDoc, 
+      deleteDoc, 
+      onSnapshot, 
+      query, 
+      orderBy, 
+      serverTimestamp 
+    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAs1ti_J3Fxi6t41kW_xC3OORk_PugyTSk",
+      authDomain: "entre-nosotros-742c0.firebaseapp.com",
+      projectId: "entre-nosotros-742c0",
+      storageBucket: "entre-nosotros-742c0.firebasestorage.app",
+      messagingSenderId: "67176257419",
+      appId: "1:67176257419:web:c5e00b80c8f51aa428418e"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Initial default topics
+    const defaultTopics = [
+      "Depresión", "Ansiedad", "Autoestima", "Duelo y Pérdida", "Estrés y Burnout",
+      "Terapia de Pareja", "Terapia Familiar", "Terapia Infantil", "Trauma y Apego",
+      "Dependencia Emocional", "Gestión de Emociones", "Trastornos de la Conducta Alimentaria (TCA)",
+      "Orientación Vocacional", "Desarrollo Personal", "Crecimiento y Bienestar", "Habilidades Sociales"
+    ];
+
+    let availableTopics = [...defaultTopics];
+    let selectedTopics = [];
+
+    window.db = db;
+    window.selectedTopics = selectedTopics;
+
+    // Load custom topics from Firestore
+    async function loadTopics() {
+      try {
+        const topicsSnap = await getDocs(collection(db, "temas_psicologia"));
+        topicsSnap.forEach((doc) => {
+          const tName = doc.data().nombre;
+          if (tName && !availableTopics.includes(tName)) {
+            availableTopics.push(tName);
+          }
+        });
+        renderTopicsSuggestions();
+      } catch (err) {
+        console.warn("No se pudieron cargar temas remotos:", err);
+      }
+    }
+
+    // Save a new topic to Firestore so all psychologists can use it
+    async function saveCustomTopicToFirestore(topicName) {
+      try {
+        const docId = topicName.toLowerCase().replace(/[^a-z0-9]/g, '_');
+        await setDoc(doc(db, "temas_psicologia", docId), {
+          nombre: topicName,
+          createdAt: serverTimestamp()
+        });
+      } catch (err) {
+        console.error("Error guardando tema:", err);
+      }
+    }
+
+    // Render topic suggestion chips
+    function renderTopicsSuggestions() {
+      const container = document.getElementById("topicsSuggestions");
+      if (!container) return;
+      
+      const filterInput = document.getElementById("topicInput").value.trim().toLowerCase();
+      
+      const filtered = availableTopics.filter(t => 
+        !selectedTopics.includes(t) && 
+        (filterInput === "" || t.toLowerCase().includes(filterInput))
+      );
+
+      container.innerHTML = "";
+
+      filtered.slice(0, 15).forEach(topic => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "text-xs font-semibold px-3 py-1.5 rounded-full bg-coffee-100 text-coffee-700 hover:bg-coffee-200 transition-all border border-coffee-200 flex items-center gap-1.5";
+        btn.innerHTML = `<span>+</span> ${topic}`;
+        btn.onclick = () => addTopic(topic);
+        container.appendChild(btn);
+      });
+    }
+
+    // Render selected topics tags
+    function renderSelectedTopics() {
+      const container = document.getElementById("selectedTopicsContainer");
+      if (!container) return;
+      container.innerHTML = "";
+
+      selectedTopics.forEach((topic, idx) => {
+        const tag = document.createElement("span");
+        tag.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-coffee-700 text-white shadow-sm";
+        tag.innerHTML = `
+          <span>${topic}</span>
+          <button type="button" class="text-white hover:text-red-300 font-bold ml-1 text-sm focus:outline-none" onclick="removeTopic(${idx})">&times;</button>
+        `;
+        container.appendChild(tag);
+      });
+    }
+
+    window.addTopic = function(topic) {
+      const clean = topic.trim();
+      if (!clean) return;
+      if (!selectedTopics.includes(clean)) {
+        selectedTopics.push(clean);
+        if (!availableTopics.includes(clean)) {
+          availableTopics.push(clean);
+          saveCustomTopicToFirestore(clean);
+        }
+        renderSelectedTopics();
+        renderTopicsSuggestions();
+      }
+      document.getElementById("topicInput").value = "";
+    };
+
+    window.removeTopic = function(index) {
+      selectedTopics.splice(index, 1);
+      renderSelectedTopics();
+      renderTopicsSuggestions();
+    };
+
+    // Topic input enter handler
+    document.getElementById("topicInput").addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === ",") {
+        e.preventDefault();
+        const val = e.target.value.trim().replace(/,$/, '');
+        if (val) {
+          window.addTopic(val);
+        }
+      }
+    });
+
+    document.getElementById("topicInput").addEventListener("input", () => {
+      renderTopicsSuggestions();
+    });
+
+    // Image previews
+    document.getElementById("avatarInput").addEventListener("input", (e) => {
+      const preview = document.getElementById("avatarPreview");
+      if (e.target.value) {
+        preview.src = e.target.value;
+        preview.classList.remove("hidden");
+      } else {
+        preview.classList.add("hidden");
+      }
+    });
+
+    document.getElementById("coverInput").addEventListener("input", (e) => {
+      const preview = document.getElementById("coverPreview");
+      if (e.target.value) {
+        preview.src = e.target.value;
+        preview.classList.remove("hidden");
+      } else {
+        preview.classList.add("hidden");
+      }
+    });
+
+    // Handle File upload helper to base64 or URL
+    function setupFileInput(fileInputId, textInputId, previewImgId) {
+      const fileInput = document.getElementById(fileInputId);
+      const textInput = document.getElementById(textInputId);
+      const previewImg = document.getElementById(previewImgId);
+
+      fileInput.addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Convert to Base64
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          textInput.value = event.target.result;
+          previewImg.src = event.target.result;
+          previewImg.classList.remove("hidden");
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    setupFileInput("avatarFile", "avatarInput", "avatarPreview");
+    setupFileInput("coverFile", "coverInput", "coverPreview");
+
+    // Form submission
+    const form = document.getElementById("psychologistForm");
+    const statusMsg = document.getElementById("statusMessage");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      
+      const submitBtn = document.getElementById("submitBtn");
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `
+        <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+        </svg> Guardando especialista...
+      `;
+
+      try {
+        const nombre = document.getElementById("nombre").value.trim();
+        const especialidad = document.getElementById("especialidad").value.trim();
+        const descripcion = document.getElementById("descripcion").value.trim();
+        const modalidad = document.getElementById("modalidad").value;
+        const correo = document.getElementById("correo").value.trim();
+        const whatsapp = document.getElementById("whatsapp").value.trim();
+        const sitioWeb = document.getElementById("sitioWeb").value.trim();
+        const ubicacion = document.getElementById("ubicacion").value.trim();
+        
+        let imagen = document.getElementById("avatarInput").value.trim();
+        if (!imagen) {
+          imagen = "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=400&q=80";
+        }
+
+        let fotoPortada = document.getElementById("coverInput").value.trim();
+        if (!fotoPortada) {
+          fotoPortada = "https://images.unsplash.com/photo-1507652313519-d4e9174996dd?auto=format&fit=crop&w=1200&q=80";
+        }
+
+        const newPsico = {
+          nombre,
+          especialidad,
+          descripcion,
+          modalidad,
+          temas: [...selectedTopics],
+          correo,
+          whatsapp,
+          telefono: whatsapp,
+          sitioWeb,
+          ubicacion,
+          imagen,
+          fotoPortada,
+          verificado: true,
+          activo: true,
+          createdAt: serverTimestamp()
+        };
+
+        await addDoc(collection(db, "psicologos"), newPsico);
+
+        statusMsg.innerHTML = `
+          <div class="p-4 mb-4 text-sm text-green-800 rounded-xl bg-green-50 border border-green-200 flex items-center gap-2">
+            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            <strong>¡Éxito!</strong> El psicólogo <strong>${nombre}</strong> se registró correctamente y ya aparece en la app.
+          </div>
+        `;
+        
+        form.reset();
+        selectedTopics.length = 0;
+        renderSelectedTopics();
+        renderTopicsSuggestions();
+        document.getElementById("avatarPreview").classList.add("hidden");
+        document.getElementById("coverPreview").classList.add("hidden");
+
+        setTimeout(() => {
+          statusMsg.innerHTML = "";
+        }, 5000);
+
+      } catch (err) {
+        console.error("Error al registrar psicólogo:", err);
+        statusMsg.innerHTML = `
+          <div class="p-4 mb-4 text-sm text-red-800 rounded-xl bg-red-50 border border-red-200">
+            <strong>Error:</strong> ${err.message}
+          </div>
+        `;
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `Registrar y Publicar Psicólogo`;
+      }
+    });
+
+    // Real-time listener for current psychologists
+    const q = query(collection(db, "psicologos"), orderBy("createdAt", "desc"));
+    onSnapshot(q, (snapshot) => {
+      const listContainer = document.getElementById("psychologistsList");
+      const countBadge = document.getElementById("psicoCount");
+      if (!listContainer) return;
+
+      countBadge.innerText = `${snapshot.size} registrados`;
+
+      if (snapshot.empty) {
+        listContainer.innerHTML = `
+          <div class="text-center py-10 text-gray-400">
+            No hay psicólogos dados de alta aún.
+          </div>
+        `;
+        return;
+      }
+
+      listContainer.innerHTML = "";
+      snapshot.forEach((docSnap) => {
+        const p = docSnap.data();
+        const id = docSnap.id;
+
+        const card = document.createElement("div");
+        card.className = "bg-white p-4 rounded-2xl border border-coffee-200 shadow-sm flex items-center justify-between gap-4 hover:shadow-md transition-all";
+        card.innerHTML = `
+          <div class="flex items-center gap-3.5 min-w-0">
+            <img src="${p.imagen || 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=150&q=80'}" class="w-13 h-13 rounded-full object-cover border-2 border-coffee-300 flex-shrink-0" style="width:52px; height:52px;" />
+            <div class="min-w-0">
+              <div class="flex items-center gap-1.5">
+                <h4 class="font-bold text-coffee-900 text-sm truncate">${p.nombre}</h4>
+                <span class="inline-flex items-center justify-center w-4 h-4 bg-blue-500 rounded-full text-white text-[9px]">✓</span>
+              </div>
+              <p class="text-xs text-coffee-600 font-medium truncate">${p.especialidad}</p>
+              <div class="flex items-center gap-2 mt-1">
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-coffee-100 text-coffee-800">${p.modalidad || 'Ambos'}</span>
+                <span class="text-[11px] text-gray-500">${p.temas ? p.temas.length : 0} temas</span>
+              </div>
+            </div>
+          </div>
+          <button onclick="deletePsychologist('${id}', '${p.nombre}')" class="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg text-xs font-semibold transition-colors flex-shrink-0">
+            Eliminar
+          </button>
+        `;
+        listContainer.appendChild(card);
+      });
+    });
+
+    window.deletePsychologist = async function(id, name) {
+      if (confirm(`¿Estás seguro de que deseas eliminar a ${name}?`)) {
+        try {
+          await deleteDoc(doc(db, "psicologos", id));
+        } catch (err) {
+          alert("Error al eliminar: " + err.message);
+        }
+      }
+    };
+
+    // Initialize
+    loadTopics();
+    renderTopicsSuggestions();
+  </script>
+</head>
+<body class="bg-coffee-50 text-coffee-900 font-sans min-h-screen py-10 px-4 md:px-8">
+  <div class="max-w-6xl mx-auto">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 pb-6 border-b border-coffee-200">
+      <div class="flex items-center gap-4">
+        <img src="https://iili.io/nlMffqB.png" alt="Logo" class="w-14 h-14 rounded-2xl shadow-sm border border-coffee-300" />
+        <div>
+          <h1 class="text-2xl md:text-3xl font-extrabold text-coffee-900 tracking-tight">Alta de Psicólogos Especialistas</h1>
+          <p class="text-sm text-coffee-600 font-medium">Panel de carga directa a la aplicación <span class="font-bold text-coffee-800">Entre Nosotros</span></p>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <span id="psicoCount" class="bg-coffee-700 text-white text-xs font-bold px-3.5 py-1.5 rounded-full shadow-sm">
+          Cargando...
+        </span>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <!-- FORM COLUMN (7 cols) -->
+      <div class="lg:col-span-7 bg-white rounded-3xl p-6 md:p-8 border border-coffee-200 shadow-sm">
+        <div id="statusMessage"></div>
+
+        <form id="psychologistForm" class="space-y-6">
+          <!-- 1. FOTO PERFIL Y PORTADA -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-coffee-50 rounded-2xl border border-coffee-100">
+            <!-- Foto de Perfil -->
+            <div>
+              <label class="block text-xs font-bold text-coffee-800 uppercase tracking-wider mb-2">1. Foto de Perfil</label>
+              <div class="flex items-center gap-3 mb-2">
+                <img id="avatarPreview" src="" class="w-12 h-12 rounded-full object-cover border-2 border-coffee-400 hidden flex-shrink-0" />
+                <input type="file" id="avatarFile" accept="image/*" class="text-xs text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-coffee-700 file:text-white hover:file:bg-coffee-800 cursor-pointer" />
+              </div>
+              <input type="text" id="avatarInput" placeholder="O pega enlace URL de la foto..." class="w-full text-xs px-3 py-2 rounded-xl border border-coffee-200 focus:outline-none focus:ring-2 focus:ring-coffee-400 bg-white" />
+            </div>
+
+            <!-- Foto de Portada -->
+            <div>
+              <label class="block text-xs font-bold text-coffee-800 uppercase tracking-wider mb-2">2. Foto de Portada</label>
+              <div class="flex items-center gap-3 mb-2">
+                <img id="coverPreview" src="" class="w-16 h-10 rounded-lg object-cover border-2 border-coffee-400 hidden flex-shrink-0" />
+                <input type="file" id="coverFile" accept="image/*" class="text-xs text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-coffee-700 file:text-white hover:file:bg-coffee-800 cursor-pointer" />
+              </div>
+              <input type="text" id="coverInput" placeholder="O pega enlace URL de la portada..." class="w-full text-xs px-3 py-2 rounded-xl border border-coffee-200 focus:outline-none focus:ring-2 focus:ring-coffee-400 bg-white" />
+            </div>
+          </div>
+
+          <!-- 2. DATOS PRINCIPALES -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold text-coffee-800 uppercase tracking-wider mb-1.5">Nombre del Especialista *</label>
+              <input type="text" id="nombre" required placeholder="Ej. Lic. Sofía Morales Ruiz" class="w-full text-sm px-4 py-2.5 rounded-xl border border-coffee-200 focus:outline-none focus:ring-2 focus:ring-coffee-500 bg-coffee-50/50" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-coffee-800 uppercase tracking-wider mb-1.5">Especialidad *</label>
+              <input type="text" id="especialidad" required placeholder="Ej. Psicología Clínica y Tanatología" class="w-full text-sm px-4 py-2.5 rounded-xl border border-coffee-200 focus:outline-none focus:ring-2 focus:ring-coffee-500 bg-coffee-50/50" />
+            </div>
+          </div>
+
+          <!-- 3. DESCRIPCIÓN -->
+          <div>
+            <label class="block text-xs font-bold text-coffee-800 uppercase tracking-wider mb-1.5">Descripción Profesional / Sobre el Especialista *</label>
+            <textarea id="descripcion" rows="3" required placeholder="Describe el enfoque terapéutico, formación, años de experiencia y cómo ayuda a sus pacientes..." class="w-full text-sm px-4 py-2.5 rounded-xl border border-coffee-200 focus:outline-none focus:ring-2 focus:ring-coffee-500 bg-coffee-50/50 leading-relaxed"></textarea>
+          </div>
+
+          <!-- 4. MODALIDAD -->
+          <div>
+            <label class="block text-xs font-bold text-coffee-800 uppercase tracking-wider mb-1.5">Modalidad de Consulta *</label>
+            <select id="modalidad" required class="w-full text-sm px-4 py-2.5 rounded-xl border border-coffee-200 focus:outline-none focus:ring-2 focus:ring-coffee-500 bg-coffee-50/50 font-semibold text-coffee-800">
+              <option value="Presencial y En línea">Presencial y En línea (Ambos)</option>
+              <option value="En línea">En línea (Virtual / Videollamada)</option>
+              <option value="Presencial">Presencial (Consultorio)</option>
+            </select>
+          </div>
+
+          <!-- 5. TEMAS QUE TRATA (TAGS AUTOCOMPLETE + CREACIÓN) -->
+          <div class="p-4 bg-coffee-50 rounded-2xl border border-coffee-200">
+            <label class="block text-xs font-bold text-coffee-800 uppercase tracking-wider mb-1">Temas que Trata *</label>
+            <p class="text-xs text-coffee-600 mb-2.5">Escribe y presiona Enter para agregar, o haz clic en las sugerencias abajo:</p>
+            
+            <div id="selectedTopicsContainer" class="flex flex-wrap gap-2 mb-3 min-h-[32px]"></div>
+
+            <div class="flex gap-2 mb-3">
+              <input type="text" id="topicInput" placeholder="Escribe un tema (ej. Autoestima, Ansiedad, Duelo...)" class="flex-1 text-sm px-3.5 py-2 rounded-xl border border-coffee-200 focus:outline-none focus:ring-2 focus:ring-coffee-500 bg-white" />
+              <button type="button" onclick="window.addTopic(document.getElementById('topicInput').value)" class="px-4 py-2 bg-coffee-700 hover:bg-coffee-800 text-white rounded-xl text-xs font-bold transition-all shadow-sm">
+                + Agregar
+              </button>
+            </div>
+
+            <div class="pt-2 border-t border-coffee-200">
+              <span class="text-[11px] font-bold text-coffee-600 uppercase tracking-wider block mb-2">Sugerencias rápidas:</span>
+              <div id="topicsSuggestions" class="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto"></div>
+            </div>
+          </div>
+
+          <!-- 6. CONTACTO Y UBICACIÓN -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold text-coffee-800 uppercase tracking-wider mb-1.5">Correo Electrónico *</label>
+              <input type="email" id="correo" required placeholder="ejemplo@psicologia.com" class="w-full text-sm px-4 py-2.5 rounded-xl border border-coffee-200 focus:outline-none focus:ring-2 focus:ring-coffee-500 bg-coffee-50/50" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-coffee-800 uppercase tracking-wider mb-1.5">WhatsApp (con clave lada) *</label>
+              <input type="text" id="whatsapp" required placeholder="Ej. +52 55 1234 5678" class="w-full text-sm px-4 py-2.5 rounded-xl border border-coffee-200 focus:outline-none focus:ring-2 focus:ring-coffee-500 bg-coffee-50/50" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-coffee-800 uppercase tracking-wider mb-1.5">Sitio Web / Red Social</label>
+              <input type="url" id="sitioWeb" placeholder="https://www.psicologos.com" class="w-full text-sm px-4 py-2.5 rounded-xl border border-coffee-200 focus:outline-none focus:ring-2 focus:ring-coffee-500 bg-coffee-50/50" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-coffee-800 uppercase tracking-wider mb-1.5">Ubicación / Ciudad / Dirección *</label>
+              <input type="text" id="ubicacion" required placeholder="Ej. Ciudad de México / Consultorio Roma Sur" class="w-full text-sm px-4 py-2.5 rounded-xl border border-coffee-200 focus:outline-none focus:ring-2 focus:ring-coffee-500 bg-coffee-50/50" />
+            </div>
+          </div>
+
+          <!-- SUBMIT BUTTON -->
+          <button type="submit" id="submitBtn" class="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-coffee-700 to-coffee-800 hover:from-coffee-800 hover:to-coffee-900 text-white font-bold text-sm tracking-wide shadow-md hover:shadow-lg transition-all transform active:scale-[0.99] flex items-center justify-center gap-2">
+            Registrar y Publicar Psicólogo
+          </button>
+        </form>
+      </div>
+
+      <!-- LIST COLUMN (5 cols) -->
+      <div class="lg:col-span-5 flex flex-col gap-4">
+        <div class="bg-white rounded-3xl p-6 border border-coffee-200 shadow-sm flex-1">
+          <div class="flex items-center justify-between mb-4 pb-3 border-b border-coffee-200">
+            <h3 class="font-extrabold text-coffee-900 text-base">Especialistas en la App</h3>
+            <span class="text-xs text-coffee-600 font-semibold">Sincronización en Vivo</span>
+          </div>
+          
+          <div id="psychologistsList" class="space-y-3 max-h-[700px] overflow-y-auto pr-1">
+            <div class="text-center py-10 text-gray-400 text-sm">Cargando psicólogos...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
