@@ -268,15 +268,6 @@ export const PsychologistDetailModal: React.FC<PsychologistDetailModalProps> = (
                   'Especialista comprometido con brindar un espacio seguro, confidencial y empático para el cuidado de tu salud mental.'}
               </Text>
             </View>
-
-            {psychologist.ubicacion ? (
-              <View style={styles.locationDetailRow}>
-                <Ionicons name="pin-outline" size={16} color={colors.coffeePrimary} />
-                <Text style={styles.locationDetailText}>
-                  {psychologist.ubicacion}
-                </Text>
-              </View>
-            ) : null}
           </View>
 
           {/* 5. Temas y Especialidades que Trata */}
@@ -618,19 +609,6 @@ const styles = StyleSheet.create({
     lineHeight: 21,
     color: colors.textPrimary,
     fontStyle: 'normal',
-  },
-  locationDetailRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 12,
-    gap: 6,
-    paddingHorizontal: 4,
-  },
-  locationDetailText: {
-    fontSize: 12.5,
-    color: colors.textSecondary,
-    fontWeight: '500',
-    flex: 1,
   },
   /* 5. Topics Grid */
   allTopicsGrid: {
