@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   FlatList,
   TouchableOpacity,
+  TextInput,
+  ScrollView,
   Image,
   ActivityIndicator,
   RefreshControl,
@@ -17,7 +19,6 @@ import { subscribeToPsychologists } from '../services/psychologistsService';
 import { PsychologistDetailModal } from '../components/Psychologists/PsychologistDetailModal';
 import { AppHeader } from '../components/Header/AppHeader';
 import { colors } from '../theme/colors';
-import { spacing } from '../theme/spacing';
 
 interface PsychologistsScreenProps {
   onOpenMenu: () => void;
@@ -26,6 +27,8 @@ interface PsychologistsScreenProps {
   contentPaddingTop?: number;
   contentPaddingBottom?: number;
 }
+
+type ModalidadFilter = 'todos' | 'linea' | 'presencial';
 
 export const PsychologistsScreen: React.FC<PsychologistsScreenProps> = ({
   onOpenMenu,
@@ -38,6 +41,11 @@ export const PsychologistsScreen: React.FC<PsychologistsScreenProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedPsico, setSelectedPsico] = useState<Psychologist | null>(null);
+
+  // Search & Filters State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [modalidadFilter, setModalidadFilter] = useState<ModalidadFilter>('todos');
+  const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
 
   useEffect(() => {
     const unsubscribe = subscribeToPsychologists((data) => {
@@ -53,6 +61,69 @@ export const PsychologistsScreen: React.FC<PsychologistsScreenProps> = ({
     setRefreshing(true);
     setTimeout(() => setRefreshing(false), 800);
   };
+
+  // Extract unique topics dynamically ONLY from registered psychologists
+  const dynamicTopics = useMemo(() => {
+    const topicSet = new Set<string>();
+    psychologists.forEach((p) => {
+      if (Array.isArray(p.temas)) {
+        p.temas.forEach((tema) => {
+          const trimmed = tema?.trim();
+          if (trimmed) topicSet.add(trimmed);
+        });
+      }
+    });
+    return Array.from(topicSet);
+  }, [psychologists]);
+
+  // Filtered list based on search, modality, and dynamic topic
+  const filteredPsychologists = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+
+    return psychologists.filter((p) => {
+      // 1. Search Query Filter
+      if (query) {
+        const nameMatch = p.nombre?.toLowerCase().includes(query);
+        const specMatch = p.especialidad?.toLowerCase().includes(query);
+        const cityMatch = p.ciudad?.toLowerCase().includes(query);
+        const descMatch = p.descripcion?.toLowerCase().includes(query);
+        const topicMatch = (p.temas || []).some((t) => t.toLowerCase().includes(query));
+
+        if (!nameMatch && !specMatch && !cityMatch && !descMatch && !topicMatch) {
+          return false;
+        }
+      }
+
+      // 2. Modality Filter
+      if (modalidadFilter !== 'todos') {
+        const mod = (p.modalidad || '').toLowerCase();
+        if (modalidadFilter === 'linea') {
+          const isOnline =
+            mod.includes('línea') ||
+            mod.includes('linea') ||
+            mod.includes('ambos') ||
+            mod.includes('ambas');
+          if (!isOnline) return false;
+        } else if (modalidadFilter === 'presencial') {
+          const isPresential =
+            mod.includes('presencial') ||
+            mod.includes('ambos') ||
+            mod.includes('ambas');
+          if (!isPresential) return false;
+        }
+      }
+
+      // 3. Topic Filter
+      if (selectedTopic) {
+        const hasTopic = (p.temas || []).some(
+          (t) => t.trim().toLowerCase() === selectedTopic.trim().toLowerCase()
+        );
+        if (!hasTopic) return false;
+      }
+
+      return true;
+    });
+  }, [psychologists, searchQuery, modalidadFilter, selectedTopic]);
 
   const handleOpenWhatsApp = (whatsapp?: string, name?: string) => {
     if (!whatsapp) {
@@ -83,17 +154,14 @@ export const PsychologistsScreen: React.FC<PsychologistsScreenProps> = ({
     });
   };
 
-  const renderHeader = () => (
-    <View style={styles.headerTitleContainer}>
-      <View style={styles.titleRow}>
-        <Ionicons name="medical-outline" size={22} color={colors.coffeePrimary} style={{ marginRight: 8 }} />
-        <Text style={styles.screenMainTitle}>Especialistas en Psicología</Text>
-      </View>
-      <Text style={styles.screenSubTitle}>
-        Profesionales calificados y verificados listos para acompañarte en tu bienestar emocional
-      </Text>
-    </View>
-  );
+  const handleClearFilters = () => {
+    setSearchQuery('');
+    setModalidadFilter('todos');
+    setSelectedTopic(null);
+  };
+
+  const hasActiveFilters =
+    searchQuery.trim().length > 0 || modalidadFilter !== 'todos' || selectedTopic !== null;
 
   const renderItem = ({ item }: { item: Psychologist }) => {
     const topicsToShow = (item.temas || []).slice(0, 3);
@@ -123,7 +191,7 @@ export const PsychologistsScreen: React.FC<PsychologistsScreenProps> = ({
                     ? 'videocam-outline'
                     : 'business-outline'
                 }
-                size={11}
+                size={10}
                 color={colors.coffeePrimary}
               />
               <Text style={styles.modalidadPillText} numberOfLines={1}>
@@ -132,7 +200,7 @@ export const PsychologistsScreen: React.FC<PsychologistsScreenProps> = ({
             </View>
           </TouchableOpacity>
 
-          {/* Right Column: Name, Specialty, Topics, and Quick Info */}
+          {/* Right Column: Name, City, Specialty, Topics */}
           <TouchableOpacity
             style={styles.infoRightCol}
             activeOpacity={0.88}
@@ -143,8 +211,18 @@ export const PsychologistsScreen: React.FC<PsychologistsScreenProps> = ({
               <Text style={styles.nameText} numberOfLines={1}>
                 {item.nombre}
               </Text>
-              <Ionicons name="checkmark-circle" size={17} color="#2563EB" style={{ marginLeft: 4 }} />
+              <Ionicons name="checkmark-circle" size={16} color="#2563EB" style={{ marginLeft: 4 }} />
             </View>
+
+            {/* Ciudad (City in very small font right below the name) */}
+            {item.ciudad ? (
+              <View style={styles.cityRow}>
+                <Ionicons name="location-sharp" size={11} color={colors.coffeePrimary} style={{ marginRight: 3 }} />
+                <Text style={styles.cityText} numberOfLines={1}>
+                  {item.ciudad}
+                </Text>
+              </View>
+            ) : null}
 
             {/* Specialty */}
             <Text style={styles.specialtyText} numberOfLines={2}>
@@ -216,24 +294,195 @@ export const PsychologistsScreen: React.FC<PsychologistsScreenProps> = ({
         onProfilePress={onProfilePress}
       />
 
+      {/* Fixed Header, Search & Filter Section (Keeps TextInput from losing focus) */}
+      <View style={[styles.headerContainer, { paddingTop: contentPaddingTop + 4 }]}>
+        {/* Centered "¿Necesitas ayuda?" */}
+        <View style={styles.headerTitleRow}>
+          <Ionicons name="sparkles" size={17} color={colors.coffeePrimary} style={{ marginRight: 6 }} />
+          <Text style={styles.screenMainTitle}>¿Necesitas ayuda?</Text>
+        </View>
+
+        {/* Search Bar */}
+        <View style={styles.searchBarContainer}>
+          <Ionicons name="search-outline" size={18} color={colors.coffeePrimary} style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Buscar por nombre, tema, ciudad..."
+            placeholderTextColor="#A89B91"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            returnKeyType="search"
+            clearButtonMode="while-editing"
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity
+              onPress={() => setSearchQuery('')}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Ionicons name="close-circle" size={18} color="#A89B91" />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* Modality Filter Tabs */}
+        <View style={styles.modalityFilterRow}>
+          <TouchableOpacity
+            style={[
+              styles.modalityFilterBtn,
+              modalidadFilter === 'todos' && styles.modalityFilterBtnActive,
+            ]}
+            onPress={() => setModalidadFilter('todos')}
+            activeOpacity={0.8}
+          >
+            <Ionicons
+              name="apps-outline"
+              size={13}
+              color={modalidadFilter === 'todos' ? colors.white : colors.coffeeDark}
+            />
+            <Text
+              style={[
+                styles.modalityFilterBtnText,
+                modalidadFilter === 'todos' && styles.modalityFilterBtnTextActive,
+              ]}
+            >
+              Todos
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.modalityFilterBtn,
+              modalidadFilter === 'linea' && styles.modalityFilterBtnActive,
+            ]}
+            onPress={() => setModalidadFilter(modalidadFilter === 'linea' ? 'todos' : 'linea')}
+            activeOpacity={0.8}
+          >
+            <Ionicons
+              name="videocam-outline"
+              size={13}
+              color={modalidadFilter === 'linea' ? colors.white : colors.coffeeDark}
+            />
+            <Text
+              style={[
+                styles.modalityFilterBtnText,
+                modalidadFilter === 'linea' && styles.modalityFilterBtnTextActive,
+              ]}
+            >
+              En línea
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.modalityFilterBtn,
+              modalidadFilter === 'presencial' && styles.modalityFilterBtnActive,
+            ]}
+            onPress={() =>
+              setModalidadFilter(modalidadFilter === 'presencial' ? 'todos' : 'presencial')
+            }
+            activeOpacity={0.8}
+          >
+            <Ionicons
+              name="business-outline"
+              size={13}
+              color={modalidadFilter === 'presencial' ? colors.white : colors.coffeeDark}
+            />
+            <Text
+              style={[
+                styles.modalityFilterBtnText,
+                modalidadFilter === 'presencial' && styles.modalityFilterBtnTextActive,
+              ]}
+            >
+              Presencial
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Dynamic Topics Filter */}
+        {dynamicTopics.length > 0 && (
+          <View style={styles.topicsFilterWrapper}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.topicsScrollContent}
+              keyboardShouldPersistTaps="handled"
+            >
+              {dynamicTopics.map((topic, index) => {
+                const isSelected =
+                  selectedTopic?.toLowerCase() === topic.toLowerCase();
+                return (
+                  <TouchableOpacity
+                    key={index}
+                    style={[
+                      styles.topicFilterChip,
+                      isSelected && styles.topicFilterChipActive,
+                    ]}
+                    onPress={() =>
+                      setSelectedTopic(isSelected ? null : topic)
+                    }
+                    activeOpacity={0.8}
+                  >
+                    <Ionicons
+                      name={isSelected ? 'checkmark-circle' : 'pricetag-outline'}
+                      size={12}
+                      color={isSelected ? colors.white : colors.coffeePrimary}
+                    />
+                    <Text
+                      style={[
+                        styles.topicFilterChipText,
+                        isSelected && styles.topicFilterChipTextActive,
+                      ]}
+                    >
+                      {topic}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+        )}
+
+        {/* Active Filter Notice & Reset */}
+        {hasActiveFilters && (
+          <View style={styles.activeFilterNotice}>
+            <Text style={styles.activeFilterCount}>
+              {filteredPsychologists.length}{' '}
+              {filteredPsychologists.length === 1 ? 'especialista encontrado' : 'especialistas encontrados'}
+            </Text>
+            <TouchableOpacity
+              onPress={handleClearFilters}
+              style={styles.clearFiltersBtn}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="reload-outline" size={12} color={colors.coffeePrimary} />
+              <Text style={styles.clearFiltersText}>Limpiar filtros</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
+
+      {/* Psychologists List */}
       {isLoading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.coffeePrimary} />
         </View>
       ) : (
         <FlatList
-          data={psychologists}
+          data={filteredPsychologists}
           keyExtractor={(item) => item.id}
-          ListHeaderComponent={renderHeader}
           renderItem={renderItem}
           contentContainerStyle={[
             styles.listContent,
             {
-              paddingTop: contentPaddingTop + 8,
+              paddingTop: 6,
               paddingBottom: contentPaddingBottom + 20,
             },
           ]}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -244,11 +493,30 @@ export const PsychologistsScreen: React.FC<PsychologistsScreenProps> = ({
           }
           ListEmptyComponent={
             <View style={styles.emptyCard}>
-              <Ionicons name="people-outline" size={42} color={colors.coffeePrimary} />
-              <Text style={styles.emptyTitle}>Próximamente especialistas</Text>
-              <Text style={styles.emptySubtitle}>
-                Estamos integrando a los mejores profesionales en psicología para brindarte el apoyo que necesitas.
+              <Ionicons
+                name={hasActiveFilters ? 'search-outline' : 'people-outline'}
+                size={42}
+                color={colors.coffeePrimary}
+              />
+              <Text style={styles.emptyTitle}>
+                {hasActiveFilters
+                  ? 'No se encontraron resultados'
+                  : 'Próximamente especialistas'}
               </Text>
+              <Text style={styles.emptySubtitle}>
+                {hasActiveFilters
+                  ? 'Intenta ajustar los filtros de búsqueda o seleccionar otros temas.'
+                  : 'Estamos integrando a los mejores profesionales en psicología para brindarte el apoyo que necesitas.'}
+              </Text>
+              {hasActiveFilters && (
+                <TouchableOpacity
+                  onPress={handleClearFilters}
+                  style={styles.emptyResetBtn}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.emptyResetBtnText}>Restablecer filtros</Text>
+                </TouchableOpacity>
+              )}
             </View>
           }
         />
@@ -277,26 +545,135 @@ const styles = StyleSheet.create({
   listContent: {
     paddingHorizontal: 16,
   },
-  headerTitleContainer: {
-    marginBottom: 16,
-    paddingHorizontal: 2,
+  /* Header Container */
+  headerContainer: {
+    marginBottom: 8,
+    paddingHorizontal: 16,
   },
-  titleRow: {
+  headerTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
   },
   screenMainTitle: {
-    fontSize: 19,
+    fontSize: 18,
     fontWeight: '800',
     color: colors.coffeeDark,
     letterSpacing: -0.2,
+    textAlign: 'center',
   },
-  screenSubTitle: {
-    fontSize: 12.5,
+  /* Search Bar */
+  searchBarContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.white,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    paddingHorizontal: 12,
+    height: 44,
+    marginBottom: 8,
+    shadowColor: colors.coffeeDeep,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 1.5,
+  },
+  searchIcon: {
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 13,
+    color: colors.coffeeDark,
+    paddingVertical: 0,
+  },
+  /* Modality Filters */
+  modalityFilterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 8,
+  },
+  modalityFilterBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.white,
+    paddingHorizontal: 12,
+    paddingVertical: 6.5,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    gap: 5,
+  },
+  modalityFilterBtnActive: {
+    backgroundColor: colors.coffeePrimary,
+    borderColor: colors.coffeePrimary,
+  },
+  modalityFilterBtnText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.coffeeDark,
+  },
+  modalityFilterBtnTextActive: {
+    color: colors.white,
+    fontWeight: '700',
+  },
+  /* Dynamic Topic Filters */
+  topicsFilterWrapper: {
+    marginBottom: 6,
+  },
+  topicsScrollContent: {
+    gap: 6,
+    paddingRight: 8,
+  },
+  topicFilterChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F3EAE3',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#E5D5C8',
+    gap: 4,
+  },
+  topicFilterChipActive: {
+    backgroundColor: colors.coffeePrimary,
+    borderColor: colors.coffeePrimary,
+  },
+  topicFilterChipText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.coffeeDark,
+  },
+  topicFilterChipTextActive: {
+    color: colors.white,
+    fontWeight: '700',
+  },
+  /* Active filter summary notice */
+  activeFilterNotice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: 2,
+    paddingBottom: 2,
+  },
+  activeFilterCount: {
+    fontSize: 11.5,
+    fontWeight: '600',
     color: colors.textSecondary,
-    fontWeight: '500',
-    marginTop: 3,
-    lineHeight: 18,
+  },
+  clearFiltersBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  clearFiltersText: {
+    fontSize: 11.5,
+    fontWeight: '700',
+    color: colors.coffeePrimary,
   },
   /* Card Container */
   cardContainer: {
@@ -377,6 +754,17 @@ const styles = StyleSheet.create({
     fontSize: 15.5,
     fontWeight: '800',
     color: colors.coffeeDark,
+    flexShrink: 1,
+  },
+  cityRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 3,
+  },
+  cityText: {
+    fontSize: 10.5,
+    fontWeight: '600',
+    color: colors.textSecondary,
     flexShrink: 1,
   },
   specialtyText: {
@@ -507,5 +895,17 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 19,
+  },
+  emptyResetBtn: {
+    marginTop: 8,
+    backgroundColor: colors.coffeePrimary,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 10,
+  },
+  emptyResetBtnText: {
+    color: colors.white,
+    fontSize: 12.5,
+    fontWeight: '700',
   },
 });

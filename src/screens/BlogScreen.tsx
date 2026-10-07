@@ -12,14 +12,13 @@ import {
   NativeScrollEvent,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { MONTHS_DATA, MonthTheme } from '../data/monthsData';
+import { MONTHS_DATA } from '../data/monthsData';
 import { MonthDetailModal } from '../components/Blog/MonthDetailModal';
 import { Psychologist } from '../types/psychologist';
 import { subscribeToPsychologists } from '../services/psychologistsService';
 import { PsychologistDetailModal } from '../components/Psychologists/PsychologistDetailModal';
 import { AppHeader } from '../components/Header/AppHeader';
 import { colors } from '../theme/colors';
-import { spacing } from '../theme/spacing';
 
 interface BlogScreenProps {
   onOpenMenu: () => void;
@@ -29,6 +28,25 @@ interface BlogScreenProps {
   contentPaddingTop?: number;
   contentPaddingBottom?: number;
 }
+
+interface TopicItem {
+  id: string;
+  titulo: string;
+  imagen: string;
+}
+
+const INTEREST_TOPICS: TopicItem[] = [
+  {
+    id: 'depresion',
+    titulo: 'Depresión',
+    imagen: 'https://i.pinimg.com/1200x/b8/7c/8f/b87c8fe21146f1c89d576d97c2471458.jpg',
+  },
+  {
+    id: 'ansiedad',
+    titulo: 'Ansiedad',
+    imagen: 'https://i.pinimg.com/1200x/3e/f6/f4/3ef6f4d666bf0ae7febb0e6750966fc8.jpg',
+  },
+];
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SINGLE_CARD_WIDTH = SCREEN_WIDTH - 32;
@@ -102,7 +120,7 @@ export const BlogScreen: React.FC<BlogScreenProps> = ({
         contentContainerStyle={[
           styles.scrollContent,
           {
-            paddingTop: contentPaddingTop + 12,
+            paddingTop: contentPaddingTop + 14,
             paddingBottom: contentPaddingBottom + 20,
           },
         ]}
@@ -110,23 +128,18 @@ export const BlogScreen: React.FC<BlogScreenProps> = ({
       >
         {/* 12 MONTHS SINGLE-CARD HORIZONTAL CAROUSEL */}
         <View style={styles.carouselSection}>
-          <View style={styles.sectionHeader}>
-            <View style={styles.titleContainer}>
-              <View style={styles.titleRow}>
-                <Ionicons
-                  name="calendar-outline"
-                  size={20}
-                  color={colors.coffeePrimary}
-                  style={{ marginRight: 7 }}
-                />
-                <Text style={styles.sectionTitle}>
-                  Calendario de Conciencia y Cuidado
-                </Text>
-              </View>
-              <Text style={styles.sectionSubText}>
-                Reflexión y bienestar emocional
-              </Text>
+          {/* Centered Clean Header (No subtitle) */}
+          <View style={styles.centeredHeader}>
+            <View style={styles.calendarIconBubble}>
+              <Ionicons
+                name="calendar"
+                size={16}
+                color={colors.coffeePrimary}
+              />
             </View>
+            <Text style={styles.centeredSectionTitle}>
+              Calendario de Conciencia y Cuidado
+            </Text>
           </View>
 
           {/* Horizontal Snap Scroll with 1 Single Card Per View starting at current month */}
@@ -150,7 +163,7 @@ export const BlogScreen: React.FC<BlogScreenProps> = ({
                   style={[
                     styles.singleCardWrapper,
                     {
-                      borderColor: item.primaryColor + (isCurrent ? 'CC' : '50'),
+                      borderColor: item.primaryColor + (isCurrent ? 'DD' : '50'),
                       shadowColor: item.primaryColor,
                     },
                     isCurrent && styles.currentSingleCardBorder,
@@ -166,13 +179,13 @@ export const BlogScreen: React.FC<BlogScreenProps> = ({
                   >
                     {/* Clearer Ambient Backdrop */}
                     <View style={styles.singleCardDarkOverlay}>
-                      {/* Top Row: Month Name (Clean, No Icon) & Current Indicator */}
+                      {/* Top Row: Month Name & Current Indicator */}
                       <View style={styles.singleCardTopRow}>
                         <View
                           style={[
                             styles.singleCardMonthPill,
                             {
-                              backgroundColor: item.primaryColor + 'D9',
+                              backgroundColor: item.primaryColor + 'E6',
                               borderColor: item.accentColor + '80',
                             },
                           ]}
@@ -186,7 +199,7 @@ export const BlogScreen: React.FC<BlogScreenProps> = ({
                           <View
                             style={[
                               styles.miniCurrentTag,
-                              { backgroundColor: 'rgba(255, 255, 255, 0.25)' },
+                              { backgroundColor: 'rgba(255, 255, 255, 0.28)' },
                             ]}
                           >
                             <Text style={styles.miniCurrentTagText}>
@@ -264,30 +277,50 @@ export const BlogScreen: React.FC<BlogScreenProps> = ({
           </View>
         </View>
 
-        {/* SECTION: ESPECIALISTAS QUE PUEDEN ACOMPAÑARTE */}
+        {/* SECTION: TEMAS QUE TE PUEDEN INTERESAR */}
+        <View style={styles.topicsSection}>
+          <View style={styles.topicsHeaderRow}>
+            <Text style={styles.topicsSectionTitle}>
+              Temas que te pueden interesar
+            </Text>
+          </View>
+
+          <View style={styles.topicsGrid}>
+            {INTEREST_TOPICS.map((topic) => (
+              <View key={topic.id} style={styles.topicCard}>
+                <View style={styles.topicImageContainer}>
+                  <Image
+                    source={{ uri: topic.imagen }}
+                    style={styles.topicImage}
+                    resizeMode="cover"
+                  />
+                </View>
+                <Text style={styles.topicTitle}>{topic.titulo}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        {/* SECTION: ESPECIALISTAS A TU LADO (Cleaned up) */}
         <View style={styles.psychologistsSection}>
-          <View style={styles.sectionHeader}>
-            <View>
-              <Text style={styles.sectionTitle}>
-                Especialistas a tu lado
-              </Text>
-              <Text style={styles.sectionSubText}>
-                Profesionales en psicología listos para escucharte
-              </Text>
-            </View>
+          <View style={styles.psicoHeaderRow}>
+            <Text style={styles.psicoSectionTitle}>
+              Especialistas a tu lado
+            </Text>
             {onOpenPsychologists ? (
               <TouchableOpacity
-                style={styles.viewAllPsicoPill}
+                style={styles.viewAllDiscreetBtn}
                 activeOpacity={0.7}
                 onPress={onOpenPsychologists}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
-                <Text style={styles.viewAllPsicoPillText}>Ver todos</Text>
-                <Ionicons name="chevron-forward" size={13} color={colors.coffeePrimary} />
+                <Text style={styles.viewAllDiscreetText}>Ver todos</Text>
+                <Ionicons name="chevron-forward" size={12} color={colors.coffeePrimary} />
               </TouchableOpacity>
             ) : null}
           </View>
 
-          {/* Horizontal List of Psychologists */}
+          {/* Horizontal List of Psychologists (Avatar + Name + Specialty only) */}
           {psychologists.length > 0 ? (
             <ScrollView
               horizontal
@@ -312,19 +345,14 @@ export const BlogScreen: React.FC<BlogScreenProps> = ({
                   <Text style={styles.psicoMiniSpecialty} numberOfLines={2}>
                     {p.especialidad}
                   </Text>
-
-                  <View style={styles.psicoMiniAction}>
-                    <Text style={styles.psicoMiniActionText}>Ver perfil</Text>
-                    <Ionicons name="arrow-forward" size={12} color={colors.coffeePrimary} />
-                  </View>
                 </TouchableOpacity>
               ))}
             </ScrollView>
           ) : (
             <View style={styles.emptyPsicoBox}>
-              <Ionicons name="people-outline" size={26} color={colors.coffeePrimary} />
+              <Ionicons name="people-outline" size={24} color={colors.coffeePrimary} />
               <Text style={styles.emptyPsicoText}>
-                Red de profesionales en psicología en constante crecimiento.
+                Red de profesionales en psicología disponible para ti.
               </Text>
             </View>
           )}
@@ -334,13 +362,13 @@ export const BlogScreen: React.FC<BlogScreenProps> = ({
         <View style={styles.upcomingSection}>
           <View style={styles.upcomingCard}>
             <View style={styles.upcomingIconCircle}>
-              <Ionicons name="sparkles" size={22} color={colors.coffeePrimary} />
+              <Ionicons name="sparkles" size={20} color={colors.coffeePrimary} />
             </View>
             <Text style={styles.upcomingTitle}>
-              Próximamente más reflexiones y artículos
+              Próximamente más lecturas y guías
             </Text>
             <Text style={styles.upcomingDesc}>
-              Espacio preparado para guías psicológicas y lecturas de bienestar emocional.
+              Espacio preparado para artículos especializados y reflexiones de bienestar.
             </Text>
           </View>
         </View>
@@ -375,30 +403,37 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   carouselSection: {
-    marginBottom: 22,
+    marginBottom: 24,
   },
-  sectionHeader: {
-    marginBottom: 14,
-    paddingHorizontal: 2,
-  },
-  titleContainer: {
-    width: '100%',
-  },
-  titleRow: {
-    flexDirection: 'row',
+  /* Centered Header for Calendar */
+  centeredHeader: {
     alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 14,
+    paddingHorizontal: 8,
   },
-  sectionTitle: {
-    fontSize: 16.5,
+  calendarIconBubble: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 6,
+    borderWidth: 1,
+    borderColor: '#EAE3DF',
+    shadowColor: colors.coffeeDeep,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  centeredSectionTitle: {
+    fontSize: 15.5,
     fontWeight: '800',
-    color: colors.textPrimary,
+    color: colors.coffeeDark,
+    textAlign: 'center',
     letterSpacing: -0.2,
-  },
-  sectionSubText: {
-    fontSize: 12.5,
-    color: colors.textSecondary,
-    fontWeight: '500',
-    marginTop: 3,
   },
   carouselScrollContent: {
     gap: 14,
@@ -409,7 +444,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     overflow: 'hidden',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.14,
+    shadowOpacity: 0.12,
     shadowRadius: 10,
     elevation: 4,
     backgroundColor: '#1C1917',
@@ -457,12 +492,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 3.5,
     borderRadius: 10,
-    gap: 4,
-  },
-  activeDotSmall: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
   },
   miniCurrentTagText: {
     color: colors.white,
@@ -539,37 +568,103 @@ const styles = StyleSheet.create({
     height: 6,
     borderRadius: 3,
   },
+  /* Topics of Interest Section */
+  topicsSection: {
+    marginBottom: 24,
+  },
+  topicsHeaderRow: {
+    marginBottom: 12,
+    paddingHorizontal: 2,
+  },
+  topicsSectionTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: colors.coffeeDark,
+    letterSpacing: -0.2,
+  },
+  topicsGrid: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  topicCard: {
+    flex: 1,
+    backgroundColor: colors.white,
+    borderRadius: 20,
+    padding: 10,
+    borderWidth: 1.2,
+    borderColor: '#F0EAE5',
+    shadowColor: colors.coffeeDeep,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 5,
+    elevation: 2,
+  },
+  topicImageContainer: {
+    width: '100%',
+    aspectRatio: 1,
+    borderRadius: 14,
+    overflow: 'hidden',
+    backgroundColor: '#FAF7F5',
+    marginBottom: 8,
+  },
+  topicImage: {
+    width: '100%',
+    height: '100%',
+  },
+  topicTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: colors.coffeeDark,
+    textAlign: 'center',
+    paddingVertical: 2,
+    letterSpacing: -0.2,
+  },
   /* Psychologists in Blog */
   psychologistsSection: {
     marginBottom: 24,
   },
-  viewAllPsicoPill: {
+  psicoHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.white,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.borderLight,
-    gap: 3,
+    justifyContent: 'space-between',
+    marginBottom: 12,
+    paddingHorizontal: 2,
   },
-  viewAllPsicoPillText: {
-    fontSize: 11.5,
+  psicoSectionTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: colors.coffeeDark,
+    letterSpacing: -0.2,
+  },
+  viewAllDiscreetBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 9,
+    paddingVertical: 4.5,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#EAE3DF',
+    gap: 2,
+  },
+  viewAllDiscreetText: {
+    fontSize: 11,
     fontWeight: '700',
     color: colors.coffeePrimary,
   },
   psicoScrollContent: {
     gap: 12,
     paddingRight: 16,
+    paddingVertical: 2,
   },
   psicoMiniCard: {
-    width: 170,
+    width: 150,
     backgroundColor: colors.white,
     borderRadius: 18,
-    padding: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 12,
     borderWidth: 1.2,
-    borderColor: colors.borderLight,
+    borderColor: '#F0EAE5',
     alignItems: 'center',
     shadowColor: colors.coffeeDeep,
     shadowOffset: { width: 0, height: 2 },
@@ -578,93 +673,77 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   psicoMiniAvatar: {
-    width: 58,
-    height: 58,
-    borderRadius: 29,
-    backgroundColor: colors.surface,
+    width: 62,
+    height: 62,
+    borderRadius: 31,
+    backgroundColor: '#FAF7F5',
     borderWidth: 1.5,
     borderColor: colors.coffeePrimary,
     marginBottom: 8,
   },
   psicoMiniName: {
-    fontSize: 13.5,
+    fontSize: 13,
     fontWeight: '800',
     color: colors.coffeeDark,
     textAlign: 'center',
     marginBottom: 3,
   },
   psicoMiniSpecialty: {
-    fontSize: 11,
+    fontSize: 10.5,
     color: colors.coffeePrimary,
     fontWeight: '600',
     textAlign: 'center',
-    marginBottom: 10,
-    minHeight: 28,
-  },
-  psicoMiniAction: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: colors.borderLight,
-    width: '100%',
-    justifyContent: 'center',
-  },
-  psicoMiniActionText: {
-    fontSize: 11.5,
-    fontWeight: '700',
-    color: colors.coffeePrimary,
+    lineHeight: 14,
   },
   emptyPsicoBox: {
     backgroundColor: colors.white,
     borderRadius: 16,
-    padding: 20,
+    padding: 18,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: colors.borderLight,
+    borderColor: '#EAE3DF',
     borderStyle: 'dashed',
     gap: 6,
   },
   emptyPsicoText: {
-    fontSize: 12,
+    fontSize: 11.5,
     color: colors.textSecondary,
     textAlign: 'center',
   },
   upcomingSection: {
-    marginTop: 4,
-    marginBottom: 12,
+    marginTop: 2,
+    marginBottom: 10,
   },
   upcomingCard: {
     backgroundColor: colors.white,
     borderRadius: 18,
-    padding: 18,
+    padding: 16,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: colors.borderLight,
+    borderColor: '#EAE3DF',
     borderStyle: 'dashed',
   },
   upcomingIconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.surface,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#FAF7F5',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   upcomingTitle: {
-    fontSize: 13.5,
+    fontSize: 13,
     fontWeight: '700',
-    color: colors.textPrimary,
-    marginBottom: 4,
+    color: colors.coffeeDark,
+    marginBottom: 3,
     textAlign: 'center',
   },
   upcomingDesc: {
-    fontSize: 11.5,
+    fontSize: 11,
     color: colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 17,
-    paddingHorizontal: 10,
+    lineHeight: 16,
+    paddingHorizontal: 8,
   },
 });

@@ -12,6 +12,7 @@ export interface Psychologist {
   whatsapp?: string; // WhatsApp
   sitioWeb?: string; // Sitio web
   ubicacion: string; // Ubicación / Consultorio
+  ciudad?: string; // Ciudad del especialista
   verificado?: boolean;
   activo?: boolean;
   createdAt?: any;

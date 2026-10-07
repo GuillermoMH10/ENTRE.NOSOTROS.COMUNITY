@@ -252,6 +252,7 @@
         const correo = document.getElementById("correo").value.trim();
         const whatsapp = document.getElementById("whatsapp").value.trim();
         const sitioWeb = document.getElementById("sitioWeb").value.trim();
+        const ciudad = document.getElementById("ciudad").value.trim();
         const ubicacion = document.getElementById("ubicacion").value.trim();
         
         let imagen = document.getElementById("avatarInput").value.trim();
@@ -274,6 +275,7 @@
           whatsapp,
           telefono: whatsapp,
           sitioWeb,
+          ciudad,
           ubicacion,
           imagen,
           fotoPortada,
@@ -487,13 +489,18 @@
             </div>
 
             <div>
+              <label class="block text-xs font-bold text-coffee-800 uppercase tracking-wider mb-1.5">Ciudad *</label>
+              <input type="text" id="ciudad" required placeholder="Ej. Ciudad de México, Guadalajara, Monterrey..." class="w-full text-sm px-4 py-2.5 rounded-xl border border-coffee-200 focus:outline-none focus:ring-2 focus:ring-coffee-500 bg-coffee-50/50" />
+            </div>
+
+            <div>
               <label class="block text-xs font-bold text-coffee-800 uppercase tracking-wider mb-1.5">Sitio Web / Red Social</label>
               <input type="url" id="sitioWeb" placeholder="https://www.psicologos.com" class="w-full text-sm px-4 py-2.5 rounded-xl border border-coffee-200 focus:outline-none focus:ring-2 focus:ring-coffee-500 bg-coffee-50/50" />
             </div>
 
-            <div>
-              <label class="block text-xs font-bold text-coffee-800 uppercase tracking-wider mb-1.5">Ubicación / Ciudad / Dirección *</label>
-              <input type="text" id="ubicacion" required placeholder="Ej. Ciudad de México / Consultorio Roma Sur" class="w-full text-sm px-4 py-2.5 rounded-xl border border-coffee-200 focus:outline-none focus:ring-2 focus:ring-coffee-500 bg-coffee-50/50" />
+            <div class="md:col-span-2">
+              <label class="block text-xs font-bold text-coffee-800 uppercase tracking-wider mb-1.5">Ubicación (Enlace de Maps o Dirección física) *</label>
+              <input type="text" id="ubicacion" required placeholder="Ej. Enlace de Google Maps / Bing Maps o dirección del consultorio" class="w-full text-sm px-4 py-2.5 rounded-xl border border-coffee-200 focus:outline-none focus:ring-2 focus:ring-coffee-500 bg-coffee-50/50" />
             </div>
           </div>
 

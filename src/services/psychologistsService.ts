@@ -44,6 +44,7 @@ export const subscribeToPsychologists = (
           whatsapp: data.whatsapp || data.telefono || '',
           sitioWeb: data.sitioWeb || '',
           ubicacion: data.ubicacion || '',
+          ciudad: data.ciudad || '',
           verificado: data.verificado !== false,
           activo: data.activo !== false,
           createdAt: data.createdAt?.toMillis
@@ -88,6 +89,7 @@ export const getPsychologists = async (): Promise<Psychologist[]> => {
         whatsapp: data.whatsapp || data.telefono || '',
         sitioWeb: data.sitioWeb || '',
         ubicacion: data.ubicacion || '',
+        ciudad: data.ciudad || '',
         verificado: data.verificado !== false,
         activo: data.activo !== false,
         createdAt: data.createdAt?.toMillis

@@ -21,6 +21,7 @@ import { SearchScreen } from './SearchScreen';
 import { BlogScreen } from './BlogScreen';
 import { PsychologistsScreen } from './PsychologistsScreen';
 import { RulesScreen } from './RulesScreen';
+import { SupportScreen } from './SupportScreen';
 import { UserProfileScreen } from './UserProfileScreen';
 import { MonthDetailModal } from '../components/Blog/MonthDetailModal';
 import { Post } from '../types/post';
@@ -224,6 +225,22 @@ export const HomeScreen: React.FC = () => {
             contentPaddingTop={0}
             contentPaddingBottom={TABBAR_HEIGHT + (Platform.OS === 'ios' ? 14 : 4)}
           />
+        ) : activeTab === 'ayuda' ? (
+          <SupportScreen
+            onOpenMenu={handleOpenMenu}
+            onJoinPress={handleOpenAuth}
+            onProfilePress={handleOpenProfile}
+            onOpenPsychologists={handleOpenPsychologists}
+            onOpenCreatePost={() => {
+              if (!user) {
+                setIsAuthOpen(true);
+              } else {
+                setIsCreateOpen(true);
+              }
+            }}
+            contentPaddingTop={0}
+            contentPaddingBottom={TABBAR_HEIGHT + (Platform.OS === 'ios' ? 14 : 4)}
+          />
         ) : (
           <FeedList
             onCommentPress={handleCommentPress}
@@ -274,6 +291,14 @@ export const HomeScreen: React.FC = () => {
           visible={isProfileOpen}
           onClose={handleCloseProfile}
           onRequireAuth={handleOpenAuth}
+          onOpenPsychologists={handleOpenPsychologists}
+          onOpenCreatePost={() => {
+            if (!user) {
+              setIsAuthOpen(true);
+            } else {
+              setIsCreateOpen(true);
+            }
+          }}
         />
 
         {/* Create Post Screen (Desahógate, este es tu espacio) */}

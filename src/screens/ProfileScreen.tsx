@@ -31,11 +31,17 @@ import {
   subscribeToSavedPosts,
   subscribeToReactedPosts,
 } from '../services/postsService';
+import { getLatestTestResult } from '../services/psychologyTestService';
+import { TestResult } from '../types/psychologyTest';
+import { PsychologyTestModal } from '../components/PsychologyTest/PsychologyTestModal';
+import { WeeklyMoodTracker } from '../components/Profile/WeeklyMoodTracker';
 
 interface ProfileScreenProps {
   visible: boolean;
   onClose: () => void;
   onRequireAuth?: () => void;
+  onOpenPsychologists?: () => void;
+  onOpenCreatePost?: () => void;
 }
 
 type ProfileTab = 'posts' | 'saved' | 'reacted' | null;
@@ -46,11 +52,16 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   visible,
   onClose,
   onRequireAuth,
+  onOpenPsychologists,
+  onOpenCreatePost,
 }) => {
   const { user, logout, updateUserProfile } = useAuth();
 
   // Active Tab: null initially (clean blank space as requested), or 'posts' | 'saved' | 'reacted'
   const [selectedTab, setSelectedTab] = useState<ProfileTab>(null);
+  const [latestTestResult, setLatestTestResult] = useState<TestResult | null>(null);
+  const [isTestModalOpen, setIsTestModalOpen] = useState(false);
+  const [testModalMode, setTestModalMode] = useState<'questionnaire' | 'result'>('questionnaire');
 
   // Feed lists for each tab
   const [userPosts, setUserPosts] = useState<Post[]>([]);
@@ -84,6 +95,15 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     setViewerIndex(idx);
     setViewerVisible(true);
   };
+
+  // Fetch latest psychology test result
+  useEffect(() => {
+    if (visible && user) {
+      getLatestTestResult(user.id).then((res) => {
+        setLatestTestResult(res);
+      });
+    }
+  }, [visible, user]);
 
   // Real-time subscriptions based on active tab
   useEffect(() => {
@@ -510,55 +530,171 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
           {/* Tab Content Rendering */}
           {selectedTab === null ? (
-            /* Clean blank space while nothing is selected, as requested */
-            <View style={styles.cleanBlankSpace}>
-              <Ionicons name="sparkles-outline" size={28} color={colors.borderMedium} style={{ opacity: 0.5 }} />
-              <Text style={styles.cleanBlankText}>Selecciona una sección para ver tus contenidos</Text>
-            </View>
-          ) : loadingPosts ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="small" color={colors.coffeePrimary} />
-            </View>
-          ) : currentTabPosts.length === 0 ? (
-            <View style={styles.emptyTabContainer}>
-              <Ionicons
-                name={
-                  selectedTab === 'posts'
-                    ? 'document-text-outline'
-                    : selectedTab === 'saved'
-                    ? 'bookmark-outline'
-                    : 'heart-outline'
-                }
-                size={36}
-                color={colors.borderMedium}
-              />
-              <Text style={styles.emptyTabTitle}>
-                {selectedTab === 'posts'
-                  ? 'No has publicado nada aún'
-                  : selectedTab === 'saved'
-                  ? 'No tienes publicaciones guardadas'
-                  : 'Aún no has reaccionado a ninguna publicación'}
-              </Text>
-              <Text style={styles.emptyTabSubtitle}>
-                {selectedTab === 'posts'
-                  ? 'Comparte tus pensamientos y desahógate cuando lo necesites.'
-                  : selectedTab === 'saved'
-                  ? 'Guarda publicaciones para verlas más tarde.'
-                  : 'Expresa tu apoyo a la comunidad reaccionando a publicaciones.'}
-              </Text>
-            </View>
+            <>
+              {latestTestResult ? (
+                <View style={styles.profileTestCard}>
+                  <View style={styles.profileTestHeader}>
+                    <View style={styles.profileTestTitleRow}>
+                      <Ionicons name="pulse" size={17} color={latestTestResult.badgeColor} style={{ marginRight: 6 }} />
+                      <Text style={styles.profileTestMainTitle}>Tu Bienestar Emocional</Text>
+                    </View>
+                    <Text style={styles.profileTestDate}>
+                      {new Date(latestTestResult.createdAt).toLocaleDateString()}
+                    </Text>
+                  </View>
+
+                  <View style={[styles.profileTestBadge, { backgroundColor: latestTestResult.badgeColor + '18' }]}>
+                    <Text style={[styles.profileTestBadgeText, { color: latestTestResult.badgeColor }]}>
+                      {latestTestResult.levelTitle}
+                    </Text>
+                  </View>
+
+                  <Text style={styles.profileTestSummaryText} numberOfLines={3}>
+                    {latestTestResult.summary}
+                  </Text>
+
+                  {/* 3 Main Dimensions preview */}
+                  <View style={styles.profileDimList}>
+                    {latestTestResult.dimensions.slice(0, 3).map((dim) => {
+                      const color =
+                        dim.level === 'bajo'
+                          ? '#10B981'
+                          : dim.level === 'moderado'
+                          ? '#F59E0B'
+                          : '#EF4444';
+                      return (
+                        <View key={dim.key} style={styles.profileDimItem}>
+                          <View style={styles.profileDimHeader}>
+                            <Text style={styles.profileDimLabel}>{dim.label}</Text>
+                            <Text style={[styles.profileDimLevel, { color }]}>{dim.level.toUpperCase()}</Text>
+                          </View>
+                          <View style={styles.profileDimBarTrack}>
+                            <View
+                              style={[
+                                styles.profileDimBarFill,
+                                { width: `${dim.percentage}%`, backgroundColor: color },
+                              ]}
+                            />
+                          </View>
+                        </View>
+                      );
+                    })}
+                  </View>
+
+                  {/* 2 Separated Distinct Buttons */}
+                  <View style={styles.profileTestActionsRow}>
+                    <TouchableOpacity
+                      style={styles.profileViewResultBtn}
+                      activeOpacity={0.85}
+                      onPress={() => {
+                        setTestModalMode('result');
+                        setIsTestModalOpen(true);
+                      }}
+                    >
+                      <Ionicons name="eye-outline" size={14} color={colors.white} style={{ marginRight: 5 }} />
+                      <Text style={styles.profileViewResultBtnText}>Ver evaluación</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={styles.profileRetakeBtn}
+                      activeOpacity={0.85}
+                      onPress={() => {
+                        setTestModalMode('questionnaire');
+                        setIsTestModalOpen(true);
+                      }}
+                    >
+                      <Ionicons name="refresh-outline" size={14} color={colors.coffeeDark} style={{ marginRight: 5 }} />
+                      <Text style={styles.profileRetakeBtnText}>Repetir test</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ) : (
+                <View style={styles.profileNoTestContainer}>
+                  <View style={styles.profileNoTestIconCircle}>
+                    <Ionicons name="heart-circle-outline" size={32} color={colors.coffeePrimary} />
+                  </View>
+                  <Text style={styles.profileNoTestTitle}>Conoce tu estado de bienestar</Text>
+                  <Text style={styles.profileNoTestSubtitle}>
+                    Realiza nuestro test emocional interactivo para evaluar tus niveles de ánimo, ansiedad, estrés y descanso.
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.profileStartTestBtn}
+                    activeOpacity={0.85}
+                    onPress={() => {
+                      setTestModalMode('questionnaire');
+                      setIsTestModalOpen(true);
+                    }}
+                  >
+                    <Ionicons name="clipboard-outline" size={16} color={colors.white} style={{ marginRight: 6 }} />
+                    <Text style={styles.profileStartTestBtnText}>Realizar test emocional</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              {/* Weekly Mood Tracker Section ("¿Cómo te has sentido esta semana?") */}
+              <WeeklyMoodTracker userId={user?.id} />
+            </>
           ) : (
-            <View style={styles.postsListContainer}>
-              {currentTabPosts.map((post) => (
-                <PostCard
-                  key={post.id}
-                  post={post}
-                  onCommentPress={(p) => setActiveCommentPost(p)}
-                  onRequireAuth={onRequireAuth || (() => {})}
-                  onOptionsPress={(p) => setSelectedPostForOptions(p)}
-                />
-              ))}
-            </View>
+            <>
+              {/* Return Button to Graphs & Emotional Wellbeing */}
+              <View style={styles.tabReturnBar}>
+                <TouchableOpacity
+                  style={styles.tabReturnBtn}
+                  onPress={() => setSelectedTab(null)}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="arrow-back" size={14} color={colors.coffeeDark} style={{ marginRight: 6 }} />
+                  <Text style={styles.tabReturnBtnText}>Volver a mis gráficas y bienestar</Text>
+                  <Ionicons name="pulse" size={14} color={colors.coffeePrimary} style={{ marginLeft: 6 }} />
+                </TouchableOpacity>
+              </View>
+
+              {loadingPosts ? (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="small" color={colors.coffeePrimary} />
+                </View>
+              ) : currentTabPosts.length === 0 ? (
+                <View style={styles.emptyTabContainer}>
+                  <Ionicons
+                    name={
+                      selectedTab === 'posts'
+                        ? 'document-text-outline'
+                        : selectedTab === 'saved'
+                        ? 'bookmark-outline'
+                        : 'heart-outline'
+                    }
+                    size={36}
+                    color={colors.borderMedium}
+                  />
+                  <Text style={styles.emptyTabTitle}>
+                    {selectedTab === 'posts'
+                      ? 'No has publicado nada aún'
+                      : selectedTab === 'saved'
+                      ? 'No tienes publicaciones guardadas'
+                      : 'Aún no has reaccionado a ninguna publicación'}
+                  </Text>
+                  <Text style={styles.emptyTabSubtitle}>
+                    {selectedTab === 'posts'
+                      ? 'Comparte tus pensamientos y desahógate cuando lo necesites.'
+                      : selectedTab === 'saved'
+                      ? 'Guarda publicaciones para verlas más tarde.'
+                      : 'Expresa tu apoyo a la comunidad reaccionando a publicaciones.'}
+                  </Text>
+                </View>
+              ) : (
+                <View style={styles.postsListContainer}>
+                  {currentTabPosts.map((post) => (
+                    <PostCard
+                      key={post.id}
+                      post={post}
+                      onCommentPress={(p) => setActiveCommentPost(p)}
+                      onRequireAuth={onRequireAuth || (() => {})}
+                      onOptionsPress={(p) => setSelectedPostForOptions(p)}
+                    />
+                  ))}
+                </View>
+              )}
+            </>
           )}
 
           {/* Bottom Clear Logout Option */}
@@ -628,6 +764,24 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           visible={selectedPostForEdit !== null}
           post={selectedPostForEdit}
           onClose={() => setSelectedPostForEdit(null)}
+        />
+
+        {/* Psychology Test Modal */}
+        <PsychologyTestModal
+          visible={isTestModalOpen}
+          userId={user?.id}
+          initialResult={latestTestResult}
+          startMode={testModalMode}
+          onClose={() => setIsTestModalOpen(false)}
+          onOpenPsychologists={() => {
+            onClose();
+            if (onOpenPsychologists) onOpenPsychologists();
+          }}
+          onOpenCreatePost={() => {
+            onClose();
+            if (onOpenCreatePost) onOpenCreatePost();
+          }}
+          onTestCompleted={(res) => setLatestTestResult(res)}
         />
       </View>
     </Modal>
@@ -1088,5 +1242,217 @@ const styles = StyleSheet.create({
     fontSize: 13.5,
     fontWeight: '700',
     color: colors.white,
+  },
+  /* Profile Psychology Test Card */
+  profileTestCard: {
+    backgroundColor: colors.white,
+    borderRadius: 20,
+    padding: 16,
+    marginHorizontal: 16,
+    marginTop: 10,
+    borderWidth: 1.2,
+    borderColor: colors.borderLight,
+    shadowColor: colors.coffeeDeep,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2.5,
+  },
+  profileTestHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  profileTestTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  profileTestMainTitle: {
+    fontSize: 13.5,
+    fontWeight: '800',
+    color: colors.coffeeDark,
+  },
+  profileTestDate: {
+    fontSize: 11,
+    color: colors.textSecondary,
+    fontWeight: '600',
+  },
+  profileTestBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  profileTestBadgeText: {
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  profileTestSummaryText: {
+    fontSize: 12.5,
+    color: colors.textPrimary,
+    lineHeight: 18,
+    marginBottom: 12,
+  },
+  profileDimList: {
+    gap: 8,
+    marginBottom: 12,
+  },
+  profileDimItem: {
+    backgroundColor: '#FAF7F5',
+    padding: 8,
+    borderRadius: 10,
+    borderWidth: 0.8,
+    borderColor: '#EAE3DF',
+  },
+  profileDimHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  profileDimLabel: {
+    fontSize: 11.5,
+    fontWeight: '700',
+    color: colors.coffeeDark,
+  },
+  profileDimLevel: {
+    fontSize: 9.5,
+    fontWeight: '800',
+  },
+  profileDimBarTrack: {
+    height: 5,
+    backgroundColor: '#E5DCD6',
+    borderRadius: 2.5,
+    overflow: 'hidden',
+  },
+  profileDimBarFill: {
+    height: '100%',
+    borderRadius: 2.5,
+  },
+  profileTestActionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  profileViewResultBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.coffeePrimary,
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+    shadowColor: colors.coffeeDeep,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  profileViewResultBtnText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: colors.white,
+  },
+  profileRetakeBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FAF7F5',
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#EAE3DF',
+  },
+  profileRetakeBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.coffeeDark,
+  },
+  /* Profile No Test Invitation Container */
+  profileNoTestContainer: {
+    backgroundColor: colors.white,
+    borderRadius: 20,
+    padding: 24,
+    marginHorizontal: 16,
+    marginTop: 10,
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: colors.borderLight,
+    borderStyle: 'dashed',
+    gap: 8,
+  },
+  profileNoTestIconCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: '#F3EAE3',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 2,
+  },
+  profileNoTestTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: colors.coffeeDark,
+    textAlign: 'center',
+  },
+  profileNoTestSubtitle: {
+    fontSize: 12.5,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 18,
+    paddingHorizontal: 8,
+    marginBottom: 6,
+  },
+  profileStartTestBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.coffeePrimary,
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    borderRadius: 12,
+    shadowColor: colors.coffeeDeep,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  profileStartTestBtnText: {
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: colors.white,
+  },
+  /* Tab Return Bar to Graphs and Overview */
+  tabReturnBar: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 6,
+  },
+  tabReturnBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FAF7F5',
+    borderWidth: 1.2,
+    borderColor: '#EAE3DF',
+    paddingVertical: 9,
+    paddingHorizontal: 14,
+    borderRadius: 14,
+    shadowColor: colors.coffeeDeep,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  tabReturnBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.coffeeDark,
   },
 });

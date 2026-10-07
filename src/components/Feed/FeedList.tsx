@@ -13,6 +13,8 @@ import { PostCard } from './PostCard';
 import { DailyQuoteCard } from './DailyQuoteCard';
 import { MonthAwarenessPostCard } from './MonthAwarenessPostCard';
 import { DailyMoodCard } from './DailyMoodCard';
+import { WeeklyMoodTracker } from '../Profile/WeeklyMoodTracker';
+import { useAuth } from '../../context/AuthContext';
 import { subscribeToPosts } from '../../services/postsService';
 import { colors } from '../../theme/colors';
 
@@ -32,7 +34,8 @@ interface FeedListProps {
 type FeedListItem =
   | { type: 'post'; data: Post }
   | { type: 'quote'; offset: number; id: string }
-  | { type: 'month-awareness'; id: string };
+  | { type: 'month-awareness'; id: string }
+  | { type: 'weekly-mood'; id: string };
 
 export const FeedList: React.FC<FeedListProps> = ({
   onCommentPress,
@@ -46,6 +49,7 @@ export const FeedList: React.FC<FeedListProps> = ({
   contentPaddingTop = 56,
   contentPaddingBottom = 64,
 }) => {
+  const { user } = useAuth();
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -85,11 +89,12 @@ export const FeedList: React.FC<FeedListProps> = ({
     lastOffsetY.current = currentOffsetY;
   };
 
-  // Combine regular user posts with quote publications and month awareness publication
+  // Combine regular user posts with quote publications, month awareness, and weekly mood tracker
   const feedItems = useMemo<FeedListItem[]>(() => {
     if (posts.length === 0) {
       return [
         { type: 'month-awareness', id: 'month-card-top' },
+        { type: 'weekly-mood', id: 'weekly-mood-top' },
         { type: 'quote', offset: 0, id: 'quote-top-0' },
       ];
     }
@@ -99,6 +104,7 @@ export const FeedList: React.FC<FeedListProps> = ({
     const monthPos = Math.min(posts.length, initialMonthSlot === firstPos ? firstPos + 1 : initialMonthSlot);
     let quoteCount = 0;
     let monthInserted = false;
+    let weeklyMoodInserted = false;
 
     for (let i = 0; i < posts.length; i++) {
       // Month awareness card
@@ -112,13 +118,22 @@ export const FeedList: React.FC<FeedListProps> = ({
         items.push({ type: 'quote', offset: quoteCount, id: `quote-slot-${quoteCount}` });
         quoteCount++;
       }
+      // Weekly Mood card (~3 posts later)
+      else if (i === firstPos + 3 && !weeklyMoodInserted) {
+        items.push({ type: 'weekly-mood', id: 'weekly-mood-slot-0' });
+        weeklyMoodInserted = true;
+      }
       // 2nd quote ~5 posts later
-      else if (i === firstPos + 5 && quoteCount < 3) {
+      else if (i === firstPos + 6 && quoteCount < 3) {
         items.push({ type: 'quote', offset: quoteCount, id: `quote-slot-${quoteCount}` });
         quoteCount++;
       }
-      // 3rd quote ~5 posts after the 2nd
-      else if (i === firstPos + 10 && quoteCount < 3) {
+      // 2nd Weekly Mood card (~8 posts later)
+      else if (i === firstPos + 9) {
+        items.push({ type: 'weekly-mood', id: `weekly-mood-slot-${i}` });
+      }
+      // 3rd quote
+      else if (i === firstPos + 12 && quoteCount < 3) {
         items.push({ type: 'quote', offset: quoteCount, id: `quote-slot-${quoteCount}` });
         quoteCount++;
       }
@@ -129,6 +144,11 @@ export const FeedList: React.FC<FeedListProps> = ({
     // Ensure month card is placed if not yet inserted
     if (!monthInserted) {
       items.splice(1, 0, { type: 'month-awareness', id: 'month-awareness-card' });
+    }
+
+    // Ensure weekly mood card is placed if not yet inserted
+    if (!weeklyMoodInserted) {
+      items.splice(2, 0, { type: 'weekly-mood', id: 'weekly-mood-slot-main' });
     }
 
     // If there were very few posts and firstPos wasn't reached
@@ -158,6 +178,9 @@ export const FeedList: React.FC<FeedListProps> = ({
               onOpenMonthDetail={onOpenMonthDetail}
             />
           );
+        }
+        if (item.type === 'weekly-mood') {
+          return <WeeklyMoodTracker userId={user?.id} isFeedCard />;
         }
         if (item.type === 'quote') {
           return <DailyQuoteCard quoteOffset={item.offset} />;

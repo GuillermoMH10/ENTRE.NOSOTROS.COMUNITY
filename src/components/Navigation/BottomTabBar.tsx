@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
 
-export type TabId = 'principal' | 'blog' | 'buscar' | 'crear';
+export type TabId = 'principal' | 'blog' | 'buscar' | 'crear' | 'ayuda';
 
 interface TabItem {
   id: TabId;
@@ -45,6 +45,12 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({
       label: 'Crear',
       icon: 'add-circle-outline',
       activeIcon: 'add-circle',
+    },
+    {
+      id: 'ayuda',
+      label: '¿Ayuda?',
+      icon: 'heart-circle-outline',
+      activeIcon: 'heart-circle',
     },
   ];
 

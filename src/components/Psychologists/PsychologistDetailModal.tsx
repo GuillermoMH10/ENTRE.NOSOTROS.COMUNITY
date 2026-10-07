@@ -177,6 +177,14 @@ export const PsychologistDetailModal: React.FC<PsychologistDetailModalProps> = (
             {/* Specialty */}
             <Text style={styles.profileSpecialtyText}>{psychologist.especialidad}</Text>
 
+            {/* Ciudad */}
+            {psychologist.ciudad ? (
+              <View style={styles.modalCityRow}>
+                <Ionicons name="location-sharp" size={13} color={colors.coffeePrimary} style={{ marginRight: 4 }} />
+                <Text style={styles.modalCityText}>{psychologist.ciudad}</Text>
+              </View>
+            ) : null}
+
             {/* Modalidad Badge */}
             <View style={styles.modalidadPill}>
               <Ionicons
@@ -208,7 +216,9 @@ export const PsychologistDetailModal: React.FC<PsychologistDetailModalProps> = (
                   <Ionicons name="location" size={22} color="#E11D48" />
                 </View>
                 <Text style={styles.gridActionTitle}>Ubicación</Text>
-                <Text style={styles.gridActionSub} numberOfLines={1}>Ver mapa</Text>
+                <Text style={styles.gridActionSub} numberOfLines={1}>
+                  {psychologist.ciudad || 'Ver mapa'}
+                </Text>
               </TouchableOpacity>
 
               {/* 2. WhatsApp */}
@@ -486,9 +496,20 @@ const styles = StyleSheet.create({
     color: colors.coffeePrimary,
     fontWeight: '600',
     textAlign: 'center',
-    marginBottom: 10,
+    marginBottom: 6,
     lineHeight: 18,
     paddingHorizontal: 12,
+  },
+  modalCityRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
+  },
+  modalCityText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.textSecondary,
   },
   modalidadPill: {
     flexDirection: 'row',
