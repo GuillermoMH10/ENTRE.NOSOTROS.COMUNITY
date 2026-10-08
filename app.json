@@ -32,7 +32,18 @@
       "bundler": "metro"
     },
     "plugins": [
-      "expo-font"
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "./assets/fonts/Ionicons.ttf",
+            "./assets/fonts/MaterialCommunityIcons.ttf",
+            "./assets/fonts/MaterialIcons.ttf",
+            "./assets/fonts/FontAwesome.ttf",
+            "./assets/fonts/Feather.ttf"
+          ]
+        }
+      ]
     ],
     "extra": {
       "eas": {

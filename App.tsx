@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import * as Font from 'expo-font';
+import { useFonts } from 'expo-font';
 import { Ionicons } from '@expo/vector-icons';
 import { AuthProvider } from './src/context/AuthContext';
 import { HomeScreen } from './src/screens/HomeScreen';
@@ -13,18 +13,12 @@ import { colors } from './src/theme/colors';
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
 
-  useEffect(() => {
-    async function preloadAssets() {
-      try {
-        // Preload Ionicons font so all vector icons render smoothly
-        await Font.loadAsync(Ionicons.font);
-      } catch (e) {
-        console.warn('Font loading non-fatal warning:', e);
-      }
-    }
-
-    preloadAssets();
-  }, []);
+  // Load vector icon fonts directly from local assets with fallbacks for standalone Android APKs
+  const [fontsLoaded] = useFonts({
+    ionicons: require('./assets/fonts/Ionicons.ttf'),
+    Ionicons: require('./assets/fonts/Ionicons.ttf'),
+    ...Ionicons.font,
+  });
 
   return (
     <SafeAreaProvider>
