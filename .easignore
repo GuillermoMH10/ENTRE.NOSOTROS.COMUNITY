@@ -1,5 +1,7 @@
-node_modules/
-.expo/
-dist/
-web-build/
+.git
+.expo
+node_modules
+dist
+web-build
+PruebasSistema
 *.log
