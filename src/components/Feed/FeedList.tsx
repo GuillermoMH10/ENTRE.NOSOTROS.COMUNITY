@@ -15,7 +15,7 @@ import { MonthAwarenessPostCard } from './MonthAwarenessPostCard';
 import { DailyMoodCard } from './DailyMoodCard';
 import { WeeklyMoodTracker } from '../Profile/WeeklyMoodTracker';
 import { useAuth } from '../../context/AuthContext';
-import { subscribeToPosts } from '../../services/postsService';
+import { subscribeToPosts, subscribeToUserFollowing } from '../../services/postsService';
 import { colors } from '../../theme/colors';
 
 interface FeedListProps {
@@ -51,6 +51,7 @@ export const FeedList: React.FC<FeedListProps> = ({
 }) => {
   const { user } = useAuth();
   const [posts, setPosts] = useState<Post[]>([]);
+  const [followingIds, setFollowingIds] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const lastOffsetY = useRef(0);
@@ -60,14 +61,23 @@ export const FeedList: React.FC<FeedListProps> = ({
   const initialMonthSlot = useRef(Math.floor(Math.random() * 3) + 1).current; // 1..3
 
   useEffect(() => {
-    const unsubscribe = subscribeToPosts((livePosts) => {
+    const unsubscribePosts = subscribeToPosts((livePosts) => {
       setPosts(livePosts);
       setIsLoading(false);
       setRefreshing(false);
     });
 
-    return () => unsubscribe();
-  }, []);
+    const unsubscribeFollowing = user
+      ? subscribeToUserFollowing(user.id, (ids) => {
+          setFollowingIds(ids);
+        })
+      : () => {};
+
+    return () => {
+      unsubscribePosts();
+      unsubscribeFollowing();
+    };
+  }, [user?.id]);
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -188,6 +198,7 @@ export const FeedList: React.FC<FeedListProps> = ({
         return (
           <PostCard
             post={item.data}
+            isFollowing={followingIds.includes(item.data.authorId)}
             onCommentPress={onCommentPress}
             onRequireAuth={onRequireAuth}
             onOptionsPress={onOptionsPress}

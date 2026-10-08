@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,26 +13,32 @@ import { Post, ReactionType, REACTIONS_MAP } from '../../types/post';
 import { PostMediaView } from './PostMediaView';
 import { ReactionPicker } from './ReactionPicker';
 import { ImageViewerModal } from '../UI/ImageViewerModal';
-import { togglePostReaction, toggleSavePost } from '../../services/postsService';
+import { togglePostReaction, toggleSavePost, toggleFollowUser } from '../../services/postsService';
 import { useAuth } from '../../context/AuthContext';
 
 interface PostCardProps {
   post: Post;
+  isFollowing?: boolean;
+  onFollowToggle?: (targetAuthorId: string) => void;
   onCommentPress: (post: Post) => void;
   onRequireAuth: () => void;
   onOptionsPress?: (post: Post) => void;
   onEditPress?: (post: Post) => void;
   onDeletePress?: (post: Post) => void;
+  onReportPress?: (post: Post) => void;
   onUserPress?: (userId: string, username: string, avatarUrl: string) => void;
 }
 
 export const PostCard: React.FC<PostCardProps> = ({
   post,
+  isFollowing: isFollowingProp,
+  onFollowToggle,
   onCommentPress,
   onRequireAuth,
   onOptionsPress,
   onEditPress,
   onDeletePress,
+  onReportPress,
   onUserPress,
 }) => {
   const { user } = useAuth();
@@ -40,11 +46,19 @@ export const PostCard: React.FC<PostCardProps> = ({
   const [pickerPosition, setPickerPosition] = useState<{ x: number; y: number } | undefined>(undefined);
   const [viewerVisible, setViewerVisible] = useState(false);
   const [viewerIndex, setViewerIndex] = useState(0);
+  const [isFollowing, setIsFollowing] = useState<boolean>(Boolean(isFollowingProp));
   const reactionBtnRef = React.useRef<View>(null);
+
+  useEffect(() => {
+    if (isFollowingProp !== undefined) {
+      setIsFollowing(isFollowingProp);
+    }
+  }, [isFollowingProp]);
 
   const currentUserId = user?.id || '';
   const userReactionType = currentUserId ? post.userReactions?.[currentUserId] : undefined;
   const isSaved = currentUserId ? post.savedBy?.includes(currentUserId) : false;
+  const isAuthor = Boolean(user && user.id === post.authorId);
 
   // Format relative date
   const formatTimeAgo = (timestamp: number) => {
@@ -64,6 +78,22 @@ export const PostCard: React.FC<PostCardProps> = ({
     (post.reactions?.teEscucho || 0) +
     (post.reactions?.noEstasSolo || 0) +
     (post.reactions?.fuerza || 0);
+
+  // Handle follow/unfollow tap
+  const handleFollowPress = async () => {
+    if (!user) {
+      onRequireAuth();
+      return;
+    }
+    const nextState = !isFollowing;
+    setIsFollowing(nextState);
+
+    if (onFollowToggle) {
+      onFollowToggle(post.authorId);
+    } else {
+      await toggleFollowUser(user.id, post.authorId);
+    }
+  };
 
   // Handle default tap on reaction button
   const handleSingleTapReaction = async () => {
@@ -131,7 +161,7 @@ export const PostCard: React.FC<PostCardProps> = ({
         onClose={() => setShowReactionPicker(false)}
       />
 
-      {/* Header: Author Avatar, Username, Time & Author Options */}
+      {/* Header: Author Avatar, Username, Time & Follow / Options */}
       <View style={styles.headerRow}>
         <TouchableOpacity
           style={styles.authorTouchable}
@@ -153,15 +183,39 @@ export const PostCard: React.FC<PostCardProps> = ({
           </View>
         </TouchableOpacity>
 
-        {/* Author Options: Editar / Eliminar */}
-        {user && user.id === post.authorId && (onOptionsPress || onEditPress || onDeletePress) && (
+        {/* Discreet Follow / Following Button (when viewing another user's post) */}
+        {!isAuthor && (
+          <TouchableOpacity
+            style={[
+              styles.followBtn,
+              isFollowing && styles.followingBtn,
+            ]}
+            onPress={handleFollowPress}
+            activeOpacity={0.7}
+          >
+            <Ionicons
+              name={isFollowing ? "checkmark" : "add"}
+              size={13}
+              color={isFollowing ? colors.textSecondary : colors.primary}
+              style={{ marginRight: 2 }}
+            />
+            <Text style={[styles.followBtnText, isFollowing && styles.followingBtnText]}>
+              {isFollowing ? 'Siguiendo' : 'Seguir'}
+            </Text>
+          </TouchableOpacity>
+        )}
+
+        {/* Options Button: Edit/Delete for Author, Discreet Report for Others */}
+        {(onOptionsPress || onEditPress || onDeletePress || onReportPress) && (
           <TouchableOpacity
             style={styles.postOptionsBtn}
             onPress={() => {
               if (onOptionsPress) {
                 onOptionsPress(post);
-              } else if (onEditPress) {
+              } else if (isAuthor && onEditPress) {
                 onEditPress(post);
+              } else if (onReportPress) {
+                onReportPress(post);
               }
             }}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -183,7 +237,7 @@ export const PostCard: React.FC<PostCardProps> = ({
         onMediaPress={handleMediaPress}
       />
 
-      {/* Hashtags in discrete soft blue */}
+      {/* Hashtags in discrete modern slate/sky blue */}
       {post.hashtags && post.hashtags.length > 0 ? (
         <View style={styles.hashtagsRow}>
           {post.hashtags.map((tag, idx) => (
@@ -294,7 +348,7 @@ export const PostCard: React.FC<PostCardProps> = ({
           <Ionicons
             name={isSaved ? 'bookmark' : 'bookmark-outline'}
             size={18}
-            color={isSaved ? colors.coffeePrimary : colors.textSecondary}
+            color={isSaved ? colors.primary : colors.textSecondary}
           />
           <Text style={[styles.actionBtnText, isSaved && styles.actionBtnTextActive]}>
             {isSaved ? 'Guardado' : 'Guardar'}
@@ -343,6 +397,30 @@ const styles = StyleSheet.create({
   authorInfo: {
     flex: 1,
   },
+  followBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 4.5,
+    borderRadius: 14,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    marginRight: 8,
+  },
+  followingBtn: {
+    backgroundColor: colors.surfaceSoft,
+    borderColor: colors.borderLight,
+  },
+  followBtnText: {
+    fontSize: 11.5,
+    fontWeight: '700',
+    color: colors.primary,
+  },
+  followingBtnText: {
+    color: colors.textSecondary,
+    fontWeight: '600',
+  },
   postOptionsBtn: {
     padding: 6,
     borderRadius: 14,
@@ -371,8 +449,8 @@ const styles = StyleSheet.create({
   },
   hashtagText: {
     fontSize: 12.5,
-    color: '#4A7FB8',
-    fontWeight: '500',
+    color: colors.primary,
+    fontWeight: '600',
     marginRight: 4,
   },
   counterRow: {
@@ -434,12 +512,12 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   actionBtnTextActive: {
-    color: colors.coffeePrimary,
+    color: colors.primary,
     fontWeight: '700',
   },
   postDivider: {
     height: 1,
-    backgroundColor: '#F0EBE6',
+    backgroundColor: colors.borderLight,
     width: '100%',
     marginTop: 6,
   },

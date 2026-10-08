@@ -535,7 +535,7 @@ export const PsychologistsScreen: React.FC<PsychologistsScreenProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAF7F5',
+    backgroundColor: colors.background,
   },
   loadingContainer: {
     flex: 1,
@@ -631,12 +631,12 @@ const styles = StyleSheet.create({
   topicFilterChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F3EAE3',
+    backgroundColor: colors.surfaceSoft,
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#E5D5C8',
+    borderColor: colors.borderLight,
     gap: 4,
   },
   topicFilterChipActive: {
@@ -780,12 +780,12 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   topicChip: {
-    backgroundColor: '#F3EAE3',
+    backgroundColor: colors.surfaceSoft,
     paddingHorizontal: 8,
     paddingVertical: 3.5,
     borderRadius: 8,
     borderWidth: 0.8,
-    borderColor: '#E5D5C8',
+    borderColor: colors.borderLight,
   },
   topicChipText: {
     fontSize: 10.5,

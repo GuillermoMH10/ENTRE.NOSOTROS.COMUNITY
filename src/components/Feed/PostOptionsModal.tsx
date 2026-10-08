@@ -6,39 +6,50 @@ import {
   TouchableOpacity,
   Modal,
   Pressable,
-  Animated,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
 import { Post } from '../../types/post';
+import { reportPost } from '../../services/postsService';
 
 interface PostOptionsModalProps {
   visible: boolean;
   post: Post | null;
+  currentUserId?: string;
   onClose: () => void;
-  onEdit: (post: Post) => void;
-  onDelete: (post: Post) => void;
+  onEdit?: (post: Post) => void;
+  onDelete?: (post: Post) => void;
+  onReport?: (post: Post) => void;
 }
 
 export const PostOptionsModal: React.FC<PostOptionsModalProps> = ({
   visible,
   post,
+  currentUserId,
   onClose,
   onEdit,
   onDelete,
+  onReport,
 }) => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showReportConfirm, setShowReportConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isReporting, setIsReporting] = useState(false);
+  const [reportedDone, setReportedDone] = useState(false);
 
   if (!visible || !post) return null;
 
+  const isAuthor = Boolean(currentUserId && currentUserId === post.authorId);
+
   const handleEditPress = () => {
     onClose();
-    onEdit(post);
+    if (onEdit) onEdit(post);
   };
 
   const handleConfirmDelete = async () => {
+    if (!onDelete) return;
     setIsDeleting(true);
     await onDelete(post);
     setIsDeleting(false);
@@ -46,8 +57,23 @@ export const PostOptionsModal: React.FC<PostOptionsModalProps> = ({
     onClose();
   };
 
+  const handleConfirmReport = async () => {
+    setIsReporting(true);
+    await reportPost(post.id, currentUserId);
+    setIsReporting(false);
+    setReportedDone(true);
+    if (onReport) onReport(post);
+    setTimeout(() => {
+      setReportedDone(false);
+      setShowReportConfirm(false);
+      onClose();
+    }, 1500);
+  };
+
   const handleDismiss = () => {
     setShowDeleteConfirm(false);
+    setShowReportConfirm(false);
+    setReportedDone(false);
     onClose();
   };
 
@@ -65,7 +91,7 @@ export const PostOptionsModal: React.FC<PostOptionsModalProps> = ({
             /* Confirm Delete View */
             <View style={styles.confirmCard}>
               <View style={styles.warningIconCircle}>
-                <Ionicons name="trash" size={26} color="#D32F2F" />
+                <Ionicons name="trash" size={26} color="#DC2626" />
               </View>
               <Text style={styles.confirmTitle}>¿Eliminar publicación?</Text>
               <Text style={styles.confirmDesc}>
@@ -96,6 +122,51 @@ export const PostOptionsModal: React.FC<PostOptionsModalProps> = ({
                 </TouchableOpacity>
               </View>
             </View>
+          ) : showReportConfirm ? (
+            /* Confirm Report View (Discreet) */
+            <View style={styles.confirmCard}>
+              <View style={[styles.warningIconCircle, { backgroundColor: colors.surface }]}>
+                <Ionicons
+                  name={reportedDone ? "checkmark-circle" : "flag-outline"}
+                  size={26}
+                  color={reportedDone ? "#16A34A" : colors.primary}
+                />
+              </View>
+              <Text style={styles.confirmTitle}>
+                {reportedDone ? 'Reporte enviado' : '¿Reportar publicación?'}
+              </Text>
+              <Text style={styles.confirmDesc}>
+                {reportedDone
+                  ? 'Gracias por ayudarnos a cuidar la comunidad. Nuestro equipo revisará el contenido.'
+                  : 'Si consideras que esta publicación incumple las normas de convivencia o contiene información dañina, puedes reportarla.'}
+              </Text>
+
+              {!reportedDone && (
+                <View style={styles.confirmButtonsCol}>
+                  <TouchableOpacity
+                    style={styles.reportConfirmBtn}
+                    onPress={handleConfirmReport}
+                    disabled={isReporting}
+                    activeOpacity={0.85}
+                  >
+                    {isReporting ? (
+                      <ActivityIndicator size="small" color={colors.white} />
+                    ) : (
+                      <Text style={styles.reportConfirmBtnText}>Confirmar reporte</Text>
+                    )}
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.keepBtn}
+                    onPress={() => setShowReportConfirm(false)}
+                    disabled={isReporting}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.keepBtnText}>Cancelar</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
           ) : (
             /* Main Options Menu */
             <View style={styles.optionsCard}>
@@ -105,37 +176,58 @@ export const PostOptionsModal: React.FC<PostOptionsModalProps> = ({
               <Text style={styles.optionsHeading}>Opciones de publicación</Text>
 
               <View style={styles.optionsList}>
-                {/* 1. Edit Option */}
-                <TouchableOpacity
-                  style={styles.optionItem}
-                  onPress={handleEditPress}
-                  activeOpacity={0.75}
-                >
-                  <View style={[styles.optionIconCircle, { backgroundColor: '#F4EFEB' }]}>
-                    <Ionicons name="create-outline" size={20} color={colors.coffeePrimary} />
-                  </View>
-                  <View style={styles.optionTextCol}>
-                    <Text style={styles.optionTitle}>Editar publicación</Text>
-                    <Text style={styles.optionSubtitle}>Modifica el texto y los temas</Text>
-                  </View>
-                  <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-                </TouchableOpacity>
+                {/* Author Options */}
+                {isAuthor && onEdit && (
+                  <TouchableOpacity
+                    style={styles.optionItem}
+                    onPress={handleEditPress}
+                    activeOpacity={0.75}
+                  >
+                    <View style={[styles.optionIconCircle, { backgroundColor: colors.surface }]}>
+                      <Ionicons name="create-outline" size={20} color={colors.primary} />
+                    </View>
+                    <View style={styles.optionTextCol}>
+                      <Text style={styles.optionTitle}>Editar publicación</Text>
+                      <Text style={styles.optionSubtitle}>Modifica el texto y los temas</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+                  </TouchableOpacity>
+                )}
 
-                {/* 2. Delete Option */}
-                <TouchableOpacity
-                  style={[styles.optionItem, styles.optionItemDanger]}
-                  onPress={() => setShowDeleteConfirm(true)}
-                  activeOpacity={0.75}
-                >
-                  <View style={[styles.optionIconCircle, { backgroundColor: '#FDF0ED' }]}>
-                    <Ionicons name="trash-outline" size={20} color="#D32F2F" />
-                  </View>
-                  <View style={styles.optionTextCol}>
-                    <Text style={[styles.optionTitle, { color: '#D32F2F' }]}>Eliminar publicación</Text>
-                    <Text style={styles.optionSubtitle}>Borrar definitivamente</Text>
-                  </View>
-                  <Ionicons name="chevron-forward" size={18} color="#D32F2F" style={{ opacity: 0.6 }} />
-                </TouchableOpacity>
+                {isAuthor && onDelete && (
+                  <TouchableOpacity
+                    style={[styles.optionItem, styles.optionItemDanger]}
+                    onPress={() => setShowDeleteConfirm(true)}
+                    activeOpacity={0.75}
+                  >
+                    <View style={[styles.optionIconCircle, { backgroundColor: '#FEE2E2' }]}>
+                      <Ionicons name="trash-outline" size={20} color="#DC2626" />
+                    </View>
+                    <View style={styles.optionTextCol}>
+                      <Text style={[styles.optionTitle, { color: '#DC2626' }]}>Eliminar publicación</Text>
+                      <Text style={styles.optionSubtitle}>Borrar definitivamente</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={18} color="#DC2626" style={{ opacity: 0.6 }} />
+                  </TouchableOpacity>
+                )}
+
+                {/* Non-Author Discreet Report Option */}
+                {!isAuthor && (
+                  <TouchableOpacity
+                    style={styles.optionItem}
+                    onPress={() => setShowReportConfirm(true)}
+                    activeOpacity={0.75}
+                  >
+                    <View style={[styles.optionIconCircle, { backgroundColor: colors.surface }]}>
+                      <Ionicons name="flag-outline" size={19} color={colors.textSecondary} />
+                    </View>
+                    <View style={styles.optionTextCol}>
+                      <Text style={styles.optionTitle}>Reportar publicación</Text>
+                      <Text style={styles.optionSubtitle}>Reportar contenido inapropiado</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+                  </TouchableOpacity>
+                )}
               </View>
 
               {/* Cancel Button */}
@@ -157,7 +249,7 @@ export const PostOptionsModal: React.FC<PostOptionsModalProps> = ({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    backgroundColor: 'rgba(15, 23, 42, 0.45)',
     justifyContent: 'flex-end',
     alignItems: 'center',
   },
@@ -172,7 +264,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.12,
     shadowRadius: 16,
     elevation: 20,
   },
@@ -180,7 +272,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#E0D8D0',
+    backgroundColor: colors.borderMedium,
     alignSelf: 'center',
     marginBottom: 16,
   },
@@ -201,16 +293,16 @@ const styles = StyleSheet.create({
   optionItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FAF7F5',
+    backgroundColor: colors.surfaceSoft,
     paddingVertical: 12,
     paddingHorizontal: 14,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#F0EBE6',
+    borderColor: colors.borderLight,
   },
   optionItemDanger: {
-    backgroundColor: '#FFF8F7',
-    borderColor: '#FCEBE8',
+    backgroundColor: '#FEF2F2',
+    borderColor: '#FEE2E2',
   },
   optionIconCircle: {
     width: 40,
@@ -230,22 +322,23 @@ const styles = StyleSheet.create({
   },
   optionSubtitle: {
     fontSize: 11.5,
-    color: colors.textMuted,
+    color: colors.textSecondary,
     marginTop: 2,
   },
   cancelButton: {
-    backgroundColor: '#F5EFEA',
+    backgroundColor: colors.surfaceSoft,
     paddingVertical: 13,
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.borderLight,
   },
   cancelButtonText: {
     fontSize: 14,
     fontWeight: '700',
     color: colors.coffeeDark,
   },
-  // Delete Confirm Styles
   confirmCard: {
     alignItems: 'center',
     paddingVertical: 12,
@@ -254,7 +347,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#FDECEA',
+    backgroundColor: '#FEE2E2',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 14,
@@ -279,28 +372,37 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   deleteConfirmBtn: {
-    backgroundColor: '#D32F2F',
+    backgroundColor: '#DC2626',
     paddingVertical: 13,
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#D32F2F',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 3,
   },
   deleteConfirmBtnText: {
     color: colors.white,
     fontSize: 14,
     fontWeight: '700',
   },
+  reportConfirmBtn: {
+    backgroundColor: colors.primary,
+    paddingVertical: 13,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  reportConfirmBtnText: {
+    color: colors.white,
+    fontSize: 14,
+    fontWeight: '700',
+  },
   keepBtn: {
-    backgroundColor: '#F5EFEA',
+    backgroundColor: colors.surfaceSoft,
     paddingVertical: 12,
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.borderLight,
   },
   keepBtnText: {
     color: colors.coffeeDark,

@@ -466,7 +466,7 @@ const styles = StyleSheet.create({
     width: 200,
     height: 200,
     borderRadius: 100,
-    backgroundColor: '#F3EAE3',
+    backgroundColor: colors.surface,
     opacity: 0.75,
   },
   bgCircleTopRight: {
@@ -476,7 +476,7 @@ const styles = StyleSheet.create({
     width: 170,
     height: 170,
     borderRadius: 85,
-    backgroundColor: '#EFE5DD',
+    backgroundColor: colors.surfaceHover,
     opacity: 0.65,
   },
   bgCircleBottom: {
@@ -486,7 +486,7 @@ const styles = StyleSheet.create({
     width: 220,
     height: 220,
     borderRadius: 110,
-    backgroundColor: '#F0E7DF',
+    backgroundColor: colors.surfaceSoft,
     opacity: 0.6,
   },
   centerContainer: {

@@ -66,6 +66,9 @@ export interface Post {
   userReactions?: Record<string, ReactionType>;
   commentsCount: number;
   savedBy: string[];
+  reported?: boolean;
+  reportsCount?: number;
+  reportedBy?: string[];
   createdAt: string;
   timestamp: number;
 }

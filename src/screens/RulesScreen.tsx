@@ -257,12 +257,12 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#F3EAE3',
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
     borderWidth: 1,
-    borderColor: '#E5D5C8',
+    borderColor: colors.borderLight,
   },
   ruleNumberText: {
     fontSize: 12.5,
@@ -297,14 +297,14 @@ const styles = StyleSheet.create({
   },
   ruleSeparator: {
     height: 1,
-    backgroundColor: '#F0EAE5',
+    backgroundColor: colors.borderLight,
   },
   /* Support Actions Card */
   supportActionsCard: {
-    backgroundColor: '#FAF7F5',
+    backgroundColor: colors.surfaceSoft,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#EAE3DF',
+    borderColor: colors.borderLight,
     paddingHorizontal: 14,
     paddingVertical: 4,
     marginBottom: 16,

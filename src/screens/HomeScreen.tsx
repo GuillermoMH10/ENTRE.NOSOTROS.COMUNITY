@@ -319,10 +319,11 @@ export const HomeScreen: React.FC = () => {
           onRequireAuth={handleOpenAuth}
         />
 
-        {/* Post Options Bottom Sheet (Edit & Delete for Author) */}
+        {/* Post Options Bottom Sheet (Edit/Delete for Author, Discreet Report for Others) */}
         <PostOptionsModal
           visible={selectedPostForOptions !== null}
           post={selectedPostForOptions}
+          currentUserId={user?.id}
           onClose={() => setSelectedPostForOptions(null)}
           onEdit={(post) => setSelectedPostForEdit(post)}
           onDelete={handleDeletePost}

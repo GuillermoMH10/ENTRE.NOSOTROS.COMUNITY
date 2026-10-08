@@ -5,7 +5,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   Animated,
-  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { MOOD_OPTIONS, MoodType, MoodOption } from '../../data/dailyMoodResponses';
@@ -79,8 +78,8 @@ export const DailyMoodCard: React.FC = () => {
           styles.card,
           todayRecord && !showQuestion
             ? {
-                borderColor: (selectedOption?.color || colors.coffeePrimary) + '40',
-                shadowColor: selectedOption?.color || colors.coffeePrimary,
+                borderColor: colors.borderLight,
+                shadowColor: selectedOption?.color || colors.primary,
               }
             : styles.defaultCardBorder,
         ]}
@@ -91,7 +90,7 @@ export const DailyMoodCard: React.FC = () => {
             {/* Header Title & Subtitle */}
             <View style={styles.headerTitleRow}>
               <View style={styles.sparkleIconWrapper}>
-                <Ionicons name="sparkles" size={16} color={colors.coffeePrimary} />
+                <Ionicons name="sparkles" size={17} color={colors.primary} />
               </View>
               <View style={styles.headerTexts}>
                 <Text style={styles.mainTitle}>¿Cómo te sientes hoy?</Text>
@@ -101,7 +100,7 @@ export const DailyMoodCard: React.FC = () => {
               </View>
             </View>
 
-            {/* 5 Emojis / Faces Selection Grid */}
+            {/* 5 Emojis / Faces Selection Row - Clean transparent background & large faces */}
             <View style={styles.moodsRow}>
               {MOOD_OPTIONS.map((option) => {
                 const isCurrentSelected = todayRecord?.mood === option.id;
@@ -110,27 +109,25 @@ export const DailyMoodCard: React.FC = () => {
                     key={option.id}
                     style={[
                       styles.moodItem,
-                      { backgroundColor: option.lightBg },
-                      isCurrentSelected && {
-                        borderColor: option.color,
-                        borderWidth: 2,
-                        transform: [{ scale: 1.05 }],
-                      },
+                      isCurrentSelected && styles.moodItemSelected,
                     ]}
-                    activeOpacity={0.7}
+                    activeOpacity={0.6}
                     onPress={() => handleSelectMood(option)}
                   >
                     <Text style={styles.moodEmoji}>{option.emoji}</Text>
                     <Text
                       style={[
                         styles.moodLabel,
-                        { color: option.color },
-                        isCurrentSelected && { fontWeight: '800' },
+                        { color: isCurrentSelected ? option.color : colors.textSecondary },
+                        isCurrentSelected && styles.moodLabelSelected,
                       ]}
                       numberOfLines={1}
                     >
                       {option.label}
                     </Text>
+                    {isCurrentSelected && (
+                      <View style={[styles.selectedDot, { backgroundColor: option.color }]} />
+                    )}
                   </TouchableOpacity>
                 );
               })}
@@ -144,19 +141,14 @@ export const DailyMoodCard: React.FC = () => {
             {/* Success Header */}
             <View style={styles.answeredHeader}>
               <View style={styles.answeredLeftRow}>
-                <View
-                  style={[
-                    styles.answeredEmojiCircle,
-                    { backgroundColor: selectedOption.lightBg },
-                  ]}
-                >
+                <View style={styles.answeredEmojiCircle}>
                   <Text style={styles.answeredEmojiText}>
                     {selectedOption.emoji}
                   </Text>
                 </View>
                 <View style={styles.answeredTitleCol}>
                   <Text style={styles.answeredThanksText}>
-                    Gracias por contestar
+                    Gracias por compartir
                   </Text>
                   <Text
                     style={[
@@ -183,7 +175,7 @@ export const DailyMoodCard: React.FC = () => {
               style={[
                 styles.quoteBubble,
                 {
-                  backgroundColor: selectedOption.lightBg + '60',
+                  backgroundColor: colors.surfaceSoft,
                   borderLeftColor: selectedOption.color,
                 },
               ]}
@@ -208,11 +200,11 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: colors.white,
-    borderRadius: 20,
-    borderWidth: 1.4,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.07,
-    shadowRadius: 6,
+    borderRadius: 22,
+    borderWidth: 1.5,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
     elevation: 2,
   },
   defaultCardBorder: {
@@ -220,17 +212,19 @@ const styles = StyleSheet.create({
     shadowColor: colors.coffeeDeep,
   },
   contentPadding: {
-    padding: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 12,
   },
   headerTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 14,
+    paddingHorizontal: 4,
   },
   sparkleIconWrapper: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
@@ -240,48 +234,58 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   mainTitle: {
-    fontSize: 15,
+    fontSize: 15.5,
     fontWeight: '800',
     color: colors.coffeeDark,
     letterSpacing: -0.2,
   },
   subTitle: {
-    fontSize: 11.5,
+    fontSize: 12,
     color: colors.textSecondary,
     fontWeight: '500',
     marginTop: 1,
   },
   moodsRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 6,
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    paddingVertical: 4,
   },
   moodItem: {
-    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 10,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: 'transparent',
+    paddingVertical: 6,
+    paddingHorizontal: 6,
+    backgroundColor: 'transparent', // Sin fondo en las caritas como solicitado
+    borderRadius: 16,
+    minWidth: 58,
+  },
+  moodItemSelected: {
+    transform: [{ scale: 1.12 }],
   },
   moodEmoji: {
-    fontSize: 24,
-    marginBottom: 4,
+    fontSize: 38, // Carita mucho más grande y bonita
+    marginBottom: 6,
   },
   moodLabel: {
-    fontSize: 11,
-    fontWeight: '700',
+    fontSize: 11.5,
+    fontWeight: '600',
   },
-  submittingLoader: {
-    marginTop: 8,
-    alignItems: 'center',
+  moodLabelSelected: {
+    fontWeight: '800',
+  },
+  selectedDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+    marginTop: 3,
   },
   answeredHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 10,
+    paddingHorizontal: 4,
   },
   answeredLeftRow: {
     flexDirection: 'row',
@@ -289,50 +293,51 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   answeredEmojiCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
+    backgroundColor: colors.surfaceSoft,
   },
   answeredEmojiText: {
-    fontSize: 22,
+    fontSize: 28,
   },
   answeredTitleCol: {
     flex: 1,
   },
   answeredThanksText: {
-    fontSize: 13.5,
+    fontSize: 14,
     fontWeight: '800',
     color: colors.coffeeDark,
   },
   answeredMoodName: {
-    fontSize: 11.5,
+    fontSize: 12,
     fontWeight: '700',
     marginTop: 1,
   },
   changeResponseBtn: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 10,
     backgroundColor: colors.surface,
   },
   changeResponseText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: colors.textSecondary,
+    fontSize: 11.5,
+    fontWeight: '700',
+    color: colors.primary,
   },
   quoteBubble: {
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 12,
-    borderLeftWidth: 3.5,
-    marginTop: 2,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: 14,
+    borderLeftWidth: 4,
+    marginTop: 4,
   },
   quoteText: {
     fontSize: 13,
-    lineHeight: 19,
+    lineHeight: 19.5,
     color: colors.textPrimary,
     fontStyle: 'italic',
   },

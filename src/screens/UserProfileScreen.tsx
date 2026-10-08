@@ -16,7 +16,8 @@ import { colors } from '../theme/colors';
 import { Post } from '../types/post';
 import { PostCard } from '../components/Feed/PostCard';
 import { ImageViewerModal } from '../components/UI/ImageViewerModal';
-import { fetchUserProfile, subscribeToUserPosts } from '../services/postsService';
+import { fetchUserProfile, subscribeToUserPosts, toggleFollowUser, subscribeToUserFollowing } from '../services/postsService';
+import { useAuth } from '../context/AuthContext';
 
 interface UserProfileScreenProps {
   visible: boolean;
@@ -39,10 +40,13 @@ export const UserProfileScreen: React.FC<UserProfileScreenProps> = ({
   onCommentPress,
   onRequireAuth,
 }) => {
+  const { user } = useAuth();
   const [profileData, setProfileData] = useState<any | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [loadingPosts, setLoadingPosts] = useState(true);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followingIds, setFollowingIds] = useState<string[]>([]);
 
   // Full-screen Image Viewer
   const [viewerImages, setViewerImages] = useState<string[]>([]);
@@ -66,13 +70,24 @@ export const UserProfileScreen: React.FC<UserProfileScreenProps> = ({
     });
 
     // 2. Real-time Subscription to this user's posts
-    const unsubscribe = subscribeToUserPosts(userId, (userPosts) => {
+    const unsubscribePosts = subscribeToUserPosts(userId, (userPosts) => {
       setPosts(userPosts);
       setLoadingPosts(false);
     });
 
-    return () => unsubscribe();
-  }, [visible, userId]);
+    // 3. Subscription to current user's followings
+    const unsubscribeFollowing = user
+      ? subscribeToUserFollowing(user.id, (ids) => {
+          setFollowingIds(ids);
+          setIsFollowing(ids.includes(userId));
+        })
+      : () => {};
+
+    return () => {
+      unsubscribePosts();
+      unsubscribeFollowing();
+    };
+  }, [visible, userId, user?.id]);
 
   if (!visible || !userId) return null;
 
@@ -80,6 +95,16 @@ export const UserProfileScreen: React.FC<UserProfileScreenProps> = ({
     setViewerImages(imagesList);
     setViewerIndex(index);
     setViewerVisible(true);
+  };
+
+  const handleToggleFollow = async () => {
+    if (!user) {
+      onRequireAuth();
+      return;
+    }
+    const nextState = !isFollowing;
+    setIsFollowing(nextState);
+    await toggleFollowUser(user.id, userId);
   };
 
   const username = profileData?.username || initialUsername || 'Usuario';
@@ -91,7 +116,7 @@ export const UserProfileScreen: React.FC<UserProfileScreenProps> = ({
   const bio = profileData?.bio || '';
   const createdAt = profileData?.createdAt;
   const followingCount = profileData?.followingCount || 0;
-  const followersCount = profileData?.followersCount || 0;
+  const followersCount = (profileData?.followersCount || 0) + (isFollowing ? 1 : 0);
 
   const formatJoinedDate = (isoString?: string) => {
     if (!isoString) return 'Recientemente';
@@ -162,8 +187,35 @@ export const UserProfileScreen: React.FC<UserProfileScreenProps> = ({
               </TouchableOpacity>
             </View>
 
-            {/* Username */}
-            <Text style={styles.usernameText}>@{username}</Text>
+            {/* Username & Follow Button */}
+            <View style={styles.usernameRow}>
+              <Text style={styles.usernameText}>@{username}</Text>
+              {user && user.id !== userId && (
+                <TouchableOpacity
+                  style={[
+                    styles.profileFollowBtn,
+                    isFollowing && styles.profileFollowingBtn,
+                  ]}
+                  onPress={handleToggleFollow}
+                  activeOpacity={0.75}
+                >
+                  <Ionicons
+                    name={isFollowing ? "checkmark" : "person-add"}
+                    size={14}
+                    color={isFollowing ? colors.textSecondary : colors.white}
+                    style={{ marginRight: 4 }}
+                  />
+                  <Text
+                    style={[
+                      styles.profileFollowBtnText,
+                      isFollowing && styles.profileFollowingBtnText,
+                    ]}
+                  >
+                    {isFollowing ? 'Siguiendo' : 'Seguir'}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
 
             {/* Bio */}
             {bio ? (
@@ -203,7 +255,7 @@ export const UserProfileScreen: React.FC<UserProfileScreenProps> = ({
           {/* Posts List */}
           {loadingPosts ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="small" color={colors.coffeePrimary} />
+              <ActivityIndicator size="small" color={colors.primary} />
             </View>
           ) : posts.length === 0 ? (
             <View style={styles.emptyContainer}>
@@ -217,6 +269,7 @@ export const UserProfileScreen: React.FC<UserProfileScreenProps> = ({
                 <PostCard
                   key={post.id}
                   post={post}
+                  isFollowing={isFollowing}
                   onCommentPress={onCommentPress}
                   onRequireAuth={onRequireAuth}
                 />
@@ -244,7 +297,7 @@ const styles = StyleSheet.create({
     paddingTop: Platform.OS === 'android' ? 32 : 44,
     paddingBottom: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#F4EFEB',
+    borderBottomColor: colors.borderLight,
     backgroundColor: colors.white,
     zIndex: 10,
   },
@@ -267,7 +320,7 @@ const styles = StyleSheet.create({
   coverBanner: {
     width: '100%',
     height: 140,
-    backgroundColor: '#1C1614',
+    backgroundColor: colors.surfaceSoft,
     position: 'relative',
     alignItems: 'center',
     justifyContent: 'center',
@@ -289,7 +342,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0EBE6',
+    borderBottomColor: colors.borderLight,
   },
   avatarContainer: {
     marginTop: -44,
@@ -303,12 +356,39 @@ const styles = StyleSheet.create({
     borderColor: colors.white,
     backgroundColor: colors.surface,
   },
+  usernameRow: {
+    alignItems: 'center',
+    marginBottom: 4,
+  },
   usernameText: {
-    fontSize: 16.5,
+    fontSize: 17,
     fontWeight: '800',
     color: colors.coffeeDeep,
     letterSpacing: -0.3,
-    marginBottom: 4,
+    marginBottom: 6,
+  },
+  profileFollowBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.primary,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginTop: 2,
+  },
+  profileFollowingBtn: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+  },
+  profileFollowBtnText: {
+    color: colors.white,
+    fontSize: 12.5,
+    fontWeight: '700',
+  },
+  profileFollowingBtnText: {
+    color: colors.textSecondary,
+    fontWeight: '600',
   },
   bioContainer: {
     paddingHorizontal: 16,
@@ -340,12 +420,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: '#FAF7F5',
+    backgroundColor: colors.surfaceSoft,
     paddingHorizontal: 14,
     paddingVertical: 7,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#F0EBE6',
+    borderColor: colors.borderLight,
   },
   statCount: {
     fontSize: 13.5,
@@ -370,7 +450,7 @@ const styles = StyleSheet.create({
     color: colors.coffeeDeep,
   },
   sectionBadge: {
-    backgroundColor: '#F5EFEA',
+    backgroundColor: colors.surface,
     borderRadius: 10,
     paddingHorizontal: 7,
     paddingVertical: 1,
@@ -379,7 +459,7 @@ const styles = StyleSheet.create({
   sectionBadgeText: {
     fontSize: 11.5,
     fontWeight: '700',
-    color: colors.coffeePrimary,
+    color: colors.primary,
   },
   loadingContainer: {
     paddingVertical: 40,

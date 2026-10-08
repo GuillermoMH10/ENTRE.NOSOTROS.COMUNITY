@@ -12,6 +12,7 @@ import {
   orderBy,
   limit,
   increment,
+  arrayUnion,
 } from 'firebase/firestore';
 import { ref, uploadString, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from './firebase';
@@ -501,6 +502,114 @@ export async function fetchUserProfile(userId: string): Promise<any | null> {
     console.warn('Error al obtener perfil de usuario:', error);
     return null;
   }
+}
+
+/**
+ * Discreetly reports a post and marks it in Firestore
+ */
+export async function reportPost(
+  postId: string,
+  userId?: string | null
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const postRef = doc(db, 'posts', postId);
+    const postSnap = await getDoc(postRef);
+    if (!postSnap.exists()) {
+      return { success: false, error: 'Publicación no encontrada' };
+    }
+
+    const updateData: any = {
+      reported: true,
+      reportsCount: increment(1),
+    };
+
+    if (userId) {
+      updateData.reportedBy = arrayUnion(userId);
+    }
+
+    await updateDoc(postRef, updateData);
+
+    // Also record report in a separate collection for admin auditing
+    const reportId = `rep_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+    await setDoc(doc(db, 'reported_posts', reportId), {
+      id: reportId,
+      postId,
+      reportedByUserId: userId || 'anon',
+      timestamp: Date.now(),
+      createdAt: new Date().toISOString(),
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    console.warn('Error al reportar publicación:', error);
+    return { success: false, error: error.message || 'Error al reportar' };
+  }
+}
+
+/**
+ * Follows or unfollows a target user and keeps counter synchronized
+ */
+export async function toggleFollowUser(
+  currentUserId: string,
+  targetUserId: string
+): Promise<{ isFollowing: boolean; success: boolean; error?: string }> {
+  if (!currentUserId || !targetUserId || currentUserId === targetUserId) {
+    return { isFollowing: false, success: false, error: 'Acción no válida' };
+  }
+
+  try {
+    const followRef = doc(db, `users/${currentUserId}/following`, targetUserId);
+    const followerRef = doc(db, `users/${targetUserId}/followers`, currentUserId);
+    const currentUserDocRef = doc(db, 'users', currentUserId);
+    const targetUserDocRef = doc(db, 'users', targetUserId);
+
+    const followSnap = await getDoc(followRef);
+
+    if (followSnap.exists()) {
+      // Unfollow
+      await deleteDoc(followRef);
+      await deleteDoc(followerRef).catch(() => {});
+      await updateDoc(currentUserDocRef, { followingCount: increment(-1) }).catch(() => {});
+      await updateDoc(targetUserDocRef, { followersCount: increment(-1) }).catch(() => {});
+      return { isFollowing: false, success: true };
+    } else {
+      // Follow
+      const now = new Date().toISOString();
+      await setDoc(followRef, { targetUserId, createdAt: now, timestamp: Date.now() });
+      await setDoc(followerRef, { followerId: currentUserId, createdAt: now, timestamp: Date.now() });
+      await updateDoc(currentUserDocRef, { followingCount: increment(1) }).catch(() => {});
+      await updateDoc(targetUserDocRef, { followersCount: increment(1) }).catch(() => {});
+      return { isFollowing: true, success: true };
+    }
+  } catch (error: any) {
+    console.warn('Error al seguir/dejar de seguir usuario:', error);
+    return { isFollowing: false, success: false, error: error.message };
+  }
+}
+
+/**
+ * Subscribes to the list of user IDs that current user is following
+ */
+export function subscribeToUserFollowing(
+  currentUserId: string,
+  callback: (followingIds: string[]) => void
+): () => void {
+  if (!currentUserId) {
+    callback([]);
+    return () => {};
+  }
+
+  const followingQuery = collection(db, `users/${currentUserId}/following`);
+  return onSnapshot(
+    followingQuery,
+    (snap) => {
+      const ids = snap.docs.map((d) => d.id);
+      callback(ids);
+    },
+    (err) => {
+      console.warn('Error al obtener seguidos:', err);
+    }
+  );
 }
 
 
