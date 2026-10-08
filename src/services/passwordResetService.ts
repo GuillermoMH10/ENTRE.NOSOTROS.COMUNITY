@@ -122,6 +122,13 @@ export async function sendPasswordResetCode(email: string): Promise<ResetCodeRes
             'Tu servicio de Gmail en EmailJS necesita ser reconectado. Entra a EmailJS > Email Services > Reconectar cuenta de Gmail.',
         };
       }
+      if (emailResult.errorText?.includes('non-browser')) {
+        return {
+          success: false,
+          error:
+            'Para enviar correos desde la app, debes activar la casilla "Allow EmailJS API for non-browser applications" en: dashboard.emailjs.com/admin/account/security',
+        };
+      }
       return {
         success: false,
         error: `Error de EmailJS: ${emailResult.errorText || 'No se pudo enviar el correo.'}`,
