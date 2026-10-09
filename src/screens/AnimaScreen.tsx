@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
   Alert,
   Clipboard,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { AnimaMascot } from '../components/Anima/AnimaMascot';
@@ -260,38 +261,69 @@ export const AnimaScreen: React.FC<AnimaScreenProps> = ({
 
   return (
     <View style={styles.container}>
-      {/* Top Fixed Header - Clean, Short, Static & Well-Ordered */}
+      {/* Top Fixed Header with Hamburger on Left, App Logo centered, and Right Actions (Restart Chat + User Profile) */}
       <View style={[styles.header, { paddingTop: contentPaddingTop + (Platform.OS === 'ios' ? 6 : 8) }]}>
+        {/* Left: Hamburger Menu Button */}
         <TouchableOpacity
           style={styles.headerMenuBtn}
           onPress={onOpenMenu}
           activeOpacity={0.6}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Ionicons name="menu-outline" size={26} color={colors.coffeeDark} />
+          <Ionicons name="menu-outline" size={28} color={colors.coffeeDark} />
         </TouchableOpacity>
 
-        <View style={styles.headerCenter}>
-          <View style={styles.headerMascotRow}>
-            <AnimaMascot size="sm" variant="profile" animated={false} />
-            <View style={styles.headerTextWrapper}>
-              <Text style={styles.headerTitle}>ANIMA</Text>
-              <Text style={styles.headerSubtitle}>
-                {isGenerating ? 'Escribiendo... 🌱' : 'En línea 💙'}
-              </Text>
-            </View>
-          </View>
+        {/* Center: App Logo */}
+        <View style={styles.headerCenter} pointerEvents="none">
+          <Image
+            source={require('../../assets/logoappE.png')}
+            style={styles.logo}
+            resizeMode="contain"
+            accessibilityLabel="Logo Entre Nosotros"
+          />
         </View>
 
-        <TouchableOpacity
-          style={styles.headerActionBtn}
-          onPress={handleClearHistory}
-          activeOpacity={0.7}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          accessibilityLabel="Reiniciar conversación"
-        >
-          <Ionicons name="refresh-outline" size={20} color={colors.textSecondary} />
-        </TouchableOpacity>
+        {/* Right: Restart Chat + User Profile Button */}
+        <View style={styles.headerRightActions}>
+          <TouchableOpacity
+            style={styles.headerActionBtn}
+            onPress={handleClearHistory}
+            activeOpacity={0.7}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityLabel="Reiniciar conversación"
+          >
+            <Ionicons name="refresh-outline" size={22} color={colors.coffeeDark} />
+          </TouchableOpacity>
+
+          {user ? (
+            <TouchableOpacity
+              style={styles.profileAvatarButton}
+              onPress={onProfilePress}
+              activeOpacity={0.8}
+              accessibilityLabel="Ver mi perfil"
+            >
+              <View style={styles.avatarRing}>
+                <Image
+                  source={{ uri: user.avatarUrl }}
+                  style={styles.userAvatarImage}
+                  resizeMode="cover"
+                />
+              </View>
+              <View style={styles.profileBadge}>
+                <Ionicons name="person" size={8} color={colors.white} />
+              </View>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              style={styles.joinButton}
+              onPress={onJoinPress}
+              activeOpacity={0.85}
+              accessibilityLabel="Unirse"
+            >
+              <Text style={styles.joinButtonText}>Unirse</Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       {/* Optional Crisis Helpline Banner */}
@@ -426,7 +458,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingBottom: 10,
+    paddingTop: Platform.OS === 'ios' ? 6 : 8,
+    paddingBottom: 8,
     backgroundColor: colors.white,
     borderBottomWidth: 1,
     borderBottomColor: colors.borderLight,
@@ -436,42 +469,87 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 2,
     zIndex: 10,
+    height: 56,
   },
   headerMenuBtn: {
-    width: 36,
-    height: 36,
+    width: 38,
+    height: 38,
     alignItems: 'flex-start',
     justifyContent: 'center',
+    zIndex: 2,
   },
   headerCenter: {
-    flex: 1,
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  headerMascotRow: {
+  logo: {
+    width: 170,
+    height: 42,
+  },
+  headerRightActions: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-  },
-  headerTextWrapper: {
-    alignItems: 'flex-start',
-  },
-  headerTitle: {
-    fontSize: 15.5,
-    fontWeight: '800',
-    color: colors.coffeeDark,
-    letterSpacing: 0.4,
-  },
-  headerSubtitle: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: colors.coffeePrimary,
+    zIndex: 2,
   },
   headerActionBtn: {
     width: 36,
     height: 36,
-    alignItems: 'flex-end',
+    alignItems: 'center',
     justifyContent: 'center',
+  },
+  profileAvatarButton: {
+    position: 'relative',
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarRing: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    borderWidth: 1.8,
+    borderColor: colors.coffeePrimary,
+    padding: 1.5,
+    backgroundColor: colors.white,
+  },
+  userAvatarImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 15,
+    backgroundColor: colors.surface,
+  },
+  profileBadge: {
+    position: 'absolute',
+    bottom: -1,
+    right: -1,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: colors.coffeePrimary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: colors.white,
+  },
+  joinButton: {
+    backgroundColor: colors.coffeePrimary,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  joinButtonText: {
+    color: colors.white,
+    fontSize: 12.5,
+    fontWeight: '700',
   },
   /* Crisis Help Banner */
   crisisBanner: {
