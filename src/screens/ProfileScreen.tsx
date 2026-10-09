@@ -15,6 +15,8 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { db } from '../services/firebase';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 import { useAuth } from '../context/AuthContext';
@@ -24,6 +26,8 @@ import { CommentsScreen } from './CommentsScreen';
 import { PostOptionsModal } from '../components/Feed/PostOptionsModal';
 import { EditPostModal } from '../components/Feed/EditPostModal';
 import { ImageViewerModal } from '../components/UI/ImageViewerModal';
+import { FollowListModal, FollowTabType } from '../components/Profile/FollowListModal';
+import { UserProfileScreen } from './UserProfileScreen';
 import {
   uploadMediaToStorage,
   deletePost,
@@ -85,6 +89,12 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   // Active Comment Post Modal
   const [activeCommentPost, setActiveCommentPost] = useState<Post | null>(null);
 
+  // Follows / Followers Modal State
+  const [followModalVisible, setFollowModalVisible] = useState(false);
+  const [followModalTab, setFollowModalTab] = useState<FollowTabType>('following');
+  const [selectedOtherUser, setSelectedOtherUser] = useState<{ userId: string; username?: string; avatarUrl?: string } | null>(null);
+  const [liveCounts, setLiveCounts] = useState<{ followingCount?: number; followersCount?: number }>({});
+
   // Full-screen Image Viewer (Cover & Avatar)
   const [viewerImages, setViewerImages] = useState<string[]>([]);
   const [viewerIndex, setViewerIndex] = useState(0);
@@ -95,6 +105,22 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     setViewerIndex(idx);
     setViewerVisible(true);
   };
+
+  // Subscribe to live user counts (followers / following)
+  useEffect(() => {
+    if (!visible || !user) return;
+    const userDocRef = doc(db, 'users', user.id);
+    const unsubscribe = onSnapshot(userDocRef, (snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        setLiveCounts({
+          followingCount: data.followingCount || 0,
+          followersCount: data.followersCount || 0,
+        });
+      }
+    });
+    return () => unsubscribe();
+  }, [visible, user?.id]);
 
   // Fetch latest psychology test result
   useEffect(() => {
@@ -446,12 +472,31 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
             {/* Discrete Stats Buttons (Seguidos / Seguidores) */}
             <View style={styles.statsRow}>
-              <TouchableOpacity style={styles.statPill} activeOpacity={0.7}>
-                <Text style={styles.statCount}>{user.followingCount || 0}</Text>
+              <TouchableOpacity
+                style={styles.statPill}
+                onPress={() => {
+                  setFollowModalTab('following');
+                  setFollowModalVisible(true);
+                }}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.statCount}>
+                  {liveCounts.followingCount ?? user.followingCount ?? 0}
+                </Text>
                 <Text style={styles.statLabel}>Seguidos</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.statPill} activeOpacity={0.7}>
-                <Text style={styles.statCount}>{user.followersCount || 0}</Text>
+
+              <TouchableOpacity
+                style={styles.statPill}
+                onPress={() => {
+                  setFollowModalTab('followers');
+                  setFollowModalVisible(true);
+                }}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.statCount}>
+                  {liveCounts.followersCount ?? user.followersCount ?? 0}
+                </Text>
                 <Text style={styles.statLabel}>Seguidores</Text>
               </TouchableOpacity>
             </View>
@@ -782,6 +827,30 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             if (onOpenCreatePost) onOpenCreatePost();
           }}
           onTestCompleted={(res) => setLatestTestResult(res)}
+        />
+
+        {/* Follow List Modal (Seguidos / Seguidores) */}
+        <FollowListModal
+          visible={followModalVisible}
+          userId={user?.id || null}
+          username={user?.username}
+          initialTab={followModalTab}
+          onClose={() => setFollowModalVisible(false)}
+          onUserPress={(targetId, targetUsername, targetAvatar) => {
+            setSelectedOtherUser({ userId: targetId, username: targetUsername, avatarUrl: targetAvatar });
+          }}
+          onRequireAuth={() => onRequireAuth?.()}
+        />
+
+        {/* Other User Profile Screen (Opened from Followers/Following list) */}
+        <UserProfileScreen
+          visible={selectedOtherUser !== null}
+          userId={selectedOtherUser?.userId || null}
+          initialUsername={selectedOtherUser?.username}
+          initialAvatarUrl={selectedOtherUser?.avatarUrl}
+          onClose={() => setSelectedOtherUser(null)}
+          onCommentPress={(p) => setActiveCommentPost(p)}
+          onRequireAuth={() => onRequireAuth?.()}
         />
       </View>
     </Modal>

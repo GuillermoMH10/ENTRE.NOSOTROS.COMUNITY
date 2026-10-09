@@ -12,10 +12,13 @@ import {
   Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { db } from '../services/firebase';
 import { colors } from '../theme/colors';
 import { Post } from '../types/post';
 import { PostCard } from '../components/Feed/PostCard';
 import { ImageViewerModal } from '../components/UI/ImageViewerModal';
+import { FollowListModal, FollowTabType } from '../components/Profile/FollowListModal';
 import { fetchUserProfile, subscribeToUserPosts, toggleFollowUser, subscribeToUserFollowing } from '../services/postsService';
 import { useAuth } from '../context/AuthContext';
 
@@ -48,6 +51,11 @@ export const UserProfileScreen: React.FC<UserProfileScreenProps> = ({
   const [isFollowing, setIsFollowing] = useState(false);
   const [followingIds, setFollowingIds] = useState<string[]>([]);
 
+  // Follow List Modal State
+  const [followModalVisible, setFollowModalVisible] = useState(false);
+  const [followModalTab, setFollowModalTab] = useState<FollowTabType>('following');
+  const [selectedSubUser, setSelectedSubUser] = useState<{ userId: string; username?: string; avatarUrl?: string } | null>(null);
+
   // Full-screen Image Viewer
   const [viewerImages, setViewerImages] = useState<string[]>([]);
   const [viewerIndex, setViewerIndex] = useState(0);
@@ -63,9 +71,14 @@ export const UserProfileScreen: React.FC<UserProfileScreenProps> = ({
     setLoadingProfile(true);
     setLoadingPosts(true);
 
-    // 1. Fetch User Data
-    fetchUserProfile(userId).then((data) => {
-      setProfileData(data);
+    // 1. Live User Data Subscription
+    const userDocRef = doc(db, 'users', userId);
+    const unsubscribeUser = onSnapshot(userDocRef, (snap) => {
+      if (snap.exists()) {
+        setProfileData({ id: snap.id, ...snap.data() });
+      } else {
+        fetchUserProfile(userId).then((data) => setProfileData(data));
+      }
       setLoadingProfile(false);
     });
 
@@ -84,6 +97,7 @@ export const UserProfileScreen: React.FC<UserProfileScreenProps> = ({
       : () => {};
 
     return () => {
+      unsubscribeUser();
       unsubscribePosts();
       unsubscribeFollowing();
     };
@@ -232,14 +246,28 @@ export const UserProfileScreen: React.FC<UserProfileScreenProps> = ({
 
             {/* Stats (Seguidos / Seguidores) */}
             <View style={styles.statsRow}>
-              <View style={styles.statPill}>
+              <TouchableOpacity
+                style={styles.statPill}
+                onPress={() => {
+                  setFollowModalTab('following');
+                  setFollowModalVisible(true);
+                }}
+                activeOpacity={0.7}
+              >
                 <Text style={styles.statCount}>{followingCount}</Text>
                 <Text style={styles.statLabel}>Seguidos</Text>
-              </View>
-              <View style={styles.statPill}>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.statPill}
+                onPress={() => {
+                  setFollowModalTab('followers');
+                  setFollowModalVisible(true);
+                }}
+                activeOpacity={0.7}
+              >
                 <Text style={styles.statCount}>{followersCount}</Text>
                 <Text style={styles.statLabel}>Seguidores</Text>
-              </View>
+              </TouchableOpacity>
             </View>
           </View>
 
@@ -279,6 +307,34 @@ export const UserProfileScreen: React.FC<UserProfileScreenProps> = ({
 
           <View style={{ height: 40 }} />
         </ScrollView>
+
+        {/* Follow List Modal (Seguidos / Seguidores) */}
+        <FollowListModal
+          visible={followModalVisible}
+          userId={userId}
+          username={username}
+          initialTab={followModalTab}
+          onClose={() => setFollowModalVisible(false)}
+          onUserPress={(targetId, targetUsername, targetAvatar) => {
+            if (user && user.id === targetId) {
+              onClose(); // viewing own profile
+            } else {
+              setSelectedSubUser({ userId: targetId, username: targetUsername, avatarUrl: targetAvatar });
+            }
+          }}
+          onRequireAuth={onRequireAuth}
+        />
+
+        {/* Nested User Profile Screen */}
+        <UserProfileScreen
+          visible={selectedSubUser !== null}
+          userId={selectedSubUser?.userId || null}
+          initialUsername={selectedSubUser?.username}
+          initialAvatarUrl={selectedSubUser?.avatarUrl}
+          onClose={() => setSelectedSubUser(null)}
+          onCommentPress={onCommentPress}
+          onRequireAuth={onRequireAuth}
+        />
       </View>
     </Modal>
   );

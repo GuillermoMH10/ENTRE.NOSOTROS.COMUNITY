@@ -612,4 +612,67 @@ export function subscribeToUserFollowing(
   );
 }
 
+export interface UserFollowItem {
+  id: string;
+  username: string;
+  avatarUrl: string;
+  bio?: string;
+  createdAt?: string;
+}
+
+/**
+ * Subscribes in real-time to the list of user profiles that a user is following or by whom they are followed
+ */
+export function subscribeUserFollowList(
+  userId: string,
+  type: 'following' | 'followers',
+  callback: (users: UserFollowItem[]) => void
+): () => void {
+  if (!userId) {
+    callback([]);
+    return () => {};
+  }
+
+  const subColRef = collection(db, `users/${userId}/${type}`);
+  return onSnapshot(
+    subColRef,
+    async (snapshot) => {
+      const userIds = snapshot.docs.map((docSnap) => docSnap.id);
+      if (userIds.length === 0) {
+        callback([]);
+        return;
+      }
+
+      const usersPromises = userIds.map(async (targetId) => {
+        try {
+          const uRef = doc(db, 'users', targetId);
+          const uSnap = await getDoc(uRef);
+          if (uSnap.exists()) {
+            const data = uSnap.data();
+            return {
+              id: uSnap.id,
+              username: data.username || 'Usuario',
+              avatarUrl:
+                data.avatarUrl ||
+                'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
+              bio: data.bio || '',
+              createdAt: data.createdAt,
+            } as UserFollowItem;
+          }
+          return null;
+        } catch {
+          return null;
+        }
+      });
+
+      const results = await Promise.all(usersPromises);
+      callback(results.filter((item): item is UserFollowItem => item !== null));
+    },
+    (error) => {
+      console.warn(`Error en listener de ${type}:`, error);
+      callback([]);
+    }
+  );
+}
+
 
