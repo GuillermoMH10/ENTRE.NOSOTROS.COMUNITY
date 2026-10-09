@@ -3,13 +3,16 @@ import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
 
-export type TabId = 'principal' | 'blog' | 'buscar' | 'crear' | 'ayuda';
+import { AnimaMascot } from '../Anima/AnimaMascot';
+
+export type TabId = 'principal' | 'blog' | 'anima' | 'buscar' | 'crear' | 'ayuda';
 
 interface TabItem {
   id: TabId;
   label: string;
-  icon: keyof typeof Ionicons.glyphMap;
-  activeIcon: keyof typeof Ionicons.glyphMap;
+  icon?: keyof typeof Ionicons.glyphMap;
+  activeIcon?: keyof typeof Ionicons.glyphMap;
+  isMascot?: boolean;
 }
 
 interface BottomTabBarProps {
@@ -33,6 +36,11 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({
       label: 'Blog',
       icon: 'newspaper-outline',
       activeIcon: 'newspaper',
+    },
+    {
+      id: 'anima',
+      label: 'ANIMA',
+      isMascot: true,
     },
     {
       id: 'buscar',
@@ -67,16 +75,23 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({
               onPress={() => onTabPress && onTabPress(tab.id)}
             >
               <View style={styles.iconContainer}>
-                <Ionicons
-                  name={isCurrentActive ? tab.activeIcon : tab.icon}
-                  size={22}
-                  color={isCurrentActive ? colors.coffeePrimary : colors.textSecondary}
-                />
+                {tab.isMascot ? (
+                  <View style={[styles.mascotTabWrapper, isCurrentActive && styles.mascotTabWrapperActive]}>
+                    <AnimaMascot size="xs" animated={isCurrentActive} />
+                  </View>
+                ) : (
+                  <Ionicons
+                    name={isCurrentActive ? tab.activeIcon! : tab.icon!}
+                    size={22}
+                    color={isCurrentActive ? colors.coffeePrimary : colors.textSecondary}
+                  />
+                )}
               </View>
               <Text
                 style={[
                   styles.tabLabel,
                   isCurrentActive ? styles.tabLabelActive : styles.tabLabelInactive,
+                  tab.isMascot && isCurrentActive && { color: colors.coffeePrimary, fontWeight: '800' },
                 ]}
               >
                 {tab.label}
@@ -131,5 +146,16 @@ const styles = StyleSheet.create({
   tabLabelInactive: {
     color: colors.textSecondary,
     fontWeight: '500',
+  },
+  mascotTabWrapper: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  mascotTabWrapperActive: {
+    backgroundColor: '#E1EAEF',
+    transform: [{ scale: 1.1 }],
   },
 });

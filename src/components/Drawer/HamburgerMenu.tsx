@@ -77,10 +77,11 @@ export const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
     }
   }, [visible]);
 
-  // Main 4 accesses
+  // Main accesses
   const mainNavItems = [
     { id: 'principal' as const, label: 'Principal', icon: 'home-outline' as const },
     { id: 'blog' as const, label: 'Blog', icon: 'newspaper-outline' as const },
+    { id: 'anima' as const, label: 'Mascota ANIMA 💙', icon: 'sparkles-outline' as const },
     { id: 'buscar' as const, label: 'Buscar', icon: 'search-outline' as const },
     { id: 'crear' as const, label: 'Crear', icon: 'add-circle-outline' as const },
   ];
@@ -111,6 +112,8 @@ export const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
       onOpenPsychologists();
     } else if (id === 'reglas' && onOpenRules) {
       onOpenRules();
+    } else if (id === 'necesito_ayuda' && onNavigate) {
+      onNavigate('ayuda');
     } else if (id === 'logout') {
       await logout();
     } else if (id === 'login' && onRequireAuth) {

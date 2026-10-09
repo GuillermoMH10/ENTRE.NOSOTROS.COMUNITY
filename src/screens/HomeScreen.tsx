@@ -22,6 +22,7 @@ import { BlogScreen } from './BlogScreen';
 import { PsychologistsScreen } from './PsychologistsScreen';
 import { RulesScreen } from './RulesScreen';
 import { SupportScreen } from './SupportScreen';
+import { AnimaScreen } from './AnimaScreen';
 import { UserProfileScreen } from './UserProfileScreen';
 import { MonthDetailModal } from '../components/Blog/MonthDetailModal';
 import { Post } from '../types/post';
@@ -218,6 +219,15 @@ export const HomeScreen: React.FC = () => {
           />
         ) : activeTab === 'blog' ? (
           <BlogScreen
+            onOpenMenu={handleOpenMenu}
+            onJoinPress={handleOpenAuth}
+            onProfilePress={handleOpenProfile}
+            onOpenPsychologists={handleOpenPsychologists}
+            contentPaddingTop={0}
+            contentPaddingBottom={TABBAR_HEIGHT + (Platform.OS === 'ios' ? 14 : 4)}
+          />
+        ) : activeTab === 'anima' ? (
+          <AnimaScreen
             onOpenMenu={handleOpenMenu}
             onJoinPress={handleOpenAuth}
             onProfilePress={handleOpenProfile}
