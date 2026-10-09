@@ -77,7 +77,7 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({
               <View style={styles.iconContainer}>
                 {tab.isMascot ? (
                   <View style={[styles.mascotTabWrapper, isCurrentActive && styles.mascotTabWrapperActive]}>
-                    <AnimaMascot size="xs" animated={isCurrentActive} />
+                    <AnimaMascot size="xs" animated={false} />
                   </View>
                 ) : (
                   <Ionicons
@@ -148,14 +148,13 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   mascotTabWrapper: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     alignItems: 'center',
     justifyContent: 'center',
   },
   mascotTabWrapperActive: {
     backgroundColor: '#E1EAEF',
-    transform: [{ scale: 1.1 }],
   },
 });

@@ -3,9 +3,11 @@ import { View, Image, StyleSheet, Animated, Easing, StyleProp, ViewStyle } from 
 import { colors } from '../../theme/colors';
 
 export type MascotSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+export type MascotVariant = 'profile' | 'full';
 
 interface AnimaMascotProps {
   size?: MascotSize;
+  variant?: MascotVariant;
   animated?: boolean;
   isThinking?: boolean;
   style?: StyleProp<ViewStyle>;
@@ -21,7 +23,8 @@ const SIZE_MAP: Record<MascotSize, number> = {
 
 export const AnimaMascot: React.FC<AnimaMascotProps> = ({
   size = 'md',
-  animated = true,
+  variant = 'profile',
+  animated = false,
   isThinking = false,
   style,
 }) => {
@@ -30,7 +33,10 @@ export const AnimaMascot: React.FC<AnimaMascotProps> = ({
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    if (!animated) return;
+    if (!animated) {
+      floatAnim.setValue(0);
+      return;
+    }
 
     // Gentle floating loop
     const floatLoop = Animated.loop(
@@ -113,8 +119,15 @@ export const AnimaMascot: React.FC<AnimaMascotProps> = ({
         ]}
       >
         <Image
-          source={require('../../../assets/Mascota axolote kawaii ANIMA.png')}
-          style={styles.image}
+          source={
+            variant === 'full'
+              ? require('../../../assets/Mascota axolote kawaii ANIMA.png')
+              : require('../../../assets/perfilANIMA.png')
+          }
+          style={[
+            styles.image,
+            variant === 'profile' && { borderRadius: dimension / 2 },
+          ]}
           resizeMode="contain"
           accessibilityLabel="Mascota ANIMA"
         />

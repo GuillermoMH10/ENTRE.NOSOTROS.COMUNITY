@@ -53,7 +53,7 @@ Recuerda: eres ANIMA, un asistente de bienestar emocional, no un profesional de 
 export const INITIAL_ANIMA_MESSAGE: AnimaMessage = {
   id: 'initial_anima_welcome',
   role: 'model',
-  text: '¡Hola! Soy **ANIMA** 💙, tu compañera de bienestar emocional en Entre Nosotros.\n\nEstoy aquí para escucharte sin juzgarte, acompañarte cuando lo necesites o guiarte con ejercicios de calma y respiración 🌱.\n\n¿Cómo te sientes hoy? ¿Hay algo que quieras compartir conmigo? ✨',
+  text: '¡Hola! Soy **ANIMA** 💙. Estoy aquí para escucharte y acompañarte con tus emociones. ¿Cómo te sientes hoy? 🌱✨',
   timestamp: Date.now(),
 };
 
