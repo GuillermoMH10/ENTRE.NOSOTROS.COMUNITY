@@ -11,7 +11,6 @@ import {
   ActivityIndicator,
   Alert,
   Clipboard,
-  ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { AnimaMascot } from '../components/Anima/AnimaMascot';
@@ -71,10 +70,15 @@ export const AnimaScreen: React.FC<AnimaScreenProps> = ({
     });
   }, []);
 
-  // Change phrase occasionally
-  const handleRotatePhrase = () => {
+  // Automatically rotate phrase every 10 minutes (600,000 ms) and on every fresh mount
+  useEffect(() => {
     setCurrentPhrase(getRandomAnimaPhrase());
-  };
+    const interval = setInterval(() => {
+      setCurrentPhrase(getRandomAnimaPhrase());
+    }, 10 * 60 * 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   // Scroll to bottom whenever messages change
   const scrollToBottom = (animated: boolean = true) => {
@@ -184,7 +188,27 @@ export const AnimaScreen: React.FC<AnimaScreenProps> = ({
     return `${hours}:${mins}`;
   };
 
-  // Render individual chat bubble - Optimized for wider, cleaner structure
+  // Helper to render text with bold tags formatted cleanly (no raw asterisks displayed)
+  const renderCleanMessageText = (rawText: string, isUser: boolean) => {
+    if (!rawText) return null;
+    const segments = rawText.split(/(\*\*.*?\*\*)/g);
+    return (
+      <Text style={isUser ? styles.userMessageText : styles.modelMessageText}>
+        {segments.map((seg, index) => {
+          if (seg.startsWith('**') && seg.endsWith('**')) {
+            return (
+              <Text key={index} style={{ fontWeight: '700' }}>
+                {seg.slice(2, -2)}
+              </Text>
+            );
+          }
+          return seg;
+        })}
+      </Text>
+    );
+  };
+
+  // Render individual chat bubble - Wide, neat layout
   const renderMessageItem = ({ item }: { item: AnimaMessage }) => {
     const isUser = item.role === 'user';
     const isCopied = copiedMessageId === item.id;
@@ -194,7 +218,7 @@ export const AnimaScreen: React.FC<AnimaScreenProps> = ({
         <View style={styles.userMessageRow}>
           <View style={styles.userBubbleContainer}>
             <View style={styles.userBubble}>
-              <Text style={styles.userMessageText}>{item.text}</Text>
+              {renderCleanMessageText(item.text, true)}
             </View>
             <Text style={styles.userMessageTime}>{formatTime(item.timestamp)}</Text>
           </View>
@@ -205,7 +229,7 @@ export const AnimaScreen: React.FC<AnimaScreenProps> = ({
     return (
       <View style={styles.modelMessageRow}>
         <View style={styles.modelAvatarCol}>
-          <AnimaMascot size="xs" animated={false} />
+          <AnimaMascot size="xs" variant="profile" animated={false} />
         </View>
         <View style={styles.modelBubbleContainer}>
           <View style={styles.modelBubbleHeader}>
@@ -226,7 +250,7 @@ export const AnimaScreen: React.FC<AnimaScreenProps> = ({
           </View>
 
           <View style={styles.modelBubble}>
-            <Text style={styles.modelMessageText}>{item.text}</Text>
+            {renderCleanMessageText(item.text, false)}
           </View>
           <Text style={styles.modelMessageTime}>{formatTime(item.timestamp)}</Text>
         </View>
@@ -249,7 +273,7 @@ export const AnimaScreen: React.FC<AnimaScreenProps> = ({
 
         <View style={styles.headerCenter}>
           <View style={styles.headerMascotRow}>
-            <AnimaMascot size="sm" animated={false} />
+            <AnimaMascot size="sm" variant="profile" animated={false} />
             <View style={styles.headerTextWrapper}>
               <Text style={styles.headerTitle}>ANIMA</Text>
               <Text style={styles.headerSubtitle}>
@@ -310,33 +334,21 @@ export const AnimaScreen: React.FC<AnimaScreenProps> = ({
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={
             <View style={styles.chatHeaderHero}>
-              {/* Static Mascot */}
-              <AnimaMascot size="lg" animated={false} />
+              {/* Static Mascot Profile */}
+              <AnimaMascot size="lg" variant="profile" animated={false} />
               
               <Text style={styles.heroGreeting}>ANIMA</Text>
 
-              {/* Rotating Short Emotional Phrase Card (Click to change phrase) */}
-              <TouchableOpacity
-                style={styles.phraseCard}
-                onPress={handleRotatePhrase}
-                activeOpacity={0.8}
-              >
+              {/* Rotating Short Emotional Phrase Card (Auto-rotates every 10 min or on open) */}
+              <View style={styles.phraseCard}>
                 <Text style={styles.phraseText}>"{currentPhrase}"</Text>
-                <View style={styles.phraseRefreshRow}>
-                  <Ionicons name="sparkles" size={11} color={colors.coffeePrimary} />
-                  <Text style={styles.phraseRefreshHint}>Toca para otra frase</Text>
-                </View>
-              </TouchableOpacity>
+              </View>
 
-              {/* Compact Suggestions / Quick Prompts Bar */}
+              {/* Compact Suggestions / Quick Prompts Wrapped Grid (No overflow) */}
               <View style={styles.promptsHeaderRow}>
                 <Text style={styles.promptsSectionTitle}>Sugerencias rápidas:</Text>
               </View>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.compactPromptsScroll}
-              >
+              <View style={styles.promptsGrid}>
                 {COMPACT_PROMPTS.map((prompt) => (
                   <TouchableOpacity
                     key={prompt.id}
@@ -349,13 +361,13 @@ export const AnimaScreen: React.FC<AnimaScreenProps> = ({
                     <Text style={styles.compactPromptText}>{prompt.text}</Text>
                   </TouchableOpacity>
                 ))}
-              </ScrollView>
+              </View>
             </View>
           }
           ListFooterComponent={
             isGenerating ? (
               <View style={styles.typingIndicatorRow}>
-                <AnimaMascot size="xs" animated={false} />
+                <AnimaMascot size="xs" variant="profile" animated={false} />
                 <View style={styles.typingBubble}>
                   <ActivityIndicator size="small" color={colors.coffeePrimary} style={{ marginRight: 6 }} />
                   <Text style={styles.typingText}>ANIMA está respondiendo... 🌱</Text>
@@ -365,7 +377,7 @@ export const AnimaScreen: React.FC<AnimaScreenProps> = ({
           }
         />
 
-        {/* Bottom Floating Message Input Bar - Super Organized, Clean & Sleek */}
+        {/* Bottom Floating Message Input Bar - Clean, Organized & Modern */}
         <View style={[styles.bottomBarContainer, { paddingBottom: contentPaddingBottom + 4 }]}>
           <View style={styles.inputCard}>
             <TextInput
@@ -408,7 +420,7 @@ const styles = StyleSheet.create({
   keyboardContainer: {
     flex: 1,
   },
-  /* Top Header - Short, neat, and well-proportioned */
+  /* Top Header */
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -541,18 +553,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 18,
   },
-  phraseRefreshRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginTop: 4,
-  },
-  phraseRefreshHint: {
-    fontSize: 10,
-    color: colors.coffeePrimary,
-    fontWeight: '600',
-  },
-  /* Compact Suggestions Scroll */
+  /* Compact Suggestions Wrapped Grid (Fits cleanly inside card) */
   promptsHeaderRow: {
     width: '100%',
     marginBottom: 6,
@@ -562,9 +563,12 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.textSecondary,
   },
-  compactPromptsScroll: {
+  promptsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
     gap: 6,
-    paddingVertical: 2,
+    width: '100%',
   },
   compactPromptChip: {
     flexDirection: 'row',
@@ -577,8 +581,8 @@ const styles = StyleSheet.create({
     borderColor: '#E1EAEF',
   },
   compactPromptEmoji: {
-    fontSize: 12.5,
-    marginRight: 5,
+    fontSize: 12,
+    marginRight: 4,
   },
   compactPromptText: {
     fontSize: 11,

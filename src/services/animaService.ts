@@ -53,7 +53,7 @@ Recuerda: eres ANIMA, un asistente de bienestar emocional, no un profesional de 
 export const INITIAL_ANIMA_MESSAGE: AnimaMessage = {
   id: 'initial_anima_welcome',
   role: 'model',
-  text: '¡Hola! Soy **ANIMA** 💙. Estoy aquí para escucharte y acompañarte con tus emociones. ¿Cómo te sientes hoy? 🌱✨',
+  text: '¡Hola! Soy ANIMA 💙. Estoy aquí para escucharte y acompañarte con tus emociones. ¿Cómo te sientes hoy? 🌱✨',
   timestamp: Date.now(),
 };
 
@@ -68,7 +68,10 @@ export async function loadAnimaHistory(): Promise<AnimaMessage[]> {
     }
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed) && parsed.length > 0) {
-      return parsed;
+      return parsed.map((msg) => ({
+        ...msg,
+        text: msg.text ? msg.text.replace(/\*\*ANIMA\*\*/g, 'ANIMA') : '',
+      }));
     }
     return [INITIAL_ANIMA_MESSAGE];
   } catch (error) {
