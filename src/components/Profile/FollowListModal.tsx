@@ -87,9 +87,7 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
     return () => unsubscribe();
   }, [visible, currentUser?.id]);
 
-  if (!visible || !userId) return null;
-
-  // Filter users by search query
+  // Filter users by search query (MUST be called unconditionally before early return)
   const filteredUsers = useMemo(() => {
     if (!searchQuery.trim()) return usersList;
     const q = searchQuery.trim().toLowerCase();
@@ -99,6 +97,8 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
         (u.bio && u.bio.toLowerCase().includes(q))
     );
   }, [usersList, searchQuery]);
+
+  if (!visible || !userId) return null;
 
   // Handle follow / unfollow toggle
   const handleToggleFollowItem = async (targetId: string) => {
