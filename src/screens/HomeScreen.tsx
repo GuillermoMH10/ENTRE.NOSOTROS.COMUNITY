@@ -17,6 +17,7 @@ import { CreatePostScreen } from './CreatePostScreen';
 import { CommentsScreen } from './CommentsScreen';
 import { EditPostModal } from '../components/Feed/EditPostModal';
 import { PostOptionsModal } from '../components/Feed/PostOptionsModal';
+import { MoreMenuModal } from '../components/Navigation/MoreMenuModal';
 import { SearchScreen } from './SearchScreen';
 import { BlogScreen } from './BlogScreen';
 import { PsychologistsScreen } from './PsychologistsScreen';
@@ -38,6 +39,7 @@ export const HomeScreen: React.FC = () => {
 
   const [activeTab, setActiveTab] = useState<TabId>('principal');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -125,6 +127,10 @@ export const HomeScreen: React.FC = () => {
 
   // Tab navigation handler
   const handleTabPress = (tabId: TabId) => {
+    if (tabId === 'mas') {
+      setIsMoreMenuOpen(true);
+      return;
+    }
     setIsPsychologistsOpen(false);
     setIsRulesOpen(false);
     setActiveTab(tabId);
@@ -180,7 +186,13 @@ export const HomeScreen: React.FC = () => {
             ]}
           >
             <AppHeader
-              onOpenMenu={handleOpenMenu}
+              onCreatePostPress={() => {
+                if (!user) {
+                  setIsAuthOpen(true);
+                } else {
+                  setIsCreateOpen(true);
+                }
+              }}
               onJoinPress={handleOpenAuth}
               onProfilePress={handleOpenProfile}
             />
@@ -281,6 +293,22 @@ export const HomeScreen: React.FC = () => {
             onTabPress={handleTabPress}
           />
         </Animated.View>
+
+        {/* Upward Sliding "Más..." Bottom Sheet Menu */}
+        <MoreMenuModal
+          visible={isMoreMenuOpen}
+          onClose={() => setIsMoreMenuOpen(false)}
+          onOpenProfile={handleOpenProfile}
+          onOpenPsychologists={handleOpenPsychologists}
+          onOpenRules={handleOpenRules}
+          onOpenSupport={() => {
+            setIsMoreMenuOpen(false);
+            setIsPsychologistsOpen(false);
+            setIsRulesOpen(false);
+            setActiveTab('ayuda');
+          }}
+          onRequireAuth={handleOpenAuth}
+        />
 
         {/* Sliding Hamburger Drawer */}
         <HamburgerMenu

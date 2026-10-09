@@ -5,7 +5,7 @@ import { colors } from '../../theme/colors';
 
 import { AnimaMascot } from '../Anima/AnimaMascot';
 
-export type TabId = 'principal' | 'blog' | 'anima' | 'buscar' | 'crear' | 'ayuda';
+export type TabId = 'principal' | 'blog' | 'anima' | 'buscar' | 'crear' | 'ayuda' | 'mas';
 
 interface TabItem {
   id: TabId;
@@ -39,7 +39,7 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({
     },
     {
       id: 'anima',
-      label: 'ANIMA',
+      label: 'Anima',
       isMascot: true,
     },
     {
@@ -49,16 +49,10 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({
       activeIcon: 'search',
     },
     {
-      id: 'crear',
-      label: 'Crear',
-      icon: 'add-circle-outline',
-      activeIcon: 'add-circle',
-    },
-    {
-      id: 'ayuda',
-      label: '¿Ayuda?',
-      icon: 'heart-circle-outline',
-      activeIcon: 'heart-circle',
+      id: 'mas',
+      label: 'Más...',
+      icon: 'ellipsis-horizontal-circle-outline',
+      activeIcon: 'ellipsis-horizontal-circle',
     },
   ];
 
@@ -77,7 +71,7 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({
               <View style={styles.iconContainer}>
                 {tab.isMascot ? (
                   <View style={[styles.mascotTabWrapper, isCurrentActive && styles.mascotTabWrapperActive]}>
-                    <AnimaMascot size="xs" animated={false} />
+                    <AnimaMascot size="sm" variant="profile" animated={false} />
                   </View>
                 ) : (
                   <Ionicons
@@ -121,7 +115,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    height: 46,
+    height: 48,
   },
   tabButton: {
     flex: 1,
@@ -132,7 +126,7 @@ const styles = StyleSheet.create({
   iconContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    height: 24,
+    height: 28,
   },
   tabLabel: {
     fontSize: 10.5,
@@ -148,9 +142,9 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   mascotTabWrapper: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },

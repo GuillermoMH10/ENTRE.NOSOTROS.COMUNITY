@@ -6,12 +6,14 @@ import { spacing } from '../../theme/spacing';
 import { useAuth } from '../../context/AuthContext';
 
 interface AppHeaderProps {
-  onOpenMenu: () => void;
+  onCreatePostPress?: () => void;
+  onOpenMenu?: () => void;
   onJoinPress: () => void;
   onProfilePress: () => void;
 }
 
 export const AppHeader: React.FC<AppHeaderProps> = ({
+  onCreatePostPress,
   onOpenMenu,
   onJoinPress,
   onProfilePress,
@@ -31,16 +33,16 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           />
         </View>
 
-        {/* Left: Hamburger Menu Button (No background) */}
+        {/* Left: Create Post Button (Plus icon) */}
         <TouchableOpacity
-          style={styles.hamburgerButton}
-          onPress={onOpenMenu}
-          activeOpacity={0.6}
+          style={styles.createPostButton}
+          onPress={onCreatePostPress || onOpenMenu}
+          activeOpacity={0.7}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          accessibilityLabel="Abrir menú de navegación"
+          accessibilityLabel="Crear publicación"
           accessibilityRole="button"
         >
-          <Ionicons name="menu-outline" size={30} color={colors.coffeeDark} />
+          <Ionicons name="add-circle-outline" size={30} color={colors.coffeePrimary} />
         </TouchableOpacity>
 
         {/* Right: Circular Avatar with Profile Identifier Badge or Unirse Button */}
@@ -115,7 +117,7 @@ const styles = StyleSheet.create({
     width: 185,
     height: 46,
   },
-  hamburgerButton: {
+  createPostButton: {
     width: 38,
     height: 38,
     alignItems: 'flex-start',

@@ -261,40 +261,10 @@ export const AnimaScreen: React.FC<AnimaScreenProps> = ({
 
   return (
     <View style={styles.container}>
-      {/* Top Fixed Header with Hamburger on Left, App Logo centered, and Right Actions (Restart Chat + User Profile) */}
+      {/* Top Fixed Header with Profile on Left, Logo centered, and Restart Chat on Right */}
       <View style={[styles.header, { paddingTop: contentPaddingTop + (Platform.OS === 'ios' ? 6 : 8) }]}>
-        {/* Left: Hamburger Menu Button */}
-        <TouchableOpacity
-          style={styles.headerMenuBtn}
-          onPress={onOpenMenu}
-          activeOpacity={0.6}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        >
-          <Ionicons name="menu-outline" size={28} color={colors.coffeeDark} />
-        </TouchableOpacity>
-
-        {/* Center: App Logo */}
-        <View style={styles.headerCenter} pointerEvents="none">
-          <Image
-            source={require('../../assets/logoappE.png')}
-            style={styles.logo}
-            resizeMode="contain"
-            accessibilityLabel="Logo Entre Nosotros"
-          />
-        </View>
-
-        {/* Right: Restart Chat + User Profile Button */}
-        <View style={styles.headerRightActions}>
-          <TouchableOpacity
-            style={styles.headerActionBtn}
-            onPress={handleClearHistory}
-            activeOpacity={0.7}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            accessibilityLabel="Reiniciar conversación"
-          >
-            <Ionicons name="refresh-outline" size={22} color={colors.coffeeDark} />
-          </TouchableOpacity>
-
+        {/* Left: User Profile Avatar or Unirse Button */}
+        <View style={styles.headerLeftAction}>
           {user ? (
             <TouchableOpacity
               style={styles.profileAvatarButton}
@@ -323,6 +293,29 @@ export const AnimaScreen: React.FC<AnimaScreenProps> = ({
               <Text style={styles.joinButtonText}>Unirse</Text>
             </TouchableOpacity>
           )}
+        </View>
+
+        {/* Center: App Logo */}
+        <View style={styles.headerCenter} pointerEvents="none">
+          <Image
+            source={require('../../assets/logoappE.png')}
+            style={styles.logo}
+            resizeMode="contain"
+            accessibilityLabel="Logo Entre Nosotros"
+          />
+        </View>
+
+        {/* Right: Restart Chat Button */}
+        <View style={styles.headerRightActions}>
+          <TouchableOpacity
+            style={styles.headerActionBtn}
+            onPress={handleClearHistory}
+            activeOpacity={0.7}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityLabel="Reiniciar conversación"
+          >
+            <Ionicons name="refresh-outline" size={22} color={colors.coffeeDark} />
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -471,12 +464,11 @@ const styles = StyleSheet.create({
     zIndex: 10,
     height: 56,
   },
-  headerMenuBtn: {
-    width: 38,
-    height: 38,
+  headerLeftAction: {
+    zIndex: 2,
+    minWidth: 38,
     alignItems: 'flex-start',
     justifyContent: 'center',
-    zIndex: 2,
   },
   headerCenter: {
     position: 'absolute',
