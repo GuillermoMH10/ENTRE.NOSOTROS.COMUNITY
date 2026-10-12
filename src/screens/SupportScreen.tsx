@@ -27,6 +27,7 @@ interface SupportScreenProps {
   onOpenCreatePost: () => void;
   contentPaddingTop?: number;
   contentPaddingBottom?: number;
+  hideAppHeader?: boolean;
 }
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -41,6 +42,7 @@ export const SupportScreen: React.FC<SupportScreenProps> = ({
   onOpenCreatePost,
   contentPaddingTop = 0,
   contentPaddingBottom = 80,
+  hideAppHeader = false,
 }) => {
   const { user } = useAuth();
   const [currentMessage, setCurrentMessage] = useState<SupportMessage>(getRandomSupportMessage());
@@ -121,11 +123,13 @@ export const SupportScreen: React.FC<SupportScreenProps> = ({
   return (
     <View style={styles.container}>
       {/* Top App Header */}
-      <AppHeader
-        onOpenMenu={onOpenMenu}
-        onJoinPress={onJoinPress}
-        onProfilePress={onProfilePress}
-      />
+      {!hideAppHeader && (
+        <AppHeader
+          onOpenMenu={onOpenMenu}
+          onJoinPress={onJoinPress}
+          onProfilePress={onProfilePress}
+        />
+      )}
 
       <ScrollView
         style={styles.scrollBody}

@@ -12,6 +12,8 @@ import {
   RefreshControl,
   Linking,
   Alert,
+  Platform,
+  useWindowDimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Psychologist } from '../types/psychologist';
@@ -26,6 +28,7 @@ interface PsychologistsScreenProps {
   onProfilePress: () => void;
   contentPaddingTop?: number;
   contentPaddingBottom?: number;
+  hideAppHeader?: boolean;
 }
 
 type ModalidadFilter = 'todos' | 'linea' | 'presencial';
@@ -36,7 +39,11 @@ export const PsychologistsScreen: React.FC<PsychologistsScreenProps> = ({
   onProfilePress,
   contentPaddingTop = 0,
   contentPaddingBottom = 80,
+  hideAppHeader = false,
 }) => {
+  const { width: windowWidth } = useWindowDimensions();
+  const isDesktop = Platform.OS === 'web' && windowWidth >= 1024;
+  const numColumns = isDesktop ? 2 : 1;
   const [psychologists, setPsychologists] = useState<Psychologist[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -168,7 +175,7 @@ export const PsychologistsScreen: React.FC<PsychologistsScreenProps> = ({
     const remainingTopicsCount = (item.temas || []).length - 3;
 
     return (
-      <View style={styles.cardContainer}>
+      <View style={[styles.cardContainer, isDesktop && { flex: 1, minWidth: 260 }]}>
         <View style={styles.cardTopContent}>
           {/* Left Column: Circular Avatar with verified badge */}
           <TouchableOpacity
@@ -285,14 +292,29 @@ export const PsychologistsScreen: React.FC<PsychologistsScreenProps> = ({
     );
   };
 
+  if (isDesktop && selectedPsico) {
+    return (
+      <View style={styles.container}>
+        <PsychologistDetailModal
+          visible={true}
+          psychologist={selectedPsico}
+          onClose={() => setSelectedPsico(null)}
+          embedded={true}
+        />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       {/* App Header */}
-      <AppHeader
-        onOpenMenu={onOpenMenu}
-        onJoinPress={onJoinPress}
-        onProfilePress={onProfilePress}
-      />
+      {!hideAppHeader && (
+        <AppHeader
+          onOpenMenu={onOpenMenu}
+          onJoinPress={onJoinPress}
+          onProfilePress={onProfilePress}
+        />
+      )}
 
       {/* Fixed Header, Search & Filter Section (Keeps TextInput from losing focus) */}
       <View style={[styles.headerContainer, { paddingTop: contentPaddingTop + 4 }]}>
@@ -470,9 +492,12 @@ export const PsychologistsScreen: React.FC<PsychologistsScreenProps> = ({
         </View>
       ) : (
         <FlatList
+          key={isDesktop ? 'desktop-grid-2' : 'mobile-list-1'}
           data={filteredPsychologists}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
+          numColumns={numColumns}
+          columnWrapperStyle={isDesktop ? styles.desktopColumnWrapper : undefined}
           contentContainerStyle={[
             styles.listContent,
             {
@@ -675,6 +700,9 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.coffeePrimary,
   },
+  desktopColumnWrapper: {
+    gap: 12,
+  },
   /* Card Container */
   cardContainer: {
     backgroundColor: colors.white,
@@ -710,6 +738,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: colors.coffeePrimary,
     backgroundColor: colors.surface,
+    ...(Platform.OS === 'web' ? ({ objectFit: 'cover' } as any) : {}),
   },
   avatarVerifiedBadge: {
     position: 'absolute',

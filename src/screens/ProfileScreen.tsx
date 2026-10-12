@@ -46,6 +46,7 @@ interface ProfileScreenProps {
   onRequireAuth?: () => void;
   onOpenPsychologists?: () => void;
   onOpenCreatePost?: () => void;
+  embedded?: boolean;
 }
 
 type ProfileTab = 'posts' | 'saved' | 'reacted' | null;
@@ -58,6 +59,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   onRequireAuth,
   onOpenPsychologists,
   onOpenCreatePost,
+  embedded = false,
 }) => {
   const { user, logout, updateUserProfile } = useAuth();
 
@@ -292,10 +294,9 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
       ? reactedPosts
       : [];
 
-  return (
-    <Modal visible={visible} animationType="slide" onRequestClose={onClose} statusBarTranslucent>
-      <View style={styles.rootContainer}>
-        {/* Full-screen Image Viewer */}
+  const profileBody = (
+    <View style={styles.rootContainer}>
+      {/* Full-screen Image Viewer */}
         <ImageViewerModal
           visible={viewerVisible}
           images={viewerImages}
@@ -853,9 +854,19 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           onRequireAuth={() => onRequireAuth?.()}
         />
       </View>
-    </Modal>
-  );
-};
+    );
+
+    if (embedded) {
+      if (!visible) return null;
+      return profileBody;
+    }
+
+    return (
+      <Modal visible={visible} animationType="slide" onRequestClose={onClose} statusBarTranslucent>
+        {profileBody}
+      </Modal>
+    );
+  };
 
 const styles = StyleSheet.create({
   rootContainer: {
@@ -867,7 +878,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingTop: Platform.OS === 'android' ? 32 : 44,
+    paddingTop: Platform.OS === 'web' ? 12 : (Platform.OS === 'android' ? 32 : 44),
     paddingBottom: 8,
     borderBottomWidth: 1,
     borderBottomColor: '#F4EFEB',
@@ -899,11 +910,12 @@ const styles = StyleSheet.create({
   // Cover Banner
   coverBanner: {
     width: '100%',
-    height: 140,
+    height: 160,
     backgroundColor: '#1C1614',
     position: 'relative',
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
   coverImageTouchable: {
     width: '100%',
@@ -912,6 +924,7 @@ const styles = StyleSheet.create({
   coverImage: {
     width: '100%',
     height: '100%',
+    ...(Platform.OS === 'web' ? ({ objectFit: 'cover' } as any) : {}),
   },
   coverPlaceholder: {
     alignItems: 'center',
@@ -970,6 +983,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 6,
     elevation: 5,
+    ...(Platform.OS === 'web' ? ({ objectFit: 'cover' } as any) : {}),
   },
   avatarEditBadge: {
     position: 'absolute',

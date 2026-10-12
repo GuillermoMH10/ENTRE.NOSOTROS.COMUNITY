@@ -27,6 +27,7 @@ interface BlogScreenProps {
   onOpenPsychologists?: () => void;
   contentPaddingTop?: number;
   contentPaddingBottom?: number;
+  hideAppHeader?: boolean;
 }
 
 interface TopicItem {
@@ -58,6 +59,7 @@ export const BlogScreen: React.FC<BlogScreenProps> = ({
   onOpenPsychologists,
   contentPaddingTop = 0,
   contentPaddingBottom = 80,
+  hideAppHeader = false,
 }) => {
   // Current month index (0 = Enero, ... 11 = Diciembre)
   const currentMonthIndex = new Date().getMonth();
@@ -108,11 +110,13 @@ export const BlogScreen: React.FC<BlogScreenProps> = ({
   return (
     <View style={styles.container}>
       {/* Top Header Bar identical to Principal */}
-      <AppHeader
-        onOpenMenu={onOpenMenu}
-        onJoinPress={onJoinPress}
-        onProfilePress={onProfilePress}
-      />
+      {!hideAppHeader && (
+        <AppHeader
+          onOpenMenu={onOpenMenu}
+          onJoinPress={onJoinPress}
+          onProfilePress={onProfilePress}
+        />
+      )}
 
       {/* Main Scroll Content */}
       <ScrollView

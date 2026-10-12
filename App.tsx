@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, View, Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
@@ -12,6 +12,22 @@ import { colors } from './src/theme/colors';
 
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
+
+  // Register PWA Service Worker on Web browsers
+  useEffect(() => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker
+          .register('/service-worker.js')
+          .then((registration) => {
+            console.log('Entre Nosotros PWA ServiceWorker registrado:', registration.scope);
+          })
+          .catch((error) => {
+            console.log('Entre Nosotros PWA ServiceWorker registro falló:', error);
+          });
+      });
+    }
+  }, []);
 
   // Load vector icon fonts directly from local assets with fallbacks for standalone Android APKs
   const [fontsLoaded] = useFonts({

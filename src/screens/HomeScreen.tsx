@@ -6,9 +6,11 @@ import {
   StatusBar,
   Platform,
   Animated,
+  useWindowDimensions,
 } from 'react-native';
 import { AppHeader } from '../components/Header/AppHeader';
 import { BottomTabBar, TabId } from '../components/Navigation/BottomTabBar';
+import { DesktopWebLayout } from '../components/Desktop/DesktopWebLayout';
 import { FeedList } from '../components/Feed/FeedList';
 import { HamburgerMenu } from '../components/Drawer/HamburgerMenu';
 import { AuthScreen } from './AuthScreen';
@@ -35,7 +37,9 @@ const HEADER_HEIGHT = 56;
 const TABBAR_HEIGHT = 64;
 
 export const HomeScreen: React.FC = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const { width: windowWidth } = useWindowDimensions();
+  const isDesktopWeb = Platform.OS === 'web' && windowWidth >= 1024;
 
   const [activeTab, setActiveTab] = useState<TabId>('principal');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -170,6 +174,90 @@ export const HomeScreen: React.FC = () => {
     }
   };
 
+  // -------------------------------------------------------------
+  // DESKTOP & LAPTOP WEB VIEW (width >= 1024px)
+  // Left: Navigation & Search | Center: Content | Right: 4 Persistent Widgets
+  // -------------------------------------------------------------
+  if (isDesktopWeb) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.white }}>
+        <DesktopWebLayout
+          user={user}
+          activeTab={activeTab}
+          onTabPress={handleTabPress}
+          onOpenProfile={handleOpenProfile}
+          onOpenPsychologists={handleOpenPsychologists}
+          onOpenRules={handleOpenRules}
+          onOpenSupport={() => {
+            setIsPsychologistsOpen(false);
+            setIsRulesOpen(false);
+            setActiveTab('ayuda');
+          }}
+          onOpenCreatePost={() => {
+            if (!user) {
+              setIsAuthOpen(true);
+            } else {
+              setIsCreateOpen(true);
+            }
+          }}
+          onRequireAuth={handleOpenAuth}
+          onCommentPress={handleCommentPress}
+          onOptionsPress={(post) => setSelectedPostForOptions(post)}
+          onEditPress={(post) => setSelectedPostForEdit(post)}
+          onDeletePress={handleDeletePost}
+          onUserPress={handleOpenUserProfile}
+          onOpenMonthDetail={(monthIdx) => {
+            setSelectedMonthIndex(monthIdx);
+            setIsMonthModalOpen(true);
+          }}
+          onLogout={logout}
+          viewingUserProfile={selectedUserForProfile}
+          onCloseUserProfile={() => setSelectedUserForProfile(null)}
+        />
+
+        {/* Global Modals for Desktop Web */}
+        <AuthScreen visible={isAuthOpen} onClose={handleCloseAuth} />
+
+        <CreatePostScreen
+          visible={isCreateOpen}
+          onClose={() => setIsCreateOpen(false)}
+          onPostCreated={handlePostCreated}
+        />
+
+        <CommentsScreen
+          visible={!!selectedPostForComments}
+          post={selectedPostForComments}
+          onClose={handleCloseComments}
+          onRequireAuth={handleOpenAuth}
+        />
+
+        <PostOptionsModal
+          visible={selectedPostForOptions !== null}
+          post={selectedPostForOptions}
+          currentUserId={user?.id}
+          onClose={() => setSelectedPostForOptions(null)}
+          onEdit={(post) => setSelectedPostForEdit(post)}
+          onDelete={handleDeletePost}
+        />
+
+        <EditPostModal
+          visible={selectedPostForEdit !== null}
+          post={selectedPostForEdit}
+          onClose={() => setSelectedPostForEdit(null)}
+        />
+
+        <MonthDetailModal
+          visible={isMonthModalOpen}
+          initialMonthIndex={selectedMonthIndex}
+          onClose={() => setIsMonthModalOpen(false)}
+        />
+      </View>
+    );
+  }
+
+  // -------------------------------------------------------------
+  // MOBILE VIEW (100% Intact & Untouched)
+  // -------------------------------------------------------------
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar

@@ -18,6 +18,7 @@ interface RulesScreenProps {
   onOpenPsychologists?: () => void;
   contentPaddingTop?: number;
   contentPaddingBottom?: number;
+  hideAppHeader?: boolean;
 }
 
 interface RuleData {
@@ -86,6 +87,7 @@ export const RulesScreen: React.FC<RulesScreenProps> = ({
   onOpenPsychologists,
   contentPaddingTop = 0,
   contentPaddingBottom = 80,
+  hideAppHeader = false,
 }) => {
   const handleCallEmergency = () => {
     Linking.openURL('tel:911').catch(() => {});
@@ -94,11 +96,13 @@ export const RulesScreen: React.FC<RulesScreenProps> = ({
   return (
     <View style={styles.container}>
       {/* Consistent App Header */}
-      <AppHeader
-        onOpenMenu={onOpenMenu}
-        onJoinPress={onJoinPress}
-        onProfilePress={onProfilePress}
-      />
+      {!hideAppHeader && (
+        <AppHeader
+          onOpenMenu={onOpenMenu}
+          onJoinPress={onJoinPress}
+          onProfilePress={onProfilePress}
+        />
+      )}
 
       <ScrollView
         style={styles.scrollArea}

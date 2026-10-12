@@ -30,6 +30,7 @@ interface UserProfileScreenProps {
   onClose: () => void;
   onCommentPress: (post: Post) => void;
   onRequireAuth: () => void;
+  embedded?: boolean;
 }
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -42,6 +43,7 @@ export const UserProfileScreen: React.FC<UserProfileScreenProps> = ({
   onClose,
   onCommentPress,
   onRequireAuth,
+  embedded = false,
 }) => {
   const { user } = useAuth();
   const [profileData, setProfileData] = useState<any | null>(null);
@@ -146,32 +148,31 @@ export const UserProfileScreen: React.FC<UserProfileScreenProps> = ({
     }
   };
 
-  return (
-    <Modal visible={visible} animationType="slide" onRequestClose={onClose} statusBarTranslucent>
-      <View style={styles.rootContainer}>
-        {/* Full-screen Image Viewer */}
-        <ImageViewerModal
-          visible={viewerVisible}
-          images={viewerImages}
-          initialIndex={viewerIndex}
-          onClose={() => setViewerVisible(false)}
-        />
+  const profileContent = (
+    <View style={styles.rootContainer}>
+      {/* Full-screen Image Viewer */}
+      <ImageViewerModal
+        visible={viewerVisible}
+        images={viewerImages}
+        initialIndex={viewerIndex}
+        onClose={() => setViewerVisible(false)}
+      />
 
-        {/* Top Sticky Navigation Bar */}
-        <View style={styles.navBar}>
-          <TouchableOpacity
-            onPress={onClose}
-            style={styles.navBackBtn}
-            activeOpacity={0.6}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <Ionicons name="arrow-back" size={20} color={colors.coffeeDark} />
-          </TouchableOpacity>
-          <Text style={styles.navTitle}>@{username}</Text>
-          <View style={{ width: 30 }} />
-        </View>
+      {/* Top Sticky Navigation Bar */}
+      <View style={[styles.navBar, embedded && styles.navBarEmbedded]}>
+        <TouchableOpacity
+          onPress={onClose}
+          style={styles.navBackBtn}
+          activeOpacity={0.6}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <Ionicons name="arrow-back" size={20} color={colors.coffeeDark} />
+        </TouchableOpacity>
+        <Text style={styles.navTitle}>@{username}</Text>
+        <View style={{ width: 30 }} />
+      </View>
 
-        <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollBody}>
+      <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollBody}>
           {/* 1. Cover Photo Banner */}
           <View style={styles.coverBanner}>
             {coverUrl ? (
@@ -334,11 +335,21 @@ export const UserProfileScreen: React.FC<UserProfileScreenProps> = ({
           onClose={() => setSelectedSubUser(null)}
           onCommentPress={onCommentPress}
           onRequireAuth={onRequireAuth}
+          embedded={embedded}
         />
       </View>
-    </Modal>
-  );
-};
+    );
+
+    if (embedded) {
+      return profileContent;
+    }
+
+    return (
+      <Modal visible={visible} animationType="slide" onRequestClose={onClose} statusBarTranslucent>
+        {profileContent}
+      </Modal>
+    );
+  };
 
 const styles = StyleSheet.create({
   rootContainer: {
@@ -350,12 +361,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingTop: Platform.OS === 'android' ? 32 : 44,
+    paddingTop: Platform.OS === 'web' ? 12 : (Platform.OS === 'android' ? 32 : 44),
     paddingBottom: 8,
     borderBottomWidth: 1,
     borderBottomColor: colors.borderLight,
     backgroundColor: colors.white,
     zIndex: 10,
+  },
+  navBarEmbedded: {
+    paddingTop: 12,
   },
   navBackBtn: {
     width: 30,
@@ -375,11 +389,12 @@ const styles = StyleSheet.create({
   },
   coverBanner: {
     width: '100%',
-    height: 140,
-    backgroundColor: colors.surfaceSoft,
+    height: 160,
+    backgroundColor: '#D1DCE5',
     position: 'relative',
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
   coverTouchable: {
     width: '100%',
@@ -388,6 +403,7 @@ const styles = StyleSheet.create({
   coverImage: {
     width: '100%',
     height: '100%',
+    ...(Platform.OS === 'web' ? ({ objectFit: 'cover' } as any) : {}),
   },
   coverPlaceholder: {
     alignItems: 'center',
@@ -403,6 +419,7 @@ const styles = StyleSheet.create({
   avatarContainer: {
     marginTop: -44,
     marginBottom: 10,
+    zIndex: 2,
   },
   avatarImage: {
     width: 88,
@@ -411,6 +428,7 @@ const styles = StyleSheet.create({
     borderWidth: 3.5,
     borderColor: colors.white,
     backgroundColor: colors.surface,
+    ...(Platform.OS === 'web' ? ({ objectFit: 'cover' } as any) : {}),
   },
   usernameRow: {
     alignItems: 'center',

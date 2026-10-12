@@ -25,6 +25,7 @@ interface PsychologistDetailModalProps {
   visible: boolean;
   psychologist: Psychologist | null;
   onClose: () => void;
+  embedded?: boolean;
 }
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -33,6 +34,7 @@ export const PsychologistDetailModal: React.FC<PsychologistDetailModalProps> = (
   visible,
   psychologist,
   onClose,
+  embedded = false,
 }) => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoadingPosts, setIsLoadingPosts] = useState(false);
@@ -116,16 +118,10 @@ export const PsychologistDetailModal: React.FC<PsychologistDetailModalProps> = (
     });
   };
 
-  return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      presentationStyle="fullScreen"
-      onRequestClose={onClose}
-    >
-      <View style={styles.rootContainer}>
-        {/* Top Sticky Navigation Bar */}
-        <SafeAreaView style={styles.navBarSafeArea}>
+  const modalContent = (
+    <View style={styles.rootContainer}>
+      {/* Top Sticky Navigation Bar */}
+      <SafeAreaView style={styles.navBarSafeArea}>
           <View style={styles.navBar}>
             <TouchableOpacity
               onPress={onClose}
@@ -377,9 +373,23 @@ export const PsychologistDetailModal: React.FC<PsychologistDetailModalProps> = (
           <View style={{ height: 40 }} />
         </ScrollView>
       </View>
-    </Modal>
-  );
-};
+    );
+
+    if (embedded) {
+      return modalContent;
+    }
+
+    return (
+      <Modal
+        visible={visible}
+        animationType="slide"
+        presentationStyle="fullScreen"
+        onRequestClose={onClose}
+      >
+        {modalContent}
+      </Modal>
+    );
+  };
 
 const styles = StyleSheet.create({
   rootContainer: {
@@ -390,6 +400,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderBottomWidth: 1,
     borderBottomColor: colors.borderLight,
+    ...(Platform.OS === 'web' ? { paddingTop: 0 } : {}),
   },
   navBar: {
     height: 52,
@@ -425,13 +436,15 @@ const styles = StyleSheet.create({
   /* 1. Cover Photo */
   coverBanner: {
     width: '100%',
-    height: 160,
+    height: 180,
     position: 'relative',
     backgroundColor: colors.surface,
+    overflow: 'hidden',
   },
   coverImage: {
     width: '100%',
     height: '100%',
+    ...(Platform.OS === 'web' ? ({ objectFit: 'cover' } as any) : {}),
   },
   coverOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -465,6 +478,7 @@ const styles = StyleSheet.create({
     borderWidth: 3.5,
     borderColor: colors.white,
     backgroundColor: colors.surface,
+    ...(Platform.OS === 'web' ? ({ objectFit: 'cover' } as any) : {}),
   },
   avatarVerifiedBadge: {
     position: 'absolute',

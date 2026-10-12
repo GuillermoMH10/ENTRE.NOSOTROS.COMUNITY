@@ -1,0 +1,30 @@
+{
+  "short_name": "EntreNosotros",
+  "name": "Entre Nosotros - Apoyo Emocional",
+  "description": "Una comunidad de apoyo emocional y acompañamiento para ti.",
+  "icons": [
+    {
+      "src": "/assets/icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/assets/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/adaptive-icon.png",
+      "sizes": "1024x1024",
+      "type": "image/png"
+    }
+  ],
+  "start_url": "/",
+  "scope": "/",
+  "background_color": "#FAF7F5",
+  "theme_color": "#355971",
+  "display": "standalone",
+  "orientation": "any",
+  "categories": ["lifestyle", "health", "social"]
+}

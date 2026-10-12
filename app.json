@@ -29,7 +29,16 @@
     },
     "web": {
       "favicon": "./assets/icon.png",
-      "bundler": "metro"
+      "bundler": "metro",
+      "name": "Entre Nosotros",
+      "shortName": "EntreNosotros",
+      "description": "Una comunidad de apoyo emocional y acompañamiento para ti.",
+      "backgroundColor": "#FAF7F5",
+      "themeColor": "#355971",
+      "display": "standalone",
+      "orientation": "any",
+      "startUrl": "/",
+      "scope": "/"
     },
     "plugins": [
       [
