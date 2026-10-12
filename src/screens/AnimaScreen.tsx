@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { AnimaMascot } from '../components/Anima/AnimaMascot';
+import { AnimaVideoSplash } from '../components/Anima/AnimaVideoSplash';
 import {
   AnimaMessage,
   loadAnimaHistory,
@@ -61,6 +62,7 @@ export const AnimaScreen: React.FC<AnimaScreenProps> = ({
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [showCrisisHelp, setShowCrisisHelp] = useState(false);
   const [currentPhrase, setCurrentPhrase] = useState<string>(getRandomAnimaPhrase());
+  const [showSplash, setShowSplash] = useState(true);
 
   const flatListRef = useRef<FlatList>(null);
 
@@ -261,6 +263,11 @@ export const AnimaScreen: React.FC<AnimaScreenProps> = ({
 
   return (
     <View style={styles.container}>
+      {/* Centered Video Splash on Screen Open */}
+      {showSplash && (
+        <AnimaVideoSplash onFinish={() => setShowSplash(false)} />
+      )}
+
       {/* Top Fixed Header with Profile on Left, Logo centered, and Restart Chat on Right */}
       <View style={[styles.header, { paddingTop: contentPaddingTop + (Platform.OS === 'ios' ? 6 : 8) }]}>
         {/* Left: User Profile Avatar or Unirse Button */}
