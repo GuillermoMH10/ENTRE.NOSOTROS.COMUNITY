@@ -225,7 +225,6 @@ export const HomeScreen: React.FC = () => {
             onEditPress={(post) => setSelectedPostForEdit(post)}
             onDeletePress={handleDeletePost}
             onUserPress={handleOpenUserProfile}
-            onOpenMenu={handleOpenMenu}
             contentPaddingTop={10}
             contentPaddingBottom={TABBAR_HEIGHT + (Platform.OS === 'ios' ? 14 : 4)}
           />

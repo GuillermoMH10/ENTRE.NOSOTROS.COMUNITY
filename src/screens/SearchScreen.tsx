@@ -189,17 +189,6 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
       {/* Search Bar Header */}
       <View style={[styles.headerContainer, { paddingTop: contentPaddingTop }]}>
         <View style={styles.searchBarRow}>
-          {onOpenMenu ? (
-            <TouchableOpacity
-              onPress={onOpenMenu}
-              style={styles.menuButton}
-              activeOpacity={0.6}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            >
-              <Ionicons name="menu-outline" size={26} color={colors.coffeeDark} />
-            </TouchableOpacity>
-          ) : null}
-
           <View style={styles.searchBarWrapper}>
             <Ionicons name="search" size={18} color={colors.coffeePrimary} style={styles.searchIcon} />
             <TextInput
@@ -535,7 +524,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0EBE6',
+    borderBottomColor: '#E1EAEF',
     zIndex: 10,
   },
   searchBarRow: {
