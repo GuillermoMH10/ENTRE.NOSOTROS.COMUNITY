@@ -52,15 +52,24 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
 
   React.useEffect(() => {
     if (visible) {
-      if (startMode === 'result' && initialResult) {
+      const isMatchingUser =
+        !initialResult?.userId ||
+        initialResult.userId === (userId || 'anonymous') ||
+        (userId && initialResult.userId === userId);
+
+      if (startMode === 'result' && initialResult && isMatchingUser) {
         setResult(initialResult);
       } else {
         setResult(null);
         setCurrentIndex(0);
         setAnswers({});
       }
+    } else {
+      setResult(null);
+      setCurrentIndex(0);
+      setAnswers({});
     }
-  }, [visible, startMode, initialResult]);
+  }, [visible, startMode, initialResult, userId]);
 
   if (!visible) return null;
 
@@ -360,8 +369,8 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
                   onOpenCreatePost();
                 }}
               >
-                <Ionicons name="heart-half-outline" size={17} color={colors.coffeeDark} />
-                <Text style={styles.secondaryActionBtnText}>Desahogarme en la comunidad</Text>
+                <Ionicons name="chatbubble-ellipses-outline" size={17} color={colors.coffeeDark} />
+                <Text style={styles.secondaryActionBtnText}>TU VOZ TIENE UN LUGAR AQUÍ</Text>
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.tertiaryActionBtn} activeOpacity={0.7} onPress={handleRestart}>

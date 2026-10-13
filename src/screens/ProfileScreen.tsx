@@ -124,14 +124,17 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     return () => unsubscribe();
   }, [visible, user?.id]);
 
-  // Fetch latest psychology test result
+  // Fetch latest psychology test result strictly for this user
   useEffect(() => {
-    if (visible && user) {
+    if (visible && user?.id) {
+      setLatestTestResult(null);
       getLatestTestResult(user.id).then((res) => {
-        setLatestTestResult(res);
+        setLatestTestResult(res || null);
       });
+    } else {
+      setLatestTestResult(null);
     }
-  }, [visible, user]);
+  }, [visible, user?.id]);
 
   // Real-time subscriptions based on active tab
   useEffect(() => {
@@ -721,7 +724,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                   </Text>
                   <Text style={styles.emptyTabSubtitle}>
                     {selectedTab === 'posts'
-                      ? 'Comparte tus pensamientos y desahógate cuando lo necesites.'
+                      ? 'Comparte tus pensamientos con la comunidad cuando lo necesites.'
                       : selectedTab === 'saved'
                       ? 'Guarda publicaciones para verlas más tarde.'
                       : 'Expresa tu apoyo a la comunidad reaccionando a publicaciones.'}

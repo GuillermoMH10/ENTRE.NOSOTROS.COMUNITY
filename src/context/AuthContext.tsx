@@ -14,6 +14,7 @@ import { hashPassword } from '../utils/crypto';
 import { generateRandomAvatar } from '../utils/avatar';
 import { UserProfile, AuthContextType } from '../types/auth';
 import { syncUserAvatarInPosts } from '../services/postsService';
+import { clearGuestTestResult } from '../services/psychologyTestService';
 
 const STORAGE_KEY = '@entre_nosotros_session_v1';
 
@@ -220,6 +221,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async () => {
     try {
       await AsyncStorage.removeItem(STORAGE_KEY);
+      await clearGuestTestResult().catch(() => {});
       setUser(null);
     } catch (error) {
       console.error('Error al cerrar sesión:', error);

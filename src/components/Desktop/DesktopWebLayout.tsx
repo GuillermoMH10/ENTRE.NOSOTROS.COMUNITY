@@ -339,8 +339,8 @@ export const DesktopWebLayout: React.FC<DesktopWebLayoutProps> = ({
               activeOpacity={0.85}
               onPress={onOpenCreatePost}
             >
-              <Ionicons name="add-circle" size={20} color={colors.white} style={{ marginRight: 8 }} />
-              <Text style={styles.createPostCTAText}>Crear Publicación</Text>
+              <Ionicons name="chatbubbles" size={18} color={colors.white} style={{ marginRight: 8 }} />
+              <Text style={styles.createPostCTAText}>Comparte con la comunidad</Text>
             </TouchableOpacity>
 
             {/* Animated Companion Card (Para que el lado izquierdo no se vea vacío) */}
@@ -460,7 +460,7 @@ export const DesktopWebLayout: React.FC<DesktopWebLayoutProps> = ({
                       onPress={onOpenCreatePost}
                     >
                       <Text style={styles.quickPostPlaceholder}>
-                        ¿Qué estás sintiendo hoy? Desahógate aquí...
+                        Este espacio es para ti...
                       </Text>
                     </TouchableOpacity>
 

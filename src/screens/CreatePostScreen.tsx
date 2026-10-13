@@ -225,7 +225,7 @@ export const CreatePostScreen: React.FC<CreatePostScreenProps> = ({
         <View style={styles.inputWrapper}>
           <TextInput
             style={[styles.contentInput, embedded && styles.contentInputEmbedded]}
-            placeholder="¿Qué estás sintiendo hoy? Desahógate, este es tu espacio..."
+            placeholder="Este espacio es para ti..."
             placeholderTextColor={colors.textMuted}
             multiline
             value={content}

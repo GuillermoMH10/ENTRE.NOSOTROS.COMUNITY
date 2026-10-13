@@ -58,10 +58,11 @@ export const SupportScreen: React.FC<SupportScreenProps> = ({
   const [testModalMode, setTestModalMode] = useState<'questionnaire' | 'result'>('questionnaire');
 
   useEffect(() => {
+    setLatestResult(null);
     getLatestTestResult(user?.id).then((res) => {
-      if (res) setLatestResult(res);
+      setLatestResult(res || null);
     });
-  }, [user]);
+  }, [user?.id]);
 
   const handleNextMessage = () => {
     let nextMsg = getRandomSupportMessage();

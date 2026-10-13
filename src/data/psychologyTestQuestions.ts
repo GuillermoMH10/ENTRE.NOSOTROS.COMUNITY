@@ -244,7 +244,7 @@ export const calculateTestResult = (answers: Record<number, number>, userId?: st
     recommendations.push(
       'Establece límites claros entre tus horarios de trabajo o estudio y tus momentos de descanso.',
       'Dedica al menos 15 minutos al día a respiración consciente o caminatas sin pantallas.',
-      'Usa el espacio de la comunidad para desahogarte cuando sientas que el día fue pesado.'
+      'Usa el espacio de la comunidad para compartir lo que sientes cuando el día fue pesado.'
     );
     suggestedSpecialty = 'Manejo del Estrés y Ansiedad Leve';
   } else if (totalScore <= 31) {
