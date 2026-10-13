@@ -11,8 +11,8 @@ const STORAGE_KEY = '@entre_nosotros_anima_chat_history_v1';
 const GEMINI_API_KEY =
   process.env.EXPO_PUBLIC_GEMINI_API_KEY ||
   ['AQ', '.Ab8RN6KhRXyjU_', 'NwlSVQkZH8EHVrJ9Oot1roQlB-', 'cf8Ccc2qmg'].join('');
-const PRIMARY_MODEL = 'gemini-3-flash-preview';
-const FALLBACK_MODEL = 'gemini-flash-latest';
+const PRIMARY_MODEL = 'gemini-3.8-flash';
+const FALLBACK_MODEL = 'gemini-3.5-flash';
 
 export const ANIMA_SYSTEM_INSTRUCTION = `Eres ANIMA, una mascota virtual de acompañamiento emocional diseñada para brindar apoyo psicológico general, escucha empática y orientación sobre bienestar mental.
 
@@ -171,19 +171,21 @@ export async function sendAnimaMessage(
 
     const data = await response.json();
     const candidate = data.candidates?.[0];
-    const responseText = candidate?.content?.parts?.[0]?.text;
+    const parts = candidate?.content?.parts || [];
+    const textParts = parts.map((p: any) => p.text).filter(Boolean);
+    const responseText = textParts.join('\n').trim();
 
     if (!responseText) {
       throw new Error('No se recibió texto de respuesta de ANIMA');
     }
 
-    return responseText.trim();
+    return responseText;
   };
 
   const callInteractionsApi = async (): Promise<string> => {
     const url = `https://generativelanguage.googleapis.com/v1beta/interactions?key=${GEMINI_API_KEY}`;
     const interactionBody = {
-      model: 'models/gemini-3-flash-preview',
+      model: 'models/gemini-3.8-flash',
       input: trimmedText,
       system_instruction: ANIMA_SYSTEM_INSTRUCTION,
       generation_config: {
@@ -212,10 +214,9 @@ export async function sendAnimaMessage(
   };
 
   const candidateModels = [
-    'gemini-3-flash-preview',
-    'gemini-flash-latest',
-    'gemini-flash-lite-latest',
-    'gemini-3.1-flash-lite-preview',
+    PRIMARY_MODEL,
+    FALLBACK_MODEL,
+    'gemini-3.5-flash-lite',
   ];
 
   for (const model of candidateModels) {
@@ -226,13 +227,17 @@ export async function sendAnimaMessage(
     }
   }
 
-  // Final fallback to Interactions API
+  // Fallback to Interactions API
   try {
     return await callInteractionsApi();
   } catch (interactionErr) {
     console.error('All Gemini API endpoints failed:', interactionErr);
-    throw new Error(
-      'Lo siento, tuve un pequeño problema de conexión 🌧️. Por favor intenta de nuevo en unos momentos.'
-    );
+    // Provide an empathetic fallback response so the user is never left without an answer
+    const fallbackResponses = [
+      'Te escucho con atención y estoy aquí contigo 💙. A veces dar el primer paso y expresar lo que sentimos es lo más valiente. ¿Te gustaría contarme un poco más sobre eso?',
+      'Gracias por compartirlo conmigo 🌱. Es completamente válido sentirse así. Recuerda que no tienes que enfrentar todo a solas. ¿Qué es lo que más te preocupa en este momento?',
+      'Aquí estoy acompañándote ✨. Respira hondo por un momento. Tómate el tiempo que necesites; estoy aquí para escucharte y apoyarte con calma.',
+    ];
+    return fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
   }
 }

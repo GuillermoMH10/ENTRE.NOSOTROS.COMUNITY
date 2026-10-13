@@ -458,8 +458,9 @@ export const DesktopWebLayout: React.FC<DesktopWebLayoutProps> = ({
                   onJoinPress={onRequireAuth}
                   onProfilePress={onOpenProfile}
                   onOpenPsychologists={() => setActiveSection('psicologos')}
-                  contentPaddingTop={8}
-                  contentPaddingBottom={16}
+                  hideAppHeader={true}
+                  contentPaddingTop={0}
+                  contentPaddingBottom={0}
                 />
               )}
 

@@ -34,7 +34,10 @@ interface AnimaScreenProps {
   onOpenPsychologists?: () => void;
   contentPaddingTop?: number;
   contentPaddingBottom?: number;
+  hideAppHeader?: boolean;
 }
+
+let hasShownAnimaSplashInSession = false;
 
 const COMPACT_PROMPTS = [
   { id: '1', emoji: '🌧️', text: 'Tengo ansiedad' },
@@ -54,6 +57,7 @@ export const AnimaScreen: React.FC<AnimaScreenProps> = ({
   onOpenPsychologists,
   contentPaddingTop = 0,
   contentPaddingBottom = 70,
+  hideAppHeader = false,
 }) => {
   const { user } = useAuth();
   const [messages, setMessages] = useState<AnimaMessage[]>([]);
@@ -62,7 +66,12 @@ export const AnimaScreen: React.FC<AnimaScreenProps> = ({
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [showCrisisHelp, setShowCrisisHelp] = useState(false);
   const [currentPhrase, setCurrentPhrase] = useState<string>(getRandomAnimaPhrase());
-  const [showSplash, setShowSplash] = useState(true);
+  const [showSplash, setShowSplash] = useState(() => {
+    if (Platform.OS === 'web' && hasShownAnimaSplashInSession) {
+      return false;
+    }
+    return true;
+  });
 
   const flatListRef = useRef<FlatList>(null);
 
@@ -83,12 +92,36 @@ export const AnimaScreen: React.FC<AnimaScreenProps> = ({
     return () => clearInterval(interval);
   }, []);
 
-  // Scroll to bottom whenever messages change
+  // Scroll to bottom whenever messages change or generation state updates
   const scrollToBottom = (animated: boolean = true) => {
-    setTimeout(() => {
+    try {
       flatListRef.current?.scrollToEnd({ animated });
-    }, 100);
+    } catch (e) {}
+
+    if (Platform.OS === 'web') {
+      setTimeout(() => {
+        try {
+          flatListRef.current?.scrollToEnd?.({ animated });
+          const node = (flatListRef.current as any)?.getScrollableNode?.();
+          if (node) {
+            node.scrollTop = node.scrollHeight;
+          }
+        } catch (e) {}
+      }, 50);
+      setTimeout(() => {
+        try {
+          const node = (flatListRef.current as any)?.getScrollableNode?.();
+          if (node) {
+            node.scrollTop = node.scrollHeight;
+          }
+        } catch (e) {}
+      }, 160);
+    }
   };
+
+  useEffect(() => {
+    scrollToBottom(false);
+  }, [messages.length, isGenerating]);
 
   const handleSendMessage = async (textToSend?: string) => {
     const text = (textToSend || inputText).trim();
@@ -261,70 +294,109 @@ export const AnimaScreen: React.FC<AnimaScreenProps> = ({
     );
   };
 
+  const handleSplashFinish = () => {
+    hasShownAnimaSplashInSession = true;
+    setShowSplash(false);
+  };
+
   return (
     <View style={styles.container}>
       {/* Centered Video Splash on Screen Open */}
       {showSplash && (
-        <AnimaVideoSplash onFinish={() => setShowSplash(false)} />
+        <AnimaVideoSplash onFinish={handleSplashFinish} />
       )}
 
-      {/* Top Fixed Header with Profile on Left, Logo centered, and Restart Chat on Right */}
-      <View style={[styles.header, { paddingTop: contentPaddingTop + (Platform.OS === 'ios' ? 6 : 8) }]}>
-        {/* Left: User Profile Avatar or Unirse Button */}
-        <View style={styles.headerLeftAction}>
-          {user ? (
-            <TouchableOpacity
-              style={styles.profileAvatarButton}
-              onPress={onProfilePress}
-              activeOpacity={0.8}
-              accessibilityLabel="Ver mi perfil"
-            >
-              <View style={styles.avatarRing}>
-                <Image
-                  source={{ uri: user.avatarUrl }}
-                  style={styles.userAvatarImage}
-                  resizeMode="cover"
-                />
+      {/* Desktop Header or Mobile Header */}
+      {hideAppHeader ? (
+        <View style={styles.desktopChatHeader}>
+          <View style={styles.desktopHeaderLeft}>
+            <View style={styles.avatarRingSmall}>
+              <AnimaMascot size="xs" variant="profile" animated={false} />
+              <View style={styles.onlineStatusDot} />
+            </View>
+            <View style={styles.desktopHeaderTextWrap}>
+              <View style={styles.desktopTitleRow}>
+                <Text style={styles.desktopHeaderTitle}>ANIMA</Text>
+                <View style={styles.aiBadge}>
+                  <Text style={styles.aiBadgeText}>IA</Text>
+                </View>
               </View>
-              <View style={styles.profileBadge}>
-                <Ionicons name="person" size={8} color={colors.white} />
-              </View>
-            </TouchableOpacity>
-          ) : (
+              <Text style={styles.desktopHeaderSubtitle}>Tu compañera de bienestar emocional • En línea</Text>
+            </View>
+          </View>
+
+          <View style={styles.desktopHeaderRight}>
             <TouchableOpacity
-              style={styles.joinButton}
-              onPress={onJoinPress}
-              activeOpacity={0.85}
-              accessibilityLabel="Unirse"
+              style={styles.desktopRestartBtn}
+              onPress={handleClearHistory}
+              activeOpacity={0.7}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              accessibilityLabel="Reiniciar conversación"
             >
-              <Text style={styles.joinButtonText}>Unirse</Text>
+              <Ionicons name="refresh-outline" size={16} color={colors.coffeeDark} />
+              <Text style={styles.desktopRestartText}>Reiniciar chat</Text>
             </TouchableOpacity>
-          )}
+          </View>
         </View>
+      ) : (
+        /* Top Fixed Header with Profile on Left, Logo centered, and Restart Chat on Right */
+        <View style={[styles.header, { paddingTop: contentPaddingTop + (Platform.OS === 'ios' ? 6 : 8) }]}>
+          {/* Left: User Profile Avatar or Unirse Button */}
+          <View style={styles.headerLeftAction}>
+            {user ? (
+              <TouchableOpacity
+                style={styles.profileAvatarButton}
+                onPress={onProfilePress}
+                activeOpacity={0.8}
+                accessibilityLabel="Ver mi perfil"
+              >
+                <View style={styles.avatarRing}>
+                  <Image
+                    source={{ uri: user.avatarUrl }}
+                    style={styles.userAvatarImage}
+                    resizeMode="cover"
+                  />
+                </View>
+                <View style={styles.profileBadge}>
+                  <Ionicons name="person" size={8} color={colors.white} />
+                </View>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={styles.joinButton}
+                onPress={onJoinPress}
+                activeOpacity={0.85}
+                accessibilityLabel="Unirse"
+              >
+                <Text style={styles.joinButtonText}>Unirse</Text>
+              </TouchableOpacity>
+            )}
+          </View>
 
-        {/* Center: App Logo */}
-        <View style={styles.headerCenter} pointerEvents="none">
-          <Image
-            source={require('../../assets/logoappE.png')}
-            style={styles.logo}
-            resizeMode="contain"
-            accessibilityLabel="Logo Entre Nosotros"
-          />
-        </View>
+          {/* Center: App Logo */}
+          <View style={styles.headerCenter} pointerEvents="none">
+            <Image
+              source={require('../../assets/logoappE.png')}
+              style={styles.logo}
+              resizeMode="contain"
+              accessibilityLabel="Logo Entre Nosotros"
+            />
+          </View>
 
-        {/* Right: Restart Chat Button */}
-        <View style={styles.headerRightActions}>
-          <TouchableOpacity
-            style={styles.headerActionBtn}
-            onPress={handleClearHistory}
-            activeOpacity={0.7}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            accessibilityLabel="Reiniciar conversación"
-          >
-            <Ionicons name="refresh-outline" size={22} color={colors.coffeeDark} />
-          </TouchableOpacity>
+          {/* Right: Restart Chat Button */}
+          <View style={styles.headerRightActions}>
+            <TouchableOpacity
+              style={styles.headerActionBtn}
+              onPress={handleClearHistory}
+              activeOpacity={0.7}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              accessibilityLabel="Reiniciar conversación"
+            >
+              <Ionicons name="refresh-outline" size={22} color={colors.coffeeDark} />
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
+      )}
 
       {/* Optional Crisis Helpline Banner */}
       {showCrisisHelp && (
@@ -349,52 +421,63 @@ export const AnimaScreen: React.FC<AnimaScreenProps> = ({
       )}
 
       {/* Main Chat Area */}
-      <KeyboardAvoidingView
-        style={styles.keyboardContainer}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 85 : 0}
-      >
+      <View style={styles.chatAreaWrapper}>
         <FlatList
           ref={flatListRef}
           data={messages}
           keyExtractor={(item) => item.id}
           renderItem={renderMessageItem}
+          style={styles.chatList}
           contentContainerStyle={[
             styles.chatContent,
-            { paddingBottom: contentPaddingBottom + 78 },
+            Platform.OS !== 'web' && { paddingBottom: contentPaddingBottom + 78 },
+            Platform.OS === 'web' && { paddingBottom: 24 },
           ]}
-          showsVerticalScrollIndicator={false}
+          showsVerticalScrollIndicator={true}
+          onContentSizeChange={() => scrollToBottom(false)}
+          onLayout={() => scrollToBottom(false)}
           ListHeaderComponent={
-            <View style={styles.chatHeaderHero}>
-              {/* Static Mascot Profile */}
-              <AnimaMascot size="lg" variant="profile" animated={false} />
-              
-              <Text style={styles.heroGreeting}>ANIMA</Text>
+            messages.length <= 1 ? (
+              <View style={styles.chatHeaderHero}>
+                {/* Static Mascot Profile */}
+                <AnimaMascot size="lg" variant="profile" animated={false} />
+                
+                <Text style={styles.heroGreeting}>ANIMA</Text>
 
-              {/* Rotating Short Emotional Phrase Card (Auto-rotates every 10 min or on open) */}
-              <View style={styles.phraseCard}>
-                <Text style={styles.phraseText}>"{currentPhrase}"</Text>
-              </View>
+                {/* Rotating Short Emotional Phrase Card */}
+                <View style={styles.phraseCard}>
+                  <Text style={styles.phraseText}>"{currentPhrase}"</Text>
+                </View>
 
-              {/* Compact Suggestions / Quick Prompts Wrapped Grid (No overflow) */}
-              <View style={styles.promptsHeaderRow}>
-                <Text style={styles.promptsSectionTitle}>Sugerencias rápidas:</Text>
+                {/* Compact Suggestions / Quick Prompts Wrapped Grid */}
+                <View style={styles.promptsHeaderRow}>
+                  <Text style={styles.promptsSectionTitle}>Sugerencias rápidas:</Text>
+                </View>
+                <View style={styles.promptsGrid}>
+                  {COMPACT_PROMPTS.map((prompt) => (
+                    <TouchableOpacity
+                      key={prompt.id}
+                      style={styles.compactPromptChip}
+                      onPress={() => handleSendMessage(prompt.text)}
+                      activeOpacity={0.75}
+                      disabled={isGenerating}
+                    >
+                      <Text style={styles.compactPromptEmoji}>{prompt.emoji}</Text>
+                      <Text style={styles.compactPromptText}>{prompt.text}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
               </View>
-              <View style={styles.promptsGrid}>
-                {COMPACT_PROMPTS.map((prompt) => (
-                  <TouchableOpacity
-                    key={prompt.id}
-                    style={styles.compactPromptChip}
-                    onPress={() => handleSendMessage(prompt.text)}
-                    activeOpacity={0.75}
-                    disabled={isGenerating}
-                  >
-                    <Text style={styles.compactPromptEmoji}>{prompt.emoji}</Text>
-                    <Text style={styles.compactPromptText}>{prompt.text}</Text>
-                  </TouchableOpacity>
-                ))}
+            ) : (
+              <View style={styles.compactHeroCard}>
+                <View style={styles.compactHeroRow}>
+                  <AnimaMascot size="xs" variant="profile" animated={false} />
+                  <Text style={styles.compactHeroText} numberOfLines={2}>
+                    "{currentPhrase}"
+                  </Text>
+                </View>
               </View>
-            </View>
+            )
           }
           ListFooterComponent={
             isGenerating ? (
@@ -409,18 +492,41 @@ export const AnimaScreen: React.FC<AnimaScreenProps> = ({
           }
         />
 
-        {/* Bottom Floating Message Input Bar - Clean, Organized & Modern */}
-        <View style={[styles.bottomBarContainer, { paddingBottom: contentPaddingBottom + 4 }]}>
+        {/* Message Input Bar */}
+        <View
+          style={[
+            styles.bottomBarContainer,
+            Platform.OS === 'web'
+              ? styles.bottomBarWeb
+              : { paddingBottom: contentPaddingBottom + 4 },
+          ]}
+        >
           <View style={styles.inputCard}>
             <TextInput
               style={styles.textInput}
-              placeholder="Escribe lo que sientes... 💙"
+              placeholder={
+                Platform.OS === 'web'
+                  ? 'Escribe lo que sientes... 💙 (Enter para enviar)'
+                  : 'Escribe lo que sientes... 💙'
+              }
               placeholderTextColor="#7F94A2"
               value={inputText}
               onChangeText={setInputText}
               multiline
               maxLength={1500}
               editable={!isGenerating}
+              onKeyPress={(e: any) => {
+                if (Platform.OS === 'web' && e.nativeEvent?.key === 'Enter' && !e.nativeEvent?.shiftKey) {
+                  e.preventDefault?.();
+                  handleSendMessage();
+                }
+              }}
+              onSubmitEditing={() => {
+                if (Platform.OS === 'web') {
+                  handleSendMessage();
+                }
+              }}
+              blurOnSubmit={false}
             />
             <TouchableOpacity
               style={[
@@ -430,6 +536,7 @@ export const AnimaScreen: React.FC<AnimaScreenProps> = ({
               onPress={() => handleSendMessage()}
               disabled={!inputText.trim() || isGenerating}
               activeOpacity={0.85}
+              accessibilityLabel="Enviar mensaje"
             >
               {isGenerating ? (
                 <ActivityIndicator size="small" color={colors.white} />
@@ -439,7 +546,7 @@ export const AnimaScreen: React.FC<AnimaScreenProps> = ({
             </TouchableOpacity>
           </View>
         </View>
-      </KeyboardAvoidingView>
+      </View>
     </View>
   );
 };
@@ -448,6 +555,25 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8FAFC',
+    ...(Platform.OS === 'web'
+      ? ({
+          height: '100%',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+        } as any)
+      : {}),
+  },
+  chatAreaWrapper: {
+    flex: 1,
+    height: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden',
+  },
+  chatList: {
+    flex: 1,
+    width: '100%',
   },
   keyboardContainer: {
     flex: 1,
@@ -582,10 +708,123 @@ const styles = StyleSheet.create({
     fontSize: 10.5,
     fontWeight: '700',
   },
+  /* Desktop ANIMA Header */
+  desktopChatHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: colors.white,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E1EAEF',
+    zIndex: 10,
+  },
+  desktopHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  avatarRingSmall: {
+    position: 'relative',
+    width: 34,
+    height: 34,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  onlineStatusDot: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 9,
+    height: 9,
+    borderRadius: 4.5,
+    backgroundColor: '#10B981',
+    borderWidth: 1.5,
+    borderColor: colors.white,
+  },
+  desktopHeaderTextWrap: {
+    flexDirection: 'column',
+  },
+  desktopTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  desktopHeaderTitle: {
+    fontSize: 14,
+    fontWeight: '900',
+    color: colors.coffeeDark,
+    letterSpacing: 0.3,
+  },
+  aiBadge: {
+    backgroundColor: '#E0F2FE',
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    borderRadius: 5,
+  },
+  aiBadgeText: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#0284C7',
+  },
+  desktopHeaderSubtitle: {
+    fontSize: 10.5,
+    color: '#64748B',
+    fontWeight: '500',
+    marginTop: 1,
+  },
+  desktopHeaderRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  desktopRestartBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingVertical: 5,
+    paddingHorizontal: 9,
+    borderRadius: 8,
+    backgroundColor: '#F1F5F9',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  desktopRestartText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.coffeeDark,
+  },
+  /* Compact Hero for ongoing chats */
+  compactHeroCard: {
+    backgroundColor: '#F0F6F9',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E1EAEF',
+    paddingVertical: 7,
+    paddingHorizontal: 12,
+    marginBottom: 10,
+    marginTop: 4,
+    alignSelf: 'center',
+    width: '100%',
+    maxWidth: 720,
+  },
+  compactHeroRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  compactHeroText: {
+    flex: 1,
+    fontSize: 11.5,
+    fontWeight: '600',
+    color: '#244558',
+    fontStyle: 'italic',
+  },
   /* Chat Content List */
   chatContent: {
     paddingHorizontal: 12,
     paddingTop: 10,
+    width: '100%',
   },
   /* Hero section with short phrase */
   chatHeaderHero: {
@@ -603,6 +842,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.03,
     shadowRadius: 5,
     elevation: 1,
+    width: '100%',
+    maxWidth: 720,
+    alignSelf: 'center',
   },
   heroGreeting: {
     fontSize: 17,
@@ -672,6 +914,9 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     marginBottom: 12,
     paddingLeft: 36,
+    width: '100%',
+    maxWidth: 720,
+    alignSelf: 'center',
   },
   userBubbleContainer: {
     alignItems: 'flex-end',
@@ -707,6 +952,8 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: 14,
     width: '100%',
+    maxWidth: 720,
+    alignSelf: 'center',
   },
   modelAvatarCol: {
     marginRight: 8,
@@ -772,6 +1019,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginVertical: 8,
     paddingLeft: 2,
+    width: '100%',
+    maxWidth: 720,
+    alignSelf: 'center',
   },
   typingBubble: {
     flexDirection: 'row',
@@ -801,6 +1051,19 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: colors.borderLight,
   },
+  bottomBarWeb: {
+    position: 'relative',
+    bottom: undefined,
+    left: undefined,
+    right: undefined,
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 12,
+    backgroundColor: colors.white,
+    borderTopWidth: 1,
+    borderTopColor: '#E1EAEF',
+    width: '100%',
+  },
   inputCard: {
     flexDirection: 'row',
     alignItems: 'flex-end',
@@ -815,6 +1078,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 5,
     elevation: 3,
+    width: '100%',
+    maxWidth: 720,
+    alignSelf: 'center',
   },
   textInput: {
     flex: 1,

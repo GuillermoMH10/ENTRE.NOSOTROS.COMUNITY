@@ -69,7 +69,7 @@ export const AnimaVideoSplash: React.FC<AnimaVideoSplashProps> = ({ onFinish }) 
     // Safety timeout: in case video duration is long or finish event doesn't fire
     const safetyTimer = setTimeout(() => {
       handleFinish();
-    }, 6500);
+    }, Platform.OS === 'web' ? 3500 : 6500);
 
     return () => {
       isMounted = false;
@@ -158,8 +158,8 @@ export const AnimaVideoSplash: React.FC<AnimaVideoSplashProps> = ({ onFinish }) 
           resizeMode={ResizeMode.CONTAIN}
           shouldPlay={true}
           isLooping={false}
-          isMuted={false}
-          volume={1.0}
+          isMuted={Platform.OS === 'web'}
+          volume={Platform.OS === 'web' ? 0 : 1.0}
           useNativeControls={false}
           onPlaybackStatusUpdate={handlePlaybackStatusUpdate}
         />
