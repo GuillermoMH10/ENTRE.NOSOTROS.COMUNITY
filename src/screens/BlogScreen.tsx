@@ -155,7 +155,7 @@ export const BlogScreen: React.FC<BlogScreenProps> = ({
         style={styles.scrollArea}
         contentContainerStyle={[
           styles.scrollContent,
-          isDesktop && { maxWidth: 740, width: '100%', alignSelf: 'center' },
+          isDesktop && { width: '100%' },
           {
             paddingTop: contentPaddingTop + 14,
             paddingBottom: contentPaddingBottom + 20,

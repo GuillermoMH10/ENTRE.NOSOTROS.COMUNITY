@@ -239,8 +239,6 @@ const styles = StyleSheet.create({
   },
   listContent: {
     backgroundColor: colors.white,
-    maxWidth: 680,
     width: '100%',
-    alignSelf: 'center',
   },
 });

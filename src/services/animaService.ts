@@ -11,8 +11,10 @@ const STORAGE_KEY = '@entre_nosotros_anima_chat_history_v1';
 const GEMINI_API_KEY =
   process.env.EXPO_PUBLIC_GEMINI_API_KEY ||
   ['AQ', '.Ab8RN6KhRXyjU_', 'NwlSVQkZH8EHVrJ9Oot1roQlB-', 'cf8Ccc2qmg'].join('');
-const PRIMARY_MODEL = 'gemini-3.8-flash';
-const FALLBACK_MODEL = 'gemini-3.5-flash';
+const PRIMARY_MODEL = 'gemini-3.1-flash-lite';
+const SECONDARY_MODEL = 'gemini-3.5-flash-lite';
+const TERTIARY_MODEL = 'gemini-flash-lite-latest';
+const BACKUP_MODEL = 'gemini-2.5-flash';
 
 export const ANIMA_SYSTEM_INSTRUCTION = `Eres ANIMA, una mascota virtual de acompañamiento emocional diseñada para brindar apoyo psicológico general, escucha empática y orientación sobre bienestar mental.
 
@@ -124,8 +126,8 @@ export async function sendAnimaMessage(
   }
 
   // Format previous messages for Gemini API
-  // Take last 12 messages for conversation context
-  const contextMessages = history.slice(-12);
+  // Take last 8 messages for ultra-fast, focused conversation context
+  const contextMessages = history.slice(-8);
   const formattedContents = contextMessages
     .filter((msg) => msg.id !== 'initial_anima_welcome' || contextMessages.length === 1)
     .map((msg) => ({
@@ -145,78 +147,97 @@ export async function sendAnimaMessage(
       parts: [{ text: ANIMA_SYSTEM_INSTRUCTION }],
     },
     generationConfig: {
-      temperature: 0.85,
-      maxOutputTokens: 1024,
+      temperature: 0.8,
+      maxOutputTokens: 380,
       topP: 0.95,
     },
   };
 
-  // Helper to make the API request with given model
+  // Helper to make the API request with given model with quick timeout
   const callModel = async (modelName: string): Promise<string> => {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${GEMINI_API_KEY}`;
-    
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 4000);
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${GEMINI_API_KEY}`;
+      
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      const errorMsg = (errorData as any)?.error?.message || `HTTP ${response.status}`;
-      throw new Error(errorMsg);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const errorMsg = (errorData as any)?.error?.message || `HTTP ${response.status}`;
+        throw new Error(errorMsg);
+      }
+
+      const data = await response.json();
+      const candidate = data.candidates?.[0];
+      const parts = candidate?.content?.parts || [];
+      const textParts = parts.map((p: any) => p.text).filter(Boolean);
+      const responseText = textParts.join('\n').trim();
+
+      if (!responseText) {
+        throw new Error('No se recibió texto de respuesta de ANIMA');
+      }
+
+      return responseText;
+    } catch (err: any) {
+      clearTimeout(timeoutId);
+      throw err;
     }
-
-    const data = await response.json();
-    const candidate = data.candidates?.[0];
-    const parts = candidate?.content?.parts || [];
-    const textParts = parts.map((p: any) => p.text).filter(Boolean);
-    const responseText = textParts.join('\n').trim();
-
-    if (!responseText) {
-      throw new Error('No se recibió texto de respuesta de ANIMA');
-    }
-
-    return responseText;
   };
 
   const callInteractionsApi = async (): Promise<string> => {
-    const url = `https://generativelanguage.googleapis.com/v1beta/interactions?key=${GEMINI_API_KEY}`;
-    const interactionBody = {
-      model: 'models/gemini-3.8-flash',
-      input: trimmedText,
-      system_instruction: ANIMA_SYSTEM_INSTRUCTION,
-      generation_config: {
-        temperature: 0.85,
-        max_output_tokens: 1024,
-        topP: 0.95,
-      },
-    };
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 4000);
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/interactions?key=${GEMINI_API_KEY}`;
+      const interactionBody = {
+        model: 'models/gemini-3.5-flash-lite',
+        input: trimmedText,
+        system_instruction: ANIMA_SYSTEM_INSTRUCTION,
+        generation_config: {
+          temperature: 0.8,
+          max_output_tokens: 380,
+          topP: 0.95,
+        },
+      };
 
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(interactionBody),
-    });
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(interactionBody),
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
 
-    if (!response.ok) {
-      throw new Error(`Interactions API HTTP ${response.status}`);
+      if (!response.ok) {
+        throw new Error(`Interactions API HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+      const outputText = data.output_text || data.steps?.find((s: any) => s.type === 'model_output')?.content?.[0]?.text;
+      if (!outputText) {
+        throw new Error('No output from Interactions API');
+      }
+      return outputText.trim();
+    } catch (err: any) {
+      clearTimeout(timeoutId);
+      throw err;
     }
-
-    const data = await response.json();
-    const outputText = data.output_text || data.steps?.find((s: any) => s.type === 'model_output')?.content?.[0]?.text;
-    if (!outputText) {
-      throw new Error('No output from Interactions API');
-    }
-    return outputText.trim();
   };
 
   const candidateModels = [
     PRIMARY_MODEL,
-    FALLBACK_MODEL,
-    'gemini-3.5-flash-lite',
+    SECONDARY_MODEL,
+    TERTIARY_MODEL,
+    BACKUP_MODEL,
   ];
 
   for (const model of candidateModels) {

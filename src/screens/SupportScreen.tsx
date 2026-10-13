@@ -169,7 +169,7 @@ export const SupportScreen: React.FC<SupportScreenProps> = ({
       >
         {/* 1. TOP EMPATHETIC PHRASE CARD (ANIMA - Mensaje de Apoyo) */}
         <TouchableOpacity
-          style={[styles.quoteCard, isDesktop && { maxWidth: 880, width: '100%', alignSelf: 'center' }]}
+          style={[styles.quoteCard, isDesktop && { width: 'auto', marginHorizontal: 16 }]}
           activeOpacity={0.9}
           onPress={handleNextMessage}
         >

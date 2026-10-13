@@ -449,7 +449,7 @@ export const DesktopWebLayout: React.FC<DesktopWebLayoutProps> = ({
                         />
                       ) : (
                         <View style={styles.quickPostAvatarPlaceholder}>
-                          <Ionicons name="person" size={18} color="#7F94A2" />
+                          <Ionicons name="person" size={22} color="#64748B" />
                         </View>
                       )}
                     </TouchableOpacity>
@@ -468,8 +468,9 @@ export const DesktopWebLayout: React.FC<DesktopWebLayoutProps> = ({
                       style={styles.quickPostPlusBtn}
                       activeOpacity={0.8}
                       onPress={onOpenCreatePost}
+                      accessibilityLabel="Crear publicación"
                     >
-                      <Ionicons name="add" size={20} color={colors.white} />
+                      <Ionicons name="add" size={24} color={colors.white} />
                     </TouchableOpacity>
                   </View>
 
@@ -930,12 +931,14 @@ const styles = StyleSheet.create({
   logoRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 16,
-    paddingHorizontal: 4,
+    width: '100%',
   },
   logoImage: {
-    width: 175,
-    height: 52,
+    width: 185,
+    height: 54,
+    alignSelf: 'center',
   },
   sidebarSearchWrapper: {
     flexDirection: 'row',
@@ -1125,50 +1128,60 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.white,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E1EAEF',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    gap: 10,
-    maxWidth: 680,
+    borderBottomWidth: 1.5,
+    borderBottomColor: '#E2E8F0',
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    gap: 14,
     width: '100%',
-    alignSelf: 'center',
   },
   quickPostAvatarWrap: {},
   quickPostAvatar: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 1.5,
+    borderColor: '#CBD5E1',
     backgroundColor: '#E1EAEF',
   },
   quickPostAvatarPlaceholder: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: '#F0F6F9',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#F1F5F9',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: '#CBD5E1',
   },
   quickPostInputFake: {
     flex: 1,
-    backgroundColor: '#F0F6F9',
-    borderWidth: 1,
-    borderColor: '#E1EAEF',
-    borderRadius: 18,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
+    backgroundColor: '#F1F5F9',
+    borderWidth: 1.5,
+    borderColor: '#CBD5E1',
+    borderRadius: 25,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    minHeight: 46,
+    justifyContent: 'center',
   },
   quickPostPlaceholder: {
-    fontSize: 12,
-    color: '#7F94A2',
+    fontSize: 14,
+    color: '#475569',
+    fontWeight: '500',
   },
   quickPostPlusBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: '#355971',
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#355971',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
   },
 
   /* ------------------------------------------------------------- */
