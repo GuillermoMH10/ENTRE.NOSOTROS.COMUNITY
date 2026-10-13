@@ -6,6 +6,8 @@ import {
   ScrollView,
   TouchableOpacity,
   Dimensions,
+  Platform,
+  useWindowDimensions,
   ImageBackground,
   Image,
   NativeSyntheticEvent,
@@ -49,9 +51,6 @@ const INTEREST_TOPICS: TopicItem[] = [
   },
 ];
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const SINGLE_CARD_WIDTH = SCREEN_WIDTH - 32;
-
 export const BlogScreen: React.FC<BlogScreenProps> = ({
   onOpenMenu,
   onJoinPress,
@@ -61,6 +60,13 @@ export const BlogScreen: React.FC<BlogScreenProps> = ({
   contentPaddingBottom = 80,
   hideAppHeader = false,
 }) => {
+  const { width: windowWidth } = useWindowDimensions();
+  const isDesktop = Platform.OS === 'web' && windowWidth >= 1024;
+  // Available width in center column is capped cleanly for desktop
+  const singleCardWidth = isDesktop
+    ? Math.min(Math.max(windowWidth - 662, 440), 680)
+    : (windowWidth - 32);
+
   // Current month index (0 = Enero, ... 11 = Diciembre)
   const currentMonthIndex = new Date().getMonth();
 
@@ -86,13 +92,13 @@ export const BlogScreen: React.FC<BlogScreenProps> = ({
     const timer = setTimeout(() => {
       if (carouselScrollRef.current) {
         carouselScrollRef.current.scrollTo({
-          x: currentMonthIndex * (SINGLE_CARD_WIDTH + 14),
+          x: currentMonthIndex * (singleCardWidth + 14),
           animated: false,
         });
       }
     }, 120);
     return () => clearTimeout(timer);
-  }, [currentMonthIndex]);
+  }, [currentMonthIndex, singleCardWidth]);
 
   const handleOpenMonth = (index: number) => {
     setSelectedMonthForDetail(index);
@@ -101,7 +107,7 @@ export const BlogScreen: React.FC<BlogScreenProps> = ({
 
   const handleCarouselScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const contentOffsetX = e.nativeEvent.contentOffset.x;
-    const index = Math.round(contentOffsetX / (SINGLE_CARD_WIDTH + 14));
+    const index = Math.round(contentOffsetX / (singleCardWidth + 14));
     if (index >= 0 && index < MONTHS_DATA.length && index !== carouselActiveIndex) {
       setCarouselActiveIndex(index);
     }
@@ -123,6 +129,7 @@ export const BlogScreen: React.FC<BlogScreenProps> = ({
         style={styles.scrollArea}
         contentContainerStyle={[
           styles.scrollContent,
+          isDesktop && { maxWidth: 740, width: '100%', alignSelf: 'center' },
           {
             paddingTop: contentPaddingTop + 14,
             paddingBottom: contentPaddingBottom + 20,
@@ -151,9 +158,9 @@ export const BlogScreen: React.FC<BlogScreenProps> = ({
             ref={carouselScrollRef}
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentOffset={{ x: currentMonthIndex * (SINGLE_CARD_WIDTH + 14), y: 0 }}
+            contentOffset={{ x: currentMonthIndex * (singleCardWidth + 14), y: 0 }}
             contentContainerStyle={styles.carouselScrollContent}
-            snapToInterval={SINGLE_CARD_WIDTH + 14}
+            snapToInterval={singleCardWidth + 14}
             snapToAlignment="center"
             decelerationRate="fast"
             onScroll={handleCarouselScroll}
@@ -167,6 +174,7 @@ export const BlogScreen: React.FC<BlogScreenProps> = ({
                   style={[
                     styles.singleCardWrapper,
                     {
+                      width: singleCardWidth,
                       borderColor: item.primaryColor + (isCurrent ? 'DD' : '50'),
                       shadowColor: item.primaryColor,
                     },
@@ -230,7 +238,7 @@ export const BlogScreen: React.FC<BlogScreenProps> = ({
                       >
                         <Text
                           style={styles.singleCardSpeechText}
-                          numberOfLines={3}
+                          numberOfLines={4}
                         >
                           "{item.speech}"{' '}
                           <Ionicons
@@ -443,7 +451,6 @@ const styles = StyleSheet.create({
     gap: 14,
   },
   singleCardWrapper: {
-    width: SINGLE_CARD_WIDTH,
     borderRadius: 22,
     borderWidth: 1.5,
     overflow: 'hidden',

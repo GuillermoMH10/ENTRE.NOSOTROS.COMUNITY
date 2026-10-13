@@ -43,7 +43,8 @@ export const PsychologistsScreen: React.FC<PsychologistsScreenProps> = ({
 }) => {
   const { width: windowWidth } = useWindowDimensions();
   const isDesktop = Platform.OS === 'web' && windowWidth >= 1024;
-  const numColumns = isDesktop ? 2 : 1;
+  const centerColWidth = windowWidth - 630;
+  const numColumns = isDesktop && centerColWidth >= 700 ? 2 : 1;
   const [psychologists, setPsychologists] = useState<Psychologist[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -215,7 +216,7 @@ export const PsychologistsScreen: React.FC<PsychologistsScreenProps> = ({
           >
             {/* Name with Verified Checkmark */}
             <View style={styles.nameRow}>
-              <Text style={styles.nameText} numberOfLines={1}>
+              <Text style={styles.nameText} numberOfLines={2}>
                 {item.nombre}
               </Text>
               <Ionicons name="checkmark-circle" size={16} color="#2563EB" style={{ marginLeft: 4 }} />
@@ -284,8 +285,8 @@ export const PsychologistsScreen: React.FC<PsychologistsScreenProps> = ({
             activeOpacity={0.85}
             onPress={() => setSelectedPsico(item)}
           >
-            <Text style={styles.viewProfileBtnText}>Ver perfil</Text>
-            <Ionicons name="arrow-forward" size={14} color={colors.white} />
+            <Text style={styles.viewProfileBtnText} numberOfLines={1}>Ver perfil</Text>
+            <Ionicons name="arrow-forward" size={13} color={colors.white} />
           </TouchableOpacity>
         </View>
       </View>
@@ -317,7 +318,13 @@ export const PsychologistsScreen: React.FC<PsychologistsScreenProps> = ({
       )}
 
       {/* Fixed Header, Search & Filter Section (Keeps TextInput from losing focus) */}
-      <View style={[styles.headerContainer, { paddingTop: contentPaddingTop + 4 }]}>
+      <View
+        style={[
+          styles.headerContainer,
+          isDesktop && { maxWidth: 960, width: '100%', alignSelf: 'center' },
+          { paddingTop: contentPaddingTop + 4 },
+        ]}
+      >
         {/* Centered "¿Necesitas ayuda?" */}
         <View style={styles.headerTitleRow}>
           <Ionicons name="sparkles" size={17} color={colors.coffeePrimary} style={{ marginRight: 6 }} />
@@ -492,14 +499,15 @@ export const PsychologistsScreen: React.FC<PsychologistsScreenProps> = ({
         </View>
       ) : (
         <FlatList
-          key={isDesktop ? 'desktop-grid-2' : 'mobile-list-1'}
+          key={isDesktop ? `desktop-grid-${numColumns}` : 'mobile-list-1'}
           data={filteredPsychologists}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
           numColumns={numColumns}
-          columnWrapperStyle={isDesktop ? styles.desktopColumnWrapper : undefined}
+          columnWrapperStyle={numColumns > 1 ? styles.desktopColumnWrapper : undefined}
           contentContainerStyle={[
             styles.listContent,
+            isDesktop && { maxWidth: 960, width: '100%', alignSelf: 'center' },
             {
               paddingTop: 6,
               paddingBottom: contentPaddingBottom + 20,
@@ -757,16 +765,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.surface,
-    paddingHorizontal: 6,
-    paddingVertical: 3,
+    paddingHorizontal: 5,
+    paddingVertical: 2.5,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: colors.borderLight,
-    gap: 3,
-    maxWidth: 78,
+    gap: 2,
+    maxWidth: 92,
   },
   modalidadPillText: {
-    fontSize: 9.5,
+    fontSize: 9,
     fontWeight: '700',
     color: colors.coffeePrimary,
   },
@@ -780,9 +788,10 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   nameText: {
-    fontSize: 15.5,
+    fontSize: 14.5,
     fontWeight: '800',
     color: colors.coffeeDark,
+    lineHeight: 18,
     flexShrink: 1,
   },
   cityRow: {
@@ -838,7 +847,7 @@ const styles = StyleSheet.create({
   cardActionsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
     marginTop: 14,
     paddingTop: 12,
     borderTopWidth: 1,
@@ -849,10 +858,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#25D366',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 9,
+    paddingVertical: 7.5,
     borderRadius: 12,
-    gap: 5,
+    gap: 4,
     shadowColor: '#25D366',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
@@ -861,7 +870,7 @@ const styles = StyleSheet.create({
   },
   whatsappBtnText: {
     color: colors.white,
-    fontSize: 12,
+    fontSize: 11.5,
     fontWeight: '700',
   },
   emailBtn: {
@@ -871,14 +880,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF5F5',
     borderWidth: 1,
     borderColor: '#FECDCA',
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
     paddingVertical: 7.5,
     borderRadius: 12,
-    gap: 4,
+    gap: 3,
   },
   emailBtnText: {
     color: '#D92D20',
-    fontSize: 12,
+    fontSize: 11.5,
     fontWeight: '700',
   },
   viewProfileBtn: {
@@ -887,10 +896,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.coffeePrimary,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingVertical: 7.5,
+    paddingHorizontal: 8,
     borderRadius: 12,
-    gap: 5,
+    gap: 4,
     shadowColor: colors.coffeeDeep,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.12,
@@ -899,7 +908,7 @@ const styles = StyleSheet.create({
   },
   viewProfileBtnText: {
     color: colors.white,
-    fontSize: 12,
+    fontSize: 11.5,
     fontWeight: '700',
   },
   /* Empty State */

@@ -7,6 +7,8 @@ import {
   TouchableOpacity,
   Image,
   Dimensions,
+  Platform,
+  useWindowDimensions,
   NativeSyntheticEvent,
   NativeScrollEvent,
 } from 'react-native';
@@ -30,8 +32,6 @@ interface SupportScreenProps {
   hideAppHeader?: boolean;
 }
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const CARD_WIDTH = SCREEN_WIDTH - 52;
 const CARD_SPACING = 14;
 
 export const SupportScreen: React.FC<SupportScreenProps> = ({
@@ -44,6 +44,12 @@ export const SupportScreen: React.FC<SupportScreenProps> = ({
   contentPaddingBottom = 80,
   hideAppHeader = false,
 }) => {
+  const { width: windowWidth } = useWindowDimensions();
+  const isDesktop = Platform.OS === 'web' && windowWidth >= 1024;
+  const cardWidth = isDesktop
+    ? Math.min(Math.max(windowWidth - 662, 440), 660)
+    : (windowWidth - 52);
+
   const { user } = useAuth();
   const [currentMessage, setCurrentMessage] = useState<SupportMessage>(getRandomSupportMessage());
   const [isTestModalOpen, setIsTestModalOpen] = useState(false);
@@ -81,7 +87,7 @@ export const SupportScreen: React.FC<SupportScreenProps> = ({
 
   const handleCarouselScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const scrollX = e.nativeEvent.contentOffset.x;
-    const index = Math.round(scrollX / (CARD_WIDTH + CARD_SPACING));
+    const index = Math.round(scrollX / (cardWidth + CARD_SPACING));
     if (index !== activeCardIndex && index >= 0 && index < 3) {
       setActiveCardIndex(index);
     }
@@ -120,6 +126,24 @@ export const SupportScreen: React.FC<SupportScreenProps> = ({
     },
   ];
 
+  if (isDesktop && isTestModalOpen) {
+    return (
+      <View style={styles.container}>
+        <PsychologyTestModal
+          visible={true}
+          userId={user?.id}
+          initialResult={latestResult}
+          startMode={testModalMode}
+          onClose={() => setIsTestModalOpen(false)}
+          onOpenPsychologists={onOpenPsychologists}
+          onOpenCreatePost={onOpenCreatePost}
+          onTestCompleted={handleTestCompleted}
+          embedded={true}
+        />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       {/* Top App Header */}
@@ -135,6 +159,7 @@ export const SupportScreen: React.FC<SupportScreenProps> = ({
         style={styles.scrollBody}
         contentContainerStyle={[
           styles.scrollContent,
+          isDesktop && { maxWidth: 740, width: '100%', alignSelf: 'center' },
           {
             paddingTop: contentPaddingTop + 8,
             paddingBottom: contentPaddingBottom + 20,
@@ -144,7 +169,7 @@ export const SupportScreen: React.FC<SupportScreenProps> = ({
       >
         {/* 1. TOP EMPATHETIC PHRASE CARD (Clean Sparkle + Rotating Phrase) */}
         <TouchableOpacity
-          style={styles.quoteCard}
+          style={[styles.quoteCard, isDesktop && { maxWidth: 660, width: '100%', alignSelf: 'center' }]}
           activeOpacity={0.9}
           onPress={handleNextMessage}
         >
@@ -171,7 +196,7 @@ export const SupportScreen: React.FC<SupportScreenProps> = ({
           <ScrollView
             horizontal
             pagingEnabled={false}
-            snapToInterval={CARD_WIDTH + CARD_SPACING}
+            snapToInterval={cardWidth + CARD_SPACING}
             snapToAlignment="start"
             decelerationRate="fast"
             showsHorizontalScrollIndicator={false}
@@ -182,7 +207,7 @@ export const SupportScreen: React.FC<SupportScreenProps> = ({
             {carouselCards.map((card, idx) => (
               <TouchableOpacity
                 key={card.id}
-                style={styles.carouselCard}
+                style={[styles.carouselCard, { width: cardWidth }]}
                 activeOpacity={0.92}
                 onPress={card.onPress}
               >
@@ -229,7 +254,7 @@ export const SupportScreen: React.FC<SupportScreenProps> = ({
 
         {/* 3. LATEST TEST EVALUATION SUMMARY (Clean & Aesthetic) */}
         {latestResult && (
-          <View style={styles.latestTestCard}>
+          <View style={[styles.latestTestCard, isDesktop && { maxWidth: 660, width: '100%', alignSelf: 'center' }]}>
             <View style={styles.latestTestHeader}>
               <View style={styles.latestTestTitleRow}>
                 <Ionicons name="pulse" size={17} color={latestResult.badgeColor} style={{ marginRight: 6 }} />
@@ -366,7 +391,6 @@ const styles = StyleSheet.create({
     gap: CARD_SPACING,
   },
   carouselCard: {
-    width: CARD_WIDTH,
     backgroundColor: colors.white,
     borderRadius: 22,
     borderWidth: 1.2,
@@ -387,6 +411,7 @@ const styles = StyleSheet.create({
   cardImage: {
     width: '100%',
     height: '100%',
+    ...(Platform.OS === 'web' ? ({ objectFit: 'cover' } as any) : {}),
   },
   cardImageOverlay: {
     ...StyleSheet.absoluteFillObject,

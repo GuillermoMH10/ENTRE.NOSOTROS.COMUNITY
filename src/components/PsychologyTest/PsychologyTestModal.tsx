@@ -8,6 +8,8 @@ import {
   ScrollView,
   SafeAreaView,
   Dimensions,
+  Platform,
+  useWindowDimensions,
   ActivityIndicator,
   Share,
 } from 'react-native';
@@ -16,8 +18,6 @@ import { TEST_QUESTIONS, TEST_OPTIONS, calculateTestResult } from '../../data/ps
 import { TestResult } from '../../types/psychologyTest';
 import { saveLatestTestResult } from '../../services/psychologyTestService';
 import { colors } from '../../theme/colors';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 interface PsychologyTestModalProps {
   visible: boolean;
@@ -28,6 +28,7 @@ interface PsychologyTestModalProps {
   onOpenPsychologists: () => void;
   onOpenCreatePost: () => void;
   onTestCompleted?: (result: TestResult) => void;
+  embedded?: boolean;
 }
 
 export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
@@ -39,7 +40,11 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
   onOpenPsychologists,
   onOpenCreatePost,
   onTestCompleted,
+  embedded = false,
 }) => {
+  const { width: windowWidth } = useWindowDimensions();
+  const isDesktop = Platform.OS === 'web' && windowWidth >= 1024;
+  const isEmbeddedMode = embedded || isDesktop;
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [isEvaluating, setIsEvaluating] = useState(false);
@@ -162,11 +167,10 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
     );
   };
 
-  return (
-    <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" onRequestClose={onClose}>
-      <SafeAreaView style={styles.safeArea}>
-        {/* Top Header */}
-        <View style={styles.topHeader}>
+  const modalContent = (
+    <SafeAreaView style={[styles.safeArea, isDesktop && styles.desktopSafeArea]}>
+      {/* Top Header */}
+      <View style={styles.topHeader}>
           <TouchableOpacity onPress={onClose} style={styles.closeBtn} activeOpacity={0.7}>
             <Ionicons name="close" size={20} color={colors.coffeeDark} />
           </TouchableOpacity>
@@ -446,6 +450,15 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
           </View>
         )}
       </SafeAreaView>
+  );
+
+  if (isEmbeddedMode) {
+    return modalContent;
+  }
+
+  return (
+    <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" onRequestClose={onClose}>
+      {modalContent}
     </Modal>
   );
 };
@@ -453,6 +466,12 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
+    backgroundColor: '#FAF7F5',
+  },
+  desktopSafeArea: {
+    maxWidth: 780,
+    width: '100%',
+    alignSelf: 'center',
     backgroundColor: '#FAF7F5',
   },
   topHeader: {

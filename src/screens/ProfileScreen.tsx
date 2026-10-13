@@ -858,6 +858,27 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
     if (embedded) {
       if (!visible) return null;
+      if (isTestModalOpen) {
+        return (
+          <View style={styles.rootContainer}>
+            <PsychologyTestModal
+              visible={true}
+              userId={user?.id}
+              initialResult={latestTestResult}
+              startMode={testModalMode}
+              onClose={() => setIsTestModalOpen(false)}
+              onOpenPsychologists={() => {
+                if (onOpenPsychologists) onOpenPsychologists();
+              }}
+              onOpenCreatePost={() => {
+                if (onOpenCreatePost) onOpenCreatePost();
+              }}
+              onTestCompleted={(res) => setLatestTestResult(res)}
+              embedded={true}
+            />
+          </View>
+        );
+      }
       return profileBody;
     }
 

@@ -98,10 +98,19 @@ export const DesktopWebLayout: React.FC<DesktopWebLayoutProps> = ({
   // Search input in sidebar
   const [sidebarSearch, setSidebarSearch] = useState('');
 
-  // Live follow stats for user card
-  const [liveCounts, setLiveCounts] = useState<{ followingCount?: number; followersCount?: number }>({
+  // Live user profile data (counts, cover photo, avatar)
+  const [liveUserData, setLiveUserData] = useState<{
+    followingCount?: number;
+    followersCount?: number;
+    coverPhotoUrl?: string;
+    avatarUrl?: string;
+    bio?: string;
+  }>({
     followingCount: user?.followingCount || 0,
     followersCount: user?.followersCount || 0,
+    coverPhotoUrl: user?.coverPhotoUrl,
+    avatarUrl: user?.avatarUrl,
+    bio: user?.bio,
   });
 
   // Follow Modal State (Seguidores / Seguidos)
@@ -132,16 +141,19 @@ export const DesktopWebLayout: React.FC<DesktopWebLayoutProps> = ({
     }
   }, [activeTab]);
 
-  // Subscribe to live user follower and following counts
+  // Subscribe to live user follower and following counts & profile assets
   useEffect(() => {
     if (!user) return;
     const userDocRef = doc(db, 'users', user.id);
     const unsubscribe = onSnapshot(userDocRef, (snap) => {
       if (snap.exists()) {
         const data = snap.data();
-        setLiveCounts({
+        setLiveUserData({
           followingCount: data.followingCount ?? user.followingCount ?? 0,
           followersCount: data.followersCount ?? user.followersCount ?? 0,
+          coverPhotoUrl: data.coverPhotoUrl || user.coverPhotoUrl,
+          avatarUrl: data.avatarUrl || user.avatarUrl,
+          bio: data.bio ?? user.bio,
         });
       }
     });
@@ -517,89 +529,97 @@ export const DesktopWebLayout: React.FC<DesktopWebLayoutProps> = ({
             {/* ------------------------------------------------------------- */}
             {user ? (
               <View style={styles.widgetCard}>
-                {/* Cover Banner with Real Image */}
-                <View style={styles.profileCardHeaderBanner}>
-                  {user.coverPhotoUrl ? (
-                    <Image
-                      source={{ uri: user.coverPhotoUrl }}
-                      style={styles.profileCardCoverImage}
-                      resizeMode="cover"
-                    />
-                  ) : (
-                    <View style={styles.profileCardCoverPlaceholder}>
-                      <Ionicons name="sparkles" size={18} color="rgba(255, 255, 255, 0.6)" />
-                    </View>
-                  )}
-                  <View style={styles.profileCardCoverOverlay} />
-                </View>
+                {/* Cover Banner with Real Image or Fallback */}
+                {(() => {
+                  const activeCoverUrl = liveUserData.coverPhotoUrl || user.coverPhotoUrl;
+                  const activeAvatarUrl = liveUserData.avatarUrl || user.avatarUrl;
+                  return (
+                    <>
+                      <View style={styles.profileCardHeaderBanner}>
+                        {activeCoverUrl ? (
+                          <Image
+                            source={{ uri: activeCoverUrl }}
+                            style={styles.profileCardCoverImage}
+                            resizeMode="cover"
+                          />
+                        ) : (
+                          <View style={styles.profileCardCoverPlaceholder}>
+                            <Ionicons name="sparkles" size={20} color="rgba(255, 255, 255, 0.6)" />
+                          </View>
+                        )}
+                        <View style={styles.profileCardCoverOverlay} />
+                      </View>
 
-                <View style={styles.profileCardBody}>
-                  {/* Large Profile Picture with Border */}
-                  <TouchableOpacity
-                    style={styles.profileAvatarWrapper}
-                    activeOpacity={0.85}
-                    onPress={() => setActiveSection('perfil')}
-                  >
-                    <Image
-                      source={{ uri: user.avatarUrl }}
-                      style={styles.profileAvatarLarge}
-                      resizeMode="cover"
-                    />
-                    <View style={styles.profileBadgeDot}>
-                      <Ionicons name="checkmark" size={10} color={colors.white} />
-                    </View>
-                  </TouchableOpacity>
+                      <View style={styles.profileCardBody}>
+                        {/* Large Profile Picture with Border */}
+                        <TouchableOpacity
+                          style={styles.profileAvatarWrapper}
+                          activeOpacity={0.85}
+                          onPress={() => setActiveSection('perfil')}
+                        >
+                          <Image
+                            source={{ uri: activeAvatarUrl }}
+                            style={styles.profileAvatarLarge}
+                            resizeMode="cover"
+                          />
+                          <View style={styles.profileBadgeDot}>
+                            <Ionicons name="checkmark" size={10} color={colors.white} />
+                          </View>
+                        </TouchableOpacity>
 
-                  {/* Name and Handle */}
-                  <Text style={styles.profileCardName} numberOfLines={1}>
-                    {user.username}
-                  </Text>
-                  <Text style={styles.profileCardEmail} numberOfLines={1}>
-                    {user.email}
-                  </Text>
-                  {user.bio ? (
-                    <Text style={styles.profileCardBio} numberOfLines={2}>
-                      {user.bio}
-                    </Text>
-                  ) : null}
+                        {/* Name and Handle */}
+                        <Text style={styles.profileCardName} numberOfLines={1}>
+                          {user.username}
+                        </Text>
+                        <Text style={styles.profileCardEmail} numberOfLines={1}>
+                          {user.email}
+                        </Text>
+                        {user.bio ? (
+                          <Text style={styles.profileCardBio} numberOfLines={2}>
+                            {user.bio}
+                          </Text>
+                        ) : null}
 
-                  {/* Followers & Following Stats */}
-                  <View style={styles.profileStatsRow}>
-                    <TouchableOpacity
-                      style={styles.profileStatItem}
-                      activeOpacity={0.7}
-                      onPress={handleOpenFollowing}
-                    >
-                      <Text style={styles.profileStatNumber}>
-                        {liveCounts.followingCount ?? 0}
-                      </Text>
-                      <Text style={styles.profileStatLabel}>Seguidos</Text>
-                    </TouchableOpacity>
+                        {/* Followers & Following Stats */}
+                        <View style={styles.profileStatsRow}>
+                          <TouchableOpacity
+                            style={styles.profileStatItem}
+                            activeOpacity={0.7}
+                            onPress={handleOpenFollowing}
+                          >
+                            <Text style={styles.profileStatNumber}>
+                              {liveUserData.followingCount ?? 0}
+                            </Text>
+                            <Text style={styles.profileStatLabel}>Seguidos</Text>
+                          </TouchableOpacity>
 
-                    <View style={styles.profileStatDivider} />
+                          <View style={styles.profileStatDivider} />
 
-                    <TouchableOpacity
-                      style={styles.profileStatItem}
-                      activeOpacity={0.7}
-                      onPress={handleOpenFollowers}
-                    >
-                      <Text style={styles.profileStatNumber}>
-                        {liveCounts.followersCount ?? 0}
-                      </Text>
-                      <Text style={styles.profileStatLabel}>Seguidores</Text>
-                    </TouchableOpacity>
-                  </View>
+                          <TouchableOpacity
+                            style={styles.profileStatItem}
+                            activeOpacity={0.7}
+                            onPress={handleOpenFollowers}
+                          >
+                            <Text style={styles.profileStatNumber}>
+                              {liveUserData.followersCount ?? 0}
+                            </Text>
+                            <Text style={styles.profileStatLabel}>Seguidores</Text>
+                          </TouchableOpacity>
+                        </View>
 
-                  {/* Action button */}
-                  <TouchableOpacity
-                    style={styles.viewFullProfileBtn}
-                    activeOpacity={0.8}
-                    onPress={() => setActiveSection('perfil')}
-                  >
-                    <Text style={styles.viewFullProfileBtnText}>Ver mi perfil completo</Text>
-                    <Ionicons name="arrow-forward" size={14} color={colors.coffeePrimary} />
-                  </TouchableOpacity>
-                </View>
+                        {/* Action button */}
+                        <TouchableOpacity
+                          style={styles.viewFullProfileBtn}
+                          activeOpacity={0.8}
+                          onPress={() => setActiveSection('perfil')}
+                        >
+                          <Text style={styles.viewFullProfileBtnText}>Ver mi perfil completo</Text>
+                          <Ionicons name="arrow-forward" size={14} color={colors.coffeePrimary} />
+                        </TouchableOpacity>
+                      </View>
+                    </>
+                  );
+                })()}
               </View>
             ) : (
               <View style={styles.widgetCard}>
@@ -835,12 +855,12 @@ const styles = StyleSheet.create({
   logoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 16,
     paddingHorizontal: 4,
   },
   logoImage: {
-    width: 125,
-    height: 36,
+    width: 175,
+    height: 52,
   },
   sidebarSearchWrapper: {
     flexDirection: 'row',
@@ -1021,12 +1041,12 @@ const styles = StyleSheet.create({
     borderRightWidth: 1,
     borderRightColor: '#E1EAEF',
     overflow: 'hidden',
-    alignItems: 'center',
   },
   feedWrapper: {
     flex: 1,
     width: '100%',
     maxWidth: 680,
+    alignSelf: 'center',
   },
   quickPostCard: {
     flexDirection: 'row',
@@ -1079,7 +1099,7 @@ const styles = StyleSheet.create({
   /* RIGHT SIDEBAR STYLES (Tope al Borde Derecho)                  */
   /* ------------------------------------------------------------- */
   rightSidebar: {
-    width: 360,
+    width: 380,
     height: '100%',
     backgroundColor: '#F8FAFC',
     display: 'flex',
@@ -1089,9 +1109,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   rightSidebarScrollContent: {
-    padding: 14,
-    gap: 12,
-    paddingBottom: 24,
+    padding: 10,
+    gap: 10,
+    paddingBottom: 16,
   },
   rightScrollCue: {
     flexDirection: 'row',
@@ -1123,7 +1143,7 @@ const styles = StyleSheet.create({
 
   /* Widget 1: Profile Card */
   profileCardHeaderBanner: {
-    height: 85,
+    height: 95,
     backgroundColor: '#355971',
     position: 'relative',
     overflow: 'hidden',
