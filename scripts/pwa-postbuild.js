@@ -37,11 +37,16 @@ if (fs.existsSync(iconSrc)) {
   console.log('✅ Iconos PWA copiados a dist');
 }
 
-// 4. Copy psychologist registration HTML
+// 4. Copy psychologist registration & demo posts HTML
 const psicoHtml = path.join(rootDir, 'PruebasSistema', 'registro_psicologos.html');
 if (fs.existsSync(psicoHtml)) {
   fs.copyFileSync(psicoHtml, path.join(distDir, 'registro_psicologos.html'));
   console.log('✅ Copiado registro_psicologos.html a dist');
+}
+const demoPostsHtml = path.join(rootDir, 'panel_publicaciones_demo.html');
+if (fs.existsSync(demoPostsHtml)) {
+  fs.copyFileSync(demoPostsHtml, path.join(distDir, 'panel_publicaciones_demo.html'));
+  console.log('✅ Copiado panel_publicaciones_demo.html a dist');
 }
 
 // 5. Inject PWA tags into dist/index.html
@@ -67,6 +72,45 @@ if (fs.existsSync(indexHtmlPath)) {
     html = html.replace('</head>', `${pwaTags}\n</head>`);
     fs.writeFileSync(indexHtmlPath, html, 'utf8');
     console.log('✅ Meta tags de PWA inyectados en dist/index.html');
+  }
+
+  // Ensure custom scrollbar style exists in dist/index.html
+  if (!html.includes('id="custom-web-scrollbar"')) {
+    const scrollbarCss = `
+    <!-- Custom Web Scrollbar Styling -->
+    <style id="custom-web-scrollbar">
+      ::-webkit-scrollbar {
+        width: 9px !important;
+        height: 9px !important;
+        display: block !important;
+      }
+      ::-webkit-scrollbar-track {
+        background: #F1F5F9 !important;
+        border-radius: 9999px !important;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #94A3B8 !important;
+        border-radius: 9999px !important;
+        border: 2px solid #F1F5F9 !important;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #64748B !important;
+      }
+      ::-webkit-scrollbar-thumb:active {
+        background: #475569 !important;
+      }
+      ::-webkit-scrollbar-corner {
+        background: transparent !important;
+      }
+      html, body, #root, * {
+        scrollbar-width: thin !important;
+        scrollbar-color: #94A3B8 #F1F5F9 !important;
+      }
+    </style>
+    `;
+    html = html.replace('</head>', `${scrollbarCss}\n</head>`);
+    fs.writeFileSync(indexHtmlPath, html, 'utf8');
+    console.log('✅ Estilos de scrollbar inyectados en dist/index.html');
   }
 }
 

@@ -40,7 +40,7 @@ export const MonthAwarenessPostCard: React.FC<MonthAwarenessPostCardProps> = ({
         {/* Header: Author Avatar, Username, Verified Badge & Month Tagline */}
         <View style={styles.headerRow}>
           <Image
-            source={require('../../../assets/icon.png')}
+            source={require('../../../assets/perfilANIMA.png')}
             style={[
               styles.authorAvatar,
               { borderColor: currentMonth.primaryColor },
@@ -49,7 +49,7 @@ export const MonthAwarenessPostCard: React.FC<MonthAwarenessPostCardProps> = ({
           />
           <View style={styles.authorInfo}>
             <View style={styles.nameRow}>
-              <Text style={styles.authorUsername}>Entre Nosotros</Text>
+              <Text style={styles.authorUsername}>ANIMA</Text>
               <Ionicons
                 name="checkmark-circle"
                 size={14}

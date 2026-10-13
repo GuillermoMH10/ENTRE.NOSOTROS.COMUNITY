@@ -161,7 +161,7 @@ export const BlogScreen: React.FC<BlogScreenProps> = ({
             paddingBottom: contentPaddingBottom + 20,
           },
         ]}
-        showsVerticalScrollIndicator={false}
+        showsVerticalScrollIndicator={Platform.OS === 'web' ? true : false}
       >
         {/* 12 MONTHS SINGLE-CARD HORIZONTAL CAROUSEL */}
         <View style={styles.carouselSection}>

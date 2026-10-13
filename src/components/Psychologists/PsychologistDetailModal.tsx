@@ -146,7 +146,7 @@ export const PsychologistDetailModal: React.FC<PsychologistDetailModalProps> = (
         <ScrollView
           style={styles.scrollBody}
           contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
+          showsVerticalScrollIndicator={Platform.OS === 'web' ? true : false}
         >
           {/* 1. Cover Photo Banner */}
           <View style={styles.coverBanner}>

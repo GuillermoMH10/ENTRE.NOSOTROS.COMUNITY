@@ -34,6 +34,40 @@
         flex: 1;
       }
     </style>
+
+    <!-- Custom Web Scrollbar Styling (Modern web capsule design) -->
+    <style id="custom-web-scrollbar">
+      /* Chrome, Safari, Edge, Opera */
+      ::-webkit-scrollbar {
+        width: 9px !important;
+        height: 9px !important;
+        display: block !important;
+      }
+      ::-webkit-scrollbar-track {
+        background: #F1F5F9 !important;
+        border-radius: 9999px !important;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #94A3B8 !important;
+        border-radius: 9999px !important;
+        border: 2px solid #F1F5F9 !important;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #64748B !important;
+      }
+      ::-webkit-scrollbar-thumb:active {
+        background: #475569 !important;
+      }
+      ::-webkit-scrollbar-corner {
+        background: transparent !important;
+      }
+
+      /* Firefox */
+      html, body, #root, * {
+        scrollbar-width: thin !important;
+        scrollbar-color: #94A3B8 #F1F5F9 !important;
+      }
+    </style>
   </head>
   <body>
     <noscript>Necesitas habilitar JavaScript para ejecutar esta aplicación.</noscript>

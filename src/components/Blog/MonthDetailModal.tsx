@@ -111,7 +111,7 @@ export const MonthDetailModal: React.FC<MonthDetailModalProps> = ({
         <ScrollView
           style={styles.scrollContainer}
           contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
+          showsVerticalScrollIndicator={Platform.OS === 'web' ? true : false}
         >
           {/* Main Hero Card for the Selected Month with Image Background */}
           <View

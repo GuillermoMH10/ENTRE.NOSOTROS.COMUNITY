@@ -282,7 +282,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
 
       {/* Main Scrollable Content */}
       <ScrollView
-        showsVerticalScrollIndicator={false}
+        showsVerticalScrollIndicator={Platform.OS === 'web' ? true : false}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: contentPaddingBottom + 30 }]}
         keyboardShouldPersistTaps="handled"
       >

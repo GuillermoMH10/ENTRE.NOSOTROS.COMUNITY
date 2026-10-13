@@ -57,21 +57,27 @@ export const DailyQuoteCard: React.FC<DailyQuoteCardProps> = ({ quoteOffset = 0 
       <View style={styles.headerRow}>
         <View style={styles.authorRow}>
           <Image
-            source={require('../../../assets/icon.png')}
+            source={require('../../../assets/perfilANIMA.png')}
             style={styles.authorAvatar}
             resizeMode="cover"
           />
           <View style={styles.authorInfo}>
             <View style={styles.nameRow}>
-              <Text style={styles.authorUsername}>Entre Nosotros</Text>
+              <Text style={styles.authorUsername}>ANIMA</Text>
               <Ionicons
                 name="checkmark-circle"
                 size={14}
-                color={colors.coffeePrimary}
+                color="#3B82F6"
                 style={styles.verifiedBadge}
               />
+              <Ionicons
+                name="sparkles"
+                size={12}
+                color="#F59E0B"
+                style={{ marginLeft: 3 }}
+              />
             </View>
-            <Text style={styles.postSubtitle}>Mensaje para ti :)</Text>
+            <Text style={styles.postSubtitle}>Mensaje con amor para ti ✨</Text>
           </View>
         </View>
       </View>
@@ -82,6 +88,11 @@ export const DailyQuoteCard: React.FC<DailyQuoteCardProps> = ({ quoteOffset = 0 
           {currentQuoteData.quote}
         </Text>
       </Animated.View>
+
+      {/* ANIMA Warm Signature */}
+      <View style={styles.signatureRow}>
+        <Text style={styles.signatureText}>— Con cariño, ANIMA 💙</Text>
+      </View>
 
       {/* Thin Hairline Divider Separator identical to all posts */}
       <View style={styles.postDivider} />
@@ -107,12 +118,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   authorAvatar: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: colors.surface,
-    borderWidth: 1.2,
-    borderColor: colors.coffeePrimary,
+    borderWidth: 1.5,
+    borderColor: '#93C5FD',
     marginRight: 10,
   },
   authorInfo: {
@@ -123,28 +134,40 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   authorUsername: {
-    fontSize: 13.5,
+    fontSize: 14,
     fontWeight: '700',
-    color: colors.coffeeDeep,
+    color: '#1E293B',
   },
   verifiedBadge: {
     marginLeft: 4,
   },
   postSubtitle: {
-    fontSize: 11,
-    color: colors.coffeePrimary,
+    fontSize: 11.5,
+    color: '#3B82F6',
     fontWeight: '600',
     marginTop: 1,
   },
   contentWrapper: {
     marginTop: 2,
-    marginBottom: 8,
+    marginBottom: 6,
   },
   contentParagraph: {
     fontSize: 14,
     color: colors.textPrimary,
-    lineHeight: 21,
+    lineHeight: 22,
     letterSpacing: 0.1,
+  },
+  signatureRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: 4,
+    marginBottom: 4,
+  },
+  signatureText: {
+    fontSize: 12,
+    color: '#2563EB',
+    fontWeight: '600',
+    fontStyle: 'italic',
   },
   postDivider: {
     height: 1,

@@ -25,12 +25,14 @@ interface CreatePostScreenProps {
   visible: boolean;
   onClose: () => void;
   onPostCreated: () => void;
+  embedded?: boolean;
 }
 
 export const CreatePostScreen: React.FC<CreatePostScreenProps> = ({
   visible,
   onClose,
   onPostCreated,
+  embedded = false,
 }) => {
   const { user } = useAuth();
 
@@ -157,66 +159,73 @@ export const CreatePostScreen: React.FC<CreatePostScreenProps> = ({
 
   if (!visible) return null;
 
-  return (
-    <Modal visible={visible} animationType="slide" onRequestClose={onClose} statusBarTranslucent>
-      <KeyboardAvoidingView
-        style={styles.rootContainer}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        {/* Header Bar */}
-        <View style={styles.topBar}>
-          <View style={styles.topBarSideLeft}>
-            <TouchableOpacity onPress={onClose} style={styles.closeBtn} activeOpacity={0.7}>
-              <Ionicons name="close" size={22} color={colors.coffeeDark} />
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.topBarCenter}>
-            <Text style={styles.barTitle}>Crear Publicación</Text>
-          </View>
-
-          <View style={styles.topBarSideRight}>
-            <TouchableOpacity
-              style={[
-                styles.publishBtn,
-                !hasContentOrMedia || isSubmitting ? styles.publishBtnDisabled : null,
-              ]}
-              onPress={handlePublish}
-              disabled={!hasContentOrMedia || isSubmitting}
-              activeOpacity={0.85}
-            >
-              {isSubmitting ? (
-                <ActivityIndicator size="small" color={colors.white} />
-              ) : (
-                <Text style={styles.publishBtnText}>Publicar</Text>
-              )}
-            </TouchableOpacity>
-          </View>
+  const contentEl = (
+    <KeyboardAvoidingView
+      style={[styles.rootContainer, embedded && styles.rootContainerEmbedded]}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      {/* Header Bar */}
+      <View style={[styles.topBar, embedded && styles.topBarEmbedded]}>
+        <View style={styles.topBarSideLeft}>
+          <TouchableOpacity onPress={onClose} style={styles.closeBtn} activeOpacity={0.7} accessibilityLabel="Cerrar">
+            <Ionicons name="close" size={20} color={colors.coffeeDark} />
+          </TouchableOpacity>
         </View>
 
-        <ScrollView
-          style={styles.scrollContainer}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
-          {/* User Info Bar with Slogan */}
-          {user && (
-            <View style={styles.userRow}>
-              <Image source={{ uri: user.avatarUrl }} style={styles.avatar} />
-              <View style={styles.userTextCol}>
-                <Text style={styles.username}>@{user.username}</Text>
-                <Text style={styles.sloganText}>
-                  Aquí puedes hablar, aquí puedes escuchar, aquí puedes encontrar ayuda
-                </Text>
-              </View>
-            </View>
-          )}
+        <View style={styles.topBarCenter}>
+          <Text style={styles.barTitle}>Crear Publicación</Text>
+          <Text style={styles.barSubtitle}>Tu espacio seguro</Text>
+        </View>
 
-          {/* Main Description Input */}
+        <View style={styles.topBarSideRight}>
+          <TouchableOpacity
+            style={[
+              styles.publishBtn,
+              !hasContentOrMedia || isSubmitting ? styles.publishBtnDisabled : null,
+            ]}
+            onPress={handlePublish}
+            disabled={!hasContentOrMedia || isSubmitting}
+            activeOpacity={0.85}
+          >
+            {isSubmitting ? (
+              <ActivityIndicator size="small" color={colors.white} />
+            ) : (
+              <Text style={styles.publishBtnText}>Publicar</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <ScrollView
+        style={styles.scrollContainer}
+        contentContainerStyle={[styles.scrollContent, embedded && styles.scrollContentEmbedded]}
+        showsVerticalScrollIndicator={Platform.OS === 'web'}
+        keyboardShouldPersistTaps="handled"
+      >
+        {/* User Info Bar with Slogan */}
+        {user && (
+          <View style={[styles.userRow, embedded && styles.userRowCompact]}>
+            <Image source={{ uri: user.avatarUrl }} style={[styles.avatar, embedded && styles.avatarCompact]} />
+            <View style={styles.userTextCol}>
+              <View style={styles.userBadgeRow}>
+                <Text style={styles.username}>@{user.username}</Text>
+                <View style={styles.communityPill}>
+                  <Ionicons name="shield-checkmark" size={11} color="#059669" />
+                  <Text style={styles.communityPillText}>Comunidad</Text>
+                </View>
+              </View>
+              <Text style={styles.sloganText} numberOfLines={1}>
+                Aquí puedes hablar, escuchar y encontrar apoyo
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {/* Main Description Input inside sleek compact box */}
+        <View style={styles.inputWrapper}>
           <TextInput
-            style={styles.contentInput}
-            placeholder="Desahógate, este es tu espacio..."
+            style={[styles.contentInput, embedded && styles.contentInputEmbedded]}
+            placeholder="¿Qué estás sintiendo hoy? Desahógate, este es tu espacio..."
             placeholderTextColor={colors.textMuted}
             multiline
             value={content}
@@ -224,102 +233,123 @@ export const CreatePostScreen: React.FC<CreatePostScreenProps> = ({
             underlineColorAndroid="transparent"
             autoFocus
           />
+        </View>
 
-          {/* 3 Ready-to-Use Photo Slots */}
-          <View style={styles.photosSection}>
-            <Text style={styles.sectionHeading}>Fotos (hasta 3):</Text>
-            <View style={styles.slotsRow}>
-              {[0, 1, 2].map((slotIndex) => {
-                const mediaUri = photoSlots[slotIndex];
+        {/* 3 Ready-to-Use Compact Photo Slots */}
+        <View style={styles.photosSection}>
+          <Text style={styles.sectionHeading}>Fotos (hasta 3):</Text>
+          <View style={styles.slotsRow}>
+            {[0, 1, 2].map((slotIndex) => {
+              const mediaUri = photoSlots[slotIndex];
 
-                return (
-                  <View key={slotIndex} style={styles.slotWrapper}>
-                    {mediaUri ? (
-                      <View style={styles.slotImageContainer}>
-                        <Image source={{ uri: mediaUri }} style={styles.slotImage} />
-                        <TouchableOpacity
-                          style={styles.removeSlotBtn}
-                          onPress={() => handleRemoveSlotImage(slotIndex)}
-                          activeOpacity={0.8}
-                        >
-                          <Ionicons name="close" size={14} color={colors.white} />
-                        </TouchableOpacity>
-                      </View>
-                    ) : (
+              return (
+                <View key={slotIndex} style={styles.slotWrapper}>
+                  {mediaUri ? (
+                    <View style={styles.slotImageContainer}>
+                      <Image source={{ uri: mediaUri }} style={styles.slotImage} />
                       <TouchableOpacity
-                        style={styles.emptySlot}
-                        onPress={() => handleSlotPress(slotIndex)}
-                        activeOpacity={0.7}
+                        style={styles.removeSlotBtn}
+                        onPress={() => handleRemoveSlotImage(slotIndex)}
+                        activeOpacity={0.8}
+                        accessibilityLabel="Eliminar foto"
                       >
-                        <View style={styles.slotIconCircle}>
-                          <Ionicons name="image-outline" size={18} color={colors.coffeePrimary} />
-                        </View>
-                        <Text style={styles.slotLabel}>Foto {slotIndex + 1}</Text>
+                        <Ionicons name="close" size={12} color={colors.white} />
                       </TouchableOpacity>
-                    )}
-                  </View>
-                );
-              })}
-            </View>
-          </View>
-
-          {/* Selected Hashtags Chips */}
-          {hashtagsList.length > 0 && (
-            <View style={styles.hashtagsContainer}>
-              {hashtagsList.map((tag, idx) => (
-                <View key={idx} style={styles.tagChip}>
-                  <Text style={styles.tagChipText}>{tag}</Text>
-                  <TouchableOpacity onPress={() => handleRemoveHashtag(tag)}>
-                    <Ionicons name="close-circle" size={15} color="#4A7FB8" style={{ marginLeft: 4 }} />
-                  </TouchableOpacity>
+                    </View>
+                  ) : (
+                    <TouchableOpacity
+                      style={styles.emptySlot}
+                      onPress={() => handleSlotPress(slotIndex)}
+                      activeOpacity={0.7}
+                      accessibilityLabel={`Agregar foto ${slotIndex + 1}`}
+                    >
+                      <View style={styles.slotIconCircle}>
+                        <Ionicons name="camera-outline" size={16} color={colors.coffeePrimary} />
+                      </View>
+                      <Text style={styles.slotLabel}>Foto {slotIndex + 1}</Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
+              );
+            })}
+          </View>
+        </View>
+
+        {/* Selected Hashtags Chips */}
+        {hashtagsList.length > 0 && (
+          <View style={styles.hashtagsContainer}>
+            {hashtagsList.map((tag, idx) => (
+              <View key={idx} style={styles.tagChip}>
+                <Text style={styles.tagChipText}>{tag}</Text>
+                <TouchableOpacity onPress={() => handleRemoveHashtag(tag)} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}>
+                  <Ionicons name="close-circle" size={14} color="#4A7FB8" style={{ marginLeft: 4 }} />
+                </TouchableOpacity>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* Hashtag Input Field */}
+        <View style={styles.hashtagInputRow}>
+          <View style={styles.hashtagFieldWrapper}>
+            <Text style={styles.hashSymbol}>#</Text>
+            <TextInput
+              style={styles.hashtagTextInput}
+              placeholder="agrega_un_tema"
+              placeholderTextColor={colors.textMuted}
+              value={hashtagInput}
+              onChangeText={setHashtagInput}
+              onSubmitEditing={() => handleAddHashtag()}
+              autoCapitalize="none"
+            />
+          </View>
+          <TouchableOpacity
+            style={styles.addTagBtn}
+            onPress={() => handleAddHashtag()}
+            activeOpacity={0.7}
+            accessibilityLabel="Agregar tema"
+          >
+            <Ionicons name="add" size={18} color={colors.coffeePrimary} />
+          </TouchableOpacity>
+        </View>
+
+        {/* Suggested / Popular Hashtags */}
+        {popularHashtags.length > 0 && (
+          <View style={styles.suggestedSection}>
+            <Text style={styles.suggestedTitle}>Temas sugeridos:</Text>
+            <View style={styles.suggestedChipsRow}>
+              {popularHashtags.map((item) => (
+                <TouchableOpacity
+                  key={item.id}
+                  style={styles.suggestedChip}
+                  onPress={() => handleAddHashtag(item.tag)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.suggestedChipText}>{item.tag}</Text>
+                </TouchableOpacity>
               ))}
             </View>
-          )}
-
-          {/* Hashtag Input Field */}
-          <View style={styles.hashtagInputRow}>
-            <View style={styles.hashtagFieldWrapper}>
-              <Text style={styles.hashSymbol}>#</Text>
-              <TextInput
-                style={styles.hashtagTextInput}
-                placeholder="agrega_un_tema"
-                placeholderTextColor={colors.textMuted}
-                value={hashtagInput}
-                onChangeText={setHashtagInput}
-                onSubmitEditing={() => handleAddHashtag()}
-                autoCapitalize="none"
-              />
-            </View>
-            <TouchableOpacity
-              style={styles.addTagBtn}
-              onPress={() => handleAddHashtag()}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="add" size={20} color={colors.coffeePrimary} />
-            </TouchableOpacity>
           </View>
+        )}
 
-          {/* Suggested / Popular Hashtags */}
-          {popularHashtags.length > 0 && (
-            <View style={styles.suggestedSection}>
-              <Text style={styles.suggestedTitle}>Temas sugeridos:</Text>
-              <View style={styles.suggestedChipsRow}>
-                {popularHashtags.map((item) => (
-                  <TouchableOpacity
-                    key={item.id}
-                    style={styles.suggestedChip}
-                    onPress={() => handleAddHashtag(item.tag)}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={styles.suggestedChipText}>{item.tag}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-          )}
-        </ScrollView>
-      </KeyboardAvoidingView>
+        {/* Compact Safe Space Reminder */}
+        <View style={styles.safeNoticeRow}>
+          <Ionicons name="heart" size={13} color="#3B82F6" style={{ marginRight: 6 }} />
+          <Text style={styles.safeNoticeText}>
+            Espacio de escucha mutua y respeto. Cuídate y cuida a los demás 🌿
+          </Text>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
+  );
+
+  if (embedded) {
+    return contentEl;
+  }
+
+  return (
+    <Modal visible={visible} animationType="slide" onRequestClose={onClose} statusBarTranslucent>
+      {contentEl}
     </Modal>
   );
 };
@@ -328,6 +358,20 @@ const styles = StyleSheet.create({
   rootContainer: {
     flex: 1,
     backgroundColor: colors.white,
+  },
+  rootContainerEmbedded: {
+    backgroundColor: colors.white,
+    borderRadius: 18,
+    marginHorizontal: 12,
+    marginVertical: 10,
+    borderWidth: 1.2,
+    borderColor: '#E2E8F0',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 3,
+    overflow: 'hidden',
   },
   topBar: {
     flexDirection: 'row',
@@ -340,8 +384,15 @@ const styles = StyleSheet.create({
     borderBottomColor: '#F0EBE6',
     backgroundColor: colors.white,
   },
+  topBarEmbedded: {
+    paddingTop: 12,
+    paddingBottom: 12,
+    paddingHorizontal: 14,
+    backgroundColor: '#FAF9F7',
+    borderBottomColor: '#E5E7EB',
+  },
   topBarSideLeft: {
-    width: 85,
+    width: 65,
     alignItems: 'flex-start',
     justifyContent: 'center',
   },
@@ -351,30 +402,35 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   topBarSideRight: {
-    width: 85,
+    width: 80,
     alignItems: 'flex-end',
     justifyContent: 'center',
   },
   closeBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#F7F3EE',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F3EFEA',
     alignItems: 'center',
     justifyContent: 'center',
   },
   barTitle: {
-    fontSize: 16.5,
+    fontSize: 15,
     fontWeight: '700',
     color: colors.coffeeDeep,
     textAlign: 'center',
   },
+  barSubtitle: {
+    fontSize: 10.5,
+    color: colors.textSecondary,
+    fontWeight: '500',
+  },
   publishBtn: {
     backgroundColor: colors.coffeePrimary,
-    paddingHorizontal: 16,
-    paddingVertical: 7,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
     borderRadius: spacing.borderRadius.full,
-    minWidth: 80,
+    minWidth: 74,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -383,19 +439,25 @@ const styles = StyleSheet.create({
   },
   publishBtnText: {
     color: colors.white,
-    fontSize: 13,
+    fontSize: 12.5,
     fontWeight: '700',
   },
   scrollContainer: {
     flex: 1,
   },
   scrollContent: {
-    padding: spacing.lg,
+    padding: spacing.md,
+  },
+  scrollContentEmbedded: {
+    padding: 14,
   },
   userRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: spacing.md,
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  userRowCompact: {
+    marginBottom: 8,
   },
   avatar: {
     width: 38,
@@ -406,56 +468,87 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.borderLight,
   },
+  avatarCompact: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+  },
   userTextCol: {
     flex: 1,
   },
+  userBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
   username: {
-    fontSize: 13.5,
+    fontSize: 13,
     fontWeight: '700',
     color: colors.coffeeDeep,
-    marginBottom: 2,
+  },
+  communityPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ECFDF5',
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
+    borderRadius: 10,
+    gap: 3,
+  },
+  communityPillText: {
+    fontSize: 9.5,
+    color: '#059669',
+    fontWeight: '700',
   },
   sloganText: {
-    fontSize: 11.5,
+    fontSize: 11,
     color: colors.textSecondary,
-    lineHeight: 15,
-    fontWeight: '500',
+    marginTop: 1,
+  },
+  inputWrapper: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    padding: 8,
+    marginBottom: 8,
   },
   contentInput: {
-    fontSize: 15.5,
+    fontSize: 14.5,
     color: colors.textPrimary,
-    lineHeight: 23,
-    minHeight: 110,
+    lineHeight: 21,
+    minHeight: 85,
+    maxHeight: 180,
     textAlignVertical: 'top',
-    paddingVertical: 8,
-    paddingHorizontal: 0,
-    borderWidth: 0,
-    borderColor: 'transparent',
-    backgroundColor: 'transparent',
+    padding: 0,
     ...Platform.select({
       web: {
         outlineStyle: 'none',
       } as any,
     }),
   },
+  contentInputEmbedded: {
+    minHeight: 75,
+    maxHeight: 140,
+    fontSize: 14,
+  },
   photosSection: {
-    marginTop: 10,
-    marginBottom: 12,
+    marginTop: 4,
+    marginBottom: 8,
   },
   sectionHeading: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 11.5,
+    fontWeight: '700',
     color: colors.coffeeDark,
-    marginBottom: 8,
+    marginBottom: 6,
   },
   slotsRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 8,
+    gap: 10,
   },
   slotWrapper: {
-    flex: 1,
-    aspectRatio: 1,
+    width: 74,
+    height: 74,
     borderRadius: 12,
     overflow: 'hidden',
   },
@@ -471,131 +564,151 @@ const styles = StyleSheet.create({
   },
   removeSlotBtn: {
     position: 'absolute',
-    top: 5,
-    right: 5,
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: 'rgba(0,0,0,0.65)',
+    top: 4,
+    right: 4,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: 'rgba(15,23,42,0.75)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   emptySlot: {
     width: '100%',
     height: '100%',
-    backgroundColor: colors.surface,
+    backgroundColor: '#F8FAFC',
     borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: colors.borderLight,
+    borderWidth: 1.2,
+    borderColor: '#CBD5E1',
     borderStyle: 'dashed',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 6,
+    padding: 4,
   },
   slotIconCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     backgroundColor: colors.white,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 4,
-    shadowColor: colors.coffeeDeep,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    marginBottom: 2,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   slotLabel: {
-    fontSize: 10.5,
+    fontSize: 9.5,
     fontWeight: '600',
-    color: colors.coffeeMedium,
+    color: '#64748B',
   },
   hashtagsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginVertical: 6,
+    marginVertical: 4,
     gap: 6,
   },
   tagChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#EDF4FC',
-    paddingHorizontal: 9,
-    paddingVertical: 4,
+    backgroundColor: '#EFF6FF',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
     borderRadius: spacing.borderRadius.full,
     borderWidth: 1,
-    borderColor: '#D0E3F7',
+    borderColor: '#BFDBFE',
   },
   tagChipText: {
-    fontSize: 11.5,
-    color: '#3B74B0',
+    fontSize: 11,
+    color: '#1D4ED8',
     fontWeight: '600',
   },
   hashtagInputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 6,
+    marginVertical: 4,
   },
   hashtagFieldWrapper: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: spacing.borderRadius.md,
-    paddingHorizontal: 10,
-    height: 38,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    height: 34,
     borderWidth: 1,
-    borderColor: colors.borderLight,
+    borderColor: '#E2E8F0',
   },
   hashSymbol: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700',
     color: colors.coffeePrimary,
     marginRight: 4,
   },
   hashtagTextInput: {
     flex: 1,
-    fontSize: 13,
+    fontSize: 12.5,
     color: colors.textPrimary,
+    ...Platform.select({
+      web: {
+        outlineStyle: 'none',
+      } as any,
+    }),
   },
   addTagBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: spacing.borderRadius.md,
-    backgroundColor: colors.surface,
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: '#F8FAFC',
     borderWidth: 1,
-    borderColor: colors.borderLight,
+    borderColor: '#E2E8F0',
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: 8,
+    marginLeft: 6,
   },
   suggestedSection: {
-    marginTop: 6,
-    marginBottom: 14,
+    marginTop: 4,
+    marginBottom: 8,
   },
   suggestedTitle: {
-    fontSize: 11.5,
+    fontSize: 11,
     fontWeight: '600',
     color: colors.textSecondary,
-    marginBottom: 6,
+    marginBottom: 4,
   },
   suggestedChipsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 6,
+    gap: 5,
   },
   suggestedChip: {
-    backgroundColor: colors.surface,
-    paddingHorizontal: 9,
-    paddingVertical: 4,
+    backgroundColor: '#F8FAFC',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
     borderRadius: spacing.borderRadius.full,
     borderWidth: 1,
-    borderColor: colors.borderLight,
+    borderColor: '#E2E8F0',
   },
   suggestedChipText: {
-    fontSize: 11.5,
+    fontSize: 11,
     color: colors.coffeeDark,
     fontWeight: '500',
+  },
+  safeNoticeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#EFF6FF',
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    marginTop: 6,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#DBEAFE',
+  },
+  safeNoticeText: {
+    fontSize: 10.5,
+    color: '#1E40AF',
+    flex: 1,
+    lineHeight: 14,
   },
 });

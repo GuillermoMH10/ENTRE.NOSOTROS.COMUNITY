@@ -165,23 +165,35 @@ export const SupportScreen: React.FC<SupportScreenProps> = ({
             paddingBottom: contentPaddingBottom + 20,
           },
         ]}
-        showsVerticalScrollIndicator={false}
+        showsVerticalScrollIndicator={Platform.OS === 'web' ? true : false}
       >
-        {/* 1. TOP EMPATHETIC PHRASE CARD (Clean Sparkle + Rotating Phrase) */}
+        {/* 1. TOP EMPATHETIC PHRASE CARD (ANIMA - Mensaje de Apoyo) */}
         <TouchableOpacity
           style={[styles.quoteCard, isDesktop && { maxWidth: 880, width: '100%', alignSelf: 'center' }]}
           activeOpacity={0.9}
           onPress={handleNextMessage}
         >
           <View style={styles.quoteTopRow}>
-            <View style={styles.quoteIconBadge}>
-              <Ionicons name="sparkles" size={16} color={colors.coffeePrimary} />
+            <View style={styles.quoteAnimaBadgeRow}>
+              <Image
+                source={require('../../assets/perfilANIMA.png')}
+                style={styles.quoteAnimaAvatar}
+                resizeMode="cover"
+              />
+              <View>
+                <View style={styles.quoteAnimaNameRow}>
+                  <Text style={styles.quoteAnimaName}>ANIMA</Text>
+                  <Ionicons name="sparkles" size={12} color="#3B82F6" style={{ marginLeft: 3 }} />
+                </View>
+                <Text style={styles.quoteAnimaSubtitle}>Un recordatorio para ti</Text>
+              </View>
             </View>
             <TouchableOpacity
               onPress={handleNextMessage}
               style={styles.discreetRefreshBtn}
               activeOpacity={0.7}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              accessibilityLabel="Ver otro mensaje"
             >
               <Ionicons name="refresh-outline" size={15} color={colors.coffeePrimary} />
             </TouchableOpacity>
@@ -189,6 +201,10 @@ export const SupportScreen: React.FC<SupportScreenProps> = ({
 
           <Text style={styles.quoteHighlightText}>{currentMessage.highlight}</Text>
           <Text style={styles.quoteBodyText}>{currentMessage.text}</Text>
+
+          <View style={styles.quoteFooterRow}>
+            <Text style={styles.quoteFooterSign}>— Con amor, ANIMA 💙</Text>
+          </View>
         </TouchableOpacity>
 
         {/* 2. THE 3 MAIN CARDS (Responsive: 3-column row on Desktop, Carousel on Mobile) */}
@@ -385,13 +401,31 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 10,
   },
-  quoteIconBadge: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: colors.surface,
+  quoteAnimaBadgeRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: 8,
+  },
+  quoteAnimaAvatar: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    borderWidth: 1.5,
+    borderColor: '#93C5FD',
+  },
+  quoteAnimaNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  quoteAnimaName: {
+    fontSize: 13.5,
+    fontWeight: '700',
+    color: colors.coffeeDark,
+  },
+  quoteAnimaSubtitle: {
+    fontSize: 10.5,
+    color: '#3B82F6',
+    fontWeight: '600',
   },
   discreetRefreshBtn: {
     width: 28,
@@ -414,6 +448,17 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.textPrimary,
     lineHeight: 19,
+  },
+  quoteFooterRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: 8,
+  },
+  quoteFooterSign: {
+    fontSize: 11.5,
+    color: '#2563EB',
+    fontWeight: '600',
+    fontStyle: 'italic',
   },
   /* Desktop 3-Card Row */
   desktopCardsRow: {

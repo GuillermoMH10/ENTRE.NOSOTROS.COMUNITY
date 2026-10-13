@@ -7,6 +7,7 @@ import {
   RefreshControl,
   NativeSyntheticEvent,
   NativeScrollEvent,
+  Platform,
 } from 'react-native';
 import { Post } from '../../types/post';
 import { PostCard } from './PostCard';
@@ -213,7 +214,7 @@ export const FeedList: React.FC<FeedListProps> = ({
         styles.listContent,
         { paddingTop: contentPaddingTop, paddingBottom: contentPaddingBottom },
       ]}
-      showsVerticalScrollIndicator={false}
+      showsVerticalScrollIndicator={Platform.OS === 'web' ? true : false}
       onScroll={handleScroll}
       scrollEventThrottle={16}
       refreshControl={
@@ -238,5 +239,8 @@ const styles = StyleSheet.create({
   },
   listContent: {
     backgroundColor: colors.white,
+    maxWidth: 680,
+    width: '100%',
+    alignSelf: 'center',
   },
 });

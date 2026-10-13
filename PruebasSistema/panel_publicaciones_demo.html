@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel de Publicaciones Demo | Entre Nosotros</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            appBlue: {
+              50: '#F0F7FD',
+              100: '#E0EFFB',
+              500: '#355971',
+              600: '#2A475A',
+              700: '#1F3543',
+            },
+            coffee: {
+              50: '#FAF7F5',
+              100: '#F3EAE3',
+              200: '#E5D5C8',
+              500: '#8C684B',
+              700: '#4A3E3D',
+              900: '#1C1917',
+            }
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom modern scrollbars */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #F1F5F9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #94A3B8;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #64748B;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen font-sans antialiased pb-20">
+
+  <!-- TOP APP NAV BAR -->
+  <header class="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-200 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-appBlue-600 to-appBlue-500 flex items-center justify-center shadow-md shadow-appBlue-500/20 text-white font-bold text-lg">
+          EN
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <h1 class="text-base font-extrabold text-slate-900 tracking-tight">Entre Nosotros</h1>
+            <span class="px-2 py-0.5 text-xs font-bold rounded-full bg-blue-100 text-blue-700 border border-blue-200">Panel Demo</span>
+          </div>
+          <p class="text-xs text-slate-500">Gestor de 20 Publicaciones de Relleno en Vivo</p>
+        </div>
+      </div>
+
+      <!-- Live Firebase Status Indicator -->
+      <div class="flex items-center space-x-3">
+        <div id="connectionStatus" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 mr-2 animate-pulse"></span>
+          Conectado a Firestore
+        </div>
+        <a href="../dist/index.html" target="_blank" class="hidden sm:inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition-colors">
+          Abrir App Web ↗
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+
+    <!-- HERO / BANNER -->
+    <div class="bg-gradient-to-r from-appBlue-700 via-appBlue-600 to-slate-800 rounded-2xl p-6 sm:p-8 text-white shadow-xl shadow-appBlue-900/10 mb-8 relative overflow-hidden">
+      <div class="relative z-10 max-w-3xl">
+        <div class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-white/10 backdrop-blur-sm text-blue-200 border border-white/20 mb-3">
+          ✨ Relleno y Prueba del Feed
+        </div>
+        <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight mb-2">
+          Activa y Desactiva Publicaciones con 1 Clic
+        </h2>
+        <p class="text-sm sm:text-base text-blue-100 leading-relaxed">
+          Para que la aplicación nunca se vea vacía. Tienes <strong class="text-white font-bold">20 publicaciones realistas</strong> creadas por usuarios empáticos (10 con fotos y 10 de solo texto salteadas). Puedes activarlas todas, desactivarlas todas o prender/apagar individualmente. ¡Los cambios se reflejan en tiempo real en la app!
+        </p>
+      </div>
+      <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+    </div>
+
+    <!-- STATS COUNTER BAR -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+      <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex flex-col justify-between">
+        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Disponibles</span>
+        <div class="flex items-baseline space-x-2 mt-1">
+          <span class="text-2xl sm:text-3xl font-extrabold text-slate-900">20</span>
+          <span class="text-xs font-medium text-slate-500">publicaciones</span>
+        </div>
+        <div class="text-xs text-slate-400 mt-2">10 con fotos • 10 texto</div>
+      </div>
+
+      <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex flex-col justify-between">
+        <span class="text-xs font-bold text-emerald-600 uppercase tracking-wider">Activas en la App</span>
+        <div class="flex items-baseline space-x-2 mt-1">
+          <span id="activeCount" class="text-2xl sm:text-3xl font-extrabold text-emerald-600">0</span>
+          <span class="text-xs font-medium text-slate-500">/ 20</span>
+        </div>
+        <div class="w-full bg-slate-100 rounded-full h-1.5 mt-2 overflow-hidden">
+          <div id="activeProgressBar" class="bg-emerald-500 h-1.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex flex-col justify-between">
+        <span class="text-xs font-bold text-blue-600 uppercase tracking-wider">Con Fotos</span>
+        <div class="flex items-baseline space-x-2 mt-1">
+          <span id="activePhotosCount" class="text-2xl sm:text-3xl font-extrabold text-blue-600">0</span>
+          <span class="text-xs font-medium text-slate-500">/ 10 activas</span>
+        </div>
+        <div class="text-xs text-slate-400 mt-2">Fotografías Unsplash HD</div>
+      </div>
+
+      <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex flex-col justify-between">
+        <span class="text-xs font-bold text-amber-600 uppercase tracking-wider">Solo Texto</span>
+        <div class="flex items-baseline space-x-2 mt-1">
+          <span id="activeTextOnlyCount" class="text-2xl sm:text-3xl font-extrabold text-amber-600">0</span>
+          <span class="text-xs font-medium text-slate-500">/ 10 activas</span>
+        </div>
+        <div class="text-xs text-slate-400 mt-2">Desahogos y reflexiones</div>
+      </div>
+    </div>
+
+    <!-- GLOBAL ACTION BUTTONS BAR -->
+    <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm mb-6 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex flex-wrap items-center gap-2">
+        <!-- Activate All -->
+        <button id="btnActivateAll" class="inline-flex items-center px-4 py-2 rounded-lg text-xs sm:text-sm font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-all transform active:scale-95 disabled:opacity-50">
+          <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+          Activar Todas (20)
+        </button>
+
+        <!-- Deactivate All -->
+        <button id="btnDeactivateAll" class="inline-flex items-center px-4 py-2 rounded-lg text-xs sm:text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white shadow-sm transition-all transform active:scale-95 disabled:opacity-50">
+          <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+          Desactivar Todas (0)
+        </button>
+
+        <span class="h-6 w-px bg-slate-200 hidden sm:block"></span>
+
+        <!-- Random 10 -->
+        <button id="btnActivateRandom10" class="inline-flex items-center px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition-colors">
+          🎲 Activar 10 al Azar
+        </button>
+
+        <!-- Random 5 -->
+        <button id="btnActivateRandom5" class="inline-flex items-center px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 transition-colors">
+          ⚡ Activar 5 al Azar
+        </button>
+      </div>
+
+      <!-- Quick Search Input -->
+      <div class="w-full sm:w-64">
+        <div class="relative">
+          <input type="text" id="searchInput" placeholder="Buscar por texto, autor..." class="w-full pl-9 pr-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-appBlue-500 focus:border-transparent bg-slate-50">
+          <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- FILTER TABS -->
+    <div class="flex items-center space-x-2 overflow-x-auto pb-3 mb-4 scrollbar-none text-xs">
+      <button data-filter="all" class="filter-tab px-3.5 py-1.5 rounded-full font-bold bg-slate-900 text-white shadow-sm transition-all">
+        Todas (20)
+      </button>
+      <button data-filter="active" class="filter-tab px-3.5 py-1.5 rounded-full font-semibold bg-white text-slate-600 border border-slate-200 hover:bg-slate-100 transition-all">
+        🟢 Activas en la App
+      </button>
+      <button data-filter="inactive" class="filter-tab px-3.5 py-1.5 rounded-full font-semibold bg-white text-slate-600 border border-slate-200 hover:bg-slate-100 transition-all">
+        ⚪ Desactivadas
+      </button>
+      <button data-filter="photos" class="filter-tab px-3.5 py-1.5 rounded-full font-semibold bg-white text-slate-600 border border-slate-200 hover:bg-slate-100 transition-all">
+        📷 Con Fotos (10)
+      </button>
+      <button data-filter="textOnly" class="filter-tab px-3.5 py-1.5 rounded-full font-semibold bg-white text-slate-600 border border-slate-200 hover:bg-slate-100 transition-all">
+        📝 Solo Texto (10)
+      </button>
+    </div>
+
+    <!-- POSTS GRID -->
+    <div id="postsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      <!-- Cards will be dynamically injected here -->
+    </div>
+
+  </main>
+
+  <!-- FLOATING TOAST NOTIFICATION -->
+  <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-24 opacity-0 transition-all duration-300 pointer-events-none">
+    <div class="bg-slate-900/95 backdrop-blur-md text-white px-5 py-3 rounded-xl shadow-2xl border border-slate-700 flex items-center space-x-3 text-sm font-medium">
+      <span id="toastIcon">✨</span>
+      <span id="toastMsg">Notificación</span>
+    </div>
+  </div>
+
+  <!-- SCRIPT LOGIC WITH FIREBASE -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { 
+      getFirestore, 
+      doc, 
+      setDoc, 
+      deleteDoc, 
+      onSnapshot, 
+      collection,
+      writeBatch
+    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    // Firebase Config (Entre Nosotros)
+    const firebaseConfig = {
+      apiKey: "AIzaSyAs1ti_J3Fxi6t41kW_xC3OORk_PugyTSk",
+      authDomain: "entre-nosotros-742c0.firebaseapp.com",
+      projectId: "entre-nosotros-742c0",
+      storageBucket: "entre-nosotros-742c0.firebasestorage.app",
+      messagingSenderId: "67176257419",
+      appId: "1:67176257419:web:c5e00b80c8f51aa428418e"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // 20 SEED POSTS (10 WITH PHOTOS, 10 TEXT-ONLY, STAGGERED ALTERNATING)
+    const DEMO_POSTS = [
+      {
+        id: "demo_post_01",
+        type: "photo",
+        authorId: "demo_user_01",
+        authorName: "Camila Ríos",
+        authorUsername: "Camila_Rios",
+        authorAvatarUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=256&q=80",
+        bio: "Estudiante de diseño, amante del té y de los días tranquilos 🌱",
+        content: "Hoy me costó mucho levantarme de la cama, pero salí a caminar 15 minutos y ver el cielo despejado me devolvió un poquito de paz. Pasito a pasito, no todos los días tienen que ser perfectos 🌱✨",
+        imageUrls: ["https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80"],
+        hashtags: ["#PasoAPaso", "#SaludMental", "#Naturaleza"],
+        reactions: { teAbrazo: 18, teEscucho: 7, noEstasSolo: 21, fuerza: 14 },
+        commentsCount: 5,
+        offsetMinutes: 12
+      },
+      {
+        id: "demo_post_02",
+        type: "text",
+        authorId: "demo_user_02",
+        authorName: "Mateo Vargas",
+        authorUsername: "Mateo_Vargas",
+        authorAvatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=256&q=80",
+        bio: "Aprendiendo a escuchar más y juzgar menos 🎧",
+        content: "A quien necesite leer esto hoy: no eres una molestia por expresar cómo te sientes. Guardarte todo por miedo a incomodar solo te desgasta a ti. Aquí estamos para escucharte sin juzgar.",
+        imageUrls: [],
+        hashtags: ["#Desahogo", "#NoEstasSolo", "#Empatia"],
+        reactions: { teAbrazo: 34, teEscucho: 19, noEstasSolo: 42, fuerza: 25 },
+        commentsCount: 9,
+        offsetMinutes: 28
+      },
+      {
+        id: "demo_post_03",
+        type: "photo",
+        authorId: "demo_user_03",
+        authorName: "Sofía Lozano",
+        authorUsername: "Sofia_Lozano",
+        authorAvatarUrl: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=256&q=80",
+        bio: "Café matutino, libros y salud emocional ☕",
+        content: "Una taza de café caliente, una libreta y 10 minutos para escribir lo que traigo en el pecho. A veces escribir desenreda lo que la mente hace bolas ☕📖",
+        imageUrls: ["https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=800&q=80"],
+        hashtags: ["#Journaling", "#Autocuidado", "#UnDiaALaVez"],
+        reactions: { teAbrazo: 22, teEscucho: 12, noEstasSolo: 15, fuerza: 9 },
+        commentsCount: 4,
+        offsetMinutes: 52
+      },
+      {
+        id: "demo_post_04",
+        type: "text",
+        authorId: "demo_user_04",
+        authorName: "David Herrera",
+        authorUsername: "David_Herrera",
+        authorAvatarUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=256&q=80",
+        bio: "Caminante en proceso de autodescubrimiento ⛰️",
+        content: "Llevaba 3 semanas con ansiedad casi a diario. Hoy logré aplicar la técnica de respiración 4-7-8 que compartieron aquí y por primera vez sentí que recuperaba el control. No es magia, pero es un avance enorme para mí.",
+        imageUrls: [],
+        hashtags: ["#Ansiedad", "#RespiracionConsciente", "#Progreso"],
+        reactions: { teAbrazo: 28, teEscucho: 16, noEstasSolo: 33, fuerza: 45 },
+        commentsCount: 12,
+        offsetMinutes: 85
+      },
+      {
+        id: "demo_post_05",
+        type: "photo",
+        authorId: "demo_user_05",
+        authorName: "Lucía Gómez",
+        authorUsername: "Lucia_Gomez",
+        authorAvatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=256&q=80",
+        bio: "Fotógrafa aficionada y coleccionista de atardeceres 🌅",
+        content: "El atardecer de hoy me recordó que los días difíciles también se terminan y dan paso a una noche tranquila. Respiren profundo, mañana es una nueva oportunidad 🌅🧡",
+        imageUrls: ["https://images.unsplash.com/photo-1495616811223-4d98c6e9c869?auto=format&fit=crop&w=800&q=80"],
+        hashtags: ["#Atardecer", "#PazMental", "#Gratitud"],
+        reactions: { teAbrazo: 41, teEscucho: 8, noEstasSolo: 26, fuerza: 22 },
+        commentsCount: 6,
+        offsetMinutes: 120
+      },
+      {
+        id: "demo_post_06",
+        type: "text",
+        authorId: "demo_user_06",
+        authorName: "Carlos Paredes",
+        authorUsername: "Carlos_Paredes",
+        authorAvatarUrl: "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=256&q=80",
+        bio: "Desarrollador, amante de la música y aprendiendo a poner límites 💻",
+        content: "¿Alguien más siente que se sobreexige hasta quedar completamente agotado? Me cuesta mucho decir 'hasta aquí por hoy' sin sentir culpa por descansar.",
+        imageUrls: [],
+        hashtags: ["#Burnout", "#Sobrecarga", "#Hablemos"],
+        reactions: { teAbrazo: 26, teEscucho: 35, noEstasSolo: 54, fuerza: 18 },
+        commentsCount: 18,
+        offsetMinutes: 165
+      },
+      {
+        id: "demo_post_07",
+        type: "photo",
+        authorId: "demo_user_07",
+        authorName: "Elena Castillo",
+        authorUsername: "Elena_Castillo",
+        authorAvatarUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=256&q=80",
+        bio: "Mamá perruna y terapeuta ocupacional 🐶",
+        content: "Adopté a este pequeño hace dos semanas y no se imaginan cómo me ha ayudado a calmar la soledad en casa. Los animalitos tienen una forma mágica de sanar el corazón 🐾🤍",
+        imageUrls: ["https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=800&q=80"],
+        hashtags: ["#AmorPerruno", "#Compañia", "#Sanando"],
+        reactions: { teAbrazo: 53, teEscucho: 14, noEstasSolo: 36, fuerza: 29 },
+        commentsCount: 14,
+        offsetMinutes: 210
+      },
+      {
+        id: "demo_post_08",
+        type: "text",
+        authorId: "demo_user_08",
+        authorName: "Javier Navarro",
+        authorUsername: "Javier_Navarro",
+        authorAvatarUrl: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=256&q=80",
+        bio: "Normalizando ir al psicólogo como ir al dentista 🧠",
+        content: "Hoy fui a mi primera sesión de terapia psicológica después de meses postergándolo por miedo y pena. Salí llorando, pero con un peso de 100 kilos menos en la espalda. Si lo estás pensando, anímate.",
+        imageUrls: [],
+        hashtags: ["#Terapia", "#SaludEmocional", "#Valiente"],
+        reactions: { teAbrazo: 61, teEscucho: 22, noEstasSolo: 44, fuerza: 72 },
+        commentsCount: 25,
+        offsetMinutes: 270
+      },
+      {
+        id: "demo_post_09",
+        type: "photo",
+        authorId: "demo_user_09",
+        authorName: "Mariana Cruz",
+        authorUsername: "Mariana_Cruz",
+        authorAvatarUrl: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=256&q=80",
+        bio: "Pinto para calmar mi mente y respiro para estar aquí 🎨",
+        content: "Desconexión total de redes por 4 horas para pintar acuarelas y escuchar la lluvia. Hacía meses que no me regalaba un rato sin mirar pantallas ni noticias estresantes 🎨🌧️",
+        imageUrls: ["https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=800&q=80"],
+        hashtags: ["#ArteTerapia", "#Desconexion", "#Bienestar"],
+        reactions: { teAbrazo: 31, teEscucho: 15, noEstasSolo: 18, fuerza: 24 },
+        commentsCount: 8,
+        offsetMinutes: 340
+      },
+      {
+        id: "demo_post_10",
+        type: "text",
+        authorId: "demo_user_10",
+        authorName: "Andrés Morales",
+        authorUsername: "Andres_Morales",
+        authorAvatarUrl: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=256&q=80",
+        bio: "Cuestionando certezas y abrazando procesos ✨",
+        content: "A veces pensamos que madurar es poder con todo solos. Hoy aprendí que madurar también es saber decir: 'no puedo con esto en este momento, ¿me ayudas?'. Cuidar de uno mismo no es egoísmo.",
+        imageUrls: [],
+        hashtags: ["#Reflexion", "#PedirAyuda", "#Crecimiento"],
+        reactions: { teAbrazo: 38, teEscucho: 25, noEstasSolo: 39, fuerza: 32 },
+        commentsCount: 11,
+        offsetMinutes: 410
+      },
+      {
+        id: "demo_post_11",
+        type: "photo",
+        authorId: "demo_user_11",
+        authorName: "Valeria Martínez",
+        authorUsername: "Valeria_Mtz",
+        authorAvatarUrl: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=256&q=80",
+        bio: "Plantitas, té de jazmín y amabilidad ante todo 🌸",
+        content: "Flores frescas para mi espacio de trabajo. Un recordatorio visual de que florecer toma tiempo, paciencia y suficiente agua y sol 🌸🌿",
+        imageUrls: ["https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=800&q=80"],
+        hashtags: ["#Detalles", "#Florecer", "#AmorPropio"],
+        reactions: { teAbrazo: 35, teEscucho: 9, noEstasSolo: 21, fuerza: 17 },
+        commentsCount: 6,
+        offsetMinutes: 500
+      },
+      {
+        id: "demo_post_12",
+        type: "text",
+        authorId: "demo_user_12",
+        authorName: "Diego Soto",
+        authorUsername: "Diego_Soto",
+        authorAvatarUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=256&q=80",
+        bio: "Ingeniero con alma sensible y corazón tranquilo 🌾",
+        content: "Para los que hoy sienten el pecho apretado o tienen muchas dudas sobre su futuro: no tienen que tener toda la vida resuelta a sus 20s o 30s. Vayan un día a la vez. Lo están haciendo mucho mejor de lo que creen.",
+        imageUrls: [],
+        hashtags: ["#UnDiaALaVez", "#Calma", "#Fuerza"],
+        reactions: { teAbrazo: 47, teEscucho: 19, noEstasSolo: 51, fuerza: 40 },
+        commentsCount: 16,
+        offsetMinutes: 620
+      },
+      {
+        id: "demo_post_13",
+        type: "photo",
+        authorId: "demo_user_01",
+        authorName: "Camila Ríos",
+        authorUsername: "Camila_Rios",
+        authorAvatarUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=256&q=80",
+        bio: "Estudiante de diseño, amante del té y de los días tranquilos 🌱",
+        content: "Hoy me permití descansar sin culpa. Desayuno rico, té caliente y mantita. El descanso no es un premio que hay que ganarse, es una necesidad vital 🍵✨",
+        imageUrls: ["https://images.unsplash.com/photo-1544787219-7f47ccb76574?auto=format&fit=crop&w=800&q=80"],
+        hashtags: ["#Descanso", "#SinCulpa", "#Calidez"],
+        reactions: { teAbrazo: 39, teEscucho: 11, noEstasSolo: 23, fuerza: 15 },
+        commentsCount: 7,
+        offsetMinutes: 750
+      },
+      {
+        id: "demo_post_14",
+        type: "text",
+        authorId: "demo_user_02",
+        authorName: "Mateo Vargas",
+        authorUsername: "Mateo_Vargas",
+        authorAvatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=256&q=80",
+        bio: "Aprendiendo a escuchar más y juzgar menos 🎧",
+        content: "A veces la gente te dice 'échale ganas' con buena intención, pero cuando estás en un momento oscuro esa frase duele. Lo que necesitamos no son porras vacías, sino alguien que se siente a nuestro lado y nos diga 'aquí estoy contigo'.",
+        imageUrls: [],
+        hashtags: ["#EmpatiaReal", "#ValidarEmociones", "#Escucha"],
+        reactions: { teAbrazo: 66, teEscucho: 38, noEstasSolo: 60, fuerza: 34 },
+        commentsCount: 22,
+        offsetMinutes: 900
+      },
+      {
+        id: "demo_post_15",
+        type: "photo",
+        authorId: "demo_user_03",
+        authorName: "Sofía Lozano",
+        authorUsername: "Sofia_Lozano",
+        authorAvatarUrl: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=256&q=80",
+        bio: "Café matutino, libros y salud emocional ☕",
+        content: "Hacer pan casero me desconectó de la ansiedad toda la tarde. Amasar con las manos me regresó al presente. Encuentra esa pequeña actividad manual que te ancle al aquí y ahora 🍞🌾",
+        imageUrls: ["https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=800&q=80"],
+        hashtags: ["#Mindfulness", "#CocinaConAmor", "#AquiYAhora"],
+        reactions: { teAbrazo: 29, teEscucho: 14, noEstasSolo: 19, fuerza: 22 },
+        commentsCount: 9,
+        offsetMinutes: 1080
+      },
+      {
+        id: "demo_post_16",
+        type: "text",
+        authorId: "demo_user_04",
+        authorName: "David Herrera",
+        authorUsername: "David_Herrera",
+        authorAvatarUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=256&q=80",
+        bio: "Caminante en proceso de autodescubrimiento ⛰️",
+        content: "Hoy quiero celebrar una pequeña victoria personal: me animé a ponerle un límite claro a una persona que siempre me hacía sentir mal. Me temblaron las piernas, pero lo hice con calma y respeto. Se siente una libertad hermosa.",
+        imageUrls: [],
+        hashtags: ["#LimitesSanos", "#PazMental", "#Victoria"],
+        reactions: { teAbrazo: 44, teEscucho: 17, noEstasSolo: 31, fuerza: 56 },
+        commentsCount: 15,
+        offsetMinutes: 1260
+      },
+      {
+        id: "demo_post_17",
+        type: "photo",
+        authorId: "demo_user_06",
+        authorName: "Carlos Paredes",
+        authorUsername: "Carlos_Paredes",
+        authorAvatarUrl: "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=256&q=80",
+        bio: "Desarrollador, amante de la música y aprendiendo a poner límites 💻",
+        content: "Senderismo en la montaña este fin de semana. Respirar aire fresco y escuchar los pinos mecidos por el viento fue el mejor reinicio para mi cabeza 🌲⛰️",
+        imageUrls: ["https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=800&q=80"],
+        hashtags: ["#Naturaleza", "#Senderismo", "#Reiniciar"],
+        reactions: { teAbrazo: 32, teEscucho: 13, noEstasSolo: 25, fuerza: 39 },
+        commentsCount: 8,
+        offsetMinutes: 1440
+      },
+      {
+        id: "demo_post_18",
+        type: "text",
+        authorId: "demo_user_07",
+        authorName: "Elena Castillo",
+        authorUsername: "Elena_Castillo",
+        authorAvatarUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=256&q=80",
+        bio: "Mamá perruna y terapeuta ocupacional 🐶",
+        content: "No tienes que ser la roca inquebrantable de tu familia todo el tiempo. Si hoy necesitas llorar a solas o pedir un abrazo, hazlo. Las lágrimas no son debilidad, son el desahogo del corazón que ha resistido mucho.",
+        imageUrls: [],
+        hashtags: ["#PermiteteSentir", "#Desahogo", "#Abrazo"],
+        reactions: { teAbrazo: 74, teEscucho: 33, noEstasSolo: 56, fuerza: 37 },
+        commentsCount: 19,
+        offsetMinutes: 1680
+      },
+      {
+        id: "demo_post_19",
+        type: "photo",
+        authorId: "demo_user_08",
+        authorName: "Javier Navarro",
+        authorUsername: "Javier_Navarro",
+        authorAvatarUrl: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=256&q=80",
+        bio: "Normalizando ir al psicólogo como ir al dentista 🧠",
+        content: "Terminé de leer un libro hermoso sobre autocompasión. Subrayé esto: 'Trátate a ti mismo como tratarías a tu mejor amigo cuando está pasando por su momento más difícil' 📚🕯️",
+        imageUrls: ["https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=800&q=80"],
+        hashtags: ["#Lectura", "#Autocompasion", "#CrecimientoPersonal"],
+        reactions: { teAbrazo: 45, teEscucho: 19, noEstasSolo: 28, fuerza: 32 },
+        commentsCount: 12,
+        offsetMinutes: 1950
+      },
+      {
+        id: "demo_post_20",
+        type: "text",
+        authorId: "demo_user_09",
+        authorName: "Mariana Cruz",
+        authorUsername: "Mariana_Cruz",
+        authorAvatarUrl: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=256&q=80",
+        bio: "Pinto para calmar mi mente y respiro para estar aquí 🎨",
+        content: "Si hoy no lograste hacer todo lo que tenías en tu lista de pendientes, no te castigues. Sobreviviste al día, y eso ya es suficiente. Mañana el sol saldrá de nuevo. Descansa con el corazón en paz 🌙💤",
+        imageUrls: [],
+        hashtags: ["#BuenasNoches", "#Descanso", "#MananaSeraOtroDia"],
+        reactions: { teAbrazo: 58, teEscucho: 24, noEstasSolo: 46, fuerza: 26 },
+        commentsCount: 14,
+        offsetMinutes: 2200
+      }
+    ];
+
+    // State
+    const activePostsSet = new Set();
+    let currentFilter = 'all';
+    let currentSearch = '';
+
+    // Elements
+    const postsGrid = document.getElementById('postsGrid');
+    const activeCountEl = document.getElementById('activeCount');
+    const activePhotosCountEl = document.getElementById('activePhotosCount');
+    const activeTextOnlyCountEl = document.getElementById('activeTextOnlyCount');
+    const activeProgressBar = document.getElementById('activeProgressBar');
+    const searchInput = document.getElementById('searchInput');
+    const btnActivateAll = document.getElementById('btnActivateAll');
+    const btnDeactivateAll = document.getElementById('btnDeactivateAll');
+    const btnActivateRandom10 = document.getElementById('btnActivateRandom10');
+    const btnActivateRandom5 = document.getElementById('btnActivateRandom5');
+    const toast = document.getElementById('toast');
+    const toastMsg = document.getElementById('toastMsg');
+    const toastIcon = document.getElementById('toastIcon');
+
+    // Show Toast Helper
+    let toastTimeout = null;
+    function showToast(message, icon = '✨') {
+      toastMsg.textContent = message;
+      toastIcon.textContent = icon;
+      toast.classList.remove('translate-y-24', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+      if (toastTimeout) clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toast.classList.add('translate-y-24', 'opacity-0');
+        toast.classList.remove('translate-y-0', 'opacity-100');
+      }, 2500);
+    }
+
+    // Format relative time helper
+    function getEstimatedTimeAgo(mins) {
+      if (mins < 60) return `hace ${mins} min`;
+      const hrs = Math.floor(mins / 60);
+      return `hace ${hrs} h`;
+    }
+
+    // Prepare Document Data for Firestore
+    function buildPostDocument(post) {
+      const now = Date.now();
+      const simulatedTime = now - (post.offsetMinutes * 60 * 1000);
+      return {
+        id: post.id,
+        authorId: post.authorId,
+        authorUsername: post.authorUsername,
+        authorAvatarUrl: post.authorAvatarUrl,
+        content: post.content,
+        imageUrls: post.imageUrls || [],
+        hashtags: post.hashtags || [],
+        reactions: post.reactions || { teAbrazo: 0, teEscucho: 0, noEstasSolo: 0, fuerza: 0 },
+        commentsCount: post.commentsCount || 0,
+        savedBy: [],
+        createdAt: new Date(simulatedTime).toISOString(),
+        timestamp: simulatedTime,
+        isDemoPost: true
+      };
+    }
+
+    // Ensure mock user exists in Firestore 'users' collection
+    async function ensureUserExists(post) {
+      try {
+        const userRef = doc(db, 'users', post.authorId);
+        await setDoc(userRef, {
+          id: post.authorId,
+          username: post.authorUsername,
+          displayName: post.authorName,
+          avatarUrl: post.authorAvatarUrl,
+          bio: post.bio,
+          followersCount: Math.floor(Math.random() * 40) + 15,
+          followingCount: Math.floor(Math.random() * 30) + 10,
+          postsCount: 1,
+          role: 'user',
+          createdAt: new Date().toISOString()
+        }, { merge: true });
+      } catch (err) {
+        console.warn('Nota: usuario mock guardado o existente:', err);
+      }
+    }
+
+    // Activate Single Post
+    async function activatePost(post) {
+      try {
+        const postDoc = buildPostDocument(post);
+        await setDoc(doc(db, 'posts', post.id), postDoc);
+        ensureUserExists(post);
+        showToast(`Publicación de @${post.authorUsername} activada`, '🟢');
+      } catch (err) {
+        console.error('Error al activar:', err);
+        showToast('Error al conectar con Firestore', '❌');
+      }
+    }
+
+    // Deactivate Single Post
+    async function deactivatePost(postId, authorUsername) {
+      try {
+        await deleteDoc(doc(db, 'posts', postId));
+        showToast(`Publicación de @${authorUsername} desactivada`, '⚪');
+      } catch (err) {
+        console.error('Error al desactivar:', err);
+        showToast('Error al conectar con Firestore', '❌');
+      }
+    }
+
+    // Activate Multiple Posts
+    async function activateMultiple(postsToActivate) {
+      try {
+        btnActivateAll.disabled = true;
+        const batch = writeBatch(db);
+        postsToActivate.forEach((p) => {
+          const postDoc = buildPostDocument(p);
+          batch.set(doc(db, 'posts', p.id), postDoc);
+          ensureUserExists(p);
+        });
+        await batch.commit();
+        showToast(`${postsToActivate.length} publicaciones activadas en la App`, '🚀');
+      } catch (err) {
+        console.error('Error en batch:', err);
+        showToast('Error al activar publicaciones', '❌');
+      } finally {
+        btnActivateAll.disabled = false;
+      }
+    }
+
+    // Deactivate All Posts
+    async function deactivateAll() {
+      try {
+        btnDeactivateAll.disabled = true;
+        const batch = writeBatch(db);
+        DEMO_POSTS.forEach((p) => {
+          batch.delete(doc(db, 'posts', p.id));
+        });
+        await batch.commit();
+        showToast('Todas las publicaciones demo fueron desactivadas', '🗑️');
+      } catch (err) {
+        console.error('Error al desactivar todas:', err);
+        showToast('Error al desactivar publicaciones', '❌');
+      } finally {
+        btnDeactivateAll.disabled = false;
+      }
+    }
+
+    // Update Counters and Progress Bar
+    function updateStats() {
+      const activeCount = activePostsSet.size;
+      activeCountEl.textContent = activeCount;
+      activeProgressBar.style.width = `${(activeCount / 20) * 100}%`;
+
+      let photosCount = 0;
+      let textCount = 0;
+      DEMO_POSTS.forEach((p) => {
+        if (activePostsSet.has(p.id)) {
+          if (p.type === 'photo') photosCount++;
+          else textCount++;
+        }
+      });
+      activePhotosCountEl.textContent = photosCount;
+      activeTextOnlyCountEl.textContent = textCount;
+    }
+
+    // Render Cards in Grid
+    function renderCards() {
+      postsGrid.innerHTML = '';
+
+      const filtered = DEMO_POSTS.filter((post) => {
+        const isActive = activePostsSet.has(post.id);
+
+        // Filter tab
+        if (currentFilter === 'active' && !isActive) return false;
+        if (currentFilter === 'inactive' && isActive) return false;
+        if (currentFilter === 'photos' && post.type !== 'photo') return false;
+        if (currentFilter === 'textOnly' && post.type !== 'text') return false;
+
+        // Search text
+        if (currentSearch.trim()) {
+          const q = currentSearch.toLowerCase();
+          const matchContent = post.content.toLowerCase().includes(q);
+          const matchAuthor = post.authorName.toLowerCase().includes(q) || post.authorUsername.toLowerCase().includes(q);
+          const matchTags = post.hashtags.some((t) => t.toLowerCase().includes(q));
+          if (!matchContent && !matchAuthor && !matchTags) return false;
+        }
+
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        postsGrid.innerHTML = `
+          <div class="col-span-full py-16 text-center bg-white rounded-2xl border border-slate-200">
+            <span class="text-4xl">🔍</span>
+            <p class="text-sm font-semibold text-slate-600 mt-2">No se encontraron publicaciones con ese filtro.</p>
+          </div>
+        `;
+        return;
+      }
+
+      filtered.forEach((post, index) => {
+        const isActive = activePostsSet.has(post.id);
+        const card = document.createElement('div');
+        card.className = `bg-white rounded-2xl border transition-all duration-200 flex flex-col justify-between overflow-hidden ${
+          isActive 
+            ? 'border-emerald-300 ring-2 ring-emerald-500/10 shadow-md' 
+            : 'border-slate-200 shadow-sm opacity-90 hover:opacity-100'
+        }`;
+
+        // Total reactions
+        const totalReactions = (post.reactions.teAbrazo || 0) + (post.reactions.teEscucho || 0) + (post.reactions.noEstasSolo || 0) + (post.reactions.fuerza || 0);
+
+        card.innerHTML = `
+          <!-- Card Header -->
+          <div class="p-4 border-b border-slate-100 flex items-start justify-between">
+            <div class="flex items-center space-x-3">
+              <img src="${post.authorAvatarUrl}" alt="${post.authorName}" class="w-10 h-10 rounded-full object-cover ring-2 ring-slate-100">
+              <div>
+                <div class="flex items-center space-x-1.5">
+                  <h3 class="text-xs font-bold text-slate-900">${post.authorName}</h3>
+                  <span class="text-emerald-500 text-xs">✓</span>
+                </div>
+                <p class="text-[11px] text-slate-400">@${post.authorUsername}</p>
+              </div>
+            </div>
+
+            <!-- Toggle Switch -->
+            <div class="flex items-center space-x-2">
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" class="sr-only peer post-toggle" data-id="${post.id}" ${isActive ? 'checked' : ''}>
+                <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Card Body -->
+          <div class="p-4 flex-1 flex flex-col justify-between">
+            <div>
+              <!-- Badges Row -->
+              <div class="flex items-center justify-between mb-2">
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                  post.type === 'photo' 
+                    ? 'bg-blue-50 text-blue-700 border border-blue-200' 
+                    : 'bg-amber-50 text-amber-700 border border-amber-200'
+                }">
+                  ${post.type === 'photo' ? '📷 Fotos + Texto' : '📝 Solo Texto'}
+                </span>
+
+                <span class="text-[10px] font-semibold ${isActive ? 'text-emerald-600' : 'text-slate-400'}">
+                  ${isActive ? '🟢 Activa en Feed' : '⚪ Desactivada'}
+                </span>
+              </div>
+
+              <!-- Content text -->
+              <p class="text-xs text-slate-700 leading-relaxed mb-3">${post.content}</p>
+
+              <!-- Photos Preview if available -->
+              ${post.imageUrls && post.imageUrls.length > 0 ? `
+                <div class="mb-3 rounded-xl overflow-hidden border border-slate-100 bg-slate-50">
+                  <div class="grid grid-cols-${Math.min(post.imageUrls.length, 2)} gap-1">
+                    ${post.imageUrls.map(url => `
+                      <img src="${url}" alt="Foto de post" class="w-full h-32 object-cover hover:scale-105 transition-transform duration-300">
+                    `).join('')}
+                  </div>
+                </div>
+              ` : ''}
+
+              <!-- Hashtags -->
+              <div class="flex flex-wrap gap-1.5 mb-3">
+                ${post.hashtags.map(t => `
+                  <span class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 text-slate-600">${t}</span>
+                `).join('')}
+              </div>
+            </div>
+
+            <!-- Reactions and Comments Row -->
+            <div class="pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+              <div class="flex items-center space-x-2">
+                <span title="Te abrazo">🤗 ${post.reactions.teAbrazo}</span>
+                <span title="Te escucho">👂 ${post.reactions.teEscucho}</span>
+                <span title="No estás solo">🤝 ${post.reactions.noEstasSolo}</span>
+                <span title="Fuerza">💪 ${post.reactions.fuerza}</span>
+              </div>
+              <div class="flex items-center space-x-1 text-slate-400">
+                <span>💬 ${post.commentsCount}</span>
+              </div>
+            </div>
+          </div>
+        `;
+
+        // Add toggle listener
+        const toggleInput = card.querySelector('.post-toggle');
+        toggleInput.addEventListener('change', async (e) => {
+          if (e.target.checked) {
+            await activatePost(post);
+          } else {
+            await deactivatePost(post.id, post.authorUsername);
+          }
+        });
+
+        postsGrid.appendChild(card);
+      });
+    }
+
+    // Realtime Listener to check which posts are in Firestore
+    onSnapshot(collection(db, 'posts'), (snapshot) => {
+      activePostsSet.clear();
+      snapshot.forEach((docSnap) => {
+        const id = docSnap.id;
+        if (DEMO_POSTS.some((p) => p.id === id)) {
+          activePostsSet.add(id);
+        }
+      });
+
+      updateStats();
+      renderCards();
+    }, (error) => {
+      console.warn('Listener error:', error);
+      document.getElementById('connectionStatus').className = 'inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200';
+      document.getElementById('connectionStatus').innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-500 mr-2"></span> Conexión Lenta';
+    });
+
+    // Event: Activate All
+    btnActivateAll.addEventListener('click', () => {
+      activateMultiple(DEMO_POSTS);
+    });
+
+    // Event: Deactivate All
+    btnDeactivateAll.addEventListener('click', () => {
+      deactivateAll();
+    });
+
+    // Event: Activate Random 10
+    btnActivateRandom10.addEventListener('click', () => {
+      const photos = DEMO_POSTS.filter(p => p.type === 'photo').sort(() => 0.5 - Math.random()).slice(0, 5);
+      const textOnly = DEMO_POSTS.filter(p => p.type === 'text').sort(() => 0.5 - Math.random()).slice(0, 5);
+      activateMultiple([...photos, ...textOnly]);
+    });
+
+    // Event: Activate Random 5
+    btnActivateRandom5.addEventListener('click', () => {
+      const shuffled = [...DEMO_POSTS].sort(() => 0.5 - Math.random()).slice(0, 5);
+      activateMultiple(shuffled);
+    });
+
+    // Search Input filter
+    searchInput.addEventListener('input', (e) => {
+      currentSearch = e.target.value;
+      renderCards();
+    });
+
+    // Filter Tabs
+    document.querySelectorAll('.filter-tab').forEach((tab) => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.filter-tab').forEach((t) => {
+          t.className = 'filter-tab px-3.5 py-1.5 rounded-full font-semibold bg-white text-slate-600 border border-slate-200 hover:bg-slate-100 transition-all';
+        });
+        tab.className = 'filter-tab px-3.5 py-1.5 rounded-full font-bold bg-slate-900 text-white shadow-sm transition-all';
+        currentFilter = tab.getAttribute('data-filter');
+        renderCards();
+      });
+    });
+
+    // Initial render
+    renderCards();
+    updateStats();
+  </script>
+</body>
+</html>

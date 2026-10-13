@@ -172,7 +172,7 @@ export const UserProfileScreen: React.FC<UserProfileScreenProps> = ({
         <View style={{ width: 30 }} />
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollBody}>
+      <ScrollView showsVerticalScrollIndicator={Platform.OS === 'web' ? true : false} style={styles.scrollBody}>
           {/* 1. Cover Photo Banner */}
           <View style={styles.coverBanner}>
             {coverUrl ? (

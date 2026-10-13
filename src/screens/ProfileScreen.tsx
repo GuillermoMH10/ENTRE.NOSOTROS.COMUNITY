@@ -385,7 +385,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           </TouchableOpacity>
         </View>
 
-        <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollBody}>
+        <ScrollView showsVerticalScrollIndicator={Platform.OS === 'web' ? true : false} style={styles.scrollBody}>
           {/* 1. Cover Photo Banner */}
           <View style={styles.coverBanner}>
             {user.coverPhotoUrl ? (

@@ -5,6 +5,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   Animated,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { MOOD_OPTIONS, MoodType, MoodOption } from '../../data/dailyMoodResponses';
@@ -183,6 +184,14 @@ export const DailyMoodCard: React.FC = () => {
               <Text style={styles.quoteText}>
                 "{todayRecord.quote}"
               </Text>
+              <View style={styles.quoteAnimaRow}>
+                <Image
+                  source={require('../../../assets/perfilANIMA.png')}
+                  style={styles.quoteAnimaAvatar}
+                  resizeMode="cover"
+                />
+                <Text style={styles.quoteAnimaText}>ANIMA te acompaña 💙</Text>
+              </View>
             </View>
           </View>
         )}
@@ -339,6 +348,24 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 19.5,
     color: colors.textPrimary,
+    fontStyle: 'italic',
+  },
+  quoteAnimaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: 6,
+    marginTop: 8,
+  },
+  quoteAnimaAvatar: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+  },
+  quoteAnimaText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#2563EB',
     fontStyle: 'italic',
   },
 });

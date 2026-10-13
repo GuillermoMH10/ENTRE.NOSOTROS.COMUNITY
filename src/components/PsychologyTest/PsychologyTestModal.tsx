@@ -215,7 +215,7 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
           <ScrollView
             style={styles.scrollBody}
             contentContainerStyle={styles.resultScrollContent}
-            showsVerticalScrollIndicator={false}
+            showsVerticalScrollIndicator={Platform.OS === 'web' ? true : false}
           >
             {/* Top Level Summary Card */}
             <View style={styles.resultHeroCard}>
@@ -376,7 +376,7 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
             <ScrollView
               style={styles.scrollBody}
               contentContainerStyle={styles.questionScrollContent}
-              showsVerticalScrollIndicator={false}
+              showsVerticalScrollIndicator={Platform.OS === 'web' ? true : false}
             >
               {/* Centered Category Pill */}
               <View style={styles.categoryPillCenter}>

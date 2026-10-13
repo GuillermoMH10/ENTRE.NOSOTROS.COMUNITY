@@ -236,7 +236,7 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
           <FlatList
             data={filteredUsers}
             keyExtractor={(item) => item.id}
-            showsVerticalScrollIndicator={false}
+            showsVerticalScrollIndicator={Platform.OS === 'web' ? true : false}
             contentContainerStyle={styles.listContent}
             renderItem={({ item }) => {
               const isMe = Boolean(currentUser && currentUser.id === item.id);

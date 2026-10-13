@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Linking,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { AppHeader } from '../components/Header/AppHeader';
@@ -113,7 +114,7 @@ export const RulesScreen: React.FC<RulesScreenProps> = ({
             paddingBottom: contentPaddingBottom + 20,
           },
         ]}
-        showsVerticalScrollIndicator={false}
+        showsVerticalScrollIndicator={Platform.OS === 'web' ? true : false}
       >
         {/* Compact Clean Header */}
         <View style={styles.headerContainer}>

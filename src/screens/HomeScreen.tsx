@@ -184,6 +184,9 @@ export const HomeScreen: React.FC = () => {
         <DesktopWebLayout
           user={user}
           activeTab={activeTab}
+          isCreatePostOpen={isCreateOpen}
+          onCloseCreatePost={() => setIsCreateOpen(false)}
+          onPostCreated={handlePostCreated}
           onTabPress={handleTabPress}
           onOpenProfile={handleOpenProfile}
           onOpenPsychologists={handleOpenPsychologists}
@@ -217,12 +220,6 @@ export const HomeScreen: React.FC = () => {
 
         {/* Global Modals for Desktop Web */}
         <AuthScreen visible={isAuthOpen} onClose={handleCloseAuth} />
-
-        <CreatePostScreen
-          visible={isCreateOpen}
-          onClose={() => setIsCreateOpen(false)}
-          onPostCreated={handlePostCreated}
-        />
 
         <CommentsScreen
           visible={!!selectedPostForComments}

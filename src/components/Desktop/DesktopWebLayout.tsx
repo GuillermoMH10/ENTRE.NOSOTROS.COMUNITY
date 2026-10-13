@@ -17,6 +17,7 @@ import { UserProfile } from '../../types/auth';
 import { TabId } from '../Navigation/BottomTabBar';
 import { Post } from '../../types/post';
 import { FeedList } from '../Feed/FeedList';
+import { CreatePostScreen } from '../../screens/CreatePostScreen';
 import { SearchScreen } from '../../screens/SearchScreen';
 import { BlogScreen } from '../../screens/BlogScreen';
 import { PsychologistsScreen } from '../../screens/PsychologistsScreen';
@@ -68,6 +69,9 @@ interface DesktopWebLayoutProps {
   onLogout: () => void;
   viewingUserProfile?: { userId: string; username?: string; avatarUrl?: string } | null;
   onCloseUserProfile?: () => void;
+  isCreatePostOpen?: boolean;
+  onCloseCreatePost?: () => void;
+  onPostCreated?: () => void;
 }
 
 export const DesktopWebLayout: React.FC<DesktopWebLayoutProps> = ({
@@ -89,6 +93,9 @@ export const DesktopWebLayout: React.FC<DesktopWebLayoutProps> = ({
   onLogout,
   viewingUserProfile,
   onCloseUserProfile,
+  isCreatePostOpen = false,
+  onCloseCreatePost,
+  onPostCreated,
 }) => {
   // Center section can be any of the main tabs or 'psicologos' | 'reglas' | 'ayuda' | 'perfil'
   const [activeSection, setActiveSection] = useState<DesktopNavId>(
@@ -212,6 +219,42 @@ export const DesktopWebLayout: React.FC<DesktopWebLayoutProps> = ({
 
   return (
     <View style={styles.desktopRoot}>
+      {Platform.OS === 'web' && (
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `
+              /* Custom Web Scrollbar Styling - Modern, elegant, visible */
+              ::-webkit-scrollbar {
+                width: 9px !important;
+                height: 9px !important;
+                display: block !important;
+              }
+              ::-webkit-scrollbar-track {
+                background: #F1F5F9 !important;
+                border-radius: 9999px !important;
+              }
+              ::-webkit-scrollbar-thumb {
+                background: #94A3B8 !important;
+                border-radius: 9999px !important;
+                border: 2px solid #F1F5F9 !important;
+              }
+              ::-webkit-scrollbar-thumb:hover {
+                background: #64748B !important;
+              }
+              ::-webkit-scrollbar-thumb:active {
+                background: #475569 !important;
+              }
+              ::-webkit-scrollbar-corner {
+                background: transparent !important;
+              }
+              html, body, #root, * {
+                scrollbar-width: thin !important;
+                scrollbar-color: #94A3B8 #F1F5F9 !important;
+              }
+            `,
+          }}
+        />
+      )}
       <View style={styles.desktopColumnsContainer}>
         {/* ========================================================================= */}
         {/* 1. LEFT SIDEBAR (Accesos & Navegación)                                      */}
@@ -249,7 +292,7 @@ export const DesktopWebLayout: React.FC<DesktopWebLayoutProps> = ({
           </View>
 
           {/* Navigation Items List */}
-          <ScrollView style={styles.navScroll} showsVerticalScrollIndicator={false}>
+          <ScrollView style={styles.navScroll} showsVerticalScrollIndicator={true}>
             <View style={styles.navList}>
               {NAV_ITEMS.map((item) => {
                 const isActive = activeSection === item.id;
@@ -259,6 +302,12 @@ export const DesktopWebLayout: React.FC<DesktopWebLayoutProps> = ({
                     style={[styles.navItem, isActive && styles.navItemActive]}
                     activeOpacity={0.7}
                     onPress={() => {
+                      if (isCreatePostOpen && onCloseCreatePost) {
+                        onCloseCreatePost();
+                      }
+                      if (viewingUserProfile && onCloseUserProfile) {
+                        onCloseUserProfile();
+                      }
                       setActiveSection(item.id);
                       if (['principal', 'blog', 'anima', 'buscar'].includes(item.id)) {
                         onTabPress(item.id as TabId);
@@ -360,7 +409,17 @@ export const DesktopWebLayout: React.FC<DesktopWebLayoutProps> = ({
         {/* 2. CENTER COLUMN (Contenido Dinámico)                                      */}
         {/* ========================================================================= */}
         <View style={styles.centerColumn}>
-          {viewingUserProfile ? (
+          {isCreatePostOpen ? (
+            <CreatePostScreen
+              visible={true}
+              onClose={onCloseCreatePost || (() => {})}
+              onPostCreated={() => {
+                if (onPostCreated) onPostCreated();
+                if (onCloseCreatePost) onCloseCreatePost();
+              }}
+              embedded={true}
+            />
+          ) : viewingUserProfile ? (
             <UserProfileScreen
               visible={true}
               userId={viewingUserProfile.userId}
@@ -523,7 +582,7 @@ export const DesktopWebLayout: React.FC<DesktopWebLayoutProps> = ({
           <ScrollView
             style={styles.rightSidebarScroll}
             contentContainerStyle={styles.rightSidebarScrollContent}
-            showsVerticalScrollIndicator={false}
+            showsVerticalScrollIndicator={true}
           >
             {/* ------------------------------------------------------------- */}
             {/* RECUADRO 1: PERFIL DE USUARIO                                 */}
@@ -760,16 +819,24 @@ export const DesktopWebLayout: React.FC<DesktopWebLayoutProps> = ({
             </View>
 
             {/* ------------------------------------------------------------- */}
-            {/* RECUADRO 4: MENSAJE PARA TI (FRASE DEL DÍA)                    */}
+            {/* RECUADRO 4: MENSAJE DE ANIMA (FRASE DEL DÍA)                   */}
             {/* ------------------------------------------------------------- */}
             <View style={styles.widgetCard}>
               <View style={styles.quoteWidgetBody}>
                 <View style={styles.quoteHeaderRow}>
                   <View style={styles.quoteHeaderLeft}>
-                    <View style={styles.quoteIconCircle}>
-                      <Ionicons name="sparkles" size={14} color="#D97706" />
+                    <Image
+                      source={require('../../../assets/perfilANIMA.png')}
+                      style={styles.quoteAnimaAvatar}
+                      resizeMode="cover"
+                    />
+                    <View>
+                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <Text style={styles.widgetTitle}>Mensaje de ANIMA</Text>
+                        <Ionicons name="sparkles" size={12} color="#3B82F6" style={{ marginLeft: 3 }} />
+                      </View>
+                      <Text style={styles.quoteSubtitle}>Para acompañar tu día</Text>
                     </View>
-                    <Text style={styles.widgetTitle}>Mensaje para ti ✨</Text>
                   </View>
 
                   <TouchableOpacity
@@ -788,9 +855,16 @@ export const DesktopWebLayout: React.FC<DesktopWebLayoutProps> = ({
                   <Text style={styles.quoteMessageText}>
                     "{currentQuoteText}"
                   </Text>
-                  <Text style={styles.quoteAuthorText}>
-                    — Entre Nosotros
-                  </Text>
+                  <View style={styles.quoteAuthorRow}>
+                    <Image
+                      source={require('../../../assets/perfilANIMA.png')}
+                      style={styles.quoteAuthorMiniAvatar}
+                      resizeMode="cover"
+                    />
+                    <Text style={styles.quoteAuthorText}>
+                      — Con cariño, ANIMA 💙
+                    </Text>
+                  </View>
                 </View>
               </View>
             </View>
@@ -1046,8 +1120,6 @@ const styles = StyleSheet.create({
   feedWrapper: {
     flex: 1,
     width: '100%',
-    maxWidth: 680,
-    alignSelf: 'center',
   },
   quickPostCard: {
     flexDirection: 'row',
@@ -1058,6 +1130,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     gap: 10,
+    maxWidth: 680,
+    width: '100%',
+    alignSelf: 'center',
   },
   quickPostAvatarWrap: {},
   quickPostAvatar: {
@@ -1473,7 +1548,7 @@ const styles = StyleSheet.create({
     lineHeight: 14,
   },
 
-  /* Widget 4: Frase del Día */
+  /* Widget 4: Frase de ANIMA */
   quoteWidgetBody: {
     padding: 11,
   },
@@ -1486,15 +1561,19 @@ const styles = StyleSheet.create({
   quoteHeaderLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
   },
-  quoteIconCircle: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#FEF3C7',
-    alignItems: 'center',
-    justifyContent: 'center',
+  quoteAnimaAvatar: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: '#93C5FD',
+  },
+  quoteSubtitle: {
+    fontSize: 9.5,
+    color: '#3B82F6',
+    fontWeight: '600',
   },
   quoteRefreshBtn: {
     padding: 3,
@@ -1502,23 +1581,33 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   quoteMessageBox: {
-    backgroundColor: '#FAF5FF',
+    backgroundColor: '#EFF6FF',
     borderWidth: 1,
-    borderColor: '#E9D5FF',
+    borderColor: '#DBEAFE',
     borderRadius: 10,
-    padding: 8,
+    padding: 9,
   },
   quoteMessageText: {
     fontSize: 11,
-    color: '#581C87',
+    color: '#1E3A8A',
     fontStyle: 'italic',
-    lineHeight: 15,
-    marginBottom: 4,
+    lineHeight: 16,
+    marginBottom: 6,
+  },
+  quoteAuthorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: 5,
+  },
+  quoteAuthorMiniAvatar: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
   },
   quoteAuthorText: {
-    fontSize: 9.5,
+    fontSize: 10,
     fontWeight: '700',
-    color: '#7E22CE',
-    textAlign: 'right',
+    color: '#2563EB',
   },
 });

@@ -513,7 +513,7 @@ export const PsychologistsScreen: React.FC<PsychologistsScreenProps> = ({
               paddingBottom: contentPaddingBottom + 20,
             },
           ]}
-          showsVerticalScrollIndicator={false}
+          showsVerticalScrollIndicator={Platform.OS === 'web' ? true : false}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
           refreshControl={
