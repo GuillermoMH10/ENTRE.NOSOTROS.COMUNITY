@@ -169,7 +169,7 @@ export const SupportScreen: React.FC<SupportScreenProps> = ({
       >
         {/* 1. TOP EMPATHETIC PHRASE CARD (Clean Sparkle + Rotating Phrase) */}
         <TouchableOpacity
-          style={[styles.quoteCard, isDesktop && { maxWidth: 660, width: '100%', alignSelf: 'center' }]}
+          style={[styles.quoteCard, isDesktop && { maxWidth: 880, width: '100%', alignSelf: 'center' }]}
           activeOpacity={0.9}
           onPress={handleNextMessage}
         >
@@ -191,70 +191,103 @@ export const SupportScreen: React.FC<SupportScreenProps> = ({
           <Text style={styles.quoteBodyText}>{currentMessage.text}</Text>
         </TouchableOpacity>
 
-        {/* 2. THE 3 MAIN CARDS IN A HORIZONTAL SLIDER (SWIPER) */}
-        <View style={styles.carouselSection}>
-          <ScrollView
-            horizontal
-            pagingEnabled={false}
-            snapToInterval={cardWidth + CARD_SPACING}
-            snapToAlignment="start"
-            decelerationRate="fast"
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.carouselScrollContent}
-            onScroll={handleCarouselScroll}
-            scrollEventThrottle={16}
-          >
+        {/* 2. THE 3 MAIN CARDS (Responsive: 3-column row on Desktop, Carousel on Mobile) */}
+        {isDesktop ? (
+          <View style={styles.desktopCardsRow}>
             {carouselCards.map((card, idx) => (
               <TouchableOpacity
                 key={card.id}
-                style={[styles.carouselCard, { width: cardWidth }]}
+                style={styles.desktopCard}
                 activeOpacity={0.92}
                 onPress={card.onPress}
               >
-                {/* Large Image Banner */}
-                <View style={styles.cardImageWrapper}>
+                <View style={styles.desktopCardImageWrapper}>
                   <Image source={{ uri: card.image }} style={styles.cardImage} resizeMode="cover" />
                   <View style={styles.cardImageOverlay} />
                   <View style={styles.cardImageBadge}>
-                    <Ionicons name={card.icon} size={13} color={colors.white} style={{ marginRight: 5 }} />
+                    <Ionicons name={card.icon} size={12} color={colors.white} style={{ marginRight: 4 }} />
                     <Text style={styles.cardImageBadgeText}>Opción {idx + 1} de 3</Text>
                   </View>
                 </View>
 
-                {/* Content */}
-                <View style={styles.cardBody}>
-                  <Text style={styles.cardTitle}>{card.title}</Text>
-                  <Text style={styles.cardDesc} numberOfLines={3}>
+                <View style={styles.desktopCardBody}>
+                  <Text style={styles.desktopCardTitle}>{card.title}</Text>
+                  <Text style={styles.desktopCardDesc} numberOfLines={3}>
                     {card.description}
                   </Text>
-
-                  {/* Clean Action Button */}
                   <View style={styles.cardActionBtn}>
                     <Text style={styles.cardActionBtnText}>{card.buttonText}</Text>
-                    <Ionicons name="arrow-forward" size={14} color={colors.white} />
+                    <Ionicons name="arrow-forward" size={13} color={colors.white} />
                   </View>
                 </View>
               </TouchableOpacity>
             ))}
-          </ScrollView>
-
-          {/* Dots Indicator */}
-          <View style={styles.dotsContainer}>
-            {carouselCards.map((_, dotIdx) => (
-              <View
-                key={dotIdx}
-                style={[
-                  styles.dot,
-                  dotIdx === activeCardIndex && styles.dotActive,
-                ]}
-              />
-            ))}
           </View>
-        </View>
+        ) : (
+          <View style={styles.carouselSection}>
+            <ScrollView
+              horizontal
+              pagingEnabled={false}
+              snapToInterval={cardWidth + CARD_SPACING}
+              snapToAlignment="start"
+              decelerationRate="fast"
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.carouselScrollContent}
+              onScroll={handleCarouselScroll}
+              scrollEventThrottle={16}
+            >
+              {carouselCards.map((card, idx) => (
+                <TouchableOpacity
+                  key={card.id}
+                  style={[styles.carouselCard, { width: cardWidth }]}
+                  activeOpacity={0.92}
+                  onPress={card.onPress}
+                >
+                  {/* Large Image Banner */}
+                  <View style={styles.cardImageWrapper}>
+                    <Image source={{ uri: card.image }} style={styles.cardImage} resizeMode="cover" />
+                    <View style={styles.cardImageOverlay} />
+                    <View style={styles.cardImageBadge}>
+                      <Ionicons name={card.icon} size={13} color={colors.white} style={{ marginRight: 5 }} />
+                      <Text style={styles.cardImageBadgeText}>Opción {idx + 1} de 3</Text>
+                    </View>
+                  </View>
+
+                  {/* Content */}
+                  <View style={styles.cardBody}>
+                    <Text style={styles.cardTitle}>{card.title}</Text>
+                    <Text style={styles.cardDesc} numberOfLines={3}>
+                      {card.description}
+                    </Text>
+
+                    {/* Clean Action Button */}
+                    <View style={styles.cardActionBtn}>
+                      <Text style={styles.cardActionBtnText}>{card.buttonText}</Text>
+                      <Ionicons name="arrow-forward" size={14} color={colors.white} />
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+
+            {/* Dots Indicator */}
+            <View style={styles.dotsContainer}>
+              {carouselCards.map((_, dotIdx) => (
+                <View
+                  key={dotIdx}
+                  style={[
+                    styles.dot,
+                    dotIdx === activeCardIndex && styles.dotActive,
+                  ]}
+                />
+              ))}
+            </View>
+          </View>
+        )}
 
         {/* 3. LATEST TEST EVALUATION SUMMARY (Clean & Aesthetic) */}
         {latestResult && (
-          <View style={[styles.latestTestCard, isDesktop && { maxWidth: 660, width: '100%', alignSelf: 'center' }]}>
+          <View style={[styles.latestTestCard, isDesktop && { maxWidth: 880, width: '100%', alignSelf: 'center' }]}>
             <View style={styles.latestTestHeader}>
               <View style={styles.latestTestTitleRow}>
                 <Ionicons name="pulse" size={17} color={latestResult.badgeColor} style={{ marginRight: 6 }} />
@@ -381,6 +414,50 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.textPrimary,
     lineHeight: 19,
+  },
+  /* Desktop 3-Card Row */
+  desktopCardsRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginHorizontal: 16,
+    marginBottom: 16,
+  },
+  desktopCard: {
+    flex: 1,
+    backgroundColor: colors.white,
+    borderRadius: 18,
+    borderWidth: 1.2,
+    borderColor: colors.borderLight,
+    overflow: 'hidden',
+    shadowColor: colors.coffeeDeep,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2.5,
+  },
+  desktopCardImageWrapper: {
+    width: '100%',
+    height: 140,
+    position: 'relative',
+    backgroundColor: '#F3EAE3',
+  },
+  desktopCardBody: {
+    padding: 12,
+    flex: 1,
+    justifyContent: 'space-between',
+  },
+  desktopCardTitle: {
+    fontSize: 13.5,
+    fontWeight: '900',
+    color: colors.coffeeDark,
+    letterSpacing: 0.2,
+    marginBottom: 4,
+  },
+  desktopCardDesc: {
+    fontSize: 11.5,
+    color: colors.textSecondary,
+    lineHeight: 16,
+    marginBottom: 10,
   },
   /* 2. Horizontal Swiper / Carousel */
   carouselSection: {

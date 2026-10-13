@@ -8,6 +8,8 @@ import {
   TouchableOpacity,
   SafeAreaView,
   Dimensions,
+  Platform,
+  useWindowDimensions,
   ImageBackground,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -19,15 +21,19 @@ interface MonthDetailModalProps {
   visible: boolean;
   initialMonthIndex?: number;
   onClose: () => void;
+  embedded?: boolean;
 }
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export const MonthDetailModal: React.FC<MonthDetailModalProps> = ({
   visible,
   initialMonthIndex = 0,
   onClose,
+  embedded = false,
 }) => {
+  const { width: windowWidth } = useWindowDimensions();
+  const isDesktop = Platform.OS === 'web' && windowWidth >= 1024;
+  const isEmbeddedMode = embedded || isDesktop;
+
   const [selectedIndex, setSelectedIndex] = useState<number>(initialMonthIndex);
 
   useEffect(() => {
@@ -40,14 +46,8 @@ export const MonthDetailModal: React.FC<MonthDetailModalProps> = ({
 
   const currentMonth: MonthTheme = MONTHS_DATA[selectedIndex] || MONTHS_DATA[0];
 
-  return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      presentationStyle="pageSheet"
-      onRequestClose={onClose}
-    >
-      <SafeAreaView style={styles.safeArea}>
+  const modalContent = (
+    <SafeAreaView style={[styles.safeArea, isDesktop && styles.desktopSafeArea]}>
         {/* Top Header */}
         <View style={styles.modalHeader}>
           <TouchableOpacity
@@ -306,6 +306,20 @@ export const MonthDetailModal: React.FC<MonthDetailModalProps> = ({
           <View style={{ height: 40 }} />
         </ScrollView>
       </SafeAreaView>
+  );
+
+  if (isEmbeddedMode) {
+    return modalContent;
+  }
+
+  return (
+    <Modal
+      visible={visible}
+      animationType="slide"
+      presentationStyle="pageSheet"
+      onRequestClose={onClose}
+    >
+      {modalContent}
     </Modal>
   );
 };
@@ -313,6 +327,12 @@ export const MonthDetailModal: React.FC<MonthDetailModalProps> = ({
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
+    backgroundColor: '#FAF7F5',
+  },
+  desktopSafeArea: {
+    maxWidth: 820,
+    width: '100%',
+    alignSelf: 'center',
     backgroundColor: '#FAF7F5',
   },
   modalHeader: {

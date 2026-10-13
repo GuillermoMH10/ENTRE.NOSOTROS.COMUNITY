@@ -113,6 +113,32 @@ export const BlogScreen: React.FC<BlogScreenProps> = ({
     }
   };
 
+  if (isDesktop && isDetailModalOpen) {
+    return (
+      <View style={styles.container}>
+        <MonthDetailModal
+          visible={true}
+          initialMonthIndex={selectedMonthForDetail}
+          onClose={() => setIsDetailModalOpen(false)}
+          embedded={true}
+        />
+      </View>
+    );
+  }
+
+  if (isDesktop && selectedPsicoForDetail) {
+    return (
+      <View style={styles.container}>
+        <PsychologistDetailModal
+          visible={true}
+          psychologist={selectedPsicoForDetail}
+          onClose={() => setSelectedPsicoForDetail(null)}
+          embedded={true}
+        />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       {/* Top Header Bar identical to Principal */}
