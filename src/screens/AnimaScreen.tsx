@@ -12,6 +12,8 @@ import {
   Alert,
   Clipboard,
   Image,
+  Keyboard,
+  useWindowDimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { AnimaMascot } from '../components/Anima/AnimaMascot';
@@ -35,13 +37,14 @@ interface AnimaScreenProps {
   contentPaddingTop?: number;
   contentPaddingBottom?: number;
   hideAppHeader?: boolean;
+  onKeyboardStateChange?: (isOpen: boolean) => void;
 }
 
 let hasShownAnimaSplashInSession = false;
 
 const COMPACT_PROMPTS = [
   { id: '1', emoji: '🌧️', text: 'Tengo ansiedad' },
-  { id: '2', emoji: '💬', text: 'Necesito desahogarme' },
+  { id: '2', emoji: '💬', text: 'Necesito hablar' },
   { id: '3', emoji: '🧘‍♂️', text: 'Ejercicio de respiración' },
   { id: '4', emoji: '✨', text: 'Consejo positivo' },
   { id: '5', emoji: '💤', text: 'No puedo dormir' },
@@ -58,6 +61,7 @@ export const AnimaScreen: React.FC<AnimaScreenProps> = ({
   contentPaddingTop = 0,
   contentPaddingBottom = 70,
   hideAppHeader = false,
+  onKeyboardStateChange,
 }) => {
   const { user } = useAuth();
   const [messages, setMessages] = useState<AnimaMessage[]>([]);
@@ -72,6 +76,59 @@ export const AnimaScreen: React.FC<AnimaScreenProps> = ({
     }
     return true;
   });
+
+  const { width: windowWidth } = useWindowDimensions();
+  const isDesktop = Platform.OS === 'web' && windowWidth >= 1024;
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
+
+  const handleInputFocus = () => {
+    setIsKeyboardOpen(true);
+    onKeyboardStateChange?.(true);
+    setTimeout(() => scrollToBottom(true), 150);
+  };
+
+  const handleInputBlur = () => {
+    setIsKeyboardOpen(false);
+    onKeyboardStateChange?.(false);
+  };
+
+  // Track software keyboard on iOS, Android and mobile browsers
+  useEffect(() => {
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+
+    const showSub = Keyboard.addListener(showEvent, () => {
+      setIsKeyboardOpen(true);
+      onKeyboardStateChange?.(true);
+      setTimeout(() => scrollToBottom(true), 100);
+    });
+    const hideSub = Keyboard.addListener(hideEvent, () => {
+      setIsKeyboardOpen(false);
+      onKeyboardStateChange?.(false);
+    });
+
+    let cleanupViewport: (() => void) | undefined;
+    if (Platform.OS === 'web' && typeof window !== 'undefined' && window.visualViewport) {
+      const handleResize = () => {
+        const isOpen = window.visualViewport
+          ? window.visualViewport.height < window.innerHeight - 120
+          : false;
+        setIsKeyboardOpen(isOpen);
+        onKeyboardStateChange?.(isOpen);
+        if (isOpen) {
+          setTimeout(() => scrollToBottom(true), 120);
+        }
+      };
+      window.visualViewport.addEventListener('resize', handleResize);
+      cleanupViewport = () => window.visualViewport?.removeEventListener('resize', handleResize);
+    }
+
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+      if (cleanupViewport) cleanupViewport();
+    };
+  }, [onKeyboardStateChange]);
 
   const flatListRef = useRef<FlatList>(null);
 
@@ -300,7 +357,14 @@ export const AnimaScreen: React.FC<AnimaScreenProps> = ({
   };
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={[
+        styles.container,
+        !isDesktop && !isKeyboardOpen && { paddingBottom: contentPaddingBottom },
+      ]}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? (hideAppHeader ? 0 : 56) : 0}
+    >
       {/* Centered Video Splash on Screen Open */}
       {showSplash && (
         <AnimaVideoSplash onFinish={handleSplashFinish} />
@@ -430,10 +494,11 @@ export const AnimaScreen: React.FC<AnimaScreenProps> = ({
           style={styles.chatList}
           contentContainerStyle={[
             styles.chatContent,
-            Platform.OS !== 'web' && { paddingBottom: contentPaddingBottom + 78 },
-            Platform.OS === 'web' && { paddingBottom: 24 },
+            { paddingBottom: 16 },
           ]}
           showsVerticalScrollIndicator={true}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
           onContentSizeChange={() => scrollToBottom(false)}
           onLayout={() => scrollToBottom(false)}
           ListHeaderComponent={
@@ -493,36 +558,31 @@ export const AnimaScreen: React.FC<AnimaScreenProps> = ({
         />
 
         {/* Message Input Bar */}
-        <View
-          style={[
-            styles.bottomBarContainer,
-            Platform.OS === 'web'
-              ? styles.bottomBarWeb
-              : { paddingBottom: contentPaddingBottom + 4 },
-          ]}
-        >
+        <View style={styles.bottomBarContainer}>
           <View style={styles.inputCard}>
             <TextInput
               style={styles.textInput}
               placeholder={
-                Platform.OS === 'web'
+                Platform.OS === 'web' && isDesktop
                   ? 'Escribe lo que sientes... 💙 (Enter para enviar)'
                   : 'Escribe lo que sientes... 💙'
               }
               placeholderTextColor="#7F94A2"
               value={inputText}
               onChangeText={setInputText}
+              onFocus={handleInputFocus}
+              onBlur={handleInputBlur}
               multiline
               maxLength={1500}
               editable={!isGenerating}
               onKeyPress={(e: any) => {
-                if (Platform.OS === 'web' && e.nativeEvent?.key === 'Enter' && !e.nativeEvent?.shiftKey) {
+                if (Platform.OS === 'web' && isDesktop && e.nativeEvent?.key === 'Enter' && !e.nativeEvent?.shiftKey) {
                   e.preventDefault?.();
                   handleSendMessage();
                 }
               }}
               onSubmitEditing={() => {
-                if (Platform.OS === 'web') {
+                if (Platform.OS === 'web' && isDesktop) {
                   handleSendMessage();
                 }
               }}
@@ -547,7 +607,7 @@ export const AnimaScreen: React.FC<AnimaScreenProps> = ({
           </View>
         </View>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -566,7 +626,7 @@ const styles = StyleSheet.create({
   },
   chatAreaWrapper: {
     flex: 1,
-    height: '100%',
+    minHeight: 0,
     display: 'flex',
     flexDirection: 'column',
     overflow: 'hidden',
@@ -1041,28 +1101,14 @@ const styles = StyleSheet.create({
   },
   /* Bottom Floating Input Bar */
   bottomBarContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    paddingHorizontal: 12,
-    paddingTop: 6,
-    backgroundColor: 'rgba(248, 250, 252, 0.96)',
-    borderTopWidth: 1,
-    borderTopColor: colors.borderLight,
-  },
-  bottomBarWeb: {
     position: 'relative',
-    bottom: undefined,
-    left: undefined,
-    right: undefined,
-    paddingHorizontal: 16,
+    width: '100%',
+    paddingHorizontal: 12,
     paddingTop: 8,
-    paddingBottom: 12,
+    paddingBottom: Platform.OS === 'ios' ? 10 : 8,
     backgroundColor: colors.white,
     borderTopWidth: 1,
-    borderTopColor: '#E1EAEF',
-    width: '100%',
+    borderTopColor: '#E2E8F0',
   },
   inputCard: {
     flexDirection: 'row',

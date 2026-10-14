@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   StyleSheet,
@@ -7,6 +7,7 @@ import {
   Platform,
   Animated,
   useWindowDimensions,
+  Keyboard,
 } from 'react-native';
 import { AppHeader } from '../components/Header/AppHeader';
 import { BottomTabBar, TabId } from '../components/Navigation/BottomTabBar';
@@ -64,6 +65,34 @@ export const HomeScreen: React.FC = () => {
   const headerTranslateY = useRef(new Animated.Value(0)).current;
   const tabBarTranslateY = useRef(new Animated.Value(0)).current;
   const isBarsHidden = useRef(false);
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+
+  // Monitor software keyboard on native mobile and mobile web browsers
+  useEffect(() => {
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+
+    const showSub = Keyboard.addListener(showEvent, () => setIsKeyboardVisible(true));
+    const hideSub = Keyboard.addListener(hideEvent, () => setIsKeyboardVisible(false));
+
+    let cleanupViewport: (() => void) | undefined;
+    if (Platform.OS === 'web' && typeof window !== 'undefined' && window.visualViewport) {
+      const handleViewportResize = () => {
+        const isVirtKeyboard = window.visualViewport
+          ? window.visualViewport.height < window.innerHeight - 120
+          : false;
+        setIsKeyboardVisible(isVirtKeyboard);
+      };
+      window.visualViewport.addEventListener('resize', handleViewportResize);
+      cleanupViewport = () => window.visualViewport?.removeEventListener('resize', handleViewportResize);
+    }
+
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+      if (cleanupViewport) cleanupViewport();
+    };
+  }, []);
 
   const handleOpenMenu = () => setIsMenuOpen(true);
   const handleCloseMenu = () => setIsMenuOpen(false);
@@ -330,6 +359,7 @@ export const HomeScreen: React.FC = () => {
             onOpenPsychologists={handleOpenPsychologists}
             contentPaddingTop={0}
             contentPaddingBottom={TABBAR_HEIGHT + (Platform.OS === 'ios' ? 14 : 4)}
+            onKeyboardStateChange={(isOpen) => setIsKeyboardVisible(isOpen)}
           />
         ) : activeTab === 'ayuda' ? (
           <SupportScreen
@@ -365,18 +395,20 @@ export const HomeScreen: React.FC = () => {
           />
         )}
 
-        {/* Animated Bottom Tab Bar (Collapses down on scroll down) */}
-        <Animated.View
-          style={[
-            styles.animatedTabBarWrapper,
-            { transform: [{ translateY: tabBarTranslateY }] },
-          ]}
-        >
-          <BottomTabBar
-            activeTab={activeTab}
-            onTabPress={handleTabPress}
-          />
-        </Animated.View>
+        {/* Animated Bottom Tab Bar (Collapses down on scroll down or hidden when keyboard is open) */}
+        {!isKeyboardVisible && (
+          <Animated.View
+            style={[
+              styles.animatedTabBarWrapper,
+              { transform: [{ translateY: tabBarTranslateY }] },
+            ]}
+          >
+            <BottomTabBar
+              activeTab={activeTab}
+              onTabPress={handleTabPress}
+            />
+          </Animated.View>
+        )}
 
         {/* Upward Sliding "Más..." Bottom Sheet Menu */}
         <MoreMenuModal
