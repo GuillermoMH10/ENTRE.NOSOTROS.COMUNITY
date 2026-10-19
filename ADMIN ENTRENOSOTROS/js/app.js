@@ -2165,6 +2165,7 @@
     const [timeRange, setTimeRange] = useState('7d'); // 'today' | '7d' | '30d'
     const [activeMetric, setActiveMetric] = useState('traffic'); // 'traffic' | 'posts' | 'anima'
     const [hoveredPoint, setHoveredPoint] = useState(null);
+    const [hoveredSlice, setHoveredSlice] = useState(null);
 
     // Métricas reactivas y datos de la app
     const dataByRange = useMemo(() => {
@@ -2289,19 +2290,43 @@
       return String(Math.round(num));
     };
 
+    // Datos y cálculos para la Gráfica de Pastel / Donut de Distribución
+    const donutSlices = useMemo(() => {
+      const isToday = timeRange === 'today';
+      const is30d = timeRange === '30d';
+
+      if (isToday) {
+        return [
+          { id: 'anima', label: 'Acompañamiento ANIMA IA', short: 'ANIMA IA', pct: 42, value: '312 sesiones', color: '#7C3AED', length: 163.6, offset: 0 },
+          { id: 'posts', label: 'Desahogos y Comunidad', short: 'Desahogos', pct: 28, value: '88 posts', color: '#059669', length: 109.1, offset: -163.6 },
+          { id: 'psych', label: 'Consultas con Psicólogos', short: 'Psicólogos', pct: 18, value: '34 citas', color: '#2563EB', length: 70.1, offset: -272.7 },
+          { id: 'mod', label: 'Moderación y Seguridad', short: 'Moderación', pct: 12, value: `${reportedPostsCount || 5} casos`, color: '#D97706', length: 46.8, offset: -342.8 },
+        ];
+      }
+      if (is30d) {
+        return [
+          { id: 'anima', label: 'Acompañamiento ANIMA IA', short: 'ANIMA IA', pct: 40, value: '7,450 sesiones', color: '#7C3AED', length: 155.8, offset: 0 },
+          { id: 'posts', label: 'Desahogos y Comunidad', short: 'Desahogos', pct: 32, value: '2,220 posts', color: '#059669', length: 124.7, offset: -155.8 },
+          { id: 'psych', label: 'Consultas con Psicólogos', short: 'Psicólogos', pct: 18, value: '780 citas', color: '#2563EB', length: 70.1, offset: -280.5 },
+          { id: 'mod', label: 'Moderación y Seguridad', short: 'Moderación', pct: 10, value: `${reportedPostsCount || 84} casos`, color: '#D97706', length: 39.0, offset: -350.6 },
+        ];
+      }
+      return [
+        { id: 'anima', label: 'Acompañamiento ANIMA IA', short: 'ANIMA IA', pct: 40, value: '1,975 sesiones', color: '#7C3AED', length: 155.8, offset: 0 },
+        { id: 'posts', label: 'Desahogos y Comunidad', short: 'Desahogos', pct: 30, value: '576 posts', color: '#059669', length: 116.9, offset: -155.8 },
+        { id: 'psych', label: 'Consultas con Psicólogos', short: 'Psicólogos', pct: 18, value: '196 citas', color: '#2563EB', length: 70.1, offset: -272.7 },
+        { id: 'mod', label: 'Moderación y Seguridad', short: 'Moderación', pct: 12, value: `${reportedPostsCount || 19} casos`, color: '#D97706', length: 46.8, offset: -342.8 },
+      ];
+    }, [timeRange, reportedPostsCount]);
+
+    const circumference = 389.56;
+
     return h('div', { className: 'principal-dashboard-module' },
       // 1. Barra superior con Saludo y Selector de Rango
       h('div', { className: 'dash-top-bar' },
         h('div', { className: 'dash-greeting-wrap' },
           h('div', { className: 'dash-greeting-title' },
-            h('span', null, `Hola, ${(currentUser?.name || 'Administrador').split(' ')[0]}`),
-            h('span', { className: 'dash-live-badge' },
-              h('span', { className: 'dash-pulse-dot' }),
-              'Sistema en Vivo • Firebase Activo'
-            )
-          ),
-          h('p', { className: 'dash-greeting-desc' },
-            'Supervisión integral de tráfico, desahogos, consultas de salud mental y bienestar emocional con ANIMA IA.'
+            `Hola, ${(currentUser?.name || 'Administrador').split(' ')[0]}`
           )
         ),
         h('div', { className: 'dash-controls-wrap' },
@@ -2713,83 +2738,133 @@
           )
         ),
 
-        // Columna Derecha: Estado del Sistema y Accesos Rápidos
-        h('div', { className: 'dash-card dash-control-card' },
+        // Columna Derecha: Gráfica de Pastel / Donut de Distribución de Actividad
+        h('div', { className: 'dash-card dash-donut-card' },
           h('div', { className: 'dash-card-header' },
             h('div', { style: { display: 'flex', alignItems: 'center', gap: 8 } },
-              h(Icon, { name: 'key', size: 16, color: '#D97706' }),
-              h('h3', { className: 'dash-card-title' }, 'Control y Accesos Directos')
+              h(Icon, { name: 'chart', size: 16, color: '#7C3AED' }),
+              h('h3', { className: 'dash-card-title' }, 'Distribución de Actividad en la Plataforma')
             ),
-            h('span', { className: 'dash-mini-badge badge-green' }, 'Operativo')
+            h('span', { className: 'dash-mini-badge badge-purple' }, '100% Total')
           ),
 
-          // Estado de infraestructura
-          h('div', { className: 'dash-services-box' },
-            h('div', { className: 'service-status-row' },
-              h('div', { className: 'service-name-group' },
-                h('span', { className: 'service-dot dot-green' }),
-                h('strong', null, 'Firebase Firestore Cloud')
-              ),
-              h('span', { className: 'service-status-tag' }, 'En línea • 18ms')
+          // Donut SVG + Leyenda Interactiva
+          h('div', { className: 'dash-donut-main-wrap' },
+            // Donut SVG
+            h('div', { className: 'dash-donut-svg-wrap' },
+              h('svg', { viewBox: '0 0 200 200', className: 'dash-donut-svg' },
+                // Anillo base gris sutil
+                h('circle', {
+                  cx: 100,
+                  cy: 100,
+                  r: 62,
+                  fill: 'none',
+                  stroke: '#F1F5F9',
+                  strokeWidth: 22,
+                }),
+                // Segmentos circulares del donut
+                donutSlices.map((slice) => {
+                  const isHovered = hoveredSlice?.id === slice.id;
+                  const dashLen = Math.max(1, slice.length - 2.5);
+                  const dashGap = circumference - dashLen;
+
+                  return h('circle', {
+                    key: slice.id,
+                    cx: 100,
+                    cy: 100,
+                    r: 62,
+                    fill: 'none',
+                    stroke: slice.color,
+                    strokeWidth: isHovered ? 27 : 22,
+                    strokeDasharray: `${dashLen.toFixed(1)} ${dashGap.toFixed(1)}`,
+                    strokeDashoffset: slice.offset.toFixed(1),
+                    transform: 'rotate(-90 100 100)',
+                    cursor: 'pointer',
+                    onMouseEnter: () => setHoveredSlice(slice),
+                    onMouseLeave: () => setHoveredSlice(null),
+                    style: {
+                      transition: 'stroke-width 0.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease',
+                      opacity: hoveredSlice && !isHovered ? 0.45 : 1,
+                    },
+                  });
+                }),
+
+                // Texto central reactivo
+                h('text', {
+                  x: 100,
+                  y: 92,
+                  textAnchor: 'middle',
+                  fontSize: hoveredSlice ? 20 : 17,
+                  fontWeight: 900,
+                  fill: hoveredSlice ? hoveredSlice.color : '#0F172A',
+                  fontFamily: 'inherit',
+                }, hoveredSlice ? `${hoveredSlice.pct}%` : '100%'),
+                h('text', {
+                  x: 100,
+                  y: 110,
+                  textAnchor: 'middle',
+                  fontSize: 10,
+                  fontWeight: 700,
+                  fill: '#64748B',
+                  fontFamily: 'inherit',
+                }, hoveredSlice ? hoveredSlice.short : 'Participación')
+              )
             ),
-            h('div', { className: 'service-status-row' },
-              h('div', { className: 'service-name-group' },
-                h('span', { className: 'service-dot dot-purple' }),
-                h('strong', null, 'Motor IA ANIMA Acompañamiento')
-              ),
-              h('span', { className: 'service-status-tag' }, 'Activo • <400ms')
-            ),
-            h('div', { className: 'service-status-row' },
-              h('div', { className: 'service-name-group' },
-                h('span', { className: 'service-dot dot-blue' }),
-                h('strong', null, 'Notificaciones PWA y Web Push')
-              ),
-              h('span', { className: 'service-status-tag' }, 'Listo • 99.8%')
+
+            // Leyenda interactiva con porcentajes y cantidades
+            h('div', { className: 'dash-donut-legend' },
+              donutSlices.map((slice) => {
+                const isHovered = hoveredSlice?.id === slice.id;
+                return h('div', {
+                  key: slice.id,
+                  className: `donut-legend-item ${isHovered ? 'active' : ''}`,
+                  onMouseEnter: () => setHoveredSlice(slice),
+                  onMouseLeave: () => setHoveredSlice(null),
+                },
+                  h('div', { className: 'legend-left' },
+                    h('span', { className: 'legend-color-dot', style: { backgroundColor: slice.color } }),
+                    h('span', { className: 'legend-name' }, slice.label)
+                  ),
+                  h('div', { className: 'legend-right' },
+                    h('strong', { className: 'legend-pct', style: { color: slice.color } }, `${slice.pct}%`),
+                    h('span', { className: 'legend-qty' }, slice.value)
+                  )
+                );
+              })
             )
           ),
 
-          // Botones de acceso rápido a los módulos principales
-          h('div', { className: 'dash-quick-actions-list' },
-            h('button', {
-              className: 'dash-quick-btn btn-quick-moderation',
-              onClick: () => onNavigate('moderacion'),
-            },
-              h('div', { className: 'quick-btn-icon-wrap icon-red' },
-                h(Icon, { name: 'shield', size: 16, color: '#DC2626' })
+          // Barra inferior de accesos rápidos compacta
+          h('div', { className: 'dash-donut-footer' },
+            h('span', { className: 'donut-footer-title' }, 'Acceso Directo:'),
+            h('div', { className: 'donut-quick-links' },
+              h('button', {
+                className: 'donut-quick-link-btn',
+                onClick: () => onNavigate('moderacion'),
+                title: 'Ir al Módulo de Moderación'
+              },
+                h('span', { className: 'link-dot dot-red' }),
+                'Moderación',
+                h('span', { className: 'link-badge' }, reportedPostsCount || 5)
               ),
-              h('div', { className: 'quick-btn-info' },
-                h('strong', null, 'Ir a Moderación de Contenido'),
-                h('span', null, `${reportedPostsCount || 5} publicaciones pendientes de revisión`)
+              h('button', {
+                className: 'donut-quick-link-btn',
+                onClick: () => onNavigate('usuarios'),
+                title: 'Ir al Módulo de Usuarios'
+              },
+                h('span', { className: 'link-dot dot-blue' }),
+                'Usuarios',
+                h('span', { className: 'link-badge' }, usersCount || 6)
               ),
-              h(Icon, { name: 'arrowRight', size: 14, color: '#64748B' })
-            ),
-
-            h('button', {
-              className: 'dash-quick-btn btn-quick-users',
-              onClick: () => onNavigate('usuarios'),
-            },
-              h('div', { className: 'quick-btn-icon-wrap icon-blue' },
-                h(Icon, { name: 'users', size: 16, color: '#2563EB' })
-              ),
-              h('div', { className: 'quick-btn-info' },
-                h('strong', null, 'Auditar Directorio de Usuarios'),
-                h('span', null, `${usersCount || 6} cuentas registradas en la comunidad`)
-              ),
-              h(Icon, { name: 'arrowRight', size: 14, color: '#64748B' })
-            ),
-
-            h('button', {
-              className: 'dash-quick-btn btn-quick-access',
-              onClick: () => onNavigate('accesos'),
-            },
-              h('div', { className: 'quick-btn-icon-wrap icon-amber' },
-                h(Icon, { name: 'key', size: 16, color: '#D97706' })
-              ),
-              h('div', { className: 'quick-btn-info' },
-                h('strong', null, 'Gestionar Accesos Administradores'),
-                h('span', null, `${adminsCount || 2} administradores con credenciales activas`)
-              ),
-              h(Icon, { name: 'arrowRight', size: 14, color: '#64748B' })
+              h('button', {
+                className: 'donut-quick-link-btn',
+                onClick: () => onNavigate('accesos'),
+                title: 'Ir al Módulo de Accesos'
+              },
+                h('span', { className: 'link-dot dot-amber' }),
+                'Accesos',
+                h('span', { className: 'link-badge' }, adminsCount || 2)
+              )
             )
           )
         )
