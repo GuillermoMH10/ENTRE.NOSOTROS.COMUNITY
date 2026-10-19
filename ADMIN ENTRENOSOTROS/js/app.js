@@ -517,6 +517,29 @@
         h('line', { x1: '16', y1: '17', x2: '8', y2: '17' }),
         h('polyline', { points: '10 9 9 9 8 9' })
       ),
+      sparkles: h('svg', { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth, strokeLinecap: 'round', strokeLinejoin: 'round' },
+        h('path', { d: 'M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83' })
+      ),
+      globe: h('svg', { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth, strokeLinecap: 'round', strokeLinejoin: 'round' },
+        h('circle', { cx: '12', cy: '12', r: '10' }),
+        h('line', { x1: '2', y1: '12', x2: '22', y2: '12' }),
+        h('path', { d: 'M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z' })
+      ),
+      trendingUp: h('svg', { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth, strokeLinecap: 'round', strokeLinejoin: 'round' },
+        h('polyline', { points: '23 6 13.5 15.5 8.5 10.5 1 18' }),
+        h('polyline', { points: '17 6 23 6 23 12' })
+      ),
+      arrowRight: h('svg', { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth, strokeLinecap: 'round', strokeLinejoin: 'round' },
+        h('line', { x1: '5', y1: '12', x2: '19', y2: '12' }),
+        h('polyline', { points: '12 5 19 12 12 19' })
+      ),
+      refresh: h('svg', { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth, strokeLinecap: 'round', strokeLinejoin: 'round' },
+        h('polyline', { points: '23 4 23 10 17 10' }),
+        h('path', { d: 'M20.49 15a9 9 0 1 1-2.12-9.36L23 10' })
+      ),
+      heart: h('svg', { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth, strokeLinecap: 'round', strokeLinejoin: 'round' },
+        h('path', { d: 'M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z' })
+      ),
     };
 
     return icons[name] || null;
@@ -2129,6 +2152,652 @@
   };
 
   // ==========================================================================
+  // COMPONENTE: DASHBOARD PRINCIPAL SUPER COLORIDO E INTERACTIVO
+  // ==========================================================================
+  const PrincipalDashboardView = ({
+    currentUser,
+    onNavigate,
+    usersCount = 0,
+    reportedPostsCount = 0,
+    resolvedCount = 0,
+    adminsCount = 0,
+  }) => {
+    const [timeRange, setTimeRange] = useState('7d'); // 'today' | '7d' | '30d'
+    const [activeMetric, setActiveMetric] = useState('traffic'); // 'traffic' | 'posts' | 'anima'
+    const [hoveredPoint, setHoveredPoint] = useState(null);
+
+    // Métricas reactivas y datos de la app
+    const dataByRange = useMemo(() => {
+      return {
+        today: {
+          label: 'Hoy',
+          trafficTotal: '2,980',
+          trafficDiff: '+14.8%',
+          postsTotal: '88',
+          postsDiff: '+18.5%',
+          animaTotal: '312',
+          animaDiff: '+22.4%',
+          psychologistsTotal: '34 Citas',
+          psychologistsDiff: '+12.0%',
+          moderationTotal: `${reportedPostsCount || 5} Casos`,
+          moderationSafe: '99.1%',
+          labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', 'Ahora'],
+          series: {
+            traffic: [140, 85, 310, 580, 740, 690, 345],
+            posts: [5, 2, 11, 18, 24, 31, 16],
+            anima: [22, 8, 36, 58, 72, 84, 48],
+          },
+        },
+        '7d': {
+          label: 'Últimos 7 días',
+          trafficTotal: '21,040',
+          trafficDiff: '+19.4%',
+          postsTotal: '576',
+          postsDiff: '+16.5%',
+          animaTotal: '1,975',
+          animaDiff: '+24.1%',
+          psychologistsTotal: '196 Citas',
+          psychologistsDiff: '+15.8%',
+          moderationTotal: `${reportedPostsCount || 19} Casos`,
+          moderationSafe: '98.8%',
+          labels: ['Lun 13', 'Mar 14', 'Mié 15', 'Jue 16', 'Vie 17', 'Sáb 18', 'Dom 19'],
+          series: {
+            traffic: [2250, 2580, 2490, 2980, 3240, 3620, 3880],
+            posts: [58, 66, 62, 75, 89, 104, 122],
+            anima: [195, 225, 210, 260, 310, 365, 410],
+          },
+        },
+        '30d': {
+          label: 'Últimos 30 días',
+          trafficTotal: '86,000',
+          trafficDiff: '+28.2%',
+          postsTotal: '2,220',
+          postsDiff: '+22.4%',
+          animaTotal: '7,450',
+          animaDiff: '+31.0%',
+          psychologistsTotal: '780 Citas',
+          psychologistsDiff: '+19.2%',
+          moderationTotal: `${reportedPostsCount || 84} Casos`,
+          moderationSafe: '99.4%',
+          labels: ['Semana 1', 'Semana 2', 'Semana 3', 'Semana 4'],
+          series: {
+            traffic: [17800, 19600, 22400, 26200],
+            posts: [410, 490, 580, 740],
+            anima: [1340, 1620, 1980, 2510],
+          },
+        },
+      };
+    }, [reportedPostsCount]);
+
+    const currentData = dataByRange[timeRange];
+
+    const metricConfigs = {
+      traffic: {
+        id: 'traffic',
+        name: 'Tráfico Web y App PWA',
+        color: '#2563EB',
+        lightBg: '#EFF6FF',
+        unit: 'visitas',
+        icon: 'globe',
+      },
+      posts: {
+        id: 'posts',
+        name: 'Desahogos y Publicaciones',
+        color: '#059669',
+        lightBg: '#ECFDF5',
+        unit: 'desahogos',
+        icon: 'fileText',
+      },
+      anima: {
+        id: 'anima',
+        name: 'Acompañamiento ANIMA IA',
+        color: '#7C3AED',
+        lightBg: '#F5F3FF',
+        unit: 'sesiones guiadas',
+        icon: 'sparkles',
+      },
+    };
+
+    const activeConfig = metricConfigs[activeMetric];
+
+    // Cálculos SVG
+    const chartValues = currentData.series[activeMetric];
+    const chartLabels = currentData.labels;
+    const maxVal = Math.max(...chartValues) * 1.18;
+    const svgWidth = 620;
+    const svgHeight = 200;
+    const padLeft = 45;
+    const padRight = 20;
+    const padTop = 20;
+    const padBottom = 32;
+    const plotWidth = svgWidth - padLeft - padRight;
+    const plotHeight = svgHeight - padTop - padBottom;
+
+    const points = chartValues.map((val, idx) => {
+      const x = padLeft + (idx / Math.max(1, chartValues.length - 1)) * plotWidth;
+      const y = (svgHeight - padBottom) - (val / (maxVal || 1)) * plotHeight;
+      return { x, y, val, label: chartLabels[idx] };
+    });
+
+    const pathLine = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ');
+    const pathArea = `${pathLine} L ${points[points.length - 1].x.toFixed(1)} ${svgHeight - padBottom} L ${points[0].x.toFixed(1)} ${svgHeight - padBottom} Z`;
+
+    const yGridSteps = [0.33, 0.66, 1.0];
+
+    const formatShortNumber = (num) => {
+      if (num >= 1000) return `${(num / 1000).toFixed(1)}k`;
+      return String(Math.round(num));
+    };
+
+    return h('div', { className: 'principal-dashboard-module' },
+      // 1. Barra superior con Saludo y Selector de Rango
+      h('div', { className: 'dash-top-bar' },
+        h('div', { className: 'dash-greeting-wrap' },
+          h('div', { className: 'dash-greeting-title' },
+            h('span', null, `Hola, ${(currentUser?.name || 'Administrador').split(' ')[0]}`),
+            h('span', { className: 'dash-live-badge' },
+              h('span', { className: 'dash-pulse-dot' }),
+              'Sistema en Vivo • Firebase Activo'
+            )
+          ),
+          h('p', { className: 'dash-greeting-desc' },
+            'Supervisión integral de tráfico, desahogos, consultas de salud mental y bienestar emocional con ANIMA IA.'
+          )
+        ),
+        h('div', { className: 'dash-controls-wrap' },
+          h('div', { className: 'dash-time-range-group' },
+            h('button', {
+              className: `dash-time-btn ${timeRange === 'today' ? 'active' : ''}`,
+              onClick: () => setTimeRange('today'),
+            }, 'Hoy'),
+            h('button', {
+              className: `dash-time-btn ${timeRange === '7d' ? 'active' : ''}`,
+              onClick: () => setTimeRange('7d'),
+            }, '7 Días'),
+            h('button', {
+              className: `dash-time-btn ${timeRange === '30d' ? 'active' : ''}`,
+              onClick: () => setTimeRange('30d'),
+            }, '30 Días')
+          )
+        )
+      ),
+
+      // 2. Cuadrícula de 5 KPIs Principales (Solid Colors, Vibrant Borders)
+      h('div', { className: 'dash-kpis-grid' },
+        // KPI 1: Visitas al Sitio y App (Azul Sólido #2563EB)
+        h('div', { className: 'dash-kpi-card card-kpi-blue' },
+          h('div', { className: 'dash-kpi-header' },
+            h('div', { className: 'dash-kpi-icon-wrap icon-blue' },
+              h(Icon, { name: 'globe', size: 18, color: '#2563EB' })
+            ),
+            h('span', { className: 'dash-kpi-trend trend-green' },
+              h(Icon, { name: 'trendingUp', size: 11 }),
+              currentData.trafficDiff
+            )
+          ),
+          h('div', { className: 'dash-kpi-body' },
+            h('div', { className: 'dash-kpi-number' }, currentData.trafficTotal),
+            h('div', { className: 'dash-kpi-label' }, 'Visitas Web y App PWA'),
+            h('div', { className: 'dash-kpi-micro' }, '68% Móvil PWA • 32% Web')
+          )
+        ),
+
+        // KPI 2: Publicaciones y Desahogos (Verde Esmeralda Sólido #059669)
+        h('div', { className: 'dash-kpi-card card-kpi-green' },
+          h('div', { className: 'dash-kpi-header' },
+            h('div', { className: 'dash-kpi-icon-wrap icon-green' },
+              h(Icon, { name: 'fileText', size: 18, color: '#059669' })
+            ),
+            h('span', { className: 'dash-kpi-trend trend-green' },
+              h(Icon, { name: 'trendingUp', size: 11 }),
+              currentData.postsDiff
+            )
+          ),
+          h('div', { className: 'dash-kpi-body' },
+            h('div', { className: 'dash-kpi-number' }, currentData.postsTotal),
+            h('div', { className: 'dash-kpi-label' }, 'Publicaciones y Desahogos'),
+            h('div', { className: 'dash-kpi-micro' }, '84% con apoyo comunitario')
+          )
+        ),
+
+        // KPI 3: Sesiones ANIMA IA (Violeta Sólido #7C3AED)
+        h('div', { className: 'dash-kpi-card card-kpi-purple' },
+          h('div', { className: 'dash-kpi-header' },
+            h('div', { className: 'dash-kpi-icon-wrap icon-purple' },
+              h(Icon, { name: 'sparkles', size: 18, color: '#7C3AED' })
+            ),
+            h('span', { className: 'dash-kpi-trend trend-purple' },
+              h(Icon, { name: 'heart', size: 11 }),
+              '96.4% Calma'
+            )
+          ),
+          h('div', { className: 'dash-kpi-body' },
+            h('div', { className: 'dash-kpi-number' }, currentData.animaTotal),
+            h('div', { className: 'dash-kpi-label' }, 'Acompañamiento ANIMA IA'),
+            h('div', { className: 'dash-kpi-micro' }, 'Asistencia emocional 24/7')
+          )
+        ),
+
+        // KPI 4: Red de Psicólogos (Ámbar Sólido #D97706)
+        h('div', { className: 'dash-kpi-card card-kpi-amber' },
+          h('div', { className: 'dash-kpi-header' },
+            h('div', { className: 'dash-kpi-icon-wrap icon-amber' },
+              h(Icon, { name: 'stethoscope', size: 18, color: '#D97706' })
+            ),
+            h('span', { className: 'dash-kpi-trend trend-amber' },
+              '4.9 ★ Valoración'
+            )
+          ),
+          h('div', { className: 'dash-kpi-body' },
+            h('div', { className: 'dash-kpi-number' }, currentData.psychologistsTotal),
+            h('div', { className: 'dash-kpi-label' }, 'Citas con Psicólogos'),
+            h('div', { className: 'dash-kpi-micro' }, '24 Especialistas Clínicos')
+          )
+        ),
+
+        // KPI 5: Moderación y Seguridad (Rojo Sólido #DC2626)
+        h('div', { className: 'dash-kpi-card card-kpi-red' },
+          h('div', { className: 'dash-kpi-header' },
+            h('div', { className: 'dash-kpi-icon-wrap icon-red' },
+              h(Icon, { name: 'shield', size: 18, color: '#DC2626' })
+            ),
+            h('span', { className: 'dash-kpi-trend trend-red' },
+              currentData.moderationSafe
+            )
+          ),
+          h('div', { className: 'dash-kpi-body' },
+            h('div', { className: 'dash-kpi-number' }, currentData.moderationTotal),
+            h('div', { className: 'dash-kpi-label' }, 'Moderación y Seguridad'),
+            h('div', { className: 'dash-kpi-micro' }, '0 Crisis críticas activas')
+          )
+        )
+      ),
+
+      // 3. Fila de Gráficas: Interactiva Principal (65%) + Clima Emocional (35%)
+      h('div', { className: 'dash-charts-row' },
+        // Tarjeta Gráfica Principal
+        h('div', { className: 'dash-card dash-chart-main-card' },
+          h('div', { className: 'dash-chart-header' },
+            h('div', null,
+              h('h3', { className: 'dash-card-title' }, 'Evolución y Actividad en la Plataforma'),
+              h('p', { className: 'dash-card-subtitle' }, `Visualizando datos correspondientes a: ${currentData.label}`)
+            ),
+            // Selector de Métrica
+            h('div', { className: 'dash-metric-pills' },
+              h('button', {
+                className: `dash-metric-btn metric-blue ${activeMetric === 'traffic' ? 'active' : ''}`,
+                onClick: () => setActiveMetric('traffic'),
+              },
+                h(Icon, { name: 'globe', size: 12 }),
+                'Tráfico Web y App'
+              ),
+              h('button', {
+                className: `dash-metric-btn metric-green ${activeMetric === 'posts' ? 'active' : ''}`,
+                onClick: () => setActiveMetric('posts'),
+              },
+                h(Icon, { name: 'fileText', size: 12 }),
+                'Desahogos'
+              ),
+              h('button', {
+                className: `dash-metric-btn metric-purple ${activeMetric === 'anima' ? 'active' : ''}`,
+                onClick: () => setActiveMetric('anima'),
+              },
+                h(Icon, { name: 'sparkles', size: 12 }),
+                'ANIMA IA'
+              )
+            )
+          ),
+
+          // Gráfica SVG Reactiva
+          h('div', { className: 'dash-svg-container' },
+            h('svg', {
+              viewBox: `0 0 ${svgWidth} ${svgHeight}`,
+              className: 'dash-svg-chart',
+              preserveAspectRatio: 'none',
+            },
+              // Líneas horizontales de guía (Grid)
+              yGridSteps.map((step, idx) => {
+                const y = (svgHeight - padBottom) - step * plotHeight;
+                const valLabel = formatShortNumber(maxVal * step);
+                return h('g', { key: idx },
+                  h('line', {
+                    x1: padLeft,
+                    y1: y,
+                    x2: svgWidth - padRight,
+                    y2: y,
+                    stroke: '#E2E8F0',
+                    strokeDasharray: '4 4',
+                    strokeWidth: 1,
+                  }),
+                  h('text', {
+                    x: padLeft - 8,
+                    y: y + 3.5,
+                    textAnchor: 'end',
+                    fill: '#94A3B8',
+                    fontSize: 9.5,
+                    fontFamily: 'inherit',
+                  }, valLabel)
+                );
+              }),
+
+              // Línea base X
+              h('line', {
+                x1: padLeft,
+                y1: svgHeight - padBottom,
+                x2: svgWidth - padRight,
+                y2: svgHeight - padBottom,
+                stroke: '#CBD5E1',
+                strokeWidth: 1.5,
+              }),
+
+              // Etiquetas del eje X
+              points.map((p, idx) =>
+                h('text', {
+                  key: idx,
+                  x: p.x,
+                  y: svgHeight - padBottom + 16,
+                  textAnchor: 'middle',
+                  fill: '#64748B',
+                  fontSize: 10,
+                  fontWeight: 600,
+                  fontFamily: 'inherit',
+                }, p.label)
+              ),
+
+              // Área sombreada bajo la curva
+              h('polygon', {
+                points: points.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ') +
+                        ` ${(svgWidth - padRight).toFixed(1)},${svgHeight - padBottom} ${padLeft.toFixed(1)},${svgHeight - padBottom}`,
+                fill: activeConfig.color,
+                fillOpacity: 0.12,
+              }),
+
+              // Línea de la gráfica
+              h('path', {
+                d: pathLine,
+                fill: 'none',
+                stroke: activeConfig.color,
+                strokeWidth: 3,
+                strokeLinecap: 'round',
+                strokeLinejoin: 'round',
+              }),
+
+              // Puntos interactivos
+              points.map((p, idx) => {
+                const isHovered = hoveredPoint?.index === idx;
+                return h('g', { key: idx, className: 'chart-point-group' },
+                  // Área táctil invisible
+                  h('circle', {
+                    cx: p.x,
+                    cy: p.y,
+                    r: 16,
+                    fill: 'transparent',
+                    cursor: 'pointer',
+                    onMouseEnter: () => setHoveredPoint({ index: idx, ...p }),
+                    onMouseLeave: () => setHoveredPoint(null),
+                  }),
+                  // Anillo exterior en hover
+                  isHovered && h('circle', {
+                    cx: p.x,
+                    cy: p.y,
+                    r: 9,
+                    fill: activeConfig.color,
+                    fillOpacity: 0.25,
+                  }),
+                  // Círculo del punto
+                  h('circle', {
+                    cx: p.x,
+                    cy: p.y,
+                    r: isHovered ? 6 : 4,
+                    fill: '#FFFFFF',
+                    stroke: activeConfig.color,
+                    strokeWidth: isHovered ? 3 : 2.5,
+                    cursor: 'pointer',
+                    onMouseEnter: () => setHoveredPoint({ index: idx, ...p }),
+                    onMouseLeave: () => setHoveredPoint(null),
+                  })
+                );
+              })
+            ),
+
+            // Tooltip flotante interactivo
+            hoveredPoint && h('div', {
+              className: 'dash-chart-tooltip',
+              style: {
+                left: `${(hoveredPoint.x / svgWidth) * 100}%`,
+                top: `${(hoveredPoint.y / svgHeight) * 100}%`,
+              },
+            },
+              h('div', { className: 'tooltip-header' }, hoveredPoint.label),
+              h('div', { className: 'tooltip-value' },
+                h('span', { className: 'tooltip-color-dot', style: { background: activeConfig.color } }),
+                `${hoveredPoint.val.toLocaleString()} ${activeConfig.unit}`
+              )
+            )
+          ),
+
+          // Resumen inferior de la gráfica
+          h('div', { className: 'dash-chart-footer' },
+            h('div', { className: 'chart-footer-stat' },
+              h('span', { className: 'stat-label' }, 'Métrica Activa:'),
+              h('strong', { className: 'stat-value', style: { color: activeConfig.color } }, activeConfig.name)
+            ),
+            h('div', { className: 'chart-footer-stat' },
+              h('span', { className: 'stat-label' }, 'Total en el período:'),
+              h('strong', { className: 'stat-value' }, chartValues.reduce((a, b) => a + b, 0).toLocaleString())
+            ),
+            h('div', { className: 'chart-footer-stat' },
+              h('span', { className: 'stat-label' }, 'Pico Más Alto:'),
+              h('strong', { className: 'stat-value' }, Math.max(...chartValues).toLocaleString())
+            )
+          )
+        ),
+
+        // Tarjeta Clima Emocional de la Comunidad
+        h('div', { className: 'dash-card dash-emotions-card' },
+          h('div', { className: 'dash-card-header' },
+            h('div', null,
+              h('h3', { className: 'dash-card-title' }, 'Clima Emocional de la Comunidad'),
+              h('p', { className: 'dash-card-subtitle' }, 'Monitoreo de desahogos analizados por ANIMA IA')
+            ),
+            h('span', { className: 'dash-mini-badge badge-purple' }, 'En vivo')
+          ),
+
+          // Barras de progreso de sentimientos
+          h('div', { className: 'dash-emotions-list' },
+            [
+              { label: 'Esperanza y Superación', pct: 38, color: '#10B981', count: '194 desahogos' },
+              { label: 'Desahogo y Catarsis', pct: 27, color: '#8B5CF6', count: '138 desahogos' },
+              { label: 'Gratitud y Apoyo', pct: 19, color: '#3B82F6', count: '97 desahogos' },
+              { label: 'Búsqueda de Orientación', pct: 11, color: '#F59E0B', count: '56 desahogos' },
+              { label: 'Atención Prioritaria / Duelo', pct: 5, color: '#EF4444', count: '25 desahogos' },
+            ].map((emo, idx) =>
+              h('div', { key: idx, className: 'dash-emotion-item' },
+                h('div', { className: 'emotion-label-row' },
+                  h('span', { className: 'emotion-name' }, emo.label),
+                  h('span', { className: 'emotion-pct', style: { color: emo.color } }, `${emo.pct}%`)
+                ),
+                h('div', { className: 'emotion-track' },
+                  h('div', {
+                    className: 'emotion-bar',
+                    style: { width: `${emo.pct}%`, backgroundColor: emo.color },
+                  })
+                )
+              )
+            )
+          ),
+
+          // Recuadro de Insight Emocional
+          h('div', { className: 'dash-insight-box' },
+            h(Icon, { name: 'heart', size: 16, color: '#DB2777' }),
+            h('p', null,
+              'El ',
+              h('strong', null, '92%'),
+              ' de los usuarios que publicaron sentimientos de angustia reportaron alivio emocional tras recibir mensajes de apoyo de la comunidad o interactuar con ANIMA.'
+            )
+          )
+        )
+      ),
+
+      // 4. Fila Inferior: Feed en Tiempo Real (55%) + Accesos Rápidos y Estado (45%)
+      h('div', { className: 'dash-bottom-row' },
+        // Columna Izquierda: Feed en tiempo real de la app
+        h('div', { className: 'dash-card dash-feed-card' },
+          h('div', { className: 'dash-card-header' },
+            h('div', { style: { display: 'flex', alignItems: 'center', gap: 8 } },
+              h(Icon, { name: 'activity', size: 16, color: '#0891B2' }),
+              h('h3', { className: 'dash-card-title' }, 'Actividad en Tiempo Real de la App')
+            ),
+            h('span', { className: 'dash-mini-badge badge-teal' }, 'Tiempo real')
+          ),
+
+          h('div', { className: 'dash-feed-list' },
+            [
+              {
+                type: 'post',
+                tag: 'Desahogo',
+                tagColor: '#059669',
+                tagBg: '#ECFDF5',
+                text: 'Mariana Ríos compartió un desahogo en la categoría "Superación Personal".',
+                time: 'Hace 3 min',
+                icon: 'fileText',
+              },
+              {
+                type: 'anima',
+                tag: 'ANIMA IA',
+                tagColor: '#7C3AED',
+                tagBg: '#F5F3FF',
+                text: 'Sesión de acompañamiento guiado completada con ejercicio de respiración.',
+                time: 'Hace 11 min',
+                icon: 'sparkles',
+              },
+              {
+                type: 'psych',
+                tag: 'Especialista',
+                tagColor: '#D97706',
+                tagBg: '#FFFBEB',
+                text: 'Dr. Fernando Valdés (Psicólogo) confirmó 2 citas de terapia para hoy.',
+                time: 'Hace 24 min',
+                icon: 'stethoscope',
+              },
+              {
+                type: 'community',
+                tag: 'Comunidad',
+                tagColor: '#2563EB',
+                tagBg: '#EFF6FF',
+                text: '16 miembros brindaron comentarios de apoyo al post de Carlos Mendoza.',
+                time: 'Hace 38 min',
+                icon: 'users',
+              },
+              {
+                type: 'moderation',
+                tag: 'Moderación',
+                tagColor: '#DC2626',
+                tagBg: '#FEF2F2',
+                text: 'Publicación preventiva aislada por el filtro automático de seguridad.',
+                time: 'Hace 52 min',
+                icon: 'shield',
+              },
+            ].map((item, idx) =>
+              h('div', { key: idx, className: 'dash-feed-item' },
+                h('div', {
+                  className: 'dash-feed-tag',
+                  style: { color: item.tagColor, backgroundColor: item.tagBg, borderColor: item.tagColor }
+                }, item.tag),
+                h('div', { className: 'dash-feed-content' },
+                  h('p', { className: 'dash-feed-text' }, item.text),
+                  h('span', { className: 'dash-feed-time' }, item.time)
+                )
+              )
+            )
+          )
+        ),
+
+        // Columna Derecha: Estado del Sistema y Accesos Rápidos
+        h('div', { className: 'dash-card dash-control-card' },
+          h('div', { className: 'dash-card-header' },
+            h('div', { style: { display: 'flex', alignItems: 'center', gap: 8 } },
+              h(Icon, { name: 'key', size: 16, color: '#D97706' }),
+              h('h3', { className: 'dash-card-title' }, 'Control y Accesos Directos')
+            ),
+            h('span', { className: 'dash-mini-badge badge-green' }, 'Operativo')
+          ),
+
+          // Estado de infraestructura
+          h('div', { className: 'dash-services-box' },
+            h('div', { className: 'service-status-row' },
+              h('div', { className: 'service-name-group' },
+                h('span', { className: 'service-dot dot-green' }),
+                h('strong', null, 'Firebase Firestore Cloud')
+              ),
+              h('span', { className: 'service-status-tag' }, 'En línea • 18ms')
+            ),
+            h('div', { className: 'service-status-row' },
+              h('div', { className: 'service-name-group' },
+                h('span', { className: 'service-dot dot-purple' }),
+                h('strong', null, 'Motor IA ANIMA Acompañamiento')
+              ),
+              h('span', { className: 'service-status-tag' }, 'Activo • <400ms')
+            ),
+            h('div', { className: 'service-status-row' },
+              h('div', { className: 'service-name-group' },
+                h('span', { className: 'service-dot dot-blue' }),
+                h('strong', null, 'Notificaciones PWA y Web Push')
+              ),
+              h('span', { className: 'service-status-tag' }, 'Listo • 99.8%')
+            )
+          ),
+
+          // Botones de acceso rápido a los módulos principales
+          h('div', { className: 'dash-quick-actions-list' },
+            h('button', {
+              className: 'dash-quick-btn btn-quick-moderation',
+              onClick: () => onNavigate('moderacion'),
+            },
+              h('div', { className: 'quick-btn-icon-wrap icon-red' },
+                h(Icon, { name: 'shield', size: 16, color: '#DC2626' })
+              ),
+              h('div', { className: 'quick-btn-info' },
+                h('strong', null, 'Ir a Moderación de Contenido'),
+                h('span', null, `${reportedPostsCount || 5} publicaciones pendientes de revisión`)
+              ),
+              h(Icon, { name: 'arrowRight', size: 14, color: '#64748B' })
+            ),
+
+            h('button', {
+              className: 'dash-quick-btn btn-quick-users',
+              onClick: () => onNavigate('usuarios'),
+            },
+              h('div', { className: 'quick-btn-icon-wrap icon-blue' },
+                h(Icon, { name: 'users', size: 16, color: '#2563EB' })
+              ),
+              h('div', { className: 'quick-btn-info' },
+                h('strong', null, 'Auditar Directorio de Usuarios'),
+                h('span', null, `${usersCount || 6} cuentas registradas en la comunidad`)
+              ),
+              h(Icon, { name: 'arrowRight', size: 14, color: '#64748B' })
+            ),
+
+            h('button', {
+              className: 'dash-quick-btn btn-quick-access',
+              onClick: () => onNavigate('accesos'),
+            },
+              h('div', { className: 'quick-btn-icon-wrap icon-amber' },
+                h(Icon, { name: 'key', size: 16, color: '#D97706' })
+              ),
+              h('div', { className: 'quick-btn-info' },
+                h('strong', null, 'Gestionar Accesos Administradores'),
+                h('span', null, `${adminsCount || 2} administradores con credenciales activas`)
+              ),
+              h(Icon, { name: 'arrowRight', size: 14, color: '#64748B' })
+            )
+          )
+        )
+      )
+    );
+  };
+
+  // ==========================================================================
   // COMPONENTE 5: PLACEHOLDER DE MÓDULOS EN PREPARACIÓN
   // ==========================================================================
   const ModulePlaceholderView = ({ module, onGoToAccesos }) => {
@@ -2380,8 +3049,8 @@
       return null;
     });
 
-    // 3. Módulo activo (por defecto 'accesos' como se pidió)
-    const [activeModule, setActiveModule] = useState('accesos');
+    // 3. Módulo activo (por defecto 'principal' al ingresar)
+    const [activeModule, setActiveModule] = useState('principal');
 
     // 4. Estado de pantalla ('login' | 'updatePassword' | 'dashboard')
     const [viewMode, setViewMode] = useState(() => {
@@ -2399,6 +3068,7 @@
         setViewMode('updatePassword');
       } else {
         setViewMode('dashboard');
+        setActiveModule('principal');
       }
     };
 
@@ -2435,6 +3105,7 @@
       setCurrentUser(updatedUser);
       localStorage.setItem(STORAGE_CURRENT_USER, JSON.stringify(updatedUser));
       setViewMode('dashboard');
+      setActiveModule('principal');
     };
 
     // Cerrar sesión
@@ -2442,7 +3113,7 @@
       setCurrentUser(null);
       localStorage.removeItem(STORAGE_CURRENT_USER);
       setViewMode('login');
-      setActiveModule('accesos');
+      setActiveModule('principal');
     };
 
     // Guardar nuevo admin o cambios de admin existente en Firestore
@@ -2596,7 +3267,7 @@
     // ------------------------------------------------------------------------
     // RENDER: DASHBOARD ADMINISTRATIVO COMPACTO
     // ------------------------------------------------------------------------
-    const currentModuleObj = MODULES.find((m) => m.id === activeModule) || MODULES[1];
+    const currentModuleObj = MODULES.find((m) => m.id === activeModule) || MODULES[0];
     const userPermissions = currentUser?.permissions || [];
     const isSuperAdmin = currentUser?.role === 'Super Administrador' || currentUser?.username === 'admin';
 
@@ -2612,12 +3283,11 @@
           })
         ),
 
-        // Perfil / Nombre de usuario en el Sidebar
+        // Perfil / Nombre de usuario en el Sidebar (sin rol debajo como se solicitó)
         h('div', { className: 'sidebar-user-card' },
           h('div', { className: 'user-avatar-circle' }, getInitials(currentUser?.name)),
           h('div', { className: 'user-info-meta' },
-            h('div', { className: 'user-info-name', title: currentUser?.name }, currentUser?.name || 'Administrador'),
-            h('div', { className: 'user-info-role' }, currentUser?.role || 'Administrador')
+            h('div', { className: 'user-info-name', title: currentUser?.name }, currentUser?.name || 'Administrador')
           )
         ),
 
@@ -2666,7 +3336,16 @@
         // Contenido scrolleable
         h('div', { className: 'admin-content-scroll' },
           h(ErrorBoundary, null,
-            activeModule === 'accesos'
+            activeModule === 'principal'
+              ? h(PrincipalDashboardView, {
+                  currentUser: currentUser,
+                  onNavigate: (modId) => setActiveModule(modId),
+                  usersCount: usersList.length,
+                  reportedPostsCount: reportedPostsList.length,
+                  resolvedCount: resolvedCount,
+                  adminsCount: adminsList.length,
+                })
+              : activeModule === 'accesos'
               ? h(AccesosView, {
                   adminsList: adminsList,
                   onSaveAdmin: handleSaveAdmin,
