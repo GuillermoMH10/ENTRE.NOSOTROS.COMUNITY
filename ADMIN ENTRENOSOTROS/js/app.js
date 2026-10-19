@@ -770,16 +770,6 @@
             h('div', { className: 'kpi-yellow-num-row' },
               h('span', { className: 'kpi-yellow-number' }, stats.total),
               h('span', { className: 'kpi-yellow-title' }, 'Total Administradores')
-            ),
-            h('div', { className: 'kpi-yellow-pills-row' },
-              h('span', { className: 'kpi-subpill pill-green' },
-                h('span', { className: 'dot-indicator dot-green' }),
-                `${stats.active} Activos`
-              ),
-              h('span', { className: 'kpi-subpill pill-orange' },
-                h('span', { className: 'dot-indicator dot-orange' }),
-                `${stats.inactive} En pausa`
-              )
             )
           )
         )
@@ -802,15 +792,15 @@
         h('div', { className: 'filter-actions-group' },
           h('div', { className: 'filter-pills-group compact' },
             h('button', {
-              className: `filter-pill compact ${sortFilter === 'all' ? 'active' : ''}`,
+              className: `filter-pill compact filter-all ${sortFilter === 'all' ? 'active' : ''}`,
               onClick: () => setSortFilter('all'),
             }, 'Todos'),
             h('button', {
-              className: `filter-pill compact ${sortFilter === 'recent' ? 'active' : ''}`,
+              className: `filter-pill compact filter-recent ${sortFilter === 'recent' ? 'active' : ''}`,
               onClick: () => setSortFilter('recent'),
             }, 'Más reciente'),
             h('button', {
-              className: `filter-pill compact ${sortFilter === 'old' ? 'active' : ''}`,
+              className: `filter-pill compact filter-old ${sortFilter === 'old' ? 'active' : ''}`,
               onClick: () => setSortFilter('old'),
             }, 'Más antiguo')
           ),
@@ -1249,7 +1239,7 @@
 
             return h('button', {
               key: mod.id,
-              className: `nav-item-btn ${isActive ? 'active' : ''}`,
+              className: `nav-item-btn ${isActive ? 'active' : ''} nav-item-${mod.id}`,
               onClick: () => {
                 if (!hasAccess) {
                   alert(`Tu cuenta no tiene autorización para acceder al módulo de ${mod.label}.`);
@@ -1262,6 +1252,7 @@
             },
               h('span', { className: 'nav-icon' }, h(Icon, { name: mod.icon, size: 16 })),
               h('span', { className: 'nav-item-label' }, mod.label),
+              isActive && h('span', { className: 'nav-active-dot' }),
               !hasAccess && h(Icon, { name: 'lock', size: 12, color: 'var(--text-muted)' })
             );
           })

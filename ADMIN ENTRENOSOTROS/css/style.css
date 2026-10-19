@@ -184,28 +184,24 @@ body {
   align-items: center;
   gap: 10px;
   width: 100%;
-  padding: 8px 10px;
+  padding: 8px 12px;
   border-radius: var(--radius-sm);
   background: transparent;
-  border: none;
+  border: 1px solid transparent;
   color: var(--text-muted);
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   text-align: left;
-  transition: all 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
 }
 
 .nav-item-btn:hover {
-  background: var(--bg-hover);
+  background: #F8FAFC;
   color: var(--text-main);
-}
-
-.nav-item-btn.active {
-  background: var(--blue-primary);
-  color: #FFFFFF;
-  font-weight: 600;
-  box-shadow: 0 2px 4px rgba(53, 89, 113, 0.2);
+  border-color: #E2E8F0;
+  transform: translateX(2px);
 }
 
 .nav-item-btn .nav-icon {
@@ -215,10 +211,86 @@ body {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.nav-item-btn:hover .nav-icon {
+  transform: scale(1.1);
+}
+
+/* Colores interactivos en hover para cada módulo */
+.nav-item-btn.nav-item-accesos:hover .nav-icon { color: #D97706; }
+.nav-item-btn.nav-item-principal:hover .nav-icon { color: #2563EB; }
+.nav-item-btn.nav-item-usuarios:hover .nav-icon { color: #7C3AED; }
+.nav-item-btn.nav-item-psicologos:hover .nav-icon { color: #059669; }
+.nav-item-btn.nav-item-moderacion:hover .nav-icon { color: #DB2777; }
+.nav-item-btn.nav-item-reportes:hover .nav-icon { color: #DC2626; }
+.nav-item-btn.nav-item-estadisticas:hover .nav-icon { color: #0891B2; }
+
+/* ESTADO ACTIVO VIBRANTE Y COLORIDO (Cero azul oscuro) */
+.nav-item-btn.active {
+  color: #FFFFFF !important;
+  font-weight: 700;
+  border-color: transparent !important;
+  transform: translateX(3px);
 }
 
 .nav-item-btn.active .nav-icon svg {
-  stroke: #FFFFFF;
+  stroke: #FFFFFF !important;
+}
+
+/* Módulo Accesos activo: Amarillo / Ámbar dorado brillante */
+.nav-item-btn.active.nav-item-accesos {
+  background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%) !important;
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35);
+}
+
+/* Otros módulos activos con sus respectivos colores */
+.nav-item-btn.active.nav-item-principal {
+  background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%) !important;
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35);
+}
+
+.nav-item-btn.active.nav-item-usuarios {
+  background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%) !important;
+  box-shadow: 0 4px 14px rgba(139, 92, 246, 0.35);
+}
+
+.nav-item-btn.active.nav-item-psicologos {
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%) !important;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+}
+
+.nav-item-btn.active.nav-item-moderacion {
+  background: linear-gradient(135deg, #EC4899 0%, #DB2777 100%) !important;
+  box-shadow: 0 4px 14px rgba(236, 72, 153, 0.35);
+}
+
+.nav-item-btn.active.nav-item-reportes {
+  background: linear-gradient(135deg, #EF4444 0%, #B91C1C 100%) !important;
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);
+}
+
+.nav-item-btn.active.nav-item-estadisticas {
+  background: linear-gradient(135deg, #06B6D4 0%, #0E7490 100%) !important;
+  box-shadow: 0 4px 14px rgba(6, 182, 212, 0.35);
+}
+
+/* Indicador con pulso para el módulo activo */
+.nav-active-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.9);
+  margin-left: auto;
+  flex-shrink: 0;
+  animation: navPulse 2s infinite ease-in-out;
+}
+
+@keyframes navPulse {
+  0%, 100% { opacity: 0.8; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.25); }
 }
 
 .nav-item-label {
@@ -302,19 +374,20 @@ body {
   background: #FFFFFF;
   border: 2px solid #F59E0B;
   border-radius: 14px;
-  padding: 12px 22px;
+  padding: 10px 24px;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 16px;
-  max-width: 360px;
-  width: 100%;
-  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.12);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  max-width: 280px;
+  width: auto;
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.12);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
 
 .kpi-card-yellow-center:hover {
-  transform: translateY(-1.5px);
-  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.18);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.2);
 }
 
 .kpi-yellow-icon {
@@ -352,34 +425,7 @@ body {
   font-size: 12px;
   font-weight: 600;
   color: #64748B;
-}
-
-.kpi-yellow-pills-row {
-  display: flex;
-  gap: 8px;
-  margin-top: 6px;
-}
-
-.kpi-subpill {
-  font-size: 10.5px;
-  font-weight: 700;
-  padding: 2px 8px;
-  border-radius: 999px;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.pill-green {
-  background: #ECFDF5;
-  color: #047857;
-  border: 1px solid #A7F3D0;
-}
-
-.pill-orange {
-  background: #FFF7ED;
-  color: #C2410C;
-  border: 1px solid #FED7AA;
+  white-space: nowrap;
 }
 
 .dot-indicator {
@@ -504,34 +550,66 @@ body {
 }
 
 .filter-pill.compact {
-  padding: 4px 9px;
-  font-size: 11px;
+  padding: 5px 12px;
+  font-size: 11.5px;
   border-radius: var(--radius-sm);
-  background: var(--bg-body);
-  border: 1px solid var(--border-light);
+  background: #FFFFFF;
+  border: 1px solid var(--border-medium);
   color: var(--text-muted);
   cursor: pointer;
   font-weight: 600;
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  transition: all 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
 }
 
 .filter-pill.compact:hover {
-  background: var(--border-light);
-  color: var(--text-main);
+  transform: translateY(-1.5px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
+/* Hover interactivo y colorido específico */
+.filter-pill.filter-all:hover {
+  background: #FFFBEB;
+  border-color: #F59E0B;
+  color: #B45309;
+}
+
+.filter-pill.filter-recent:hover {
+  background: #ECFDF5;
+  border-color: #10B981;
+  color: #047857;
+}
+
+.filter-pill.filter-old:hover {
+  background: #FFF7ED;
+  border-color: #F97316;
+  color: #C2410C;
+}
+
+/* ESTADOS ACTIVOS VIBRANTES Y COLORIDOS (Sin color azul corporativo) */
 .filter-pill.compact.active {
-  background: var(--blue-primary);
-  border-color: var(--blue-primary);
-  color: #FFFFFF;
+  color: #FFFFFF !important;
+  font-weight: 700;
+  border-color: transparent !important;
+  transform: translateY(-1px);
 }
 
-.filter-pill.compact.active .pill-count {
-  background: rgba(255, 255, 255, 0.25);
-  color: #FFFFFF;
+.filter-pill.filter-all.active {
+  background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%) !important;
+  box-shadow: 0 3px 10px rgba(245, 158, 11, 0.35);
+}
+
+.filter-pill.filter-recent.active {
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%) !important;
+  box-shadow: 0 3px 10px rgba(16, 185, 129, 0.35);
+}
+
+.filter-pill.filter-old.active {
+  background: linear-gradient(135deg, #F97316 0%, #EA580C 100%) !important;
+  box-shadow: 0 3px 10px rgba(249, 115, 22, 0.35);
 }
 
 .pill-count {
