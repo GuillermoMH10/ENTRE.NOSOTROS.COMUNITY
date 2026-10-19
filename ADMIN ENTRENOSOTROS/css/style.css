@@ -1344,3 +1344,294 @@ body {
   margin-left: auto;
   margin-right: auto;
 }
+
+/* ==========================================================================
+   MÓDULO USUARIOS: 3 KPIS COLORIDAS, TABLA Y AVATAR CUADRADO
+   ========================================================================== */
+.usuarios-module {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Grilla de 3 KPIs con bordes coloridos sólidos (sin degradados) */
+.users-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+@media (max-width: 860px) {
+  .users-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.kpi-card-user {
+  background: #FFFFFF;
+  border-radius: 14px;
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.kpi-card-user:hover {
+  transform: translateY(-2px);
+}
+
+/* KPI 1: Total Usuarios (Borde Morado Sólido) */
+.kpi-card-user-total {
+  border: 2px solid #8B5CF6;
+  box-shadow: 0 4px 14px rgba(139, 92, 246, 0.12);
+}
+.kpi-card-user-total:hover {
+  box-shadow: 0 6px 18px rgba(139, 92, 246, 0.18);
+}
+
+/* KPI 2: Entraron Hoy (Borde Verde Esmeralda Sólido) */
+.kpi-card-user-today {
+  border: 2px solid #10B981;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.12);
+}
+.kpi-card-user-today:hover {
+  box-shadow: 0 6px 18px rgba(16, 185, 129, 0.18);
+}
+
+/* KPI 3: Inactivas (Borde Naranja Sólido) */
+.kpi-card-user-inactive {
+  border: 2px solid #F97316;
+  box-shadow: 0 4px 14px rgba(249, 115, 22, 0.12);
+}
+.kpi-card-user-inactive:hover {
+  box-shadow: 0 6px 18px rgba(249, 115, 22, 0.18);
+}
+
+.kpi-user-icon-wrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-width: 1px;
+  border-style: solid;
+}
+
+.kpi-user-icon-wrap.icon-purple {
+  background: #F5F3FF;
+  border-color: #DDD6FE;
+}
+
+.kpi-user-icon-wrap.icon-green {
+  background: #ECFDF5;
+  border-color: #A7F3D0;
+}
+
+.kpi-user-icon-wrap.icon-orange {
+  background: #FFF7ED;
+  border-color: #FED7AA;
+}
+
+.kpi-user-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.kpi-user-number {
+  font-size: 26px;
+  font-weight: 800;
+  color: #0F172A;
+  line-height: 1;
+}
+
+.kpi-user-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748B;
+  margin-top: 4px;
+  white-space: nowrap;
+}
+
+/* Filtros específicos de usuarios con colores fijos */
+.filter-pill.filter-today.active {
+  background: #10B981 !important;
+  border-color: #10B981 !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.35);
+}
+
+.filter-pill.filter-inactive.active {
+  background: #F97316 !important;
+  border-color: #F97316 !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 2px 8px rgba(249, 115, 22, 0.35);
+}
+
+.filter-pill.filter-posts.active {
+  background: #8B5CF6 !important;
+  border-color: #8B5CF6 !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.35);
+}
+
+/* FOTO DE PERFIL EN CUADRADO */
+.user-square-avatar-wrap {
+  width: 38px;
+  height: 38px;
+  border-radius: 8px; /* Cuadrado con bordes redondeados */
+  overflow: hidden;
+  border-width: 2px;
+  border-style: solid;
+  border-color: #E2E8F0;
+  flex-shrink: 0;
+  background: #F8FAFC;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.user-square-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.user-square-avatar-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 13px;
+}
+
+/* Filas coloridas de usuarios */
+.user-colored-row {
+  transition: all 0.15s ease;
+}
+
+.user-colored-row:hover {
+  background: #FAFAFC;
+  transform: translateX(1px);
+}
+
+/* Píldora de cantidad de publicaciones */
+.posts-count-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  border-width: 1px;
+  border-style: solid;
+}
+
+.posts-count-pill.pill-purple {
+  background: #F5F3FF;
+  color: #6D28D9;
+  border-color: #DDD6FE;
+}
+
+.posts-count-pill.pill-blue {
+  background: #EFF6FF;
+  color: #1D4ED8;
+  border-color: #BFDBFE;
+}
+
+.posts-count-pill.pill-gray {
+  background: #F8FAFC;
+  color: #64748B;
+  border-color: #E2E8F0;
+}
+
+/* Botones de acción del usuario */
+.user-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.user-action-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: #FFFFFF;
+  border: 1px solid var(--border-medium);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.user-action-btn.view-posts:hover {
+  background: #EEF2FF;
+  border-color: #C7D2FE;
+  transform: translateY(-1px);
+}
+
+.user-action-btn.suspend:hover {
+  background: #FFFBEB;
+  border-color: #FDE68A;
+  transform: translateY(-1px);
+}
+
+.user-action-btn.delete:hover {
+  background: #FEF2F2;
+  border-color: #FECACA;
+  transform: translateY(-1px);
+}
+
+/* Modal informativo para acciones en desarrollo */
+.modal-notice-card {
+  max-width: 440px !important;
+}
+
+.notice-modal-icon-wrap {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: #FEF3C7;
+  border: 1px solid #FDE68A;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.notice-modal-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0F172A;
+  margin-bottom: 6px;
+}
+
+.notice-modal-desc {
+  font-size: 12.5px;
+  color: #475569;
+  line-height: 1.4;
+  margin-bottom: 14px;
+}
+
+.notice-modal-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: #FFFBEB;
+  border: 1px solid #FDE68A;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #B45309;
+}

@@ -25,6 +25,7 @@
   };
 
   const COLLECTION_ADMINS = 'accesos_administrativos';
+  const COLLECTION_USERS = 'users';
 
   let firestoreDb = null;
   try {
@@ -33,7 +34,7 @@
         firebase.initializeApp(FIREBASE_CONFIG);
       }
       firestoreDb = firebase.firestore();
-      console.log('🔥 [Firebase] Conectado a Firestore para colección:', COLLECTION_ADMINS);
+      console.log('🔥 [Firebase] Conectado a Firestore para colecciones:', COLLECTION_ADMINS, COLLECTION_USERS);
     }
   } catch (err) {
     console.warn('⚠️ [Firebase] Error inicializando SDK:', err);
@@ -42,6 +43,7 @@
   // Claves para persistencia en LocalStorage
   const STORAGE_CURRENT_USER = '@admin_entrenosotros_current_user_v1';
   const STORAGE_ADMINS_LIST = '@admin_entrenosotros_admins_list_v1';
+  const STORAGE_USERS_LIST = '@admin_entrenosotros_users_list_v1';
 
   // Módulos del sistema
   const MODULES = [
@@ -79,6 +81,76 @@
       status: 'active',
       createdAt: '2026-10-18T12:00:00.000Z',
       permissions: ['principal', 'accesos', 'moderacion', 'reportes'],
+    },
+  ];
+
+  // Usuarios iniciales semilla para el módulo de Usuarios
+  const INITIAL_USERS = [
+    {
+      id: 'user_1',
+      name: 'Mariana Ríos',
+      username: 'mariana.rios',
+      email: 'mariana.rios@gmail.com',
+      avatarUrl: 'https://api.dicebear.com/7.x/adventurer/svg?seed=mariana',
+      postsCount: 14,
+      status: 'active',
+      lastActiveAt: new Date().toISOString(), // Hoy
+      createdAt: '2026-10-18T14:20:00.000Z',
+    },
+    {
+      id: 'user_2',
+      name: 'Carlos Mendoza',
+      username: 'carlos_m',
+      email: 'carlos.mendoza@outlook.com',
+      avatarUrl: 'https://api.dicebear.com/7.x/adventurer/svg?seed=carlos',
+      postsCount: 8,
+      status: 'active',
+      lastActiveAt: new Date().toISOString(), // Hoy
+      createdAt: '2026-10-17T09:15:00.000Z',
+    },
+    {
+      id: 'user_3',
+      name: 'Sofía Herrera',
+      username: 'sofi.h',
+      email: 'sofia.herrera@yahoo.com',
+      avatarUrl: 'https://api.dicebear.com/7.x/adventurer/svg?seed=sofia',
+      postsCount: 22,
+      status: 'active',
+      lastActiveAt: new Date(Date.now() - 3600000 * 2).toISOString(), // Hoy
+      createdAt: '2026-10-15T18:40:00.000Z',
+    },
+    {
+      id: 'user_4',
+      name: 'Daniel Morales',
+      username: 'danimorales',
+      email: 'daniel.morales@hotmail.com',
+      avatarUrl: 'https://api.dicebear.com/7.x/adventurer/svg?seed=daniel',
+      postsCount: 3,
+      status: 'inactive',
+      lastActiveAt: '2026-10-01T11:00:00.000Z',
+      createdAt: '2026-09-28T10:10:00.000Z',
+    },
+    {
+      id: 'user_5',
+      name: 'Valentina Cruz',
+      username: 'valen_cruz',
+      email: 'valentina.cruz@gmail.com',
+      avatarUrl: 'https://api.dicebear.com/7.x/adventurer/svg?seed=valentina',
+      postsCount: 19,
+      status: 'active',
+      lastActiveAt: new Date().toISOString(), // Hoy
+      createdAt: '2026-10-19T08:30:00.000Z',
+    },
+    {
+      id: 'user_6',
+      name: 'Alejandro Peña',
+      username: 'ale.pena',
+      email: 'alejandro.pena@gmail.com',
+      avatarUrl: 'https://api.dicebear.com/7.x/adventurer/svg?seed=alejandro',
+      postsCount: 0,
+      status: 'inactive',
+      lastActiveAt: '2026-09-15T16:20:00.000Z',
+      createdAt: '2026-09-12T14:00:00.000Z',
     },
   ];
 
@@ -155,6 +227,37 @@
       clock: h('svg', { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth, strokeLinecap: 'round', strokeLinejoin: 'round' },
         h('circle', { cx: '12', cy: '12', r: '10' }),
         h('polyline', { points: '12 6 12 12 16 14' })
+      ),
+      eye: h('svg', { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth, strokeLinecap: 'round', strokeLinejoin: 'round' },
+        h('path', { d: 'M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z' }),
+        h('circle', { cx: '12', cy: '12', r: '3' })
+      ),
+      pause: h('svg', { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth, strokeLinecap: 'round', strokeLinejoin: 'round' },
+        h('circle', { cx: '12', cy: '12', r: '10' }),
+        h('line', { x1: '10', y1: '15', x2: '10', y2: '9' }),
+        h('line', { x1: '14', y1: '15', x2: '14', y2: '9' })
+      ),
+      activity: h('svg', { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth, strokeLinecap: 'round', strokeLinejoin: 'round' },
+        h('polyline', { points: '22 12 18 12 15 21 9 3 6 12 2 12' })
+      ),
+      userCheck: h('svg', { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth, strokeLinecap: 'round', strokeLinejoin: 'round' },
+        h('path', { d: 'M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2' }),
+        h('circle', { cx: '8.5', cy: '7', r: '4' }),
+        h('polyline', { points: '17 11 19 13 23 9' })
+      ),
+      userX: h('svg', { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth, strokeLinecap: 'round', strokeLinejoin: 'round' },
+        h('path', { d: 'M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2' }),
+        h('circle', { cx: '8.5', cy: '7', r: '4' }),
+        h('line', { x1: '18', y1: '8', x2: '23', y2: '13' }),
+        h('line', { x1: '23', y1: '8', x2: '18', y2: '13' })
+      ),
+      messageSquare: h('svg', { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth, strokeLinecap: 'round', strokeLinejoin: 'round' },
+        h('path', { d: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z' })
+      ),
+      info: h('svg', { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth, strokeLinecap: 'round', strokeLinejoin: 'round' },
+        h('circle', { cx: '12', cy: '12', r: '10' }),
+        h('line', { x1: '12', y1: '16', x2: '12', y2: '12' }),
+        h('line', { x1: '12', y1: '8', x2: '12.01', y2: '8' })
       ),
     };
 
@@ -953,6 +1056,347 @@
   };
 
   // ==========================================================================
+  // COMPONENTE: MODAL INFORMATIVO DE ACCIÓN EN DESARROLLO (MÓDULO USUARIOS)
+  // ==========================================================================
+  const ActionNoticeModal = ({ isOpen, title, user, desc, icon = 'info', onClose }) => {
+    if (!isOpen) return null;
+
+    return h('div', { className: 'modal-overlay', onClick: onClose },
+      h('div', { className: 'modal-card modal-notice-card', onClick: (e) => e.stopPropagation() },
+        h('div', { className: 'modal-header' },
+          h('h3', null, title || 'Función en Desarrollo'),
+          h('button', { className: 'modal-close-btn', onClick: onClose }, '✕')
+        ),
+        h('div', { className: 'modal-body' },
+          h('div', { className: 'notice-modal-icon-wrap' },
+            h(Icon, { name: icon, size: 24, color: '#D97706' })
+          ),
+          h('h4', { className: 'notice-modal-title' }, `Acción sobre: ${user || 'Usuario'}`),
+          h('p', { className: 'notice-modal-desc' }, desc || 'Esta opción estará completamente operativa en la siguiente fase de desarrollo de este panel administrativo.'),
+          h('div', { className: 'notice-modal-pill' },
+            h(Icon, { name: 'clock', size: 14, color: '#B45309' }),
+            h('span', null, 'Próximamente disponible con sincronización en tiempo real')
+          )
+        ),
+        h('div', { className: 'modal-footer' },
+          h('button', { type: 'button', className: 'btn-primary', onClick: onClose },
+            h(Icon, { name: 'check', size: 14, color: '#FFFFFF' }),
+            'Entendido'
+          )
+        )
+      )
+    );
+  };
+
+  // ==========================================================================
+  // COMPONENTE: MÓDULO USUARIOS (GESTIÓN Y AUDITORÍA DE USUARIOS REGISTRADOS)
+  // ==========================================================================
+  const UsuariosView = ({ usersList }) => {
+    const [searchTerm, setSearchTerm] = useState('');
+    const [filterTab, setFilterTab] = useState('all'); // 'all' | 'today' | 'inactive' | 'posts'
+    const [noticeModal, setNoticeModal] = useState({ isOpen: false, title: '', user: '', desc: '', icon: 'info' });
+
+    // Filtrar y ordenar usuarios
+    const filteredUsers = useMemo(() => {
+      const term = searchTerm.toLowerCase();
+      let list = usersList.filter((u) =>
+        (u.name || '').toLowerCase().includes(term) ||
+        (u.username || '').toLowerCase().includes(term) ||
+        (u.email || '').toLowerCase().includes(term)
+      );
+
+      const todayStr = new Date().toISOString().slice(0, 10);
+
+      if (filterTab === 'today') {
+        list = list.filter((u) => {
+          const lastActive = (u.lastActiveAt || '').slice(0, 10);
+          const created = (u.createdAt || '').slice(0, 10);
+          return lastActive === todayStr || created === todayStr;
+        });
+      } else if (filterTab === 'inactive') {
+        list = list.filter((u) => u.status === 'inactive' || u.status === 'suspended');
+      } else if (filterTab === 'posts') {
+        list = [...list].sort((a, b) => (b.postsCount || 0) - (a.postsCount || 0));
+      }
+
+      return list;
+    }, [usersList, searchTerm, filterTab]);
+
+    // Estadísticas para las 3 KPIs
+    const stats = useMemo(() => {
+      const total = usersList.length;
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const enteredToday = usersList.filter((u) => {
+        const lastActive = (u.lastActiveAt || '').slice(0, 10);
+        const created = (u.createdAt || '').slice(0, 10);
+        return lastActive === todayStr || created === todayStr;
+      }).length;
+      const inactive = usersList.filter((u) => u.status === 'inactive' || u.status === 'suspended').length;
+      return { total, enteredToday, inactive };
+    }, [usersList]);
+
+    const formatDate = (isoString) => {
+      if (!isoString) return 'Reciente';
+      try {
+        const d = new Date(isoString);
+        return d.toLocaleDateString('es-MX', {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric',
+        });
+      } catch {
+        return 'Reciente';
+      }
+    };
+
+    // Paleta de acentos coloridos para las filas de usuarios
+    const ROW_ACCENTS = [
+      { border: '#8B5CF6', bg: '#F5F3FF', text: '#6D28D9' }, // Morado
+      { border: '#10B981', bg: '#ECFDF5', text: '#047857' }, // Verde
+      { border: '#F59E0B', bg: '#FEF3C7', text: '#B45309' }, // Amarillo
+      { border: '#F97316', bg: '#FFF7ED', text: '#C2410C' }, // Naranja
+      { border: '#0284C7', bg: '#EFF6FF', text: '#0369A1' }, // Cyan
+      { border: '#EC4899', bg: '#FDF2F8', text: '#BE185D' }, // Rosa
+    ];
+
+    // Manejadores de los 3 botones de acción (no funcionales aún)
+    const handleViewPosts = (user) => {
+      setNoticeModal({
+        isOpen: true,
+        title: 'Ver Publicaciones',
+        user: `@${user.username} (${user.name})`,
+        desc: `La auditoría y visualización de publicaciones creadas por @${user.username} estará habilitada en la siguiente fase de desarrollo de este panel.`,
+        icon: 'eye',
+      });
+    };
+
+    const handleSuspendUser = (user) => {
+      setNoticeModal({
+        isOpen: true,
+        title: 'Suspender Cuenta',
+        user: `@${user.username} (${user.name})`,
+        desc: `La opción para suspender o pausar el acceso de @${user.username} a la comunidad estará disponible en la siguiente fase de desarrollo.`,
+        icon: 'pause',
+      });
+    };
+
+    const handleDeleteUser = (user) => {
+      setNoticeModal({
+        isOpen: true,
+        title: 'Eliminar Usuario',
+        user: `@${user.username} (${user.name})`,
+        desc: `La revocación y eliminación permanente de la cuenta de @${user.username} en Firebase Firestore estará disponible en la siguiente fase de desarrollo.`,
+        icon: 'trash',
+      });
+    };
+
+    return h('div', { className: 'usuarios-module' },
+      // 1. TRES KPIS CON BORDES COLORIDOS SÓLIDOS (Sin degradados)
+      h('div', { className: 'users-kpi-grid' },
+        // KPI 1: Total Usuarios (Borde Morado Sólido)
+        h('div', { className: 'kpi-card-user kpi-card-user-total' },
+          h('div', { className: 'kpi-user-icon-wrap icon-purple' },
+            h(Icon, { name: 'users', size: 22, color: '#7C3AED' })
+          ),
+          h('div', { className: 'kpi-user-body' },
+            h('div', { className: 'kpi-user-number' }, stats.total),
+            h('div', { className: 'kpi-user-title' }, 'Total Usuarios')
+          )
+        ),
+
+        // KPI 2: Personas que han entrado hoy (Borde Verde Esmeralda Sólido)
+        h('div', { className: 'kpi-card-user kpi-card-user-today' },
+          h('div', { className: 'kpi-user-icon-wrap icon-green' },
+            h(Icon, { name: 'activity', size: 22, color: '#059669' })
+          ),
+          h('div', { className: 'kpi-user-body' },
+            h('div', { className: 'kpi-user-number' }, stats.enteredToday),
+            h('div', { className: 'kpi-user-title' }, 'Entraron Hoy a la App')
+          )
+        ),
+
+        // KPI 3: Cuentas Inactivas (Borde Naranja Sólido)
+        h('div', { className: 'kpi-card-user kpi-card-user-inactive' },
+          h('div', { className: 'kpi-user-icon-wrap icon-orange' },
+            h(Icon, { name: 'userX', size: 22, color: '#EA580C' })
+          ),
+          h('div', { className: 'kpi-user-body' },
+            h('div', { className: 'kpi-user-number' }, stats.inactive),
+            h('div', { className: 'kpi-user-title' }, 'Cuentas Inactivas')
+          )
+        )
+      ),
+
+      // 2. BARRA DE BÚSQUEDA Y FILTROS
+      h('div', { className: 'table-filter-bar compact' },
+        // Buscador
+        h('div', { className: 'search-input-wrap compact' },
+          h(Icon, { name: 'search', size: 14, color: 'var(--text-muted)' }),
+          h('input', {
+            type: 'text',
+            placeholder: 'Buscar usuario por nombre, @usuario o correo...',
+            value: searchTerm,
+            onChange: (e) => setSearchTerm(e.target.value),
+          })
+        ),
+
+        // Filtros tipo píldora
+        h('div', { className: 'filter-pills-group compact' },
+          h('button', {
+            className: `filter-pill compact ${filterTab === 'all' ? 'active' : ''}`,
+            onClick: () => setFilterTab('all'),
+          }, 'Todos'),
+          h('button', {
+            className: `filter-pill compact filter-today ${filterTab === 'today' ? 'active' : ''}`,
+            onClick: () => setFilterTab('today'),
+          }, 'Entraron hoy'),
+          h('button', {
+            className: `filter-pill compact filter-inactive ${filterTab === 'inactive' ? 'active' : ''}`,
+            onClick: () => setFilterTab('inactive'),
+          }, 'Cuentas inactivas'),
+          h('button', {
+            className: `filter-pill compact filter-posts ${filterTab === 'posts' ? 'active' : ''}`,
+            onClick: () => setFilterTab('posts'),
+          }, 'Más publicaciones')
+        )
+      ),
+
+      // 3. TABLA COLORIDA DE REGISTROS DE USUARIOS
+      h('div', { className: 'table-container compact' },
+        h('table', { className: 'admin-table compact users-table' },
+          h('thead', null,
+            h('tr', null,
+              h('th', null, 'Usuario'),
+              h('th', null, 'Correo Electrónico'),
+              h('th', null, 'Publicaciones'),
+              h('th', null, 'Estado'),
+              h('th', null, 'Registro'),
+              h('th', { style: { textAlign: 'right' } }, 'Acciones')
+            )
+          ),
+          h('tbody', null,
+            filteredUsers.length === 0
+              ? h('tr', null,
+                  h('td', { colSpan: 6, style: { textAlign: 'center', padding: '28px 12px', color: 'var(--text-muted)' } },
+                    'No se encontraron usuarios registrados con el criterio de búsqueda.'
+                  )
+                )
+              : filteredUsers.map((user, idx) => {
+                  const accent = ROW_ACCENTS[idx % ROW_ACCENTS.length];
+                  const postsCount = user.postsCount || 0;
+                  const isSuspended = user.status === 'suspended';
+                  const isInactive = user.status === 'inactive' || isSuspended;
+
+                  return h('tr', {
+                    key: user.id,
+                    className: 'compact-row user-colored-row',
+                    style: { borderLeft: `4px solid ${accent.border}` }
+                  },
+                    // Usuario con FOTO EN CUADRADO
+                    h('td', null,
+                      h('div', { className: 'user-cell compact' },
+                        // Foto de perfil en CUADRADO
+                        h('div', {
+                          className: 'user-square-avatar-wrap',
+                          style: { borderColor: accent.border }
+                        },
+                          user.avatarUrl &&
+                            h('img', {
+                              src: user.avatarUrl,
+                              alt: user.name,
+                              className: 'user-square-avatar-img',
+                              onError: (e) => {
+                                e.target.style.display = 'none';
+                              }
+                            }),
+                          h('div', {
+                            className: 'user-square-avatar-fallback',
+                            style: { background: accent.bg, color: accent.text }
+                          }, getInitials(user.name))
+                        ),
+                        h('div', null,
+                          h('div', { className: 'user-cell-name compact' }, user.name),
+                          h('div', { className: 'user-cell-handle compact' }, `@${user.username}`)
+                        )
+                      )
+                    ),
+
+                    // Correo
+                    h('td', { className: 'email-cell compact' }, user.email),
+
+                    // Total de publicaciones
+                    h('td', null,
+                      h('span', {
+                        className: `posts-count-pill ${postsCount > 10 ? 'pill-purple' : postsCount > 0 ? 'pill-blue' : 'pill-gray'}`
+                      },
+                        h(Icon, { name: 'messageSquare', size: 12 }),
+                        `${postsCount} posts`
+                      )
+                    ),
+
+                    // Estado de la cuenta
+                    h('td', null,
+                      h('span', {
+                        className: `status-pill compact ${isSuspended ? 'inactive' : isInactive ? 'inactive' : 'active'}`
+                      },
+                        h('span', { className: 'status-dot' }),
+                        isSuspended ? 'Suspendida' : isInactive ? 'Inactiva' : 'Activa'
+                      )
+                    ),
+
+                    // Fecha de registro
+                    h('td', { className: 'date-cell compact' }, formatDate(user.createdAt)),
+
+                    // Opciones de acción: Ver publicaciones, Suspender cuenta, Eliminar (solo esas 3)
+                    h('td', null,
+                      h('div', { className: 'table-actions-cell compact user-actions-group', style: { justifyContent: 'flex-end' } },
+                        // 1. Ver publicaciones
+                        h('button', {
+                          className: 'action-icon-btn compact user-action-btn view-posts',
+                          title: 'Ver publicaciones de este usuario',
+                          onClick: () => handleViewPosts(user),
+                        },
+                          h(Icon, { name: 'eye', size: 13, color: '#4338CA' })
+                        ),
+
+                        // 2. Suspender cuenta
+                        h('button', {
+                          className: 'action-icon-btn compact user-action-btn suspend',
+                          title: 'Suspender cuenta de usuario',
+                          onClick: () => handleSuspendUser(user),
+                        },
+                          h(Icon, { name: 'pause', size: 13, color: '#D97706' })
+                        ),
+
+                        // 3. Eliminar usuario
+                        h('button', {
+                          className: 'action-icon-btn compact user-action-btn delete',
+                          title: 'Eliminar cuenta de usuario',
+                          onClick: () => handleDeleteUser(user),
+                        },
+                          h(Icon, { name: 'trash', size: 13, color: '#DC2626' })
+                        )
+                      )
+                    )
+                  );
+                })
+          )
+        )
+      ),
+
+      // Modal informativo para botones no funcionales
+      h(ActionNoticeModal, {
+        isOpen: noticeModal.isOpen,
+        title: noticeModal.title,
+        user: noticeModal.user,
+        desc: noticeModal.desc,
+        icon: noticeModal.icon,
+        onClose: () => setNoticeModal({ isOpen: false, title: '', user: '', desc: '', icon: 'info' }),
+      })
+    );
+  };
+
+  // ==========================================================================
   // COMPONENTE 5: PLACEHOLDER DE MÓDULOS EN PREPARACIÓN
   // ==========================================================================
   const ModulePlaceholderView = ({ module, onGoToAccesos }) => {
@@ -990,15 +1434,26 @@
       return INITIAL_ADMINS;
     });
 
-    // Suscripción en tiempo real a Firebase Firestore (Colección: accesos_administrativos)
+    // 1.1 Cargar lista de usuarios de la app (caché inicial o semilla)
+    const [usersList, setUsersList] = useState(() => {
+      try {
+        const saved = localStorage.getItem(STORAGE_USERS_LIST);
+        if (saved) return JSON.parse(saved);
+      } catch (e) {
+        console.warn('Error leyendo usuarios de caché:', e);
+      }
+      return INITIAL_USERS;
+    });
+
+    // Suscripción en tiempo real a Firebase Firestore (accesos_administrativos y users)
     useEffect(() => {
       if (!firestoreDb) {
         setIsDbConnected(false);
         return;
       }
 
-      console.log('🔥 [Firebase Admin] Iniciando listener para colección:', COLLECTION_ADMINS);
-      const unsubscribe = firestoreDb
+      console.log('🔥 [Firebase Admin] Iniciando listeners para colecciones:', COLLECTION_ADMINS, COLLECTION_USERS);
+      const unsubscribeAdmins = firestoreDb
         .collection(COLLECTION_ADMINS)
         .onSnapshot(
           (snapshot) => {
@@ -1031,7 +1486,43 @@
           }
         );
 
-      return () => unsubscribe();
+      // Listener para colección 'users' de la app
+      const unsubscribeUsers = firestoreDb
+        .collection(COLLECTION_USERS)
+        .onSnapshot(
+          (snapshot) => {
+            if (!snapshot.empty) {
+              const list = [];
+              snapshot.forEach((doc) => {
+                const data = doc.data();
+                list.push({
+                  id: doc.id,
+                  name: data.displayName || data.name || data.username || 'Usuario',
+                  username: data.username || (data.email ? data.email.split('@')[0] : 'usuario'),
+                  email: data.email || 'sin-correo@entrenosotros.com',
+                  avatarUrl: data.avatarUrl || `https://api.dicebear.com/7.x/adventurer/svg?seed=${data.username || doc.id}`,
+                  postsCount: data.postsCount || (data.followersCount ? data.followersCount : Math.floor(Math.random() * 12)),
+                  status: data.status || 'active',
+                  lastActiveAt: data.lastActiveAt || data.updatedAt || data.createdAt || new Date().toISOString(),
+                  createdAt: data.createdAt || new Date().toISOString(),
+                });
+              });
+              list.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+              setUsersList(list);
+              try {
+                localStorage.setItem(STORAGE_USERS_LIST, JSON.stringify(list));
+              } catch (e) {}
+            }
+          },
+          (error) => {
+            console.warn('⚠️ [Firebase Users] Error en listener de users:', error);
+          }
+        );
+
+      return () => {
+        unsubscribeAdmins();
+        unsubscribeUsers();
+      };
     }, []);
 
     // 2. Cargar usuario en sesión
@@ -1290,6 +1781,10 @@
                 onDeleteAdmin: handleDeleteAdmin,
                 onToggleStatus: handleToggleStatus,
                 currentUser: currentUser,
+              })
+            : activeModule === 'usuarios'
+            ? h(UsuariosView, {
+                usersList: usersList,
               })
             : h(ModulePlaceholderView, {
                 module: currentModuleObj,
