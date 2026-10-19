@@ -1,11 +1,17 @@
 {
   "name": "admin-entrenosotros",
   "version": "1.0.0",
-  "description": "Panel de Administración - Entre Nosotros",
-  "private": true,
+  "description": "Panel de Administración y Control de Accesos - Entre Nosotros",
+  "main": "index.html",
   "scripts": {
-    "start": "npx serve . -l 3001",
-    "dev": "npx serve . -l 3001",
-    "open": "start index.html"
-  }
+    "start": "npx serve . -p 4000",
+    "dev": "npx serve . -p 4000"
+  },
+  "keywords": [
+    "admin",
+    "react",
+    "entre-nosotros"
+  ],
+  "author": "Entre Nosotros",
+  "license": "ISC"
 }
