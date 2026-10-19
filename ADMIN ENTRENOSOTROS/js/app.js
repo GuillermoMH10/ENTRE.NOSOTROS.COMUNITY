@@ -26,6 +26,7 @@
 
   const COLLECTION_ADMINS = 'accesos_administrativos';
   const COLLECTION_USERS = 'users';
+  const COLLECTION_POSTS = 'posts';
 
   let firestoreDb = null;
   try {
@@ -34,7 +35,7 @@
         firebase.initializeApp(FIREBASE_CONFIG);
       }
       firestoreDb = firebase.firestore();
-      console.log('🔥 [Firebase] Conectado a Firestore para colecciones:', COLLECTION_ADMINS, COLLECTION_USERS);
+      console.log('🔥 [Firebase] Conectado a Firestore para colecciones:', COLLECTION_ADMINS, COLLECTION_USERS, COLLECTION_POSTS);
     }
   } catch (err) {
     console.warn('⚠️ [Firebase] Error inicializando SDK:', err);
@@ -44,6 +45,8 @@
   const STORAGE_CURRENT_USER = '@admin_entrenosotros_current_user_v1';
   const STORAGE_ADMINS_LIST = '@admin_entrenosotros_admins_list_v1';
   const STORAGE_USERS_LIST = '@admin_entrenosotros_users_list_v1';
+  const STORAGE_REPORTED_POSTS = '@admin_entrenosotros_reported_posts_v1';
+  const STORAGE_RESOLVED_COUNT = '@admin_entrenosotros_resolved_count_v1';
 
   // Módulos del sistema
   const MODULES = [
@@ -154,6 +157,175 @@
     },
   ];
 
+  // Publicaciones reportadas iniciales semilla para el módulo de Moderación (Grid de 6)
+  const INITIAL_REPORTED_POSTS = [
+    {
+      id: 'rep_post_1',
+      authorId: 'user_2',
+      authorName: 'Carlos Mendoza',
+      authorUsername: 'carlos_m',
+      authorEmail: 'carlos.mendoza@outlook.com',
+      authorAvatarUrl: 'https://api.dicebear.com/7.x/adventurer/svg?seed=carlos',
+      content: 'Miren la situación que viví ayer en el centro, hay personas que no respetan nada y merecen lo peor de la vida.',
+      imageUrls: ['https://images.unsplash.com/photo-1542281286-9e0a16bb7366?auto=format&fit=crop&w=600&q=80'],
+      type: 'image',
+      reportsCount: 5,
+      reportReasons: ['Lenguaje ofensivo', 'Incitación a la violencia'],
+      reportedAt: new Date().toISOString(), // Hoy
+      createdAt: new Date(Date.now() - 3600000 * 3).toISOString(),
+      status: 'pending',
+    },
+    {
+      id: 'rep_post_2',
+      authorId: 'user_1',
+      authorName: 'Mariana Ríos',
+      authorUsername: 'mariana.rios',
+      authorEmail: 'mariana.rios@gmail.com',
+      authorAvatarUrl: 'https://api.dicebear.com/7.x/adventurer/svg?seed=mariana',
+      content: 'Estoy harta de cómo ciertos usuarios responden a las publicaciones de desahogo. Esta red social se ha llenado de gente tóxica que solo sabe juzgar y agredir.',
+      imageUrls: [],
+      type: 'text',
+      reportsCount: 3,
+      reportReasons: ['Hostigamiento hacia la comunidad', 'Acoso verbal'],
+      reportedAt: new Date().toISOString(), // Hoy
+      createdAt: new Date(Date.now() - 3600000 * 5).toISOString(),
+      status: 'pending',
+    },
+    {
+      id: 'rep_post_3',
+      authorId: 'user_3',
+      authorName: 'Arturo Benítez',
+      authorUsername: 'arturo_b',
+      authorEmail: 'arturo.benitez@gmail.com',
+      authorAvatarUrl: 'https://api.dicebear.com/7.x/adventurer/svg?seed=arturo',
+      content: '¡Gana dinero fácil desde tu casa hoy mismo! Solo tienes que transferir $200 y duplicas tu inversión en 2 horas garantizado. Escríbeme al inbox.',
+      imageUrls: ['https://images.unsplash.com/photo-1559526324-4b87b5e36e44?auto=format&fit=crop&w=600&q=80'],
+      type: 'image',
+      reportsCount: 9,
+      reportReasons: ['Spam comercial o estafa', 'Fraude financiero'],
+      reportedAt: new Date(Date.now() - 86400000).toISOString(),
+      createdAt: new Date(Date.now() - 86400000).toISOString(),
+      status: 'pending',
+    },
+    {
+      id: 'rep_post_4',
+      authorId: 'user_4',
+      authorName: 'Valeria Gómez',
+      authorUsername: 'valeria.g',
+      authorEmail: 'valeria.gomez@hotmail.com',
+      authorAvatarUrl: 'https://api.dicebear.com/7.x/adventurer/svg?seed=valeria',
+      content: 'Ya no aguanto más la presión de mis exámenes ni los problemas familiares. A veces siento que no vale la pena seguir despertando cada mañana.',
+      imageUrls: [],
+      type: 'text',
+      reportsCount: 6,
+      reportReasons: ['Riesgo de bienestar emocional', 'Requiere intervención psicológica'],
+      reportedAt: new Date().toISOString(), // Hoy
+      createdAt: new Date(Date.now() - 3600000 * 2).toISOString(),
+      status: 'pending',
+    },
+    {
+      id: 'rep_post_5',
+      authorId: 'user_5',
+      authorName: 'Lucas Fernández',
+      authorUsername: 'lucas.dev',
+      authorEmail: 'lucas.fernandez@tech.io',
+      authorAvatarUrl: 'https://api.dicebear.com/7.x/adventurer/svg?seed=lucas',
+      content: 'Subiendo captura de prueba sin sentido para saturar el servidor y ver cuánto aguanta la base de datos.',
+      imageUrls: ['https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=600&q=80'],
+      type: 'image',
+      reportsCount: 4,
+      reportReasons: ['Contenido fuera de lugar', 'Intento de saturación'],
+      reportedAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+      createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+      status: 'pending',
+    },
+    {
+      id: 'rep_post_6',
+      authorId: 'user_6',
+      authorName: 'Roberto Soto',
+      authorUsername: 'roberto_x',
+      authorEmail: 'roberto.soto@gmail.com',
+      authorAvatarUrl: 'https://api.dicebear.com/7.x/adventurer/svg?seed=roberto',
+      content: 'Los administradores de este sitio no hacen nada y dejan que cualquiera publique tonterías. Es la peor app que he visto en años.',
+      imageUrls: [],
+      type: 'text',
+      reportsCount: 4,
+      reportReasons: ['Provocación (trolling)', 'Lenguaje despectivo'],
+      reportedAt: new Date(Date.now() - 86400000).toISOString(),
+      createdAt: new Date(Date.now() - 86400000).toISOString(),
+      status: 'pending',
+    },
+  ];
+
+  // Helper para sanitizar publicaciones reportadas con seguridad absoluta contra nulos
+  const sanitizeReportedPost = (post, idx) => {
+    if (!post || typeof post !== 'object') {
+      return {
+        id: `post_${idx}`,
+        authorId: `author_${idx}`,
+        authorName: 'Usuario',
+        authorUsername: `usuario_${idx}`,
+        authorEmail: 'usuario@entrenosotros.com',
+        authorAvatarUrl: `https://api.dicebear.com/7.x/adventurer/svg?seed=user_${idx}`,
+        content: '',
+        imageUrls: [],
+        type: 'text',
+        reportsCount: 1,
+        reportReasons: ['Reporte de la comunidad'],
+        reportedAt: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+        status: 'pending',
+      };
+    }
+
+    const safeUsername = typeof post.authorUsername === 'string' && post.authorUsername.trim()
+      ? post.authorUsername.trim()
+      : (typeof post.authorName === 'string' && post.authorName.trim() ? post.authorName.trim() : `usuario_${idx}`);
+
+    const safeName = typeof post.authorName === 'string' && post.authorName.trim()
+      ? post.authorName.trim()
+      : safeUsername;
+
+    const safeEmail = typeof post.authorEmail === 'string' && post.authorEmail.trim()
+      ? post.authorEmail.trim()
+      : 'usuario@entrenosotros.com';
+
+    const safeAvatar = typeof post.authorAvatarUrl === 'string' && post.authorAvatarUrl.trim()
+      ? post.authorAvatarUrl.trim()
+      : `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(safeUsername)}`;
+
+    const rawImages = Array.isArray(post.imageUrls) ? post.imageUrls : (typeof post.imageUrl === 'string' ? [post.imageUrl] : []);
+    const safeImages = rawImages.filter((img) => typeof img === 'string' && img.trim().length > 0);
+    const hasImages = safeImages.length > 0;
+
+    const rawReasons = Array.isArray(post.reportReasons)
+      ? post.reportReasons
+      : (typeof post.reason === 'string' && post.reason ? [post.reason] : ['Reporte de usuario']);
+    const safeReasons = rawReasons.filter((r) => typeof r === 'string' && r.trim().length > 0);
+    if (safeReasons.length === 0) safeReasons.push('Reporte de la comunidad');
+
+    const safeReportsCount = typeof post.reportsCount === 'number'
+      ? post.reportsCount
+      : (parseInt(post.reportsCount, 10) || 1);
+
+    return {
+      id: String(post.id || `post_${idx}`),
+      authorId: String(post.authorId || `author_${idx}`),
+      authorName: safeName,
+      authorUsername: safeUsername,
+      authorEmail: safeEmail,
+      authorAvatarUrl: safeAvatar,
+      content: typeof post.content === 'string' ? post.content : '',
+      imageUrls: safeImages,
+      type: hasImages ? 'image' : 'text',
+      reportsCount: Math.max(1, safeReportsCount),
+      reportReasons: safeReasons,
+      reportedAt: toSafeIsoString(post.reportedAt || post.timestamp || post.createdAt),
+      createdAt: toSafeIsoString(post.createdAt || post.timestamp),
+      status: post.status || 'pending',
+    };
+  };
+
   // Iconos SVG nítidos y vectoriales (sin librerías pesadas)
   const Icon = ({ name, size = 16, color = 'currentColor' }) => {
     const strokeWidth = 2;
@@ -258,6 +430,18 @@
         h('circle', { cx: '12', cy: '12', r: '10' }),
         h('line', { x1: '12', y1: '16', x2: '12', y2: '12' }),
         h('line', { x1: '12', y1: '8', x2: '12.01', y2: '8' })
+      ),
+      image: h('svg', { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth, strokeLinecap: 'round', strokeLinejoin: 'round' },
+        h('rect', { x: '3', y: '3', width: '18', height: '18', rx: '2', ry: '2' }),
+        h('circle', { cx: '8.5', cy: '8.5', r: '1.5' }),
+        h('polyline', { points: '21 15 16 10 5 21' })
+      ),
+      fileText: h('svg', { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth, strokeLinecap: 'round', strokeLinejoin: 'round' },
+        h('path', { d: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z' }),
+        h('polyline', { points: '14 2 14 8 20 8' }),
+        h('line', { x1: '16', y1: '13', x2: '8', y2: '13' }),
+        h('line', { x1: '16', y1: '17', x2: '8', y2: '17' }),
+        h('polyline', { points: '10 9 9 9 8 9' })
       ),
     };
 
@@ -1507,6 +1691,429 @@
   };
 
   // ==========================================================================
+  // COMPONENTE: MODAL COMPLETO DE DETALLE Y AUDITORÍA DE PUBLICACIÓN REPORTADA
+  // ==========================================================================
+  const ModerationDetailModal = ({ isOpen, post, onClose, onDeletePost, onDismissReports }) => {
+    if (!isOpen || !post) return null;
+
+    const hasImages = Array.isArray(post.imageUrls) && post.imageUrls.length > 0;
+    const isTodayPost = isEnteredToday(post, new Date().toISOString().slice(0, 10));
+
+    return h('div', { className: 'modal-overlay', onClick: onClose },
+      h('div', { className: 'modal-card mod-detail-modal-card', onClick: (e) => e.stopPropagation() },
+        // Header
+        h('div', { className: 'modal-header' },
+          h('div', { style: { display: 'flex', alignItems: 'center', gap: 8 } },
+            h('span', { style: { fontSize: 20 } }, '🛡️'),
+            h('h3', null, 'Auditoría y Moderación de Publicación')
+          ),
+          h('button', { className: 'modal-close-btn', onClick: onClose }, '✕')
+        ),
+
+        // Body
+        h('div', { className: 'modal-body mod-modal-body' },
+          // Fila del Autor
+          h('div', { className: 'mod-modal-author-bar' },
+            h('div', { className: 'user-square-avatar-wrap', style: { width: 44, height: 44, borderColor: '#8B5CF6' } },
+              h('img', {
+                src: post.authorAvatarUrl,
+                alt: post.authorName,
+                className: 'user-square-avatar-img',
+                onError: (e) => {
+                  e.target.onerror = null;
+                  e.target.src = `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(post.authorUsername || 'user')}`;
+                }
+              })
+            ),
+            h('div', { style: { flex: 1, minWidth: 0 } },
+              h('div', { style: { display: 'flex', alignItems: 'center', gap: 6 } },
+                h('strong', { style: { color: 'var(--text-main)', fontSize: 14 } }, post.authorName),
+                h('span', { style: { color: 'var(--text-muted)', fontSize: 12 } }, `@${post.authorUsername}`)
+              ),
+              h('div', { style: { color: 'var(--text-muted)', fontSize: 11, marginTop: 2 } },
+                `Publicado: ${formatDateSafe(post.createdAt)} • ${isTodayPost ? 'Hoy' : 'Fecha anterior'}`
+              )
+            ),
+            // Badge Tipo
+            h('span', { className: `mod-type-badge ${hasImages ? 'badge-image' : 'badge-text'}` },
+              h(Icon, { name: hasImages ? 'image' : 'fileText', size: 12 }),
+              hasImages ? 'Imagen y Texto' : 'Solo Texto'
+            )
+          ),
+
+          // Alerta de Reportes recibidos
+          h('div', { className: 'mod-modal-reports-alert' },
+            h('div', { className: 'mod-reports-alert-badge' },
+              h(Icon, { name: 'alert', size: 16, color: '#DC2626' }),
+              h('span', { style: { fontWeight: 800 } }, `${post.reportsCount} Reportes acumulados`)
+            ),
+            h('div', { className: 'mod-modal-reasons-list' },
+              (post.reportReasons || []).map((reason, idx) =>
+                h('span', { key: idx, className: 'mod-reason-tag' }, `⚠️ ${reason}`)
+              )
+            )
+          ),
+
+          // Contenido: Imagen (si aplica)
+          hasImages &&
+            h('div', { className: 'mod-modal-media-wrap' },
+              h('img', {
+                src: post.imageUrls[0],
+                alt: 'Imagen de la publicación',
+                className: 'mod-modal-image-full',
+              })
+            ),
+
+          // Contenido: Texto íntegro
+          h('div', { className: 'mod-modal-content-box' },
+            h('div', { className: 'mod-modal-content-label' }, 'Texto completo de la publicación:'),
+            h('p', { className: 'mod-modal-content-text' }, post.content || '(Publicación sin texto adicional)')
+          ),
+
+          // Caja informativa de decisión
+          h('div', { className: 'mod-decision-notice' },
+            h(Icon, { name: 'info', size: 14, color: '#3B82F6' }),
+            h('span', null, 'Como moderador, puedes eliminar el contenido para proteger a la comunidad o descartar los reportes si el contenido cumple con las normas.')
+          )
+        ),
+
+        // Footer: Botones de Decisión
+        h('div', { className: 'modal-footer mod-modal-footer' },
+          h('button', {
+            type: 'button',
+            className: 'btn-secondary',
+            onClick: onClose
+          }, 'Cancelar'),
+
+          h('button', {
+            type: 'button',
+            className: 'btn-keep-post',
+            onClick: () => {
+              onDismissReports(post.id);
+              onClose();
+            },
+            title: 'Descartar reportes y mantener publicación'
+          },
+            h(Icon, { name: 'check', size: 14, color: '#FFFFFF' }),
+            'Descartar Reportes (Mantener)'
+          ),
+
+          h('button', {
+            type: 'button',
+            className: 'btn-delete-post',
+            onClick: () => {
+              onDeletePost(post.id);
+              onClose();
+            },
+            title: 'Eliminar permanentemente de la plataforma'
+          },
+            h(Icon, { name: 'trash', size: 14, color: '#FFFFFF' }),
+            'Eliminar Publicación'
+          )
+        )
+      )
+    );
+  };
+
+  // ==========================================================================
+  // COMPONENTE: MODAL DE CONFIRMACIÓN ROJO PARA ELIMINAR PUBLICACIÓN
+  // ==========================================================================
+  const DeleteConfirmPostModal = ({ isOpen, post, onClose, onConfirm }) => {
+    if (!isOpen || !post) return null;
+
+    return h('div', { className: 'modal-overlay', onClick: onClose },
+      h('div', { className: 'modal-card modal-delete-card', onClick: (e) => e.stopPropagation() },
+        h('div', { className: 'modal-header' },
+          h('h3', null, 'Eliminar Publicación Reportada'),
+          h('button', { className: 'modal-close-btn', onClick: onClose }, '✕')
+        ),
+        h('div', { className: 'modal-body', style: { textAlign: 'center', padding: '24px 16px' } },
+          h('div', { className: 'delete-modal-icon-circle' },
+            h(Icon, { name: 'trash', size: 26, color: '#DC2626' })
+          ),
+          h('h4', { style: { fontSize: 16, fontWeight: 800, color: 'var(--text-main)', marginBottom: 8 } },
+            '¿Confirmas la eliminación?'
+          ),
+          h('p', { style: { fontSize: 12.5, color: 'var(--text-muted)', marginBottom: 16, lineHeight: 1.5 } },
+            `Esta acción eliminará permanentemente la publicación de @${post.authorUsername} y se retirará de la base de datos de la plataforma.`
+          ),
+          h('div', { className: 'delete-item-preview' },
+            h('strong', null, `@${post.authorUsername}: `),
+            h('span', null, (post.content || 'Publicación con imagen').slice(0, 90) + '...')
+          )
+        ),
+        h('div', { className: 'modal-footer' },
+          h('button', { type: 'button', className: 'btn-secondary', onClick: onClose }, 'Cancelar'),
+          h('button', {
+            type: 'button',
+            className: 'btn-danger',
+            onClick: () => {
+              onConfirm(post.id);
+              onClose();
+            }
+          },
+            h(Icon, { name: 'trash', size: 14, color: '#FFFFFF' }),
+            'Sí, Eliminar Publicación'
+          )
+        )
+      )
+    );
+  };
+
+  // ==========================================================================
+  // COMPONENTE: MÓDULO DE MODERACIÓN DE CONTENIDO
+  // ==========================================================================
+  const ModeracionView = ({ postsList = [], onDeletePost, onDismissReports, resolvedCount = 0 }) => {
+    const [searchTerm, setSearchTerm] = useState('');
+    const [filterTab, setFilterTab] = useState('all'); // 'all' | 'text' | 'image' | 'today' | 'reports'
+    const [selectedPost, setSelectedPost] = useState(null);
+    const [postToDelete, setPostToDelete] = useState(null);
+
+    // Sanitizar posts asegurando estabilidad absoluta
+    const safePostsList = useMemo(() => {
+      const source = (Array.isArray(postsList) && postsList.length > 0) ? postsList : INITIAL_REPORTED_POSTS;
+      return source.map((p, idx) => sanitizeReportedPost(p, idx));
+    }, [postsList]);
+
+    // Estadísticas para las 3 KPIs
+    const stats = useMemo(() => {
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const total = safePostsList.length;
+      const today = safePostsList.filter((p) => {
+        const repDay = (p.reportedAt || '').slice(0, 10);
+        const creDay = (p.createdAt || '').slice(0, 10);
+        return repDay === todayStr || creDay === todayStr;
+      }).length;
+      const textCount = safePostsList.filter((p) => p.type === 'text').length;
+      const imageCount = safePostsList.filter((p) => p.type === 'image').length;
+      return { total, today, textCount, imageCount };
+    }, [safePostsList]);
+
+    // Filtrar publicaciones
+    const filteredPosts = useMemo(() => {
+      const term = (searchTerm || '').trim().toLowerCase();
+      let list = safePostsList.filter((p) => {
+        if (!term) return true;
+        const contentMatch = (p.content || '').toLowerCase().includes(term);
+        const userMatch = (p.authorUsername || '').toLowerCase().includes(term) || (p.authorName || '').toLowerCase().includes(term);
+        const reasonMatch = (p.reportReasons || []).some((r) => r.toLowerCase().includes(term));
+        return contentMatch || userMatch || reasonMatch;
+      });
+
+      const todayStr = new Date().toISOString().slice(0, 10);
+
+      if (filterTab === 'text') {
+        list = list.filter((p) => p.type === 'text');
+      } else if (filterTab === 'image') {
+        list = list.filter((p) => p.type === 'image');
+      } else if (filterTab === 'today') {
+        list = list.filter((p) => {
+          const repDay = (p.reportedAt || '').slice(0, 10);
+          const creDay = (p.createdAt || '').slice(0, 10);
+          return repDay === todayStr || creDay === todayStr;
+        });
+      } else if (filterTab === 'reports') {
+        list = [...list].sort((a, b) => (b.reportsCount || 0) - (a.reportsCount || 0));
+      }
+
+      return list;
+    }, [safePostsList, searchTerm, filterTab]);
+
+    return h('div', { className: 'moderacion-module' },
+      // 1. TRES KPIS CON BORDES COLORIDOS SÓLIDOS (Sin degradados)
+      h('div', { className: 'moderation-kpi-grid' },
+        // KPI 1: Publicaciones Reportadas (Total) - Borde Rojo Sólido
+        h('div', { className: 'kpi-card-moderation kpi-card-mod-total' },
+          h('div', { className: 'kpi-mod-icon-wrap icon-red' },
+            h(Icon, { name: 'flag', size: 22, color: '#DC2626' })
+          ),
+          h('div', { className: 'kpi-mod-body' },
+            h('div', { className: 'kpi-mod-number' }, stats.total),
+            h('div', { className: 'kpi-mod-title' }, 'Publicaciones Reportadas')
+          )
+        ),
+
+        // KPI 2: Reportadas Hoy - Borde Naranja/Amarillo Sólido
+        h('div', { className: 'kpi-card-moderation kpi-card-mod-today' },
+          h('div', { className: 'kpi-mod-icon-wrap icon-amber' },
+            h(Icon, { name: 'clock', size: 22, color: '#D97706' })
+          ),
+          h('div', { className: 'kpi-mod-body' },
+            h('div', { className: 'kpi-mod-number' }, stats.today),
+            h('div', { className: 'kpi-mod-title' }, 'Reportadas Hoy')
+          )
+        ),
+
+        // KPI 3: Casos Resueltos / Moderados - Borde Verde Esmeralda Sólido
+        h('div', { className: 'kpi-card-moderation kpi-card-mod-resolved' },
+          h('div', { className: 'kpi-mod-icon-wrap icon-green' },
+            h(Icon, { name: 'shield', size: 22, color: '#059669' })
+          ),
+          h('div', { className: 'kpi-mod-body' },
+            h('div', { className: 'kpi-mod-number' }, resolvedCount),
+            h('div', { className: 'kpi-mod-title' }, 'Acciones Resueltas')
+          )
+        )
+      ),
+
+      // 2. BARRA DE BÚSQUEDA Y FILTROS
+      h('div', { className: 'table-filter-bar compact' },
+        // Buscador
+        h('div', { className: 'search-input-wrap compact' },
+          h(Icon, { name: 'search', size: 14, color: 'var(--text-muted)' }),
+          h('input', {
+            type: 'text',
+            placeholder: 'Buscar por contenido, @usuario o motivo de reporte...',
+            value: searchTerm,
+            onChange: (e) => setSearchTerm(e.target.value),
+          })
+        ),
+
+        // Filtros tipo píldora (separando Texto, Imagen y Texto)
+        h('div', { className: 'filter-pills-group compact' },
+          h('button', {
+            className: `filter-pill compact ${filterTab === 'all' ? 'active' : ''}`,
+            onClick: () => setFilterTab('all'),
+          }, `Todos (${stats.total})`),
+          h('button', {
+            className: `filter-pill compact filter-text ${filterTab === 'text' ? 'active' : ''}`,
+            onClick: () => setFilterTab('text'),
+          }, `📝 Solo Texto (${stats.textCount})`),
+          h('button', {
+            className: `filter-pill compact filter-image ${filterTab === 'image' ? 'active' : ''}`,
+            onClick: () => setFilterTab('image'),
+          }, `🖼️ Con Imagen (${stats.imageCount})`),
+          h('button', {
+            className: `filter-pill compact filter-today ${filterTab === 'today' ? 'active' : ''}`,
+            onClick: () => setFilterTab('today'),
+          }, '🕒 Reportadas Hoy'),
+          h('button', {
+            className: `filter-pill compact filter-reports ${filterTab === 'reports' ? 'active' : ''}`,
+            onClick: () => setFilterTab('reports'),
+          }, '🔥 Más Reportes')
+        )
+      ),
+
+      // 3. GRID DE 6 PUBLICACIONES REPORTADAS
+      filteredPosts.length === 0
+        ? h('div', { className: 'empty-moderation-card' },
+            h(Icon, { name: 'check', size: 36, color: '#10B981' }),
+            h('h4', null, 'Bandeja de moderación limpia'),
+            h('p', null, 'No hay publicaciones pendientes de revisión con el criterio de búsqueda seleccionado.')
+          )
+        : h('div', { className: 'moderation-posts-grid' },
+            filteredPosts.map((post) => {
+              const hasImages = post.imageUrls && post.imageUrls.length > 0;
+
+              return h('div', { key: post.id, className: `mod-post-card ${hasImages ? 'card-has-image' : 'card-text-only'}` },
+                // Header de la tarjeta con foto cuadrada del usuario
+                h('div', { className: 'mod-card-header' },
+                  h('div', { className: 'user-square-avatar-wrap', style: { width: 36, height: 36, borderColor: hasImages ? '#8B5CF6' : '#3B82F6' } },
+                    h('img', {
+                      src: post.authorAvatarUrl,
+                      alt: post.authorName,
+                      className: 'user-square-avatar-img',
+                      onError: (e) => {
+                        e.target.onerror = null;
+                        e.target.src = `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(post.authorUsername || 'user')}`;
+                      }
+                    })
+                  ),
+                  h('div', { className: 'mod-card-meta' },
+                    h('div', { className: 'mod-card-author-name' }, post.authorName),
+                    h('div', { className: 'mod-card-author-handle' }, `@${post.authorUsername} • ${formatDateSafe(post.createdAt)}`)
+                  ),
+                  // Badge de tipo (Texto / Imagen)
+                  h('span', { className: `mod-type-badge ${hasImages ? 'badge-image' : 'badge-text'}` },
+                    h(Icon, { name: hasImages ? 'image' : 'fileText', size: 11 }),
+                    hasImages ? 'Imagen y Texto' : 'Solo Texto'
+                  )
+                ),
+
+                // Alerta con el total de reportes
+                h('div', { className: 'mod-card-reports-bar' },
+                  h('span', { className: 'mod-card-reports-pill' },
+                    h(Icon, { name: 'alert', size: 12, color: '#DC2626' }),
+                    `${post.reportsCount} Reportes`
+                  ),
+                  h('div', { className: 'mod-card-reasons-preview' },
+                    (post.reportReasons || []).slice(0, 2).map((r, i) =>
+                      h('span', { key: i, className: 'mod-mini-reason' }, r)
+                    )
+                  )
+                ),
+
+                // Contenido de la publicación (Imagen o Solo Texto organizado)
+                h('div', { className: 'mod-card-content' },
+                  hasImages &&
+                    h('div', { className: 'mod-card-img-thumb-wrap', onClick: () => setSelectedPost(post) },
+                      h('img', {
+                        src: post.imageUrls[0],
+                        alt: 'Preview',
+                        className: 'mod-card-img-thumb',
+                      })
+                    ),
+                  h('div', { className: `mod-card-text-box ${hasImages ? 'text-with-image' : 'text-pure'}` },
+                    h('p', null, post.content || '(Publicación con imagen sin texto)')
+                  )
+                ),
+
+                // Acciones de decisión
+                h('div', { className: 'mod-card-actions' },
+                  // 1. Ver detalles completos
+                  h('button', {
+                    className: 'btn-mod-action btn-inspect',
+                    onClick: () => setSelectedPost(post),
+                    title: 'Ver todos los datos en modal'
+                  },
+                    h(Icon, { name: 'eye', size: 13 }),
+                    'Ver Detalle'
+                  ),
+
+                  // 2. Mantener / Absolver
+                  h('button', {
+                    className: 'btn-mod-action btn-keep',
+                    onClick: () => onDismissReports(post.id),
+                    title: 'Descartar reportes y mantener publicación'
+                  },
+                    h(Icon, { name: 'check', size: 13 }),
+                    'Mantener'
+                  ),
+
+                  // 3. Eliminar
+                  h('button', {
+                    className: 'btn-mod-action btn-delete',
+                    onClick: () => setPostToDelete(post),
+                    title: 'Eliminar publicación'
+                  },
+                    h(Icon, { name: 'trash', size: 13 }),
+                    'Eliminar'
+                  )
+                )
+              );
+            })
+          ),
+
+      // Modal de Inspección y Decisión completa
+      h(ModerationDetailModal, {
+        isOpen: !!selectedPost,
+        post: selectedPost,
+        onClose: () => setSelectedPost(null),
+        onDeletePost: onDeletePost,
+        onDismissReports: onDismissReports,
+      }),
+
+      // Modal de Confirmación de Eliminación
+      h(DeleteConfirmPostModal, {
+        isOpen: !!postToDelete,
+        post: postToDelete,
+        onClose: () => setPostToDelete(null),
+        onConfirm: onDeletePost,
+      })
+    );
+  };
+
+  // ==========================================================================
   // COMPONENTE 5: PLACEHOLDER DE MÓDULOS EN PREPARACIÓN
   // ==========================================================================
   const ModulePlaceholderView = ({ module, onGoToAccesos }) => {
@@ -1614,14 +2221,37 @@
       return INITIAL_USERS;
     });
 
-    // Suscripción en tiempo real a Firebase Firestore (accesos_administrativos y users)
+    // 1.2 Cargar publicaciones reportadas (caché inicial o semilla demo)
+    const [reportedPostsList, setReportedPostsList] = useState(() => {
+      try {
+        const saved = localStorage.getItem(STORAGE_REPORTED_POSTS);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+      } catch (e) {
+        console.warn('Error leyendo posts reportados de caché:', e);
+      }
+      return INITIAL_REPORTED_POSTS;
+    });
+
+    // 1.3 Contador de moderaciones resueltas
+    const [resolvedCount, setResolvedCount] = useState(() => {
+      try {
+        const saved = localStorage.getItem(STORAGE_RESOLVED_COUNT);
+        if (saved) return parseInt(saved, 10) || 0;
+      } catch (e) {}
+      return 12;
+    });
+
+    // Suscripción en tiempo real a Firebase Firestore (accesos_administrativos, users y posts reportados)
     useEffect(() => {
       if (!firestoreDb) {
         setIsDbConnected(false);
         return;
       }
 
-      console.log('🔥 [Firebase Admin] Iniciando listeners para colecciones:', COLLECTION_ADMINS, COLLECTION_USERS);
+      console.log('🔥 [Firebase Admin] Iniciando listeners para colecciones:', COLLECTION_ADMINS, COLLECTION_USERS, COLLECTION_POSTS);
       const unsubscribeAdmins = firestoreDb
         .collection(COLLECTION_ADMINS)
         .onSnapshot(
@@ -1693,9 +2323,34 @@
           }
         );
 
+      // Listener para colección 'posts' (publicaciones reportadas)
+      const unsubscribePosts = firestoreDb
+        .collection(COLLECTION_POSTS)
+        .where('reported', '==', true)
+        .onSnapshot(
+          (snapshot) => {
+            if (!snapshot.empty) {
+              const list = [];
+              snapshot.forEach((doc) => {
+                const data = doc.data() || {};
+                list.push(sanitizeReportedPost({ id: doc.id, ...data }));
+              });
+              list.sort((a, b) => new Date(b.reportedAt || 0) - new Date(a.reportedAt || 0));
+              setReportedPostsList(list);
+              try {
+                localStorage.setItem(STORAGE_REPORTED_POSTS, JSON.stringify(list));
+              } catch (e) {}
+            }
+          },
+          (error) => {
+            console.warn('⚠️ [Firebase Posts] Error en listener de posts reportados:', error);
+          }
+        );
+
       return () => {
         unsubscribeAdmins();
         unsubscribeUsers();
+        unsubscribePosts();
       };
     }, []);
 
@@ -1860,6 +2515,52 @@
       } catch (e) {}
     };
 
+    // Eliminar publicación reportada (Decisión: Eliminar de Firebase)
+    const handleDeleteReportedPost = async (postId) => {
+      if (firestoreDb) {
+        try {
+          await firestoreDb.collection(COLLECTION_POSTS).doc(postId).delete();
+          console.log('🗑️ [Firestore] Publicación reportada eliminada permanentemente:', postId);
+        } catch (err) {
+          console.error('[Firestore] Error eliminando publicación:', err);
+        }
+      }
+
+      const updated = reportedPostsList.filter((p) => p.id !== postId);
+      setReportedPostsList(updated);
+      const nextResolved = resolvedCount + 1;
+      setResolvedCount(nextResolved);
+      try {
+        localStorage.setItem(STORAGE_REPORTED_POSTS, JSON.stringify(updated));
+        localStorage.setItem(STORAGE_RESOLVED_COUNT, String(nextResolved));
+      } catch (e) {}
+    };
+
+    // Descartar reportes y mantener publicación (Decisión: Mantener / Absolver)
+    const handleDismissReports = async (postId) => {
+      if (firestoreDb) {
+        try {
+          await firestoreDb.collection(COLLECTION_POSTS).doc(postId).update({
+            reported: false,
+            reportsCount: 0,
+            reviewedAt: new Date().toISOString(),
+          });
+          console.log('✅ [Firestore] Reportes descartados para publicación:', postId);
+        } catch (err) {
+          console.error('[Firestore] Error actualizando estado de reporte:', err);
+        }
+      }
+
+      const updated = reportedPostsList.filter((p) => p.id !== postId);
+      setReportedPostsList(updated);
+      const nextResolved = resolvedCount + 1;
+      setResolvedCount(nextResolved);
+      try {
+        localStorage.setItem(STORAGE_REPORTED_POSTS, JSON.stringify(updated));
+        localStorage.setItem(STORAGE_RESOLVED_COUNT, String(nextResolved));
+      } catch (e) {}
+    };
+
     // ------------------------------------------------------------------------
     // RENDER: PANTALLAS SEGÚN EL ESTADO
     // ------------------------------------------------------------------------
@@ -1961,6 +2662,13 @@
               : activeModule === 'usuarios'
               ? h(UsuariosView, {
                   usersList: usersList,
+                })
+              : activeModule === 'moderacion'
+              ? h(ModeracionView, {
+                  postsList: reportedPostsList,
+                  onDeletePost: handleDeleteReportedPost,
+                  onDismissReports: handleDismissReports,
+                  resolvedCount: resolvedCount,
                 })
               : h(ModulePlaceholderView, {
                   module: currentModuleObj,
