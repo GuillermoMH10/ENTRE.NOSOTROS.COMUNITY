@@ -692,25 +692,30 @@
   // ==========================================================================
   const AccesosView = ({ adminsList, onSaveAdmin, onDeleteAdmin, onToggleStatus, currentUser }) => {
     const [searchTerm, setSearchTerm] = useState('');
-    const [statusFilter, setStatusFilter] = useState('all'); // 'all' | 'active' | 'inactive'
+    const [sortFilter, setSortFilter] = useState('all'); // 'all' | 'recent' | 'old'
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingAdmin, setEditingAdmin] = useState(null);
     const [adminToDelete, setAdminToDelete] = useState(null);
 
-    // Filtrar administradores
+    // Filtrar y ordenar administradores
     const filteredAdmins = useMemo(() => {
-      return adminsList.filter((admin) => {
-        const matchesSearch =
-          (admin.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (admin.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (admin.username || '').toLowerCase().includes(searchTerm.toLowerCase());
-
-        const matchesStatus =
-          statusFilter === 'all' ? true : admin.status === statusFilter;
-
-        return matchesSearch && matchesStatus;
+      let list = adminsList.filter((admin) => {
+        const term = searchTerm.toLowerCase();
+        return (
+          (admin.name || '').toLowerCase().includes(term) ||
+          (admin.email || '').toLowerCase().includes(term) ||
+          (admin.username || '').toLowerCase().includes(term)
+        );
       });
-    }, [adminsList, searchTerm, statusFilter]);
+
+      if (sortFilter === 'recent') {
+        list = [...list].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+      } else if (sortFilter === 'old') {
+        list = [...list].sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
+      }
+
+      return list;
+    }, [adminsList, searchTerm, sortFilter]);
 
     const stats = useMemo(() => {
       const total = adminsList.length;
@@ -743,110 +748,86 @@
       }
     };
 
+    // Estilos de avatares coloridos y vibrantes
+    const getAvatarStyle = (index) => {
+      const styles = [
+        { bg: '#EFF6FF', text: '#2563EB', border: '#BFDBFE' }, // Azul
+        { bg: '#ECFDF5', text: '#059669', border: '#A7F3D0' }, // Verde
+        { bg: '#FFF7ED', text: '#EA580C', border: '#FED7AA' }, // Naranja
+        { bg: '#FEF3C7', text: '#D97706', border: '#FDE68A' }, // Amarillo
+      ];
+      return styles[index % styles.length];
+    };
+
     return h('div', { className: 'accesos-module' },
-      // Fila Superior: KPIs vibrantes y coloridas + Botón de Acción
-      h('div', { className: 'kpis-hero-grid' },
-        // KPI 1: Total Administradores (con desglose colorido)
-        h('div', { className: 'kpi-card kpi-card-total' },
-          h('div', { className: 'kpi-icon-wrap kpi-gradient-blue' },
-            h(Icon, { name: 'users', size: 20, color: '#FFFFFF' })
+      // 1. KPI Centrada única en la parte superior (con bordes en amarillo)
+      h('div', { className: 'kpi-center-wrapper' },
+        h('div', { className: 'kpi-card-yellow-center' },
+          h('div', { className: 'kpi-yellow-icon' },
+            h(Icon, { name: 'users', size: 22, color: '#D97706' })
           ),
-          h('div', { className: 'kpi-content' },
-            h('div', { className: 'kpi-number-group' },
-              h('span', { className: 'kpi-number' }, stats.total),
-              h('span', { className: 'kpi-label' }, 'Total Administradores')
+          h('div', { className: 'kpi-yellow-body' },
+            h('div', { className: 'kpi-yellow-num-row' },
+              h('span', { className: 'kpi-yellow-number' }, stats.total),
+              h('span', { className: 'kpi-yellow-title' }, 'Total Administradores')
             ),
-            h('div', { className: 'kpi-breakdown-badges' },
-              h('span', { className: 'kpi-pill kpi-pill-green' },
-                h('span', { className: 'kpi-dot dot-green' }),
+            h('div', { className: 'kpi-yellow-pills-row' },
+              h('span', { className: 'kpi-subpill pill-green' },
+                h('span', { className: 'dot-indicator dot-green' }),
                 `${stats.active} Activos`
               ),
-              h('span', { className: 'kpi-pill kpi-pill-yellow' },
-                h('span', { className: 'kpi-dot dot-yellow' }),
+              h('span', { className: 'kpi-subpill pill-orange' },
+                h('span', { className: 'dot-indicator dot-orange' }),
                 `${stats.inactive} En pausa`
               )
-            )
-          )
-        ),
-
-        // KPI 2: Área de Última Conexión y Sesión Activa
-        h('div', { className: 'kpi-card kpi-card-session' },
-          h('div', { className: 'kpi-icon-wrap kpi-gradient-green' },
-            h(Icon, { name: 'key', size: 20, color: '#FFFFFF' })
-          ),
-          h('div', { className: 'kpi-content' },
-            h('div', { className: 'kpi-session-status' },
-              h('span', { className: 'kpi-live-pulse' }),
-              h('span', { className: 'kpi-session-title' }, 'Sesión Activa / Última Conexión')
-            ),
-            h('div', { className: 'kpi-session-name-row' },
-              h('span', { className: 'kpi-session-name' }, currentUser?.name || 'Administrador'),
-              h('span', { className: 'kpi-role-tag' }, currentUser?.role || 'Super Admin')
-            ),
-            h('div', { className: 'kpi-session-sub' },
-              `@${currentUser?.username || 'admin'} · Conectado en tiempo real con Firebase`
-            )
-          )
-        ),
-
-        // Botón Destacado: Nuevo Administrador
-        h('div', { className: 'kpi-action-card' },
-          h('button', {
-            className: 'btn-create-admin-colorful',
-            onClick: handleOpenCreate,
-            title: 'Dar de alta un nuevo administrador en Firebase',
-          },
-            h('div', { className: 'btn-plus-icon-circle' },
-              h(Icon, { name: 'plus', size: 16, color: '#FFFFFF' })
-            ),
-            h('div', { className: 'btn-create-text-group' },
-              h('span', { className: 'btn-create-title' }, 'Nuevo Administrador'),
-              h('span', { className: 'btn-create-sub' }, 'Alta con permisos a medida')
             )
           )
         )
       ),
 
-      // Barra compacta de búsqueda y filtros
+      // 2. Barra de búsqueda y filtros con botón Alta integrado a un lado
       h('div', { className: 'table-filter-bar compact' },
+        // Buscador
         h('div', { className: 'search-input-wrap compact' },
           h(Icon, { name: 'search', size: 14, color: 'var(--text-muted)' }),
           h('input', {
             type: 'text',
-            placeholder: 'Buscar por nombre, correo o usuario...',
+            placeholder: 'Buscar administrador por nombre, correo o usuario...',
             value: searchTerm,
             onChange: (e) => setSearchTerm(e.target.value),
           })
         ),
 
-        h('div', { className: 'filter-pills-group compact' },
-          h('button', {
-            className: `filter-pill compact ${statusFilter === 'all' ? 'active' : ''}`,
-            onClick: () => setStatusFilter('all'),
-          },
-            `Todos `,
-            h('span', { className: 'pill-count' }, stats.total)
+        // Grupo: Filtros (Todos, Más reciente, Más antiguo) + Botón "Alta"
+        h('div', { className: 'filter-actions-group' },
+          h('div', { className: 'filter-pills-group compact' },
+            h('button', {
+              className: `filter-pill compact ${sortFilter === 'all' ? 'active' : ''}`,
+              onClick: () => setSortFilter('all'),
+            }, 'Todos'),
+            h('button', {
+              className: `filter-pill compact ${sortFilter === 'recent' ? 'active' : ''}`,
+              onClick: () => setSortFilter('recent'),
+            }, 'Más reciente'),
+            h('button', {
+              className: `filter-pill compact ${sortFilter === 'old' ? 'active' : ''}`,
+              onClick: () => setSortFilter('old'),
+            }, 'Más antiguo')
           ),
+
+          // Botón "Alta" a un lado de los filtros
           h('button', {
-            className: `filter-pill compact filter-pill-active ${statusFilter === 'active' ? 'active' : ''}`,
-            onClick: () => setStatusFilter('active'),
+            className: 'btn-alta-action',
+            onClick: handleOpenCreate,
+            title: 'Dar de alta nuevo administrador',
           },
-            h('span', { className: 'dot-indicator dot-green' }),
-            `Activos `,
-            h('span', { className: 'pill-count' }, stats.active)
-          ),
-          h('button', {
-            className: `filter-pill compact filter-pill-inactive ${statusFilter === 'inactive' ? 'active' : ''}`,
-            onClick: () => setStatusFilter('inactive'),
-          },
-            h('span', { className: 'dot-indicator dot-yellow' }),
-            `Inactivos `,
-            h('span', { className: 'pill-count' }, stats.inactive)
+            h(Icon, { name: 'plus', size: 14, color: '#FFFFFF' }),
+            'Alta'
           )
         )
       ),
 
-      // Tabla Compacta de Administradores
+      // 3. Tabla Compacta y Colorida de Administradores
       h('div', { className: 'table-container compact' },
         h('table', { className: 'admin-table compact' },
           h('thead', null,
@@ -866,17 +847,24 @@
                     'No se encontraron administradores con los filtros seleccionados.'
                   )
                 )
-              : filteredAdmins.map((admin) => {
+              : filteredAdmins.map((admin, idx) => {
                   const isCurrent = currentUser?.id === admin.id;
                   const perms = admin.permissions || [];
-                  const displayedPerms = perms.slice(0, 3);
-                  const extraCount = perms.length - displayedPerms.length;
+                  const count = perms.length;
+                  const isFull = count === MODULES.length;
+                  const avatarStyle = getAvatarStyle(idx);
+
+                  // Color para la píldora de cantidad de accesos autorizados
+                  const qtyClass = isFull ? 'qty-pill-gold' : count >= 4 ? 'qty-pill-blue' : 'qty-pill-orange';
 
                   return h('tr', { key: admin.id, className: 'compact-row' },
-                    // Nombre / Usuario
+                    // Nombre / Usuario con avatar colorido
                     h('td', null,
                       h('div', { className: 'user-cell compact' },
-                        h('div', { className: 'user-cell-avatar compact' }, getInitials(admin.name)),
+                        h('div', {
+                          className: 'user-cell-avatar compact',
+                          style: { background: avatarStyle.bg, color: avatarStyle.text, borderColor: avatarStyle.border }
+                        }, getInitials(admin.name)),
                         h('div', null,
                           h('div', { className: 'user-cell-name compact' },
                             admin.name,
@@ -890,22 +878,10 @@
                     // Correo
                     h('td', { className: 'email-cell compact' }, admin.email),
 
-                    // Accesos autorizados con etiquetas coloridas
+                    // Accesos autorizados: SOLO CANTIDAD
                     h('td', null,
-                      h('div', { className: 'permissions-badges-list compact' },
-                        perms.length === MODULES.length
-                          ? h('span', { className: 'permission-badge badge-all' }, '★ Acceso Total (7)')
-                          : displayedPerms.map((permId) => {
-                              const mod = MODULES.find((m) => m.id === permId);
-                              const colors = getModuleBadgeColor(permId);
-                              return h('span', {
-                                key: permId,
-                                className: 'permission-badge compact',
-                                style: { background: colors.bg, borderColor: colors.border, color: colors.text }
-                              }, mod ? mod.label : permId);
-                            }),
-                        extraCount > 0 &&
-                          h('span', { className: 'permission-badge more compact' }, `+${extraCount} más`)
+                      h('span', { className: `access-quantity-pill ${qtyClass}` },
+                        isFull ? `★ ${count} de ${MODULES.length}` : `${count} de ${MODULES.length} módulos`
                       )
                     ),
 
@@ -927,7 +903,7 @@
                       )
                     ),
 
-                    // Fecha
+                    // Fecha de registro
                     h('td', { className: 'date-cell compact' }, formatDate(admin.createdAt)),
 
                     // Acciones
