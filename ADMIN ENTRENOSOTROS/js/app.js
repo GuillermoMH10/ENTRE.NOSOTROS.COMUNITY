@@ -48,6 +48,96 @@
   const STORAGE_REPORTED_POSTS = '@admin_entrenosotros_reported_posts_v1';
   const STORAGE_RESOLVED_COUNT = '@admin_entrenosotros_resolved_count_v1';
 
+  // --------------------------------------------------------------------------
+  // UTILIDADES GLOBALES SEGURAS (FECHAS, USUARIOS, REPORTES)
+  // --------------------------------------------------------------------------
+
+  // Extraer las iniciales del nombre de usuario para el avatar de forma 100% segura
+  const getInitials = (name) => {
+    if (!name || typeof name !== 'string') return 'US';
+    const clean = name.trim();
+    if (!clean) return 'US';
+    const parts = clean.split(/\s+/).filter(Boolean);
+    if (parts.length >= 2 && parts[0] && parts[1]) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    if (parts.length === 1 && parts[0].length >= 2) {
+      return parts[0].slice(0, 2).toUpperCase();
+    }
+    return (clean.slice(0, 2) || 'US').toUpperCase();
+  };
+
+  // Convertir cualquier formato de fecha (Timestamp, Date, number, string) a ISO String seguro
+  const toSafeIsoString = (val) => {
+    if (!val) return '';
+    if (typeof val === 'string') return val;
+    if (typeof val === 'number') {
+      try {
+        return new Date(val).toISOString();
+      } catch (e) {
+        return '';
+      }
+    }
+    if (val && typeof val.toDate === 'function') {
+      try {
+        return val.toDate().toISOString();
+      } catch (e) {
+        return '';
+      }
+    }
+    if (val && typeof val.seconds === 'number') {
+      try {
+        return new Date(val.seconds * 1000).toISOString();
+      } catch (e) {
+        return '';
+      }
+    }
+    if (val instanceof Date) {
+      try {
+        return val.toISOString();
+      } catch (e) {
+        return '';
+      }
+    }
+    return '';
+  };
+
+  // Formateador de fecha seguro contra cualquier tipo de dato
+  const formatDateSafe = (val) => {
+    if (!val) return 'Reciente';
+    try {
+      let d = null;
+      if (typeof val === 'string') {
+        d = new Date(val);
+      } else if (typeof val === 'number') {
+        d = new Date(val);
+      } else if (val && typeof val.toDate === 'function') {
+        d = val.toDate();
+      } else if (val && typeof val.seconds === 'number') {
+        d = new Date(val.seconds * 1000);
+      } else if (val instanceof Date) {
+        d = val;
+      }
+      if (!d || isNaN(d.getTime())) return 'Reciente';
+      return d.toLocaleDateString('es-MX', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      });
+    } catch {
+      return 'Reciente';
+    }
+  };
+
+  // Helper universal para verificar si un registro (post o usuario) corresponde a la fecha de hoy
+  const isEnteredToday = (item, todayStr) => {
+    if (!item) return false;
+    const target = todayStr || new Date().toISOString().slice(0, 10);
+    const day1 = toSafeIsoString(item.reportedAt || item.lastActiveAt || item.timestamp).slice(0, 10);
+    const day2 = toSafeIsoString(item.createdAt).slice(0, 10);
+    return day1 === target || day2 === target;
+  };
+
   // Módulos del sistema
   const MODULES = [
     { id: 'principal', label: 'Principal', icon: 'home', desc: 'Panel general y métricas globales de la comunidad' },
@@ -237,22 +327,6 @@
       reportReasons: ['Contenido fuera de lugar', 'Intento de saturación'],
       reportedAt: new Date(Date.now() - 86400000 * 2).toISOString(),
       createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-      status: 'pending',
-    },
-    {
-      id: 'rep_post_6',
-      authorId: 'user_6',
-      authorName: 'Roberto Soto',
-      authorUsername: 'roberto_x',
-      authorEmail: 'roberto.soto@gmail.com',
-      authorAvatarUrl: 'https://api.dicebear.com/7.x/adventurer/svg?seed=roberto',
-      content: 'Los administradores de este sitio no hacen nada y dejan que cualquiera publique tonterías. Es la peor app que he visto en años.',
-      imageUrls: [],
-      type: 'text',
-      reportsCount: 4,
-      reportReasons: ['Provocación (trolling)', 'Lenguaje despectivo'],
-      reportedAt: new Date(Date.now() - 86400000).toISOString(),
-      createdAt: new Date(Date.now() - 86400000).toISOString(),
       status: 'pending',
     },
   ];
@@ -446,83 +520,6 @@
     };
 
     return icons[name] || null;
-  };
-
-  // Extraer las iniciales del nombre de usuario para el avatar de forma 100% segura
-  const getInitials = (name) => {
-    if (!name || typeof name !== 'string') return 'US';
-    const clean = name.trim();
-    if (!clean) return 'US';
-    const parts = clean.split(/\s+/).filter(Boolean);
-    if (parts.length >= 2 && parts[0] && parts[1]) {
-      return (parts[0][0] + parts[1][0]).toUpperCase();
-    }
-    if (parts.length === 1 && parts[0].length >= 2) {
-      return parts[0].slice(0, 2).toUpperCase();
-    }
-    return (clean.slice(0, 2) || 'US').toUpperCase();
-  };
-
-  // Convertir cualquier formato de fecha (Timestamp, Date, number, string) a ISO String seguro
-  const toSafeIsoString = (val) => {
-    if (!val) return '';
-    if (typeof val === 'string') return val;
-    if (typeof val === 'number') {
-      try {
-        return new Date(val).toISOString();
-      } catch (e) {
-        return '';
-      }
-    }
-    if (val && typeof val.toDate === 'function') {
-      try {
-        return val.toDate().toISOString();
-      } catch (e) {
-        return '';
-      }
-    }
-    if (val && typeof val.seconds === 'number') {
-      try {
-        return new Date(val.seconds * 1000).toISOString();
-      } catch (e) {
-        return '';
-      }
-    }
-    if (val instanceof Date) {
-      try {
-        return val.toISOString();
-      } catch (e) {
-        return '';
-      }
-    }
-    return '';
-  };
-
-  // Formateador de fecha seguro contra cualquier tipo de dato
-  const formatDateSafe = (val) => {
-    if (!val) return 'Reciente';
-    try {
-      let d = null;
-      if (typeof val === 'string') {
-        d = new Date(val);
-      } else if (typeof val === 'number') {
-        d = new Date(val);
-      } else if (val && typeof val.toDate === 'function') {
-        d = val.toDate();
-      } else if (val && typeof val.seconds === 'number') {
-        d = new Date(val.seconds * 1000);
-      } else if (val instanceof Date) {
-        d = val;
-      }
-      if (!d || isNaN(d.getTime())) return 'Reciente';
-      return d.toLocaleDateString('es-MX', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-      });
-    } catch {
-      return 'Reciente';
-    }
   };
 
   // Sanitizar registro de usuario para garantizar integridad en vista de Usuarios
@@ -1704,7 +1701,7 @@
         // Header
         h('div', { className: 'modal-header' },
           h('div', { style: { display: 'flex', alignItems: 'center', gap: 8 } },
-            h('span', { style: { fontSize: 20 } }, '🛡️'),
+            h(Icon, { name: 'shield', size: 18, color: '#3B82F6' }),
             h('h3', null, 'Auditoría y Moderación de Publicación')
           ),
           h('button', { className: 'modal-close-btn', onClick: onClose }, '✕')
@@ -1749,7 +1746,10 @@
             ),
             h('div', { className: 'mod-modal-reasons-list' },
               (post.reportReasons || []).map((reason, idx) =>
-                h('span', { key: idx, className: 'mod-reason-tag' }, `⚠️ ${reason}`)
+                h('span', { key: idx, className: 'mod-reason-tag' },
+                  h(Icon, { name: 'alert', size: 11, color: '#DC2626' }),
+                  reason
+                )
               )
             )
           ),
@@ -1969,28 +1969,43 @@
           })
         ),
 
-        // Filtros tipo píldora (separando Texto, Imagen y Texto)
+        // Filtros tipo píldora (con iconos vectoriales nítidos, sin emojis)
         h('div', { className: 'filter-pills-group compact' },
           h('button', {
             className: `filter-pill compact ${filterTab === 'all' ? 'active' : ''}`,
             onClick: () => setFilterTab('all'),
-          }, `Todos (${stats.total})`),
+          },
+            h(Icon, { name: 'flag', size: 12 }),
+            `Todos (${stats.total})`
+          ),
           h('button', {
             className: `filter-pill compact filter-text ${filterTab === 'text' ? 'active' : ''}`,
             onClick: () => setFilterTab('text'),
-          }, `📝 Solo Texto (${stats.textCount})`),
+          },
+            h(Icon, { name: 'fileText', size: 12 }),
+            `Solo Texto (${stats.textCount})`
+          ),
           h('button', {
             className: `filter-pill compact filter-image ${filterTab === 'image' ? 'active' : ''}`,
             onClick: () => setFilterTab('image'),
-          }, `🖼️ Con Imagen (${stats.imageCount})`),
+          },
+            h(Icon, { name: 'image', size: 12 }),
+            `Con Imagen (${stats.imageCount})`
+          ),
           h('button', {
             className: `filter-pill compact filter-today ${filterTab === 'today' ? 'active' : ''}`,
             onClick: () => setFilterTab('today'),
-          }, '🕒 Reportadas Hoy'),
+          },
+            h(Icon, { name: 'clock', size: 12 }),
+            'Reportadas Hoy'
+          ),
           h('button', {
             className: `filter-pill compact filter-reports ${filterTab === 'reports' ? 'active' : ''}`,
             onClick: () => setFilterTab('reports'),
-          }, '🔥 Más Reportes')
+          },
+            h(Icon, { name: 'alert', size: 12 }),
+            'Más Reportes'
+          )
         )
       ),
 
