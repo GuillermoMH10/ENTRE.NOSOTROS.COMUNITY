@@ -227,53 +227,18 @@ body {
 .nav-item-btn.nav-item-reportes:hover .nav-icon { color: #DC2626; }
 .nav-item-btn.nav-item-estadisticas:hover .nav-icon { color: #0891B2; }
 
-/* ESTADO ACTIVO VIBRANTE Y COLORIDO (Cero azul oscuro) */
+/* ESTADO ACTIVO: COLOR FIJO AMARILLO SÓLIDO (Sin degradados) */
 .nav-item-btn.active {
+  background: #F59E0B !important;
   color: #FFFFFF !important;
   font-weight: 700;
-  border-color: transparent !important;
+  border-color: #F59E0B !important;
   transform: translateX(3px);
+  box-shadow: 0 3px 10px rgba(245, 158, 11, 0.35);
 }
 
 .nav-item-btn.active .nav-icon svg {
   stroke: #FFFFFF !important;
-}
-
-/* Módulo Accesos activo: Amarillo / Ámbar dorado brillante */
-.nav-item-btn.active.nav-item-accesos {
-  background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%) !important;
-  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35);
-}
-
-/* Otros módulos activos con sus respectivos colores */
-.nav-item-btn.active.nav-item-principal {
-  background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%) !important;
-  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35);
-}
-
-.nav-item-btn.active.nav-item-usuarios {
-  background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%) !important;
-  box-shadow: 0 4px 14px rgba(139, 92, 246, 0.35);
-}
-
-.nav-item-btn.active.nav-item-psicologos {
-  background: linear-gradient(135deg, #10B981 0%, #059669 100%) !important;
-  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
-}
-
-.nav-item-btn.active.nav-item-moderacion {
-  background: linear-gradient(135deg, #EC4899 0%, #DB2777 100%) !important;
-  box-shadow: 0 4px 14px rgba(236, 72, 153, 0.35);
-}
-
-.nav-item-btn.active.nav-item-reportes {
-  background: linear-gradient(135deg, #EF4444 0%, #B91C1C 100%) !important;
-  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);
-}
-
-.nav-item-btn.active.nav-item-estadisticas {
-  background: linear-gradient(135deg, #06B6D4 0%, #0E7490 100%) !important;
-  box-shadow: 0 4px 14px rgba(6, 182, 212, 0.35);
 }
 
 /* Indicador con pulso para el módulo activo */
@@ -455,7 +420,7 @@ body {
   align-items: center;
   gap: 6px;
   padding: 6px 14px;
-  background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+  background: #2563EB;
   color: #FFFFFF;
   border: none;
   border-radius: var(--radius-sm);
@@ -468,7 +433,7 @@ body {
 }
 
 .btn-alta-action:hover {
-  background: linear-gradient(135deg, #1D4ED8 0%, #1E40AF 100%);
+  background: #1D4ED8;
   transform: translateY(-1px);
   box-shadow: 0 4px 10px rgba(37, 99, 235, 0.35);
 }
@@ -570,46 +535,22 @@ body {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
-/* Hover interactivo y colorido específico */
-.filter-pill.filter-all:hover {
+.filter-pill.compact:hover {
   background: #FFFBEB;
   border-color: #F59E0B;
   color: #B45309;
+  transform: translateY(-1.5px);
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.15);
 }
 
-.filter-pill.filter-recent:hover {
-  background: #ECFDF5;
-  border-color: #10B981;
-  color: #047857;
-}
-
-.filter-pill.filter-old:hover {
-  background: #FFF7ED;
-  border-color: #F97316;
-  color: #C2410C;
-}
-
-/* ESTADOS ACTIVOS VIBRANTES Y COLORIDOS (Sin color azul corporativo) */
+/* ESTADO ACTIVO: COLOR FIJO AMARILLO SÓLIDO (Sin degradados) */
 .filter-pill.compact.active {
+  background: #F59E0B !important;
+  border-color: #F59E0B !important;
   color: #FFFFFF !important;
   font-weight: 700;
-  border-color: transparent !important;
   transform: translateY(-1px);
-}
-
-.filter-pill.filter-all.active {
-  background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%) !important;
   box-shadow: 0 3px 10px rgba(245, 158, 11, 0.35);
-}
-
-.filter-pill.filter-recent.active {
-  background: linear-gradient(135deg, #10B981 0%, #059669 100%) !important;
-  box-shadow: 0 3px 10px rgba(16, 185, 129, 0.35);
-}
-
-.filter-pill.filter-old.active {
-  background: linear-gradient(135deg, #F97316 0%, #EA580C 100%) !important;
-  box-shadow: 0 3px 10px rgba(249, 115, 22, 0.35);
 }
 
 .pill-count {
@@ -749,7 +690,7 @@ body {
 }
 
 .permission-badge.badge-all {
-  background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%) !important;
+  background: #FEF3C7 !important;
   color: #92400E !important;
   border: 1px solid #F59E0B !important;
   font-weight: 700;
