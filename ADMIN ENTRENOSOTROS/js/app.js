@@ -264,19 +264,134 @@
     return icons[name] || null;
   };
 
-  // Extraer las iniciales del nombre de usuario para el avatar
+  // Extraer las iniciales del nombre de usuario para el avatar de forma 100% segura
   const getInitials = (name) => {
-    if (!name) return 'AD';
-    const parts = name.trim().split(' ');
-    if (parts.length >= 2) {
+    if (!name || typeof name !== 'string') return 'US';
+    const clean = name.trim();
+    if (!clean) return 'US';
+    const parts = clean.split(/\s+/).filter(Boolean);
+    if (parts.length >= 2 && parts[0] && parts[1]) {
       return (parts[0][0] + parts[1][0]).toUpperCase();
     }
-    return name.slice(0, 2).toUpperCase();
+    if (parts.length === 1 && parts[0].length >= 2) {
+      return parts[0].slice(0, 2).toUpperCase();
+    }
+    return (clean.slice(0, 2) || 'US').toUpperCase();
+  };
+
+  // Convertir cualquier formato de fecha (Timestamp, Date, number, string) a ISO String seguro
+  const toSafeIsoString = (val) => {
+    if (!val) return '';
+    if (typeof val === 'string') return val;
+    if (typeof val === 'number') {
+      try {
+        return new Date(val).toISOString();
+      } catch (e) {
+        return '';
+      }
+    }
+    if (val && typeof val.toDate === 'function') {
+      try {
+        return val.toDate().toISOString();
+      } catch (e) {
+        return '';
+      }
+    }
+    if (val && typeof val.seconds === 'number') {
+      try {
+        return new Date(val.seconds * 1000).toISOString();
+      } catch (e) {
+        return '';
+      }
+    }
+    if (val instanceof Date) {
+      try {
+        return val.toISOString();
+      } catch (e) {
+        return '';
+      }
+    }
+    return '';
+  };
+
+  // Formateador de fecha seguro contra cualquier tipo de dato
+  const formatDateSafe = (val) => {
+    if (!val) return 'Reciente';
+    try {
+      let d = null;
+      if (typeof val === 'string') {
+        d = new Date(val);
+      } else if (typeof val === 'number') {
+        d = new Date(val);
+      } else if (val && typeof val.toDate === 'function') {
+        d = val.toDate();
+      } else if (val && typeof val.seconds === 'number') {
+        d = new Date(val.seconds * 1000);
+      } else if (val instanceof Date) {
+        d = val;
+      }
+      if (!d || isNaN(d.getTime())) return 'Reciente';
+      return d.toLocaleDateString('es-MX', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      });
+    } catch {
+      return 'Reciente';
+    }
+  };
+
+  // Sanitizar registro de usuario para garantizar integridad en vista de Usuarios
+  const sanitizeUser = (user, idx) => {
+    if (!user || typeof user !== 'object') {
+      return {
+        id: `user_${idx}`,
+        name: 'Usuario',
+        username: `usuario_${idx}`,
+        email: 'sin-correo@entrenosotros.com',
+        avatarUrl: '',
+        postsCount: 0,
+        status: 'active',
+        lastActiveAt: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+      };
+    }
+
+    const safeUsername = typeof user.username === 'string' && user.username.trim()
+      ? user.username.trim()
+      : (typeof user.email === 'string' && user.email.includes('@') ? user.email.split('@')[0] : `usuario_${idx}`);
+
+    const safeName = typeof user.name === 'string' && user.name.trim()
+      ? user.name.trim()
+      : (typeof user.displayName === 'string' && user.displayName ? user.displayName : safeUsername);
+
+    const safeEmail = typeof user.email === 'string' && user.email.trim()
+      ? user.email.trim()
+      : 'sin-correo@entrenosotros.com';
+
+    const rawPosts = user.postsCount !== undefined ? user.postsCount : (user.followersCount !== undefined ? user.followersCount : 0);
+    const safePostsCount = typeof rawPosts === 'number' ? rawPosts : (parseInt(rawPosts, 10) || 0);
+
+    const safeStatus = (user.status === 'inactive' || user.status === 'suspended') ? user.status : 'active';
+
+    return {
+      id: String(user.id || `user_${idx}`),
+      name: safeName,
+      username: safeUsername,
+      email: safeEmail,
+      avatarUrl: typeof user.avatarUrl === 'string' && user.avatarUrl
+        ? user.avatarUrl
+        : `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(safeUsername)}`,
+      postsCount: safePostsCount,
+      status: safeStatus,
+      lastActiveAt: toSafeIsoString(user.lastActiveAt || user.updatedAt || user.createdAt),
+      createdAt: toSafeIsoString(user.createdAt),
+    };
   };
 
   // Helper para generar el usuario a partir del correo (hasta el arroba)
   const extractUsernameFromEmail = (email) => {
-    if (!email) return '';
+    if (!email || typeof email !== 'string') return '';
     const atIndex = email.indexOf('@');
     if (atIndex > 0) {
       return email.substring(0, atIndex).trim().toLowerCase();
@@ -1096,58 +1211,56 @@
     const [filterTab, setFilterTab] = useState('all'); // 'all' | 'today' | 'inactive' | 'posts'
     const [noticeModal, setNoticeModal] = useState({ isOpen: false, title: '', user: '', desc: '', icon: 'info' });
 
+    // Sanitizar y garantizar que la lista de usuarios sea 100% segura y válida
+    const safeUsersList = useMemo(() => {
+      const source = (Array.isArray(usersList) && usersList.length > 0) ? usersList : INITIAL_USERS;
+      return source.map((u, idx) => sanitizeUser(u, idx));
+    }, [usersList]);
+
+    // Estadísticas para las 3 KPIs (con verificación segura de fechas)
+    const stats = useMemo(() => {
+      const total = safeUsersList.length;
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const enteredToday = safeUsersList.filter((u) => {
+        const lastActiveIso = toSafeIsoString(u.lastActiveAt);
+        const createdIso = toSafeIsoString(u.createdAt);
+        const lastActiveDay = lastActiveIso ? lastActiveIso.slice(0, 10) : '';
+        const createdDay = createdIso ? createdIso.slice(0, 10) : '';
+        return lastActiveDay === todayStr || createdDay === todayStr;
+      }).length;
+      const inactive = safeUsersList.filter((u) => u.status === 'inactive' || u.status === 'suspended').length;
+      return { total, enteredToday, inactive };
+    }, [safeUsersList]);
+
     // Filtrar y ordenar usuarios
     const filteredUsers = useMemo(() => {
-      const term = searchTerm.toLowerCase();
-      let list = usersList.filter((u) =>
-        (u.name || '').toLowerCase().includes(term) ||
-        (u.username || '').toLowerCase().includes(term) ||
-        (u.email || '').toLowerCase().includes(term)
-      );
+      const term = (searchTerm || '').trim().toLowerCase();
+      let list = safeUsersList.filter((u) => {
+        if (!term) return true;
+        const nameMatch = (u.name || '').toLowerCase().includes(term);
+        const userMatch = (u.username || '').toLowerCase().includes(term);
+        const emailMatch = (u.email || '').toLowerCase().includes(term);
+        return nameMatch || userMatch || emailMatch;
+      });
 
       const todayStr = new Date().toISOString().slice(0, 10);
 
       if (filterTab === 'today') {
         list = list.filter((u) => {
-          const lastActive = (u.lastActiveAt || '').slice(0, 10);
-          const created = (u.createdAt || '').slice(0, 10);
-          return lastActive === todayStr || created === todayStr;
+          const lastActiveIso = toSafeIsoString(u.lastActiveAt);
+          const createdIso = toSafeIsoString(u.createdAt);
+          const lastActiveDay = lastActiveIso ? lastActiveIso.slice(0, 10) : '';
+          const createdDay = createdIso ? createdIso.slice(0, 10) : '';
+          return lastActiveDay === todayStr || createdDay === todayStr;
         });
       } else if (filterTab === 'inactive') {
         list = list.filter((u) => u.status === 'inactive' || u.status === 'suspended');
       } else if (filterTab === 'posts') {
-        list = [...list].sort((a, b) => (b.postsCount || 0) - (a.postsCount || 0));
+        list = [...list].sort((a, b) => (Number(b.postsCount) || 0) - (Number(a.postsCount) || 0));
       }
 
       return list;
-    }, [usersList, searchTerm, filterTab]);
-
-    // Estadísticas para las 3 KPIs
-    const stats = useMemo(() => {
-      const total = usersList.length;
-      const todayStr = new Date().toISOString().slice(0, 10);
-      const enteredToday = usersList.filter((u) => {
-        const lastActive = (u.lastActiveAt || '').slice(0, 10);
-        const created = (u.createdAt || '').slice(0, 10);
-        return lastActive === todayStr || created === todayStr;
-      }).length;
-      const inactive = usersList.filter((u) => u.status === 'inactive' || u.status === 'suspended').length;
-      return { total, enteredToday, inactive };
-    }, [usersList]);
-
-    const formatDate = (isoString) => {
-      if (!isoString) return 'Reciente';
-      try {
-        const d = new Date(isoString);
-        return d.toLocaleDateString('es-MX', {
-          day: '2-digit',
-          month: 'short',
-          year: 'numeric',
-        });
-      } catch {
-        return 'Reciente';
-      }
-    };
+    }, [safeUsersList, searchTerm, filterTab]);
 
     // Paleta de acentos coloridos para las filas de usuarios
     const ROW_ACCENTS = [
@@ -1164,8 +1277,8 @@
       setNoticeModal({
         isOpen: true,
         title: 'Ver Publicaciones',
-        user: `@${user.username} (${user.name})`,
-        desc: `La auditoría y visualización de publicaciones creadas por @${user.username} estará habilitada en la siguiente fase de desarrollo de este panel.`,
+        user: `@${user.username || 'usuario'} (${user.name || 'Usuario'})`,
+        desc: `La auditoría y visualización de publicaciones creadas por @${user.username || 'usuario'} estará habilitada en la siguiente fase de desarrollo de este panel.`,
         icon: 'eye',
       });
     };
@@ -1174,8 +1287,8 @@
       setNoticeModal({
         isOpen: true,
         title: 'Suspender Cuenta',
-        user: `@${user.username} (${user.name})`,
-        desc: `La opción para suspender o pausar el acceso de @${user.username} a la comunidad estará disponible en la siguiente fase de desarrollo.`,
+        user: `@${user.username || 'usuario'} (${user.name || 'Usuario'})`,
+        desc: `La opción para suspender o pausar el acceso de @${user.username || 'usuario'} a la comunidad estará disponible en la siguiente fase de desarrollo.`,
         icon: 'pause',
       });
     };
@@ -1184,8 +1297,8 @@
       setNoticeModal({
         isOpen: true,
         title: 'Eliminar Usuario',
-        user: `@${user.username} (${user.name})`,
-        desc: `La revocación y eliminación permanente de la cuenta de @${user.username} en Firebase Firestore estará disponible en la siguiente fase de desarrollo.`,
+        user: `@${user.username || 'usuario'} (${user.name || 'Usuario'})`,
+        desc: `La revocación y eliminación permanente de la cuenta de @${user.username || 'usuario'} en Firebase Firestore estará disponible en la siguiente fase de desarrollo.`,
         icon: 'trash',
       });
     };
@@ -1283,12 +1396,12 @@
                 )
               : filteredUsers.map((user, idx) => {
                   const accent = ROW_ACCENTS[idx % ROW_ACCENTS.length];
-                  const postsCount = user.postsCount || 0;
+                  const postsCount = Number(user.postsCount) || 0;
                   const isSuspended = user.status === 'suspended';
                   const isInactive = user.status === 'inactive' || isSuspended;
 
                   return h('tr', {
-                    key: user.id,
+                    key: user.id || `user_row_${idx}`,
                     className: 'compact-row user-colored-row',
                     style: { borderLeft: `4px solid ${accent.border}` }
                   },
@@ -1303,7 +1416,7 @@
                           user.avatarUrl &&
                             h('img', {
                               src: user.avatarUrl,
-                              alt: user.name,
+                              alt: user.name || 'Usuario',
                               className: 'user-square-avatar-img',
                               onError: (e) => {
                                 e.target.style.display = 'none';
@@ -1315,14 +1428,14 @@
                           }, getInitials(user.name))
                         ),
                         h('div', null,
-                          h('div', { className: 'user-cell-name compact' }, user.name),
-                          h('div', { className: 'user-cell-handle compact' }, `@${user.username}`)
+                          h('div', { className: 'user-cell-name compact' }, user.name || 'Usuario'),
+                          h('div', { className: 'user-cell-handle compact' }, `@${user.username || 'usuario'}`)
                         )
                       )
                     ),
 
                     // Correo
-                    h('td', { className: 'email-cell compact' }, user.email),
+                    h('td', { className: 'email-cell compact' }, user.email || '—'),
 
                     // Total de publicaciones
                     h('td', null,
@@ -1345,7 +1458,7 @@
                     ),
 
                     // Fecha de registro
-                    h('td', { className: 'date-cell compact' }, formatDate(user.createdAt)),
+                    h('td', { className: 'date-cell compact' }, formatDateSafe(user.createdAt)),
 
                     // Opciones de acción: Ver publicaciones, Suspender cuenta, Eliminar (solo esas 3)
                     h('td', null,
@@ -1417,6 +1530,62 @@
   };
 
   // ==========================================================================
+  // COMPONENTE: ERROR BOUNDARY (Evita pantallas blancas por errores imprevistos)
+  // ==========================================================================
+  class ErrorBoundary extends React.Component {
+    constructor(props) {
+      super(props);
+      this.state = { hasError: false, error: null };
+    }
+
+    static getDerivedStateFromError(error) {
+      return { hasError: true, error };
+    }
+
+    componentDidCatch(error, errorInfo) {
+      console.error('💥 [ErrorBoundary] Error capturado en el panel:', error, errorInfo);
+    }
+
+    render() {
+      if (this.state.hasError) {
+        return h('div', {
+          style: {
+            padding: '36px 24px',
+            maxWidth: '560px',
+            margin: '40px auto',
+            background: '#FFFFFF',
+            border: '2px solid #EF4444',
+            borderRadius: '16px',
+            textAlign: 'center',
+            boxShadow: '0 8px 24px rgba(239, 68, 68, 0.12)'
+          }
+        },
+          h('div', { style: { fontSize: '40px', marginBottom: '12px' } }, '⚠️'),
+          h('h3', { style: { fontSize: '18px', fontWeight: '800', color: '#B91C1C', marginBottom: '8px' } }, 'Se produjo un problema al cargar esta sección'),
+          h('p', { style: { fontSize: '13px', color: '#64748B', marginBottom: '20px', lineHeight: '1.5' } },
+            this.state.error?.message || 'Error inesperado. Puedes limpiar la memoria local o recargar la vista.'
+          ),
+          h('div', { style: { display: 'flex', gap: '12px', justifyContent: 'center' } },
+            h('button', {
+              type: 'button',
+              className: 'btn-primary',
+              style: { background: '#EF4444', borderColor: '#DC2626' },
+              onClick: () => {
+                try {
+                  localStorage.removeItem(STORAGE_USERS_LIST);
+                } catch (e) {}
+                this.setState({ hasError: false, error: null });
+                window.location.reload();
+              }
+            }, 'Limpiar Datos y Recargar')
+          )
+        );
+      }
+      return this.props.children;
+    }
+  }
+
+  // ==========================================================================
   // COMPONENTE PRINCIPAL: APP ROOT
   // ==========================================================================
   const AdminApp = () => {
@@ -1434,11 +1603,14 @@
       return INITIAL_ADMINS;
     });
 
-    // 1.1 Cargar lista de usuarios de la app (caché inicial o semilla)
+    // 1.1 Cargar lista de usuarios de la app (caché inicial o semilla segura)
     const [usersList, setUsersList] = useState(() => {
       try {
         const saved = localStorage.getItem(STORAGE_USERS_LIST);
-        if (saved) return JSON.parse(saved);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
       } catch (e) {
         console.warn('Error leyendo usuarios de caché:', e);
       }
@@ -1486,7 +1658,7 @@
           }
         );
 
-      // Listener para colección 'users' de la app
+      // Listener para colección 'users' de la app con conversión segura de tipos
       const unsubscribeUsers = firestoreDb
         .collection(COLLECTION_USERS)
         .onSnapshot(
@@ -1494,17 +1666,22 @@
             if (!snapshot.empty) {
               const list = [];
               snapshot.forEach((doc) => {
-                const data = doc.data();
+                const data = doc.data() || {};
+                const uName = data.displayName || data.name || data.username || 'Usuario';
+                const uHandle = data.username || (data.email ? data.email.split('@')[0] : 'usuario');
+                const uCreatedAt = toSafeIsoString(data.createdAt);
+                const uLastActive = toSafeIsoString(data.lastActiveAt || data.updatedAt || data.createdAt);
+
                 list.push({
                   id: doc.id,
-                  name: data.displayName || data.name || data.username || 'Usuario',
-                  username: data.username || (data.email ? data.email.split('@')[0] : 'usuario'),
+                  name: uName,
+                  username: uHandle,
                   email: data.email || 'sin-correo@entrenosotros.com',
-                  avatarUrl: data.avatarUrl || `https://api.dicebear.com/7.x/adventurer/svg?seed=${data.username || doc.id}`,
-                  postsCount: data.postsCount || (data.followersCount ? data.followersCount : Math.floor(Math.random() * 12)),
+                  avatarUrl: data.avatarUrl || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(uHandle || doc.id)}`,
+                  postsCount: typeof data.postsCount === 'number' ? data.postsCount : (typeof data.followersCount === 'number' ? data.followersCount : Math.floor(Math.random() * 12)),
                   status: data.status || 'active',
-                  lastActiveAt: data.lastActiveAt || data.updatedAt || data.createdAt || new Date().toISOString(),
-                  createdAt: data.createdAt || new Date().toISOString(),
+                  lastActiveAt: uLastActive,
+                  createdAt: uCreatedAt,
                 });
               });
               list.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
@@ -1708,6 +1885,7 @@
     // ------------------------------------------------------------------------
     const currentModuleObj = MODULES.find((m) => m.id === activeModule) || MODULES[1];
     const userPermissions = currentUser?.permissions || [];
+    const isSuperAdmin = currentUser?.role === 'Super Administrador' || currentUser?.username === 'admin';
 
     return h('div', { className: 'admin-app' },
       // 1. BARRA LATERAL IZQUIERDA
@@ -1734,7 +1912,7 @@
         h('nav', { className: 'sidebar-nav-list' },
           MODULES.map((mod) => {
             const isActive = activeModule === mod.id;
-            const hasAccess = userPermissions.includes(mod.id);
+            const hasAccess = isSuperAdmin || userPermissions.includes(mod.id);
 
             return h('button', {
               key: mod.id,
@@ -1770,26 +1948,28 @@
         )
       ),
 
-      // 2. ÁREA DE CONTENIDO CENTRAL (sin barra superior, espacio completo al contenido)
+      // 2. ÁREA DE CONTENIDO CENTRAL (protegido con ErrorBoundary)
       h('main', { className: 'admin-main' },
         // Contenido scrolleable
         h('div', { className: 'admin-content-scroll' },
-          activeModule === 'accesos'
-            ? h(AccesosView, {
-                adminsList: adminsList,
-                onSaveAdmin: handleSaveAdmin,
-                onDeleteAdmin: handleDeleteAdmin,
-                onToggleStatus: handleToggleStatus,
-                currentUser: currentUser,
-              })
-            : activeModule === 'usuarios'
-            ? h(UsuariosView, {
-                usersList: usersList,
-              })
-            : h(ModulePlaceholderView, {
-                module: currentModuleObj,
-                onGoToAccesos: () => setActiveModule('accesos'),
-              })
+          h(ErrorBoundary, null,
+            activeModule === 'accesos'
+              ? h(AccesosView, {
+                  adminsList: adminsList,
+                  onSaveAdmin: handleSaveAdmin,
+                  onDeleteAdmin: handleDeleteAdmin,
+                  onToggleStatus: handleToggleStatus,
+                  currentUser: currentUser,
+                })
+              : activeModule === 'usuarios'
+              ? h(UsuariosView, {
+                  usersList: usersList,
+                })
+              : h(ModulePlaceholderView, {
+                  module: currentModuleObj,
+                  onGoToAccesos: () => setActiveModule('accesos'),
+                })
+          )
         )
       )
     );
