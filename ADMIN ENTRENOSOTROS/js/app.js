@@ -614,6 +614,79 @@
     );
   };
 
+  // Helper para asignar colores vibrantes a cada módulo en badges y decoraciones
+  const getModuleBadgeColor = (moduleId) => {
+    switch (moduleId) {
+      case 'principal': return { bg: '#EFF6FF', border: '#BFDBFE', text: '#1D4ED8' }; // Azul
+      case 'accesos': return { bg: '#FEF3C7', border: '#FDE68A', text: '#B45309' }; // Amarillo/Ámbar
+      case 'usuarios': return { bg: '#EEF2FF', border: '#C7D2FE', text: '#4338CA' }; // Índigo
+      case 'psicologos': return { bg: '#ECFDF5', border: '#A7F3D0', text: '#047857' }; // Verde esmeralda
+      case 'moderacion': return { bg: '#F5F3FF', border: '#DDD6FE', text: '#6D28D9' }; // Morado
+      case 'reportes': return { bg: '#FEF2F2', border: '#FECACA', text: '#B91C1C' }; // Rojo
+      case 'estadisticas': return { bg: '#ECFEFF', border: '#A5F3FC', text: '#0E7490' }; // Cyan
+      default: return { bg: '#F1F5F9', border: '#CBD5E1', text: '#475569' };
+    }
+  };
+
+  // ==========================================================================
+  // COMPONENTE: MODAL ROJO PROFESIONAL DE CONFIRMACIÓN DE ELIMINACIÓN
+  // ==========================================================================
+  const DeleteConfirmModal = ({ isOpen, admin, onClose, onConfirm }) => {
+    if (!isOpen || !admin) return null;
+
+    return h('div', { className: 'modal-overlay', onClick: onClose },
+      h('div', { className: 'modal-card modal-danger-card', onClick: (e) => e.stopPropagation() },
+        h('div', { className: 'modal-danger-top-bar' }),
+        h('div', { className: 'modal-danger-header' },
+          h('div', { className: 'danger-icon-circle' },
+            h(Icon, { name: 'trash', size: 22, color: '#DC2626' })
+          ),
+          h('button', { className: 'modal-close-btn', onClick: onClose }, '✕')
+        ),
+
+        h('div', { className: 'modal-danger-body' },
+          h('h3', { className: 'danger-title' }, '¿Eliminar Acceso Administrativo?'),
+          h('p', { className: 'danger-description' },
+            'Estás a punto de revocar los privilegios y eliminar de la base de datos la cuenta de este administrador:'
+          ),
+
+          h('div', { className: 'danger-user-card' },
+            h('div', { className: 'danger-avatar' }, getInitials(admin.name)),
+            h('div', { className: 'danger-meta' },
+              h('div', { className: 'danger-name' }, admin.name),
+              h('div', { className: 'danger-handle' }, `@${admin.username} · ${admin.email}`),
+              h('div', { className: 'danger-role' }, `Rol: ${admin.role || 'Administrador'}`)
+            )
+          ),
+
+          h('div', { className: 'danger-warning-pill' },
+            h(Icon, { name: 'alert', size: 14, color: '#DC2626' }),
+            h('span', null, 'Esta acción es irreversible y eliminará este acceso de Firebase Firestore.')
+          )
+        ),
+
+        h('div', { className: 'modal-footer danger-footer' },
+          h('button', {
+            type: 'button',
+            className: 'btn-secondary',
+            onClick: onClose,
+          }, 'Cancelar'),
+          h('button', {
+            type: 'button',
+            className: 'btn-danger-confirm',
+            onClick: () => {
+              onConfirm(admin.id);
+              onClose();
+            },
+          },
+            h(Icon, { name: 'trash', size: 14, color: '#FFFFFF' }),
+            'Sí, Eliminar Acceso'
+          )
+        )
+      )
+    );
+  };
+
   // ==========================================================================
   // COMPONENTE 4: MÓDULO ACCESOS (GESTIÓN DE ADMINISTRADORES)
   // ==========================================================================
@@ -622,14 +695,15 @@
     const [statusFilter, setStatusFilter] = useState('all'); // 'all' | 'active' | 'inactive'
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingAdmin, setEditingAdmin] = useState(null);
+    const [adminToDelete, setAdminToDelete] = useState(null);
 
     // Filtrar administradores
     const filteredAdmins = useMemo(() => {
       return adminsList.filter((admin) => {
         const matchesSearch =
-          admin.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          admin.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          admin.username.toLowerCase().includes(searchTerm.toLowerCase());
+          (admin.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (admin.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (admin.username || '').toLowerCase().includes(searchTerm.toLowerCase());
 
         const matchesStatus =
           statusFilter === 'all' ? true : admin.status === statusFilter;
@@ -670,54 +744,73 @@
     };
 
     return h('div', { className: 'accesos-module' },
-      // Encabezado del Módulo
-      h('div', { className: 'module-header-row' },
-        h('div', { className: 'module-title-wrap' },
-          h('h2', null, 'Control y Gestión de Accesos'),
-          h('p', null, 'Alta de administradores del sistema y configuración de permisos por módulo')
+      // Fila Superior: KPIs vibrantes y coloridas + Botón de Acción
+      h('div', { className: 'kpis-hero-grid' },
+        // KPI 1: Total Administradores (con desglose colorido)
+        h('div', { className: 'kpi-card kpi-card-total' },
+          h('div', { className: 'kpi-icon-wrap kpi-gradient-blue' },
+            h(Icon, { name: 'users', size: 20, color: '#FFFFFF' })
+          ),
+          h('div', { className: 'kpi-content' },
+            h('div', { className: 'kpi-number-group' },
+              h('span', { className: 'kpi-number' }, stats.total),
+              h('span', { className: 'kpi-label' }, 'Total Administradores')
+            ),
+            h('div', { className: 'kpi-breakdown-badges' },
+              h('span', { className: 'kpi-pill kpi-pill-green' },
+                h('span', { className: 'kpi-dot dot-green' }),
+                `${stats.active} Activos`
+              ),
+              h('span', { className: 'kpi-pill kpi-pill-yellow' },
+                h('span', { className: 'kpi-dot dot-yellow' }),
+                `${stats.inactive} En pausa`
+              )
+            )
+          )
         ),
-        h('button', {
-          className: 'btn-primary',
-          onClick: handleOpenCreate,
-        },
-          h(Icon, { name: 'plus', size: 15, color: '#FFFFFF' }),
-          'Nuevo Administrador'
+
+        // KPI 2: Área de Última Conexión y Sesión Activa
+        h('div', { className: 'kpi-card kpi-card-session' },
+          h('div', { className: 'kpi-icon-wrap kpi-gradient-green' },
+            h(Icon, { name: 'key', size: 20, color: '#FFFFFF' })
+          ),
+          h('div', { className: 'kpi-content' },
+            h('div', { className: 'kpi-session-status' },
+              h('span', { className: 'kpi-live-pulse' }),
+              h('span', { className: 'kpi-session-title' }, 'Sesión Activa / Última Conexión')
+            ),
+            h('div', { className: 'kpi-session-name-row' },
+              h('span', { className: 'kpi-session-name' }, currentUser?.name || 'Administrador'),
+              h('span', { className: 'kpi-role-tag' }, currentUser?.role || 'Super Admin')
+            ),
+            h('div', { className: 'kpi-session-sub' },
+              `@${currentUser?.username || 'admin'} · Conectado en tiempo real con Firebase`
+            )
+          )
+        ),
+
+        // Botón Destacado: Nuevo Administrador
+        h('div', { className: 'kpi-action-card' },
+          h('button', {
+            className: 'btn-create-admin-colorful',
+            onClick: handleOpenCreate,
+            title: 'Dar de alta un nuevo administrador en Firebase',
+          },
+            h('div', { className: 'btn-plus-icon-circle' },
+              h(Icon, { name: 'plus', size: 16, color: '#FFFFFF' })
+            ),
+            h('div', { className: 'btn-create-text-group' },
+              h('span', { className: 'btn-create-title' }, 'Nuevo Administrador'),
+              h('span', { className: 'btn-create-sub' }, 'Alta con permisos a medida')
+            )
+          )
         )
       ),
 
-      // Tarjetas de métricas compactas
-      h('div', { className: 'stats-cards-grid' },
-        h('div', { className: 'stat-card' },
-          h('div', { className: 'stat-icon-wrap' }, h(Icon, { name: 'users', size: 18, color: 'var(--blue-primary)' })),
-          h('div', { className: 'stat-content' },
-            h('div', { className: 'stat-number' }, stats.total),
-            h('div', { className: 'stat-label' }, 'Total Administradores')
-          )
-        ),
-        h('div', { className: 'stat-card' },
-          h('div', { className: 'stat-icon-wrap', style: { background: 'var(--status-active-bg)', color: 'var(--status-active-text)' } },
-            h(Icon, { name: 'check', size: 18, color: 'var(--status-active-text)' })
-          ),
-          h('div', { className: 'stat-content' },
-            h('div', { className: 'stat-number', style: { color: 'var(--status-active-text)' } }, stats.active),
-            h('div', { className: 'stat-label' }, 'Accesos Activos')
-          )
-        ),
-        h('div', { className: 'stat-card' },
-          h('div', { className: 'stat-icon-wrap', style: { background: '#F1F5F9', color: '#64748B' } },
-            h(Icon, { name: 'lock', size: 18, color: '#64748B' })
-          ),
-          h('div', { className: 'stat-content' },
-            h('div', { className: 'stat-number', style: { color: '#64748B' } }, stats.inactive),
-            h('div', { className: 'stat-label' }, 'Accesos Inactivos')
-          )
-        )
-      ),
-
-      // Barra de búsqueda y filtros
-      h('div', { className: 'table-filter-bar' },
-        h('div', { className: 'search-input-wrap' },
-          h(Icon, { name: 'search', size: 15, color: 'var(--text-muted)' }),
+      // Barra compacta de búsqueda y filtros
+      h('div', { className: 'table-filter-bar compact' },
+        h('div', { className: 'search-input-wrap compact' },
+          h(Icon, { name: 'search', size: 14, color: 'var(--text-muted)' }),
           h('input', {
             type: 'text',
             placeholder: 'Buscar por nombre, correo o usuario...',
@@ -726,39 +819,50 @@
           })
         ),
 
-        h('div', { className: 'filter-pills-group' },
+        h('div', { className: 'filter-pills-group compact' },
           h('button', {
-            className: `filter-pill ${statusFilter === 'all' ? 'active' : ''}`,
+            className: `filter-pill compact ${statusFilter === 'all' ? 'active' : ''}`,
             onClick: () => setStatusFilter('all'),
-          }, `Todos (${stats.total})`),
+          },
+            `Todos `,
+            h('span', { className: 'pill-count' }, stats.total)
+          ),
           h('button', {
-            className: `filter-pill ${statusFilter === 'active' ? 'active' : ''}`,
+            className: `filter-pill compact filter-pill-active ${statusFilter === 'active' ? 'active' : ''}`,
             onClick: () => setStatusFilter('active'),
-          }, `Activos (${stats.active})`),
+          },
+            h('span', { className: 'dot-indicator dot-green' }),
+            `Activos `,
+            h('span', { className: 'pill-count' }, stats.active)
+          ),
           h('button', {
-            className: `filter-pill ${statusFilter === 'inactive' ? 'active' : ''}`,
+            className: `filter-pill compact filter-pill-inactive ${statusFilter === 'inactive' ? 'active' : ''}`,
             onClick: () => setStatusFilter('inactive'),
-          }, `Inactivos (${stats.inactive})`)
+          },
+            h('span', { className: 'dot-indicator dot-yellow' }),
+            `Inactivos `,
+            h('span', { className: 'pill-count' }, stats.inactive)
+          )
         )
       ),
 
-      // Tabla de administradores
-      h('div', { className: 'table-container' },
-        h('table', { className: 'admin-table' },
+      // Tabla Compacta de Administradores
+      h('div', { className: 'table-container compact' },
+        h('table', { className: 'admin-table compact' },
           h('thead', null,
             h('tr', null,
               h('th', null, 'Administrador'),
               h('th', null, 'Correo Electrónico'),
               h('th', null, 'Accesos Autorizados'),
               h('th', null, 'Estado'),
-              h('th', null, 'Fecha de Alta'),
+              h('th', null, 'Registro'),
               h('th', { style: { textAlign: 'right' } }, 'Acciones')
             )
           ),
           h('tbody', null,
             filteredAdmins.length === 0
               ? h('tr', null,
-                  h('td', { colSpan: 6, style: { textAlign: 'center', padding: '30px 14px', color: 'var(--text-muted)' } },
+                  h('td', { colSpan: 6, style: { textAlign: 'center', padding: '24px 12px', color: 'var(--text-muted)' } },
                     'No se encontraron administradores con los filtros seleccionados.'
                   )
                 )
@@ -768,42 +872,47 @@
                   const displayedPerms = perms.slice(0, 3);
                   const extraCount = perms.length - displayedPerms.length;
 
-                  return h('tr', { key: admin.id },
+                  return h('tr', { key: admin.id, className: 'compact-row' },
                     // Nombre / Usuario
                     h('td', null,
-                      h('div', { className: 'user-cell' },
-                        h('div', { className: 'user-cell-avatar' }, getInitials(admin.name)),
+                      h('div', { className: 'user-cell compact' },
+                        h('div', { className: 'user-cell-avatar compact' }, getInitials(admin.name)),
                         h('div', null,
-                          h('div', { className: 'user-cell-name' },
+                          h('div', { className: 'user-cell-name compact' },
                             admin.name,
-                            isCurrent && h('span', { style: { marginLeft: 6, fontSize: 10, color: 'var(--blue-primary)', fontWeight: 700 } }, '(Tú)')
+                            isCurrent && h('span', { className: 'user-current-tag' }, 'Tú')
                           ),
-                          h('div', { className: 'user-cell-handle' }, `@${admin.username}`)
+                          h('div', { className: 'user-cell-handle compact' }, `@${admin.username}`)
                         )
                       )
                     ),
 
                     // Correo
-                    h('td', null, admin.email),
+                    h('td', { className: 'email-cell compact' }, admin.email),
 
-                    // Accesos autorizados
+                    // Accesos autorizados con etiquetas coloridas
                     h('td', null,
-                      h('div', { className: 'permissions-badges-list' },
+                      h('div', { className: 'permissions-badges-list compact' },
                         perms.length === MODULES.length
-                          ? h('span', { className: 'permission-badge', style: { background: '#ECFDF5', borderColor: '#A7F3D0', color: '#047857' } }, '★ Acceso Total (7)')
+                          ? h('span', { className: 'permission-badge badge-all' }, '★ Acceso Total (7)')
                           : displayedPerms.map((permId) => {
                               const mod = MODULES.find((m) => m.id === permId);
-                              return h('span', { key: permId, className: 'permission-badge' }, mod ? mod.label : permId);
+                              const colors = getModuleBadgeColor(permId);
+                              return h('span', {
+                                key: permId,
+                                className: 'permission-badge compact',
+                                style: { background: colors.bg, borderColor: colors.border, color: colors.text }
+                              }, mod ? mod.label : permId);
                             }),
                         extraCount > 0 &&
-                          h('span', { className: 'permission-badge more' }, `+${extraCount} más`)
+                          h('span', { className: 'permission-badge more compact' }, `+${extraCount} más`)
                       )
                     ),
 
                     // Estado
                     h('td', null,
                       h('span', {
-                        className: `status-pill ${admin.status}`,
+                        className: `status-pill compact ${admin.status}`,
                         onClick: () => {
                           if (isCurrent) {
                             alert('No puedes desactivar tu propia cuenta mientras estás en sesión.');
@@ -811,7 +920,7 @@
                           }
                           onToggleStatus(admin.id);
                         },
-                        title: 'Clic para alternar estado',
+                        title: 'Clic para alternar estado (Activo / Inactivo)',
                       },
                         h('span', { className: 'status-dot' }),
                         admin.status === 'active' ? 'Activo' : 'Inactivo'
@@ -819,31 +928,29 @@
                     ),
 
                     // Fecha
-                    h('td', { style: { color: 'var(--text-muted)' } }, formatDate(admin.createdAt)),
+                    h('td', { className: 'date-cell compact' }, formatDate(admin.createdAt)),
 
                     // Acciones
                     h('td', null,
-                      h('div', { className: 'table-actions-cell', style: { justifyContent: 'flex-end' } },
+                      h('div', { className: 'table-actions-cell compact', style: { justifyContent: 'flex-end' } },
                         h('button', {
-                          className: 'action-icon-btn',
+                          className: 'action-icon-btn edit compact',
                           title: 'Editar datos y accesos',
                           onClick: () => handleOpenEdit(admin),
                         },
-                          h(Icon, { name: 'edit', size: 14 })
+                          h(Icon, { name: 'edit', size: 13 })
                         ),
                         h('button', {
-                          className: 'action-icon-btn delete',
-                          title: isCurrent ? 'No puedes eliminarte a ti mismo' : 'Eliminar administrador',
+                          className: 'action-icon-btn delete compact',
+                          title: isCurrent ? 'No puedes eliminarte a ti mismo' : 'Eliminar acceso administrativo',
                           disabled: isCurrent,
-                          style: isCurrent ? { opacity: 0.35, cursor: 'not-allowed' } : {},
+                          style: isCurrent ? { opacity: 0.3, cursor: 'not-allowed' } : {},
                           onClick: () => {
                             if (isCurrent) return;
-                            if (confirm(`¿Estás seguro de que deseas eliminar el acceso a ${admin.name} (@${admin.username})?`)) {
-                              onDeleteAdmin(admin.id);
-                            }
+                            setAdminToDelete(admin);
                           },
                         },
-                          h(Icon, { name: 'trash', size: 14 })
+                          h(Icon, { name: 'trash', size: 13 })
                         )
                       )
                     )
@@ -859,6 +966,14 @@
         onClose: () => setIsModalOpen(false),
         onSave: onSaveAdmin,
         editingAdmin: editingAdmin,
+      }),
+
+      // Modal Rojo de confirmación de eliminación
+      h(DeleteConfirmModal, {
+        isOpen: !!adminToDelete,
+        admin: adminToDelete,
+        onClose: () => setAdminToDelete(null),
+        onConfirm: onDeleteAdmin,
       })
     );
   };
@@ -965,27 +1080,6 @@
       if (currentUser.needsPasswordChange) return 'updatePassword';
       return 'dashboard';
     });
-
-    // Reloj en vivo para la barra superior
-    const [currentDateTime, setCurrentDateTime] = useState('');
-    useEffect(() => {
-      const updateClock = () => {
-        const now = new Date();
-        const formatted = now.toLocaleDateString('es-MX', {
-          weekday: 'short',
-          day: 'numeric',
-          month: 'short',
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit',
-        });
-        setCurrentDateTime(formatted);
-      };
-      updateClock();
-      const interval = setInterval(updateClock, 1000);
-      return () => clearInterval(interval);
-    }, []);
 
     // Manejador de Login exitoso
     const handleLoginSuccess = (user) => {
@@ -1210,28 +1304,8 @@
         )
       ),
 
-      // 2. ÁREA DE CONTENIDO CENTRAL
+      // 2. ÁREA DE CONTENIDO CENTRAL (sin barra superior, espacio completo al contenido)
       h('main', { className: 'admin-main' },
-        // Barra superior con reloj y estado
-        h('header', { className: 'admin-topbar' },
-          // Lado derecho: Estado de conexión Firebase + Fecha y hora en vivo
-          h('div', { className: 'topbar-right-info' },
-            h('div', {
-              className: 'db-status-badge',
-              title: isDbConnected
-                ? 'Conectado a Firebase Firestore en tiempo real (Colección: accesos_administrativos)'
-                : 'Conectando con Firebase Firestore...'
-            },
-              h('span', { className: `system-status-dot ${isDbConnected ? '' : 'warning'}` }),
-              h('span', { className: 'db-status-text' }, isDbConnected ? 'BD Firestore Conectada' : 'Conectando BD...')
-            ),
-            h('div', { className: 'datetime-pill' },
-              h(Icon, { name: 'clock', size: 13, color: 'var(--text-muted)' }),
-              h('span', null, currentDateTime)
-            )
-          )
-        ),
-
         // Contenido scrolleable
         h('div', { className: 'admin-content-scroll' },
           activeModule === 'accesos'
