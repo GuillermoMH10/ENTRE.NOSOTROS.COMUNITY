@@ -424,6 +424,22 @@
   };
 
   // ==========================================================================
+  // HELPER: COLORES VIBRANTES PARA CADA MÓDULO (Limpios y sin corporativo azul)
+  // ==========================================================================
+  const getModuleBadgeColor = (moduleId) => {
+    switch (moduleId) {
+      case 'principal': return { bg: '#EFF6FF', border: '#BFDBFE', text: '#2563EB' }; // Azul
+      case 'accesos': return { bg: '#FEF3C7', border: '#FDE68A', text: '#B45309' }; // Amarillo/Ámbar
+      case 'usuarios': return { bg: '#EEF2FF', border: '#C7D2FE', text: '#4338CA' }; // Índigo
+      case 'psicologos': return { bg: '#ECFDF5', border: '#A7F3D0', text: '#047857' }; // Verde esmeralda
+      case 'moderacion': return { bg: '#F5F3FF', border: '#DDD6FE', text: '#6D28D9' }; // Morado
+      case 'reportes': return { bg: '#FEF2F2', border: '#FECACA', text: '#B91C1C' }; // Rojo
+      case 'estadisticas': return { bg: '#ECFEFF', border: '#A5F3FC', text: '#0E7490' }; // Cyan
+      default: return { bg: '#F1F5F9', border: '#CBD5E1', text: '#475569' };
+    }
+  };
+
+  // ==========================================================================
   // COMPONENTE 3: MODAL DE CREAR / EDITAR ADMINISTRADOR (MÓDULO ACCESOS)
   // ==========================================================================
   const AdminFormModal = ({ isOpen, onClose, onSave, editingAdmin }) => {
@@ -530,7 +546,6 @@
               h('input', {
                 type: 'text',
                 className: 'form-input',
-                placeholder: 'Ej. Carolina Gómez',
                 value: name,
                 onChange: (e) => setName(e.target.value),
                 required: true,
@@ -544,7 +559,6 @@
               h('input', {
                 type: 'email',
                 className: 'form-input',
-                placeholder: 'carolina.gomez@entrenosotros.com',
                 value: email,
                 onChange: (e) => handleEmailChange(e.target.value),
                 required: true,
@@ -558,7 +572,6 @@
               h('input', {
                 type: 'text',
                 className: 'form-input',
-                placeholder: 'Se autogenera del correo...',
                 value: username,
                 onChange: (e) => handleUsernameManualChange(e.target.value),
                 required: true,
@@ -585,17 +598,26 @@
               h('div', { className: 'permissions-grid' },
                 MODULES.map((mod) => {
                   const isChecked = selectedPermissions.includes(mod.id);
+                  const color = getModuleBadgeColor(mod.id);
                   return h('label', {
                     key: mod.id,
                     className: `permission-checkbox-card ${isChecked ? 'selected' : ''}`,
+                    style: isChecked ? {
+                      background: color.bg,
+                      borderColor: color.border,
+                    } : {},
                   },
                     h('input', {
                       type: 'checkbox',
                       checked: isChecked,
                       onChange: () => togglePermission(mod.id),
+                      style: { accentColor: color.text, cursor: 'pointer' },
                     }),
-                    h(Icon, { name: mod.icon, size: 14, color: isChecked ? 'var(--blue-primary)' : 'var(--text-muted)' }),
-                    h('span', { className: 'permission-checkbox-label' }, mod.label)
+                    h(Icon, { name: mod.icon, size: 15, color: isChecked ? color.text : 'var(--text-muted)' }),
+                    h('span', {
+                      className: 'permission-checkbox-label',
+                      style: isChecked ? { color: color.text, fontWeight: 700 } : {}
+                    }, mod.label)
                   );
                 })
               )
@@ -612,20 +634,6 @@
         )
       )
     );
-  };
-
-  // Helper para asignar colores vibrantes a cada módulo en badges y decoraciones
-  const getModuleBadgeColor = (moduleId) => {
-    switch (moduleId) {
-      case 'principal': return { bg: '#EFF6FF', border: '#BFDBFE', text: '#1D4ED8' }; // Azul
-      case 'accesos': return { bg: '#FEF3C7', border: '#FDE68A', text: '#B45309' }; // Amarillo/Ámbar
-      case 'usuarios': return { bg: '#EEF2FF', border: '#C7D2FE', text: '#4338CA' }; // Índigo
-      case 'psicologos': return { bg: '#ECFDF5', border: '#A7F3D0', text: '#047857' }; // Verde esmeralda
-      case 'moderacion': return { bg: '#F5F3FF', border: '#DDD6FE', text: '#6D28D9' }; // Morado
-      case 'reportes': return { bg: '#FEF2F2', border: '#FECACA', text: '#B91C1C' }; // Rojo
-      case 'estadisticas': return { bg: '#ECFEFF', border: '#A5F3FC', text: '#0E7490' }; // Cyan
-      default: return { bg: '#F1F5F9', border: '#CBD5E1', text: '#475569' };
-    }
   };
 
   // ==========================================================================

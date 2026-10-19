@@ -1019,7 +1019,7 @@ body {
 
 .form-input {
   width: 100%;
-  padding: 8px 12px;
+  padding: 9px 12px;
   border-radius: 8px;
   border: 1px solid var(--border-medium);
   background: #FFFFFF;
@@ -1030,8 +1030,8 @@ body {
 }
 
 .form-input:focus {
-  border-color: #2563EB;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+  border-color: #F59E0B;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.18);
 }
 
 .form-input[readonly] {
@@ -1044,43 +1044,41 @@ body {
 .permissions-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-  gap: 6px;
-  margin-top: 4px;
+  gap: 8px;
+  margin-top: 6px;
 }
 
 .permission-checkbox-card {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 7px 10px;
-  border-radius: var(--radius-sm);
+  gap: 9px;
+  padding: 8px 12px;
+  border-radius: 8px;
   background: #F8FAFC;
   border: 1px solid var(--border-light);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.18s ease;
   user-select: none;
 }
 
 .permission-checkbox-card:hover {
-  background: var(--bg-hover);
-  border-color: var(--border-medium);
-}
-
-.permission-checkbox-card.selected {
-  background: var(--blue-tint);
-  border-color: var(--blue-border);
+  background: #FFFFFF;
+  border-color: #CBD5E1;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
 .permission-checkbox-card input[type="checkbox"] {
-  accent-color: var(--blue-primary);
-  width: 14px;
-  height: 14px;
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
 }
 
 .permission-checkbox-label {
   font-size: 12px;
   font-weight: 600;
   color: var(--text-main);
+  transition: color 0.15s ease;
 }
 
 .permissions-toggle-bar {
@@ -1091,23 +1089,78 @@ body {
 }
 
 .btn-link-action {
-  background: transparent;
-  border: none;
-  color: var(--blue-primary);
-  font-size: 11.5px;
-  font-weight: 600;
+  background: #FFFBEB;
+  border: 1px solid #FDE68A;
+  color: #B45309;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 6px;
   cursor: pointer;
-  text-decoration: underline;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.btn-link-action:hover {
+  background: #FEF3C7;
+  border-color: #F59E0B;
+  color: #78350F;
+  transform: translateY(-1px);
 }
 
 .modal-footer {
-  padding: 12px 18px;
+  padding: 14px 20px;
   border-top: 1px solid var(--border-light);
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 8px;
-  background: #F8FAFC;
+  gap: 10px;
+  background: #FAFCFE;
+}
+
+/* Botones profesionales del modal */
+.btn-secondary {
+  padding: 8px 16px;
+  background: #FFFFFF;
+  border: 1px solid #CBD5E1;
+  border-radius: var(--radius-sm);
+  color: #475569;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.btn-secondary:hover {
+  background: #F1F5F9;
+  color: #0F172A;
+  border-color: #94A3B8;
+  transform: translateY(-1px);
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  background: #F59E0B;
+  border: 1px solid #F59E0B;
+  border-radius: var(--radius-sm);
+  color: #FFFFFF;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.35);
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.btn-primary:hover {
+  background: #D97706;
+  border-color: #D97706;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.45);
 }
 
 /* ==========================================================================
