@@ -1,0 +1,11 @@
+{
+  "name": "admin-entrenosotros",
+  "version": "1.0.0",
+  "description": "Panel de Administración - Entre Nosotros",
+  "private": true,
+  "scripts": {
+    "start": "npx serve . -l 3001",
+    "dev": "npx serve . -l 3001",
+    "open": "start index.html"
+  }
+}
