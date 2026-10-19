@@ -1408,24 +1408,21 @@
                     // Usuario con FOTO EN CUADRADO
                     h('td', null,
                       h('div', { className: 'user-cell compact' },
-                        // Foto de perfil en CUADRADO
+                        // Foto de perfil en CUADRADO (solo la foto, sin iniciales)
                         h('div', {
                           className: 'user-square-avatar-wrap',
                           style: { borderColor: accent.border }
                         },
-                          user.avatarUrl &&
-                            h('img', {
-                              src: user.avatarUrl,
-                              alt: user.name || 'Usuario',
-                              className: 'user-square-avatar-img',
-                              onError: (e) => {
-                                e.target.style.display = 'none';
-                              }
-                            }),
-                          h('div', {
-                            className: 'user-square-avatar-fallback',
-                            style: { background: accent.bg, color: accent.text }
-                          }, getInitials(user.name))
+                          h('img', {
+                            src: user.avatarUrl || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(user.username || user.id || 'user')}`,
+                            alt: user.name || 'Usuario',
+                            className: 'user-square-avatar-img',
+                            loading: 'lazy',
+                            onError: (e) => {
+                              e.target.onerror = null;
+                              e.target.src = `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(user.username || 'user')}`;
+                            }
+                          })
                         ),
                         h('div', null,
                           h('div', { className: 'user-cell-name compact' }, user.name || 'Usuario'),

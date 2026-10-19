@@ -1478,18 +1478,17 @@ body {
   box-shadow: 0 2px 8px rgba(139, 92, 246, 0.35);
 }
 
-/* FOTO DE PERFIL EN CUADRADO */
+/* FOTO DE PERFIL EN CUADRADO (Solo foto) */
 .user-square-avatar-wrap {
-  width: 38px;
-  height: 38px;
+  width: 40px;
+  height: 40px;
   border-radius: 8px; /* Cuadrado con bordes redondeados */
   overflow: hidden;
   border-width: 2px;
   border-style: solid;
   border-color: #E2E8F0;
   flex-shrink: 0;
-  background: #F8FAFC;
-  position: relative;
+  background: #F1F5F9;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1501,16 +1500,6 @@ body {
   height: 100%;
   object-fit: cover;
   display: block;
-}
-
-.user-square-avatar-fallback {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 800;
-  font-size: 13px;
 }
 
 /* Filas coloridas de usuarios */
