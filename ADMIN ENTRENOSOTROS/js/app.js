@@ -12,6 +12,33 @@
     return React.createElement(type, props, ...children.flat());
   };
 
+  // --------------------------------------------------------------------------
+  // CONFIGURACIÓN DE FIREBASE (PROYECTO: ENTRE NOSOTROS)
+  // --------------------------------------------------------------------------
+  const FIREBASE_CONFIG = {
+    apiKey: "AIzaSyAs1ti_J3Fxi6t41kW_xC3OORk_PugyTSk",
+    authDomain: "entre-nosotros-742c0.firebaseapp.com",
+    projectId: "entre-nosotros-742c0",
+    storageBucket: "entre-nosotros-742c0.firebasestorage.app",
+    messagingSenderId: "67176257419",
+    appId: "1:67176257419:web:c5e00b80c8f51aa428418e"
+  };
+
+  const COLLECTION_ADMINS = 'accesos_administrativos';
+
+  let firestoreDb = null;
+  try {
+    if (typeof firebase !== 'undefined') {
+      if (!firebase.apps || !firebase.apps.length) {
+        firebase.initializeApp(FIREBASE_CONFIG);
+      }
+      firestoreDb = firebase.firestore();
+      console.log('🔥 [Firebase] Conectado a Firestore para colección:', COLLECTION_ADMINS);
+    }
+  } catch (err) {
+    console.warn('⚠️ [Firebase] Error inicializando SDK:', err);
+  }
+
   // Claves para persistencia en LocalStorage
   const STORAGE_CURRENT_USER = '@admin_entrenosotros_current_user_v1';
   const STORAGE_ADMINS_LIST = '@admin_entrenosotros_admins_list_v1';
@@ -177,27 +204,56 @@
 
       setIsLoading(true);
 
-      setTimeout(() => {
-        setIsLoading(false);
-        // Buscar en la lista de administradores
-        const found = adminsList.find(
-          (u) =>
-            (u.email.toLowerCase() === cleanId || u.username.toLowerCase() === cleanId) &&
-            u.password === cleanPass
-        );
+      (async () => {
+        try {
+          // 1. Buscar en lista cargada en memoria
+          let found = adminsList.find(
+            (u) =>
+              (u.email && u.email.toLowerCase() === cleanId || u.username && u.username.toLowerCase() === cleanId) &&
+              u.password === cleanPass
+          );
 
-        if (!found) {
-          setErrorMessage('Credenciales incorrectas. Verifica tu usuario y contraseña.');
-          return;
+          // 2. Si no se encontró en memoria, consultar directamente en Firestore
+          if (!found && firestoreDb) {
+            try {
+              const snapEmail = await firestoreDb.collection(COLLECTION_ADMINS)
+                .where('email', '==', cleanId)
+                .get();
+              if (!snapEmail.empty) {
+                const docData = { id: snapEmail.docs[0].id, ...snapEmail.docs[0].data() };
+                if (docData.password === cleanPass) found = docData;
+              } else {
+                const snapUser = await firestoreDb.collection(COLLECTION_ADMINS)
+                  .where('username', '==', cleanId)
+                  .get();
+                if (!snapUser.empty) {
+                  const docData = { id: snapUser.docs[0].id, ...snapUser.docs[0].data() };
+                  if (docData.password === cleanPass) found = docData;
+                }
+              }
+            } catch (errQuery) {
+              console.warn('[Firestore] Error consultando credenciales:', errQuery);
+            }
+          }
+
+          setIsLoading(false);
+
+          if (!found) {
+            setErrorMessage('Credenciales incorrectas. Verifica tu usuario y contraseña.');
+            return;
+          }
+
+          if (found.status !== 'active') {
+            setErrorMessage('Tu cuenta de administrador se encuentra inactiva. Contacta al superadministrador.');
+            return;
+          }
+
+          onLoginSuccess(found);
+        } catch (err) {
+          setIsLoading(false);
+          setErrorMessage('Error al verificar credenciales: ' + (err.message || 'Intenta de nuevo.'));
         }
-
-        if (found.status !== 'active') {
-          setErrorMessage('Tu cuenta de administrador se encuentra inactiva. Contacta al superadministrador.');
-          return;
-        }
-
-        onLoginSuccess(found);
-      }, 350);
+      })();
     };
 
     const handleFillDemo = () => {
@@ -831,7 +887,10 @@
   // COMPONENTE PRINCIPAL: APP ROOT
   // ==========================================================================
   const AdminApp = () => {
-    // 1. Cargar lista de administradores de LocalStorage
+    // 0. Estado de conexión en tiempo real con Firebase Firestore
+    const [isDbConnected, setIsDbConnected] = useState(false);
+
+    // 1. Cargar lista de administradores de LocalStorage (caché inicial instantáneo)
     const [adminsList, setAdminsList] = useState(() => {
       try {
         const saved = localStorage.getItem(STORAGE_ADMINS_LIST);
@@ -842,14 +901,49 @@
       return INITIAL_ADMINS;
     });
 
-    // Guardar administradores cada vez que cambien
+    // Suscripción en tiempo real a Firebase Firestore (Colección: accesos_administrativos)
     useEffect(() => {
-      try {
-        localStorage.setItem(STORAGE_ADMINS_LIST, JSON.stringify(adminsList));
-      } catch (e) {
-        console.warn('Error guardando admins:', e);
+      if (!firestoreDb) {
+        setIsDbConnected(false);
+        return;
       }
-    }, [adminsList]);
+
+      console.log('🔥 [Firebase Admin] Iniciando listener para colección:', COLLECTION_ADMINS);
+      const unsubscribe = firestoreDb
+        .collection(COLLECTION_ADMINS)
+        .onSnapshot(
+          (snapshot) => {
+            setIsDbConnected(true);
+
+            if (snapshot.empty) {
+              console.log('🔥 [Firebase Admin] Colección accesos_administrativos vacía. Creando administradores iniciales...');
+              const batch = firestoreDb.batch();
+              INITIAL_ADMINS.forEach((adm) => {
+                const docRef = firestoreDb.collection(COLLECTION_ADMINS).doc(adm.id);
+                batch.set(docRef, { ...adm, updatedAt: new Date().toISOString() });
+              });
+              batch.commit().catch((err) => console.error('Error al sembrar administradores iniciales:', err));
+            } else {
+              const list = [];
+              snapshot.forEach((doc) => {
+                list.push({ id: doc.id, ...doc.data() });
+              });
+              // Ordenar por fecha de creación descendente
+              list.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+              setAdminsList(list);
+              try {
+                localStorage.setItem(STORAGE_ADMINS_LIST, JSON.stringify(list));
+              } catch (e) {}
+            }
+          },
+          (error) => {
+            console.warn('⚠️ [Firebase Admin] Error en listener de Firestore:', error);
+            setIsDbConnected(false);
+          }
+        );
+
+      return () => unsubscribe();
+    }, []);
 
     // 2. Cargar usuario en sesión
     const [currentUser, setCurrentUser] = useState(() => {
@@ -905,17 +999,31 @@
       }
     };
 
-    // Manejador de actualización de contraseña obligatoria
-    const handlePasswordUpdated = (newPass) => {
+    // Manejador de actualización de contraseña obligatoria en Firestore
+    const handlePasswordUpdated = async (newPass) => {
       if (!currentUser) return;
 
+      const updatedAt = new Date().toISOString();
       const updatedUser = {
         ...currentUser,
         password: newPass,
         needsPasswordChange: false,
+        updatedAt: updatedAt,
       };
 
-      // Actualizar en la lista general de administradores
+      if (firestoreDb) {
+        try {
+          await firestoreDb.collection(COLLECTION_ADMINS).doc(currentUser.id).update({
+            password: newPass,
+            needsPasswordChange: false,
+            updatedAt: updatedAt,
+          });
+          console.log('🔒 [Firestore] Contraseña actualizada en la nube para', currentUser.id);
+        } catch (err) {
+          console.error('[Firestore] Error actualizando contraseña en la nube:', err);
+        }
+      }
+
       const updatedList = adminsList.map((a) =>
         a.id === currentUser.id ? updatedUser : a
       );
@@ -934,38 +1042,89 @@
       setActiveModule('accesos');
     };
 
-    // Guardar nuevo admin o cambios de admin existente
-    const handleSaveAdmin = (adminData) => {
-      const exists = adminsList.some((a) => a.id === adminData.id);
+    // Guardar nuevo admin o cambios de admin existente en Firestore
+    const handleSaveAdmin = async (adminData) => {
+      const docId = adminData.id || `admin_${Date.now()}`;
+      const payload = {
+        ...adminData,
+        id: docId,
+        updatedAt: new Date().toISOString(),
+      };
+
+      if (firestoreDb) {
+        try {
+          await firestoreDb.collection(COLLECTION_ADMINS).doc(docId).set(payload, { merge: true });
+          console.log('✅ [Firestore] Guardado en accesos_administrativos:', docId);
+        } catch (err) {
+          console.error('[Firestore] Error guardando admin:', err);
+          alert('Hubo un problema al sincronizar con Firebase: ' + (err.message || 'Verifica la conexión.'));
+        }
+      }
+
+      // Actualización optimista de estado local
+      const exists = adminsList.some((a) => a.id === docId);
       let updated;
       if (exists) {
-        updated = adminsList.map((a) => (a.id === adminData.id ? adminData : a));
+        updated = adminsList.map((a) => (a.id === docId ? payload : a));
       } else {
-        updated = [adminData, ...adminsList];
+        updated = [payload, ...adminsList];
       }
       setAdminsList(updated);
+      try {
+        localStorage.setItem(STORAGE_ADMINS_LIST, JSON.stringify(updated));
+      } catch (e) {}
 
-      // Si se editó el usuario actualmente logueado
-      if (currentUser && currentUser.id === adminData.id) {
-        setCurrentUser(adminData);
-        localStorage.setItem(STORAGE_CURRENT_USER, JSON.stringify(adminData));
+      if (currentUser && currentUser.id === docId) {
+        setCurrentUser(payload);
+        localStorage.setItem(STORAGE_CURRENT_USER, JSON.stringify(payload));
       }
     };
 
-    // Eliminar admin
-    const handleDeleteAdmin = (adminId) => {
-      setAdminsList(adminsList.filter((a) => a.id !== adminId));
+    // Eliminar admin de Firestore
+    const handleDeleteAdmin = async (adminId) => {
+      if (firestoreDb) {
+        try {
+          await firestoreDb.collection(COLLECTION_ADMINS).doc(adminId).delete();
+          console.log('🗑️ [Firestore] Eliminado de accesos_administrativos:', adminId);
+        } catch (err) {
+          console.error('[Firestore] Error eliminando admin de Firestore:', err);
+          alert('Error al eliminar en Firebase: ' + (err.message || 'Verifica la conexión.'));
+        }
+      }
+
+      const updated = adminsList.filter((a) => a.id !== adminId);
+      setAdminsList(updated);
+      try {
+        localStorage.setItem(STORAGE_ADMINS_LIST, JSON.stringify(updated));
+      } catch (e) {}
     };
 
-    // Alternar estado activo / inactivo
-    const handleToggleStatus = (adminId) => {
-      setAdminsList(
-        adminsList.map((a) =>
-          a.id === adminId
-            ? { ...a, status: a.status === 'active' ? 'inactive' : 'active' }
-            : a
-        )
+    // Alternar estado activo / inactivo en Firestore
+    const handleToggleStatus = async (adminId) => {
+      const target = adminsList.find((a) => a.id === adminId);
+      if (!target) return;
+      const nextStatus = target.status === 'active' ? 'inactive' : 'active';
+      const updatedAt = new Date().toISOString();
+
+      if (firestoreDb) {
+        try {
+          await firestoreDb.collection(COLLECTION_ADMINS).doc(adminId).update({
+            status: nextStatus,
+            updatedAt: updatedAt,
+          });
+          console.log('🔄 [Firestore] Estado cambiado a', nextStatus, 'para', adminId);
+        } catch (err) {
+          console.error('[Firestore] Error actualizando estado en Firestore:', err);
+        }
+      }
+
+      const updated = adminsList.map((a) =>
+        a.id === adminId ? { ...a, status: nextStatus, updatedAt } : a
       );
+      setAdminsList(updated);
+      try {
+        localStorage.setItem(STORAGE_ADMINS_LIST, JSON.stringify(updated));
+      } catch (e) {}
     };
 
     // ------------------------------------------------------------------------
@@ -1055,13 +1214,21 @@
       h('main', { className: 'admin-main' },
         // Barra superior con reloj y estado
         h('header', { className: 'admin-topbar' },
-          // Lado derecho: Fecha y hora en vivo
+          // Lado derecho: Estado de conexión Firebase + Fecha y hora en vivo
           h('div', { className: 'topbar-right-info' },
+            h('div', {
+              className: 'db-status-badge',
+              title: isDbConnected
+                ? 'Conectado a Firebase Firestore en tiempo real (Colección: accesos_administrativos)'
+                : 'Conectando con Firebase Firestore...'
+            },
+              h('span', { className: `system-status-dot ${isDbConnected ? '' : 'warning'}` }),
+              h('span', { className: 'db-status-text' }, isDbConnected ? 'BD Firestore Conectada' : 'Conectando BD...')
+            ),
             h('div', { className: 'datetime-pill' },
               h(Icon, { name: 'clock', size: 13, color: 'var(--text-muted)' }),
               h('span', null, currentDateTime)
-            ),
-            h('span', { className: 'system-status-dot', title: 'Sistema en línea' })
+            )
           )
         ),
 
