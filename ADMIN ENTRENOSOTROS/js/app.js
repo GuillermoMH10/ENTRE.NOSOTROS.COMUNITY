@@ -1033,7 +1033,6 @@
             },
               h('span', { className: 'nav-icon' }, h(Icon, { name: mod.icon, size: 16 })),
               h('span', { className: 'nav-item-label' }, mod.label),
-              mod.id === 'accesos' && h('span', { className: 'nav-item-badge' }, 'Activo'),
               !hasAccess && h(Icon, { name: 'lock', size: 12, color: 'var(--text-muted)' })
             );
           })
@@ -1054,17 +1053,8 @@
 
       // 2. ÁREA DE CONTENIDO CENTRAL
       h('main', { className: 'admin-main' },
-        // Barra superior con indicador de módulo y reloj
+        // Barra superior con reloj y estado
         h('header', { className: 'admin-topbar' },
-          // Indicador "Estás en: [Módulo]"
-          h('div', { className: 'breadcrumb-indicator' },
-            h('span', { className: 'breadcrumb-label' }, 'Estás en:'),
-            h('div', { className: 'breadcrumb-pill' },
-              h(Icon, { name: currentModuleObj.icon, size: 13, color: 'var(--blue-primary)' }),
-              currentModuleObj.label
-            )
-          ),
-
           // Lado derecho: Fecha y hora en vivo
           h('div', { className: 'topbar-right-info' },
             h('div', { className: 'datetime-pill' },

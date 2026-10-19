@@ -104,41 +104,46 @@ body {
 .sidebar-logo-container {
   display: flex;
   align-items: center;
-  justifyContent: center;
-  padding-bottom: 14px;
+  justify-content: center;
+  padding: 8px 4px 16px 4px;
+  border-bottom: 1px solid var(--border-light);
+  margin-bottom: 14px;
+  text-align: center;
+}
+
+.sidebar-logo {
+  max-width: 200px;
+  width: 100%;
+  max-height: 64px;
+  height: auto;
+  object-fit: contain;
+  margin: 0 auto;
+  display: block;
+}
+
+/* Tarjeta de usuario en el Sidebar (discreta, sin fondo de color) */
+.sidebar-user-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px 12px 6px;
+  background: transparent;
+  border: none;
   border-bottom: 1px solid var(--border-light);
   margin-bottom: 12px;
 }
 
-.sidebar-logo {
-  max-width: 175px;
-  max-height: 48px;
-  object-fit: contain;
-}
-
-/* Tarjeta de usuario en el Sidebar */
-.sidebar-user-card {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 10px;
-  background: var(--blue-tint);
-  border: 1px solid var(--blue-border);
-  border-radius: var(--radius-md);
-  margin-bottom: 14px;
-}
-
 .user-avatar-circle {
-  width: 36px;
-  height: 36px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
-  background: var(--blue-primary);
-  color: #FFFFFF;
+  background: #E2E8F0;
+  color: #475569;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
-  font-size: 13px;
+  font-weight: 600;
+  font-size: 11px;
   flex-shrink: 0;
 }
 
@@ -148,18 +153,20 @@ body {
 }
 
 .user-info-name {
-  font-weight: 700;
-  font-size: 13px;
-  color: var(--text-main);
+  font-weight: 500;
+  font-size: 12px;
+  color: var(--text-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: 1.25;
 }
 
 .user-info-role {
-  font-size: 11px;
-  color: var(--blue-primary);
-  font-weight: 600;
+  font-size: 10.5px;
+  color: #94A3B8;
+  font-weight: 400;
+  line-height: 1.2;
 }
 
 /* Lista de navegación */
@@ -276,13 +283,13 @@ body {
 
 /* Barra superior de encabezado */
 .admin-topbar {
-  height: 52px;
-  min-height: 52px;
+  height: 48px;
+  min-height: 48px;
   background: var(--bg-card);
   border-bottom: 1px solid var(--border-light);
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   padding: 0 20px;
 }
 
