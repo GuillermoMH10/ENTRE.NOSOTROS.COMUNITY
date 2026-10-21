@@ -2998,3 +2998,567 @@ body {
   border-radius: 4px;
 }
 
+/* ==========================================================================
+   MÓDULO DE ALTA PSICÓLOGOS (1 KPI SUPERIOR, BUSCADOR, ALTA Y TABLA)
+   ========================================================================== */
+.psicologos-module {
+  display: flex;
+  flex-direction: column;
+}
+
+/* 1. Exactamente 1 KPI Superior Centrada (Borde sólido verde esmeralda) */
+.psico-single-kpi-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+
+.psico-kpi-card {
+  background: #FFFFFF;
+  border: 2px solid #059669;
+  border-radius: 14px;
+  padding: 12px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  max-width: 440px;
+  width: 100%;
+  box-shadow: 0 4px 14px rgba(5, 150, 105, 0.12);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.psico-kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(5, 150, 105, 0.2);
+}
+
+.psico-kpi-icon-wrap {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: #ECFDF5;
+  border: 1px solid #A7F3D0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(5, 150, 105, 0.15);
+}
+
+.psico-kpi-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.psico-kpi-top-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.psico-kpi-number {
+  font-size: 28px;
+  font-weight: 800;
+  color: #0F172A;
+  line-height: 1;
+}
+
+.psico-kpi-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #047857;
+  white-space: nowrap;
+}
+
+.psico-kpi-meta {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: #64748B;
+  margin-top: 4px;
+}
+
+/* 2. Barra de Búsqueda Extendida y Botón Alta */
+.psico-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: nowrap;
+}
+
+.psico-search-wrap {
+  flex: 1;
+  min-width: 220px;
+}
+
+.btn-alta-psicologo {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: #059669;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 6px rgba(5, 150, 105, 0.2);
+}
+
+.btn-alta-psicologo:hover {
+  background: #047857;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(5, 150, 105, 0.3);
+}
+
+/* 3. Acordeón Desplegable para Alta de Psicólogo */
+.psico-accordion-panel {
+  background: #FFFFFF;
+  border: 2px solid #059669;
+  border-radius: 14px;
+  padding: 16px 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 6px 18px rgba(5, 150, 105, 0.1);
+  animation: psicoSlideDown 0.22s ease-out;
+}
+
+@keyframes psicoSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.psico-accordion-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.psico-accordion-title {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #0F172A;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.psico-accordion-desc {
+  font-size: 12px;
+  color: #64748B;
+  line-height: 1.45;
+  margin-bottom: 14px;
+}
+
+.psico-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+@media (max-width: 640px) {
+  .psico-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.psico-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-light);
+}
+
+/* 4. Tabla y Celdas de Psicólogos */
+.psico-photo-square {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 2px solid #10B981;
+  flex-shrink: 0;
+}
+
+.psico-photo-placeholder {
+  background: #ECFDF5;
+  border: 2px solid #A7F3D0;
+  color: #047857;
+  font-weight: 700;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.badge-status-app {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #ECFDF5;
+  border: 1px solid #10B981;
+  color: #047857;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.badge-status-pending {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #FEF3C7;
+  border: 1px solid #F59E0B;
+  color: #B45309;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.btn-copy-url {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #F8FAFC;
+  border: 1px solid #CBD5E1;
+  color: #334155;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 9px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-copy-url:hover {
+  background: #FFFFFF;
+  border-color: #059669;
+  color: #059669;
+}
+
+.btn-copy-url.copied {
+  background: #ECFDF5;
+  border-color: #10B981;
+  color: #047857;
+  font-weight: 700;
+}
+
+/* 5. Modales de Acceso y Vista Previa */
+.psico-access-modal-card {
+  max-width: 540px;
+}
+
+.psico-modal-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #ECFDF5;
+  border: 1px solid #A7F3D0;
+  color: #047857;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 5px;
+}
+
+.psico-success-banner {
+  display: flex;
+  gap: 10px;
+  background: #ECFDF5;
+  border: 1px solid #A7F3D0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  margin-bottom: 14px;
+}
+
+.psico-warning-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #FEF3C7;
+  border: 1px solid #FDE68A;
+  color: #92400E;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 14px;
+}
+
+.psico-meta-info-box {
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  padding: 10px 14px;
+}
+
+.psico-meta-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12.5px;
+  padding: 3px 0;
+}
+
+.psico-meta-label {
+  color: #64748B;
+  font-weight: 500;
+}
+
+.psico-meta-value {
+  color: #0F172A;
+  font-weight: 600;
+}
+
+.psico-copy-input-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.psico-code-input {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  background: #F8FAFC;
+  color: #0F172A;
+}
+
+.btn-copy-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #355971;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 6px;
+  padding: 0 14px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.btn-copy-action:hover {
+  background: #264356;
+}
+
+.btn-copy-action.copied {
+  background: #059669;
+}
+
+/* 6. Mockup de Tarjeta de la App */
+.psico-preview-card-modal {
+  max-width: 480px;
+}
+
+.app-mockup-card-container {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+}
+
+.app-card-cover-image {
+  height: 110px;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: 10px;
+}
+
+.app-card-cover-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.app-card-verified-tag {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #059669;
+  color: #FFFFFF;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.app-card-content {
+  padding: 0 16px 16px 16px;
+  position: relative;
+}
+
+.app-card-header-row {
+  display: flex;
+  gap: 14px;
+  align-items: flex-end;
+  margin-top: -36px;
+  margin-bottom: 12px;
+  position: relative;
+  z-index: 2;
+}
+
+.app-card-avatar-square {
+  width: 72px;
+  height: 72px;
+  border-radius: 12px;
+  object-fit: cover;
+  border: 3px solid #FFFFFF;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  background: #FFFFFF;
+}
+
+.app-card-avatar-placeholder {
+  background: #ECFDF5;
+  color: #047857;
+  font-weight: 800;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.app-card-titles {
+  flex: 1;
+  padding-top: 36px;
+}
+
+.app-card-name {
+  font-size: 16px;
+  font-weight: 800;
+  color: #0F172A;
+  margin: 0;
+  line-height: 1.25;
+}
+
+.app-card-specialty {
+  font-size: 12px;
+  font-weight: 600;
+  color: #059669;
+  margin-top: 2px;
+}
+
+.app-card-cedula {
+  font-size: 11px;
+  color: #64748B;
+  margin-top: 1px;
+}
+
+.app-card-pills-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.app-card-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #F1F5F9;
+  color: #334155;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.app-card-section {
+  margin-bottom: 12px;
+}
+
+.app-card-section-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748B;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 5px;
+}
+
+.app-card-tags-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.app-card-theme-tag {
+  font-size: 10.5px;
+  font-weight: 600;
+  background: #ECFDF5;
+  color: #047857;
+  border: 1px solid #A7F3D0;
+  padding: 2px 7px;
+  border-radius: 5px;
+}
+
+.app-card-bio-text {
+  font-size: 12px;
+  color: #475569;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.app-card-action-box {
+  margin-top: 14px;
+}
+
+.app-card-whatsapp-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  background: #25D366;
+  color: #FFFFFF;
+  padding: 10px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 13px;
+  text-decoration: none;
+  box-shadow: 0 4px 12px rgba(37, 211, 102, 0.25);
+  transition: all 0.15s ease;
+}
+
+.app-card-whatsapp-btn:hover {
+  background: #1EBE5D;
+  transform: translateY(-1px);
+}
+
+.app-card-no-whatsapp {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: #F1F5F9;
+  color: #64748B;
+  padding: 9px;
+  border-radius: 8px;
+  font-size: 11.5px;
+  font-weight: 500;
+}
+

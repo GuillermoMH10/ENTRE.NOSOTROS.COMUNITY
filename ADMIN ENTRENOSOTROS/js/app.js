@@ -27,6 +27,7 @@
   const COLLECTION_ADMINS = 'accesos_administrativos';
   const COLLECTION_USERS = 'users';
   const COLLECTION_POSTS = 'posts';
+  const COLLECTION_PSYCHOLOGISTS = 'psicologos';
 
   let firestoreDb = null;
   try {
@@ -35,7 +36,7 @@
         firebase.initializeApp(FIREBASE_CONFIG);
       }
       firestoreDb = firebase.firestore();
-      console.log('🔥 [Firebase] Conectado a Firestore para colecciones:', COLLECTION_ADMINS, COLLECTION_USERS, COLLECTION_POSTS);
+      console.log('🔥 [Firebase] Conectado a Firestore para colecciones:', COLLECTION_ADMINS, COLLECTION_USERS, COLLECTION_POSTS, COLLECTION_PSYCHOLOGISTS);
     }
   } catch (err) {
     console.warn('⚠️ [Firebase] Error inicializando SDK:', err);
@@ -47,6 +48,7 @@
   const STORAGE_USERS_LIST = '@admin_entrenosotros_users_list_v1';
   const STORAGE_REPORTED_POSTS = '@admin_entrenosotros_reported_posts_v1';
   const STORAGE_RESOLVED_COUNT = '@admin_entrenosotros_resolved_count_v1';
+  const STORAGE_PSYCHOLOGISTS_LIST = '@admin_entrenosotros_psychologists_list_v1';
 
   // --------------------------------------------------------------------------
   // UTILIDADES GLOBALES SEGURAS (FECHAS, USUARIOS, REPORTES)
@@ -331,6 +333,85 @@
     },
   ];
 
+  // Psicólogos iniciales semilla para el módulo de Alta Psicólogos y Portal
+  const INITIAL_PSYCHOLOGISTS = [
+    {
+      id: 'psico_claudia',
+      nombre: 'Dra. Claudia Ramos Morales',
+      correo: 'claudia.ramos@saludmental.mx',
+      email: 'claudia.ramos@saludmental.mx',
+      tempPassword: 'Psi-2026-8812',
+      token: 'tk_claudia_7812',
+      cedula: '12849102',
+      especialidad: 'Psicología Clínica y TCC',
+      modalidad: 'Presencial y En línea',
+      telefono: '+52 55 4192 8831',
+      whatsapp: '+525541928831',
+      ciudad: 'Ciudad de México, CDMX',
+      ubicacion: 'Consultorio Del Valle Norte, CDMX',
+      descripcion: 'Especialista en intervención de crisis, ansiedad generalizada y regulación emocional con más de 8 años de experiencia en clínica.',
+      temas: ['Ansiedad', 'Depresión', 'Autoestima', 'Regulación Emocional'],
+      imagen: 'https://images.unsplash.com/photo-1594824813508-62024b4be728?auto=format&fit=crop&w=400&q=80',
+      fotoPortada: 'https://images.unsplash.com/photo-1507652313519-d4e9174996dd?auto=format&fit=crop&w=1200&q=80',
+      perfilCompleto: true,
+      activo: true,
+      verificado: true,
+      postsCount: 5,
+      createdAt: '2026-10-14T10:00:00.000Z',
+      updatedAt: '2026-10-18T16:00:00.000Z',
+    },
+    {
+      id: 'psico_fernando',
+      nombre: 'Mtro. Fernando Navarro',
+      correo: 'fernando.navarro@menteactiva.org',
+      email: 'fernando.navarro@menteactiva.org',
+      tempPassword: 'Psi-2026-3914',
+      token: 'tk_fernando_3914',
+      cedula: '9845211',
+      especialidad: 'Terapia de Pareja y Duelo',
+      modalidad: 'En línea únicamente',
+      telefono: '+52 33 1892 4477',
+      whatsapp: '+523318924477',
+      ciudad: 'Guadalajara, Jalisco',
+      ubicacion: 'Atención en Línea Nacional',
+      descripcion: 'Acompañamiento en procesos de duelo afectivo, comunicación asertiva de parejas y reconstrucción de vínculos saludables.',
+      temas: ['Duelo', 'Parejas', 'Rupturas', 'Autoestima'],
+      imagen: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=400&q=80',
+      fotoPortada: 'https://images.unsplash.com/photo-1527689368864-3a821dbccc34?auto=format&fit=crop&w=1200&q=80',
+      perfilCompleto: true,
+      activo: true,
+      verificado: true,
+      postsCount: 3,
+      createdAt: '2026-10-16T14:30:00.000Z',
+      updatedAt: '2026-10-19T11:20:00.000Z',
+    },
+    {
+      id: 'psico_mariana',
+      nombre: 'Lic. Mariana Valenzuela Garza',
+      correo: 'mvalenzuela@terapias.com',
+      email: 'mvalenzuela@terapias.com',
+      tempPassword: 'Psi-2026-5520',
+      token: 'tk_mariana_5520',
+      cedula: '',
+      especialidad: '',
+      modalidad: 'Presencial y En línea',
+      telefono: '',
+      whatsapp: '',
+      ciudad: '',
+      ubicacion: '',
+      descripcion: '',
+      temas: [],
+      imagen: '',
+      fotoPortada: '',
+      perfilCompleto: false,
+      activo: true,
+      verificado: false,
+      postsCount: 0,
+      createdAt: '2026-10-21T09:15:00.000Z',
+      updatedAt: '2026-10-21T09:15:00.000Z',
+    },
+  ];
+
   // Helper para sanitizar publicaciones reportadas con seguridad absoluta contra nulos
   const sanitizeReportedPost = (post, idx) => {
     if (!post || typeof post !== 'object') {
@@ -540,6 +621,50 @@
       heart: h('svg', { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth, strokeLinecap: 'round', strokeLinejoin: 'round' },
         h('path', { d: 'M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z' })
       ),
+      copy: h('svg', { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth, strokeLinecap: 'round', strokeLinejoin: 'round' },
+        h('rect', { x: '9', y: '9', width: '13', height: '13', rx: '2', ry: '2' }),
+        h('path', { d: 'M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1' })
+      ),
+      externalLink: h('svg', { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth, strokeLinecap: 'round', strokeLinejoin: 'round' },
+        h('path', { d: 'M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6' }),
+        h('polyline', { points: '15 3 21 3 21 9' }),
+        h('line', { x1: '10', y1: '14', x2: '21', y2: '3' })
+      ),
+      share: h('svg', { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth, strokeLinecap: 'round', strokeLinejoin: 'round' },
+        h('circle', { cx: '18', cy: '5', r: '3' }),
+        h('circle', { cx: '6', cy: '12', r: '3' }),
+        h('circle', { cx: '18', cy: '19', r: '3' }),
+        h('line', { x1: '8.59', y1: '13.51', x2: '15.42', y2: '17.49' }),
+        h('line', { x1: '15.41', y1: '6.51', x2: '8.59', y2: '10.49' })
+      ),
+      link: h('svg', { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth, strokeLinecap: 'round', strokeLinejoin: 'round' },
+        h('path', { d: 'M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71' }),
+        h('path', { d: 'M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71' })
+      ),
+      chevronDown: h('svg', { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth, strokeLinecap: 'round', strokeLinejoin: 'round' },
+        h('polyline', { points: '6 9 12 15 18 9' })
+      ),
+      chevronUp: h('svg', { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth, strokeLinecap: 'round', strokeLinejoin: 'round' },
+        h('polyline', { points: '18 15 12 9 6 15' })
+      ),
+      phone: h('svg', { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth, strokeLinecap: 'round', strokeLinejoin: 'round' },
+        h('path', { d: 'M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z' })
+      ),
+      mail: h('svg', { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth, strokeLinecap: 'round', strokeLinejoin: 'round' },
+        h('path', { d: 'M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z' }),
+        h('polyline', { points: '22,6 12,13 2,6' })
+      ),
+      qrCode: h('svg', { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth, strokeLinecap: 'round', strokeLinejoin: 'round' },
+        h('rect', { x: '3', y: '3', width: '7', height: '7' }),
+        h('rect', { x: '14', y: '3', width: '7', height: '7' }),
+        h('rect', { x: '14', y: '14', width: '7', height: '7' }),
+        h('rect', { x: '3', y: '14', width: '7', height: '7' }),
+        h('path', { d: 'M7 7h.01M17 7h.01M17 17h.01M7 17h.01' })
+      ),
+      award: h('svg', { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth, strokeLinecap: 'round', strokeLinejoin: 'round' },
+        h('circle', { cx: '12', cy: '8', r: '7' }),
+        h('polyline', { points: '8.21 13.89 7 23 12 20 17 23 15.79 13.88' })
+      ),
     };
 
     return icons[name] || null;
@@ -601,6 +726,97 @@
       return email.substring(0, atIndex).trim().toLowerCase();
     }
     return email.trim().toLowerCase();
+  };
+
+  // Sanitizar registro de especialista clínico / psicólogo
+  const sanitizePsychologist = (psico, idx) => {
+    if (!psico || typeof psico !== 'object') {
+      return {
+        id: `psico_${idx}`,
+        nombre: 'Especialista',
+        correo: 'especialista@entrenosotros.com',
+        email: 'especialista@entrenosotros.com',
+        tempPassword: `Psi-${Math.floor(1000 + Math.random() * 9000)}`,
+        token: `tk_${Math.random().toString(36).substring(2, 9)}`,
+        cedula: '',
+        especialidad: '',
+        modalidad: 'Presencial y En línea',
+        telefono: '',
+        whatsapp: '',
+        ciudad: '',
+        ubicacion: '',
+        descripcion: '',
+        temas: [],
+        imagen: '',
+        fotoPortada: '',
+        perfilCompleto: false,
+        activo: true,
+        verificado: false,
+        postsCount: 0,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+    }
+
+    const safeNombre = typeof psico.nombre === 'string' && psico.nombre.trim()
+      ? psico.nombre.trim()
+      : (typeof psico.name === 'string' && psico.name.trim() ? psico.name.trim() : 'Especialista');
+
+    const safeCorreo = typeof psico.correo === 'string' && psico.correo.trim()
+      ? psico.correo.trim()
+      : (typeof psico.email === 'string' && psico.email.trim() ? psico.email.trim() : 'especialista@entrenosotros.com');
+
+    const safeTemas = Array.isArray(psico.temas)
+      ? psico.temas.filter((t) => typeof t === 'string' && t.trim().length > 0)
+      : (typeof psico.temas === 'string' && psico.temas ? psico.temas.split(',').map((t) => t.trim()).filter(Boolean) : []);
+
+    const isComplete = Boolean(
+      psico.perfilCompleto === true ||
+      (psico.cedula && psico.especialidad && (psico.whatsapp || psico.telefono || psico.imagen))
+    );
+
+    return {
+      id: String(psico.id || `psico_${idx}`),
+      nombre: safeNombre,
+      correo: safeCorreo,
+      email: safeCorreo,
+      tempPassword: String(psico.tempPassword || psico.password || `Psi-${Math.floor(1000 + (idx * 231) % 9000)}`),
+      token: String(psico.token || `tk_${String(psico.id || idx).slice(-6)}`),
+      cedula: typeof psico.cedula === 'string' ? psico.cedula.trim() : '',
+      especialidad: typeof psico.especialidad === 'string' ? psico.especialidad.trim() : '',
+      modalidad: typeof psico.modalidad === 'string' && psico.modalidad ? psico.modalidad : 'Presencial y En línea',
+      telefono: typeof psico.telefono === 'string' ? psico.telefono.trim() : '',
+      whatsapp: typeof psico.whatsapp === 'string' ? psico.whatsapp.trim() : (typeof psico.telefono === 'string' ? psico.telefono.trim() : ''),
+      ciudad: typeof psico.ciudad === 'string' ? psico.ciudad.trim() : '',
+      ubicacion: typeof psico.ubicacion === 'string' ? psico.ubicacion.trim() : '',
+      descripcion: typeof psico.descripcion === 'string' ? psico.descripcion : (typeof psico.bio === 'string' ? psico.bio : ''),
+      temas: safeTemas,
+      imagen: typeof psico.imagen === 'string' ? psico.imagen.trim() : (typeof psico.avatar === 'string' ? psico.avatar.trim() : ''),
+      fotoPortada: typeof psico.fotoPortada === 'string' ? psico.fotoPortada.trim() : '',
+      perfilCompleto: isComplete,
+      activo: psico.activo !== false,
+      verificado: psico.verificado === true || isComplete,
+      postsCount: typeof psico.postsCount === 'number' ? psico.postsCount : (parseInt(psico.postsCount, 10) || 0),
+      createdAt: toSafeIsoString(psico.createdAt || psico.timestamp),
+      updatedAt: toSafeIsoString(psico.updatedAt || psico.createdAt),
+    };
+  };
+
+  // Construir la URL completa y segura para el Portal del Psicólogo
+  const getPsychologistPortalUrl = (psico) => {
+    if (!psico) return '';
+    try {
+      const loc = window.location;
+      const currentPath = loc.pathname;
+      const dir = currentPath.substring(0, currentPath.lastIndexOf('/'));
+      const portalBase = `${loc.origin}${dir}/portal_psicologo.html`;
+      const email = encodeURIComponent(psico.correo || psico.email || '');
+      const token = encodeURIComponent(psico.token || '');
+      const id = encodeURIComponent(psico.id || '');
+      return `${portalBase}?id=${id}&email=${email}&token=${token}`;
+    } catch (e) {
+      return `portal_psicologo.html?id=${psico.id || ''}&email=${encodeURIComponent(psico.correo || '')}&token=${encodeURIComponent(psico.token || '')}`;
+    }
   };
 
   // ==========================================================================
@@ -1706,6 +1922,771 @@
         desc: noticeModal.desc,
         icon: noticeModal.icon,
         onClose: () => setNoticeModal({ isOpen: false, title: '', user: '', desc: '', icon: 'info' }),
+      })
+    );
+  };
+
+  // ==========================================================================
+  // COMPONENTE: MODAL DE ENLACE Y CREDENCIALES GENERADAS DEL PSICÓLOGO
+  // ==========================================================================
+  const PsychologistAccessModal = ({ isOpen, psychologist, onClose }) => {
+    if (!isOpen || !psychologist) return null;
+
+    const [copiedUrl, setCopiedUrl] = useState(false);
+    const [copiedPass, setCopiedPass] = useState(false);
+
+    const portalUrl = getPsychologistPortalUrl(psychologist);
+
+    const handleCopyUrl = () => {
+      try {
+        navigator.clipboard.writeText(portalUrl);
+        setCopiedUrl(true);
+        setTimeout(() => setCopiedUrl(false), 2500);
+      } catch (err) {
+        console.warn('Error al copiar URL:', err);
+      }
+    };
+
+    const handleCopyPass = () => {
+      try {
+        navigator.clipboard.writeText(psychologist.tempPassword || 'Psi-2026');
+        setCopiedPass(true);
+        setTimeout(() => setCopiedPass(false), 2500);
+      } catch (err) {
+        console.warn('Error al copiar contraseña:', err);
+      }
+    };
+
+    return h('div', { className: 'modal-overlay', onClick: onClose },
+      h('div', { className: 'modal-card psico-access-modal-card', onClick: (e) => e.stopPropagation() },
+        h('div', { className: 'modal-header' },
+          h('div', { style: { display: 'flex', alignItems: 'center', gap: 8 } },
+            h('span', { className: 'psico-modal-badge' },
+              h(Icon, { name: 'stethoscope', size: 14, color: '#047857' }),
+              'Portal del Especialista'
+            ),
+            h('h3', { style: { margin: 0, fontSize: 16 } }, 'Acceso y Credenciales Generadas')
+          ),
+          h('button', { className: 'modal-close-btn', onClick: onClose }, '✕')
+        ),
+
+        h('div', { className: 'modal-body', style: { padding: '16px 20px' } },
+          // Banner de éxito
+          h('div', { className: 'psico-success-banner' },
+            h(Icon, { name: 'check', size: 16, color: '#047857' }),
+            h('div', null,
+              h('div', { style: { fontWeight: 700, color: '#047857', fontSize: 13 } }, '¡Acceso creado con éxito!'),
+              h('div', { style: { color: '#065F46', fontSize: 11.5, marginTop: 2 } },
+                'Comparte este enlace y contraseña con el especialista para que ingrese a personalizar su tarjeta y activar su perfil en la App.'
+              )
+            )
+          ),
+
+          // Datos del especialista
+          h('div', { className: 'psico-meta-info-box' },
+            h('div', { className: 'psico-meta-row' },
+              h('span', { className: 'psico-meta-label' }, 'Especialista:'),
+              h('span', { className: 'psico-meta-value', style: { fontWeight: 700 } }, psychologist.nombre)
+            ),
+            h('div', { className: 'psico-meta-row' },
+              h('span', { className: 'psico-meta-label' }, 'Correo asignado:'),
+              h('span', { className: 'psico-meta-value' }, psychologist.correo)
+            )
+          ),
+
+          // Contraseña temporal
+          h('div', { className: 'form-group', style: { marginTop: 14 } },
+            h('label', { className: 'form-label', style: { display: 'flex', justifyContent: 'space-between' } },
+              h('span', null, 'Contraseña de Acceso Temporal'),
+              copiedPass && h('span', { style: { color: '#059669', fontWeight: 600, fontSize: 11 } }, '✓ ¡Copiada!')
+            ),
+            h('div', { className: 'psico-copy-input-row' },
+              h('input', {
+                type: 'text',
+                readOnly: true,
+                className: 'form-input psico-code-input',
+                value: psychologist.tempPassword || 'Psi-2026',
+              }),
+              h('button', {
+                type: 'button',
+                className: `btn-copy-action ${copiedPass ? 'copied' : ''}`,
+                onClick: handleCopyPass,
+                title: 'Copiar contraseña temporal',
+              },
+                h(Icon, { name: copiedPass ? 'check' : 'copy', size: 14 }),
+                copiedPass ? 'Copiada' : 'Copiar'
+              )
+            )
+          ),
+
+          // Enlace único al portal
+          h('div', { className: 'form-group', style: { marginTop: 14 } },
+            h('label', { className: 'form-label', style: { display: 'flex', justifyContent: 'space-between' } },
+              h('span', null, 'Enlace Único del Portal'),
+              copiedUrl && h('span', { style: { color: '#059669', fontWeight: 600, fontSize: 11 } }, '✓ ¡Enlace copiado al portapapeles!')
+            ),
+            h('div', { className: 'psico-copy-input-row' },
+              h('input', {
+                type: 'text',
+                readOnly: true,
+                className: 'form-input psico-code-input',
+                value: portalUrl,
+              }),
+              h('button', {
+                type: 'button',
+                className: `btn-copy-action ${copiedUrl ? 'copied' : ''}`,
+                onClick: handleCopyUrl,
+                title: 'Copiar enlace único del portal',
+              },
+                h(Icon, { name: copiedUrl ? 'check' : 'link', size: 14 }),
+                copiedUrl ? '¡Copiado!' : 'Copiar Enlace'
+              )
+            ),
+            h('span', { className: 'form-hint', style: { marginTop: 6, display: 'block' } },
+              'El psicólogo podrá entrar directamente con este link; solicitará su correo y contraseña para acceder a sus 5 módulos.'
+            )
+          )
+        ),
+
+        h('div', { className: 'modal-footer', style: { justifyContent: 'space-between' } },
+          h('a', {
+            href: portalUrl,
+            target: '_blank',
+            rel: 'noopener noreferrer',
+            className: 'btn-secondary',
+            style: { display: 'inline-flex', alignItems: 'center', gap: 6, textDecoration: 'none' },
+          },
+            h(Icon, { name: 'externalLink', size: 14, color: 'var(--text-main)' }),
+            'Probar / Abrir Portal'
+          ),
+          h('button', {
+            type: 'button',
+            className: 'btn-primary',
+            style: { background: '#059669', borderColor: '#059669' },
+            onClick: onClose,
+          },
+            h(Icon, { name: 'check', size: 14, color: '#FFFFFF' }),
+            'Entendido / Cerrar'
+          )
+        )
+      )
+    );
+  };
+
+  // ==========================================================================
+  // COMPONENTE: MODAL DE VISTA PREVIA DE TARJETA EN LA APP ENTRE NOSOTROS
+  // ==========================================================================
+  const PsychologistCardPreviewModal = ({ isOpen, psychologist, onClose }) => {
+    if (!isOpen || !psychologist) return null;
+
+    const isComplete = psychologist.perfilCompleto;
+    const coverUrl = psychologist.fotoPortada || 'https://images.unsplash.com/photo-1507652313519-d4e9174996dd?auto=format&fit=crop&w=1200&q=80';
+    const avatarUrl = psychologist.imagen || '';
+    const cleanPhone = (psychologist.whatsapp || psychologist.telefono || '').replace(/[^\d+]/g, '');
+
+    return h('div', { className: 'modal-overlay', onClick: onClose },
+      h('div', { className: 'modal-card psico-preview-card-modal', onClick: (e) => e.stopPropagation() },
+        h('div', { className: 'modal-header' },
+          h('div', { style: { display: 'flex', alignItems: 'center', gap: 8 } },
+            h('span', { className: 'psico-modal-badge' },
+              h(Icon, { name: 'eye', size: 14, color: '#047857' }),
+              'Vista Previa'
+            ),
+            h('h3', { style: { margin: 0, fontSize: 16 } }, 'Tarjeta del Psicólogo en la App')
+          ),
+          h('button', { className: 'modal-close-btn', onClick: onClose }, '✕')
+        ),
+
+        h('div', { className: 'modal-body', style: { padding: '16px 20px', background: '#F8FAFC' } },
+          // Estado de la tarjeta
+          !isComplete && h('div', { className: 'psico-warning-banner' },
+            h(Icon, { name: 'clock', size: 15, color: '#D97706' }),
+            h('span', null, 'Tarjeta Pendiente: El especialista aún no completa su perfil clínico en el portal.')
+          ),
+
+          // Mockup móvil de la tarjeta de la App
+          h('div', { className: 'app-mockup-card-container' },
+            // Portada
+            h('div', {
+              className: 'app-card-cover-image',
+              style: { backgroundImage: `url(${coverUrl})` }
+            },
+              h('div', { className: 'app-card-cover-overlay' }),
+              // Badge de verificación
+              h('div', { className: 'app-card-verified-tag' },
+                h(Icon, { name: 'check', size: 11, color: '#FFFFFF' }),
+                'Especialista Verificado'
+              )
+            ),
+
+            // Encabezado con Avatar Cuadrado y Datos
+            h('div', { className: 'app-card-content' },
+              h('div', { className: 'app-card-header-row' },
+                // Avatar cuadrado estilizado
+                avatarUrl
+                  ? h('img', {
+                      src: avatarUrl,
+                      alt: psychologist.nombre,
+                      className: 'app-card-avatar-square',
+                      onError: (e) => { e.target.style.display = 'none'; }
+                    })
+                  : h('div', { className: 'app-card-avatar-square app-card-avatar-placeholder' },
+                      getInitials(psychologist.nombre)
+                    ),
+                h('div', { className: 'app-card-titles' },
+                  h('h4', { className: 'app-card-name' }, psychologist.nombre),
+                  h('div', { className: 'app-card-specialty' },
+                    psychologist.especialidad || 'Psicología y Acompañamiento Emocional'
+                  ),
+                  psychologist.cedula &&
+                    h('div', { className: 'app-card-cedula' }, `Céd. Profesional: ${psychologist.cedula}`)
+                )
+              ),
+
+              // Badges de modalidad y ubicación
+              h('div', { className: 'app-card-pills-row' },
+                h('span', { className: 'app-card-pill' },
+                  h(Icon, { name: 'stethoscope', size: 12, color: '#059669' }),
+                  psychologist.modalidad || 'Presencial y En línea'
+                ),
+                psychologist.ciudad &&
+                  h('span', { className: 'app-card-pill' },
+                    h(Icon, { name: 'globe', size: 12, color: '#2563EB' }),
+                    psychologist.ciudad
+                  )
+              ),
+
+              // Temas que atiende
+              psychologist.temas && psychologist.temas.length > 0 &&
+                h('div', { className: 'app-card-section' },
+                  h('div', { className: 'app-card-section-label' }, 'Temas que atiende:'),
+                  h('div', { className: 'app-card-tags-list' },
+                    psychologist.temas.map((t, idx) =>
+                      h('span', { key: idx, className: 'app-card-theme-tag' }, t)
+                    )
+                  )
+                ),
+
+              // Biografía
+              h('div', { className: 'app-card-section' },
+                h('div', { className: 'app-card-section-label' }, 'Sobre el especialista:'),
+                h('p', { className: 'app-card-bio-text' },
+                  psychologist.descripcion || 'Especialista comprometido con la salud mental y el bienestar emocional de los miembros de la comunidad Entre Nosotros.'
+                )
+              ),
+
+              // Botón de WhatsApp para Citas Directas
+              h('div', { className: 'app-card-action-box' },
+                cleanPhone
+                  ? h('a', {
+                      href: `https://wa.me/${cleanPhone}?text=${encodeURIComponent(`Hola ${psychologist.nombre}, te contacto desde la aplicación Entre Nosotros para solicitar información sobre consulta psicológica.`)}`,
+                      target: '_blank',
+                      rel: 'noopener noreferrer',
+                      className: 'app-card-whatsapp-btn',
+                    },
+                      h(Icon, { name: 'phone', size: 15, color: '#FFFFFF' }),
+                      'Contactar por WhatsApp / Agendar Cita'
+                    )
+                  : h('div', { className: 'app-card-no-whatsapp' },
+                      h(Icon, { name: 'info', size: 14, color: '#64748B' }),
+                      'WhatsApp no configurado aún por el especialista'
+                    )
+              )
+            )
+          )
+        ),
+
+        h('div', { className: 'modal-footer' },
+          h('button', { type: 'button', className: 'btn-secondary', onClick: onClose }, 'Cerrar Vista Previa')
+        )
+      )
+    );
+  };
+
+  // ==========================================================================
+  // COMPONENTE: MODAL DE CONFIRMACIÓN DE ELIMINACIÓN DE PSICÓLOGO
+  // ==========================================================================
+  const PsychologistDeleteModal = ({ isOpen, psychologist, onClose, onConfirm }) => {
+    if (!isOpen || !psychologist) return null;
+
+    return h('div', { className: 'modal-overlay', onClick: onClose },
+      h('div', { className: 'modal-card modal-danger-card', onClick: (e) => e.stopPropagation() },
+        h('div', { className: 'modal-danger-top-bar' }),
+        h('div', { className: 'modal-danger-header' },
+          h('div', { className: 'danger-icon-circle' },
+            h(Icon, { name: 'trash', size: 22, color: '#DC2626' })
+          ),
+          h('button', { className: 'modal-close-btn', onClick: onClose }, '✕')
+        ),
+
+        h('div', { className: 'modal-danger-body' },
+          h('h3', { className: 'danger-title' }, '¿Eliminar Registro de Psicólogo?'),
+          h('p', { className: 'danger-description' },
+            'Estás a punto de revocar el acceso y eliminar de Firebase Firestore la tarjeta de este especialista clínico:'
+          ),
+
+          h('div', { className: 'danger-user-card' },
+            h('div', { className: 'danger-avatar', style: { borderRadius: 8 } }, getInitials(psychologist.nombre)),
+            h('div', { className: 'danger-meta' },
+              h('div', { className: 'danger-name' }, psychologist.nombre),
+              h('div', { className: 'danger-handle' }, psychologist.correo),
+              h('div', { className: 'danger-role' }, psychologist.especialidad || 'Especialista en proceso')
+            )
+          ),
+
+          h('div', { className: 'danger-warning-pill' },
+            h(Icon, { name: 'alert', size: 14, color: '#DC2626' }),
+            h('span', null, 'Esta acción quitará su tarjeta de la App y anulará el acceso al portal.')
+          )
+        ),
+
+        h('div', { className: 'modal-footer danger-footer' },
+          h('button', { type: 'button', className: 'btn-secondary', onClick: onClose }, 'Cancelar'),
+          h('button', {
+            type: 'button',
+            className: 'btn-danger',
+            onClick: () => {
+              onConfirm(psychologist.id);
+              onClose();
+            }
+          },
+            h(Icon, { name: 'trash', size: 14, color: '#FFFFFF' }),
+            'Sí, Eliminar Especialista'
+          )
+        )
+      )
+    );
+  };
+
+  // ==========================================================================
+  // COMPONENTE: MÓDULO DE ALTA PSICÓLOGOS (1 KPI SUPERIOR, BUSCADOR, ALTA Y TABLA)
+  // ==========================================================================
+  const PsicologosView = ({ psychologistsList = [], onSavePsychologist, onDeletePsychologist }) => {
+    // 1. Estados de filtrado y búsqueda
+    const [searchTerm, setSearchTerm] = useState('');
+    const [filterTab, setFilterTab] = useState('all'); // 'all' | 'active' | 'pending'
+
+    // 2. Estado del acordeón desplegable para Alta de Psicólogo (Nombre, Correo y Ya)
+    const [isFormOpen, setIsFormOpen] = useState(false);
+    const [newName, setNewName] = useState('');
+    const [newEmail, setNewEmail] = useState('');
+    const [formError, setFormError] = useState('');
+    const [isSaving, setIsSaving] = useState(false);
+
+    // 3. Modales de interacción
+    const [accessModal, setAccessModal] = useState({ isOpen: false, psychologist: null });
+    const [previewModal, setPreviewModal] = useState({ isOpen: false, psychologist: null });
+    const [deleteModal, setDeleteModal] = useState({ isOpen: false, psychologist: null });
+    const [copiedRowId, setCopiedRowId] = useState(null);
+
+    // Sanitizar lista de psicólogos para evitar errores de render
+    const safePsychologistsList = useMemo(() => {
+      const source = (Array.isArray(psychologistsList) && psychologistsList.length > 0)
+        ? psychologistsList
+        : INITIAL_PSYCHOLOGISTS;
+      return source.map((p, idx) => sanitizePsychologist(p, idx));
+    }, [psychologistsList]);
+
+    // Estadísticas: Exactamente 1 KPI Superior (Total Psicólogos)
+    const stats = useMemo(() => {
+      const total = safePsychologistsList.length;
+      const activeInApp = safePsychologistsList.filter((p) => p.perfilCompleto).length;
+      const pending = total - activeInApp;
+      return { total, activeInApp, pending };
+    }, [safePsychologistsList]);
+
+    // Filtrar lista por término de búsqueda y pestañas
+    const filteredPsychologists = useMemo(() => {
+      const term = (searchTerm || '').trim().toLowerCase();
+      let list = safePsychologistsList.filter((p) => {
+        if (!term) return true;
+        const nameMatch = (p.nombre || '').toLowerCase().includes(term);
+        const emailMatch = (p.correo || '').toLowerCase().includes(term);
+        const cedulaMatch = (p.cedula || '').toLowerCase().includes(term);
+        const specMatch = (p.especialidad || '').toLowerCase().includes(term);
+        const cityMatch = (p.ciudad || '').toLowerCase().includes(term);
+        return nameMatch || emailMatch || cedulaMatch || specMatch || cityMatch;
+      });
+
+      if (filterTab === 'active') {
+        list = list.filter((p) => p.perfilCompleto);
+      } else if (filterTab === 'pending') {
+        list = list.filter((p) => !p.perfilCompleto);
+      }
+
+      return list;
+    }, [safePsychologistsList, searchTerm, filterTab]);
+
+    // Manejador del Formulario Desplegable: SOLO NOMBRE Y CORREO ("Y YA")
+    const handleCreatePsychologist = async (e) => {
+      e.preventDefault();
+      setFormError('');
+
+      const cleanName = newName.trim();
+      const cleanEmail = newEmail.trim().toLowerCase();
+
+      if (!cleanName) {
+        setFormError('Por favor ingresa el nombre completo del especialista.');
+        return;
+      }
+      if (!cleanEmail || !cleanEmail.includes('@')) {
+        setFormError('Por favor ingresa un correo electrónico válido.');
+        return;
+      }
+
+      setIsSaving(true);
+      try {
+        const idSuffix = Date.now().toString(36);
+        const newPsico = {
+          id: `psico_${idSuffix}`,
+          nombre: cleanName,
+          correo: cleanEmail,
+          email: cleanEmail,
+          tempPassword: `Psi-${Math.floor(1000 + Math.random() * 9000)}`,
+          token: `tk_${Math.random().toString(36).substring(2, 10)}`,
+          cedula: '',
+          especialidad: '',
+          modalidad: 'Presencial y En línea',
+          telefono: '',
+          whatsapp: '',
+          ciudad: '',
+          ubicacion: '',
+          descripcion: '',
+          temas: [],
+          imagen: '',
+          fotoPortada: '',
+          perfilCompleto: false,
+          activo: true,
+          verificado: false,
+          postsCount: 0,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+
+        if (typeof onSavePsychologist === 'function') {
+          await onSavePsychologist(newPsico);
+        }
+
+        // Limpiar formulario y cerrar acordeón
+        setNewName('');
+        setNewEmail('');
+        setIsFormOpen(false);
+
+        // Abrir inmediatamente el modal con el enlace y credenciales generadas
+        setAccessModal({ isOpen: true, psychologist: newPsico });
+      } catch (err) {
+        console.error('Error guardando psicólogo:', err);
+        setFormError('Hubo un error al registrar el especialista. Inténtalo nuevamente.');
+      } finally {
+        setIsSaving(false);
+      }
+    };
+
+    // Copiar enlace directo desde la tabla
+    const handleCopyRowUrl = (psico) => {
+      const url = getPsychologistPortalUrl(psico);
+      try {
+        navigator.clipboard.writeText(url);
+        setCopiedRowId(psico.id);
+        setTimeout(() => setCopiedRowId(null), 2200);
+      } catch (err) {
+        console.warn('Error al copiar URL:', err);
+      }
+    };
+
+    return h('div', { className: 'psicologos-module' },
+      // 1. EN LA PARTE DE ARRIBA: EXACTAMENTE 1 KPI DE TOTAL PSICÓLOGOS (Borde colorido sólido)
+      h('div', { className: 'psico-single-kpi-container' },
+        h('div', { className: 'psico-kpi-card' },
+          h('div', { className: 'psico-kpi-icon-wrap' },
+            h(Icon, { name: 'stethoscope', size: 26, color: '#059669' })
+          ),
+          h('div', { className: 'psico-kpi-body' },
+            h('div', { className: 'psico-kpi-top-row' },
+              h('div', { className: 'psico-kpi-number' }, stats.total),
+              h('div', { className: 'psico-kpi-title' }, 'Total Psicólogos Registrados')
+            ),
+            h('div', { className: 'psico-kpi-meta' },
+              `${stats.activeInApp} con perfil en la App · ${stats.pending} pendientes de completar perfil`
+            )
+          )
+        )
+      ),
+
+      // 2. BARRA DE BÚSQUEDA EXTENDIDA, FILTROS Y BOTÓN DE ALTA
+      h('div', { className: 'table-filter-bar compact psico-filter-bar' },
+        // Buscador extendido
+        h('div', { className: 'search-input-wrap compact psico-search-wrap' },
+          h(Icon, { name: 'search', size: 14, color: 'var(--text-muted)' }),
+          h('input', {
+            type: 'text',
+            placeholder: 'Buscar especialista por nombre, correo, cédula o especialidad...',
+            value: searchTerm,
+            onChange: (e) => setSearchTerm(e.target.value),
+          })
+        ),
+
+        // Botones de filtro (solo iconos y texto, sin emojis)
+        h('div', { className: 'filter-pills-group compact' },
+          h('button', {
+            className: `filter-pill compact ${filterTab === 'all' ? 'active' : ''}`,
+            onClick: () => setFilterTab('all'),
+          },
+            h(Icon, { name: 'users', size: 12 }),
+            `Todos (${stats.total})`
+          ),
+          h('button', {
+            className: `filter-pill compact filter-today ${filterTab === 'active' ? 'active' : ''}`,
+            onClick: () => setFilterTab('active'),
+          },
+            h(Icon, { name: 'userCheck', size: 12 }),
+            `En la App (${stats.activeInApp})`
+          ),
+          h('button', {
+            className: `filter-pill compact filter-inactive ${filterTab === 'pending' ? 'active' : ''}`,
+            onClick: () => setFilterTab('pending'),
+          },
+            h(Icon, { name: 'clock', size: 12 }),
+            `Pendientes (${stats.pending})`
+          )
+        ),
+
+        // Botón de Alta (+ Alta Psicólogo) que despliega el formulario hacia abajo
+        h('button', {
+          className: 'btn-alta-psicologo',
+          onClick: () => setIsFormOpen(!isFormOpen),
+          title: isFormOpen ? 'Ocultar formulario' : 'Dar de alta nuevo psicólogo',
+        },
+          h(Icon, { name: isFormOpen ? 'chevronUp' : 'plus', size: 14, color: '#FFFFFF' }),
+          isFormOpen ? 'Cerrar Formulario' : 'Dar de Alta Psicólogo'
+        )
+      ),
+
+      // 3. FORMULARIO INTERACTIVO DESPLEGABLE HACIA ABAJO (SOLO NOMBRE Y CORREO "Y YA")
+      isFormOpen &&
+        h('div', { className: 'psico-accordion-panel' },
+          h('div', { className: 'psico-accordion-header' },
+            h('div', { className: 'psico-accordion-title' },
+              h(Icon, { name: 'stethoscope', size: 18, color: '#059669' }),
+              'Alta Rápida de Especialista Clínico'
+            ),
+            h('span', { className: 'badge-status-pending' }, 'Paso 1 de 2: Acceso Rápido')
+          ),
+          h('p', { className: 'psico-accordion-desc' },
+            'Ingresa únicamente el nombre y correo del especialista. Al guardar se creará su acceso temporal y enlace exclusivo para que personalice su tarjeta y perfil en el Portal del Psicólogo.'
+          ),
+
+          formError &&
+            h('div', { className: 'login-alert', style: { marginBottom: 12 } },
+              h(Icon, { name: 'alert', size: 14, color: '#DC2626' }),
+              h('span', null, formError)
+            ),
+
+          h('form', { onSubmit: handleCreatePsychologist },
+            h('div', { className: 'psico-form-grid' },
+              // Campo 1: Nombre completo
+              h('div', { className: 'form-group' },
+                h('label', { className: 'form-label' }, 'Nombre Completo del Especialista'),
+                h('input', {
+                  type: 'text',
+                  className: 'form-input',
+                  placeholder: 'Ej. Dra. Carmen Mendoza Salgado',
+                  value: newName,
+                  onChange: (e) => setNewName(e.target.value),
+                  required: true,
+                  autoFocus: true,
+                })
+              ),
+
+              // Campo 2: Correo electrónico (y ya!)
+              h('div', { className: 'form-group' },
+                h('label', { className: 'form-label' }, 'Correo Electrónico'),
+                h('input', {
+                  type: 'email',
+                  className: 'form-input',
+                  placeholder: 'carmen.mendoza@psicologia.com',
+                  value: newEmail,
+                  onChange: (e) => setNewEmail(e.target.value),
+                  required: true,
+                })
+              )
+            ),
+
+            // Botones de acción del formulario
+            h('div', { className: 'psico-form-actions' },
+              h('button', {
+                type: 'button',
+                className: 'btn-secondary',
+                onClick: () => {
+                  setIsFormOpen(false);
+                  setFormError('');
+                },
+                disabled: isSaving,
+              }, 'Cancelar'),
+              h('button', {
+                type: 'submit',
+                className: 'btn-primary',
+                style: { background: '#059669', borderColor: '#059669' },
+                disabled: isSaving,
+              },
+                h(Icon, { name: 'check', size: 14, color: '#FFFFFF' }),
+                isSaving ? 'Guardando y Generando Enlace...' : 'Guardar y Generar Enlace'
+              )
+            )
+          )
+        ),
+
+      // 4. TABLA COLORIDA DE REGISTROS DE PSICÓLOGOS
+      h('div', { className: 'table-container compact' },
+        h('table', { className: 'admin-table compact psico-table' },
+          h('thead', null,
+            h('tr', null,
+              h('th', null, 'Especialista'),
+              h('th', null, 'Contacto'),
+              h('th', null, 'Estado en la App'),
+              h('th', null, 'Acceso al Portal'),
+              h('th', null, 'Fecha de Alta'),
+              h('th', { style: { textAlign: 'right' } }, 'Acciones')
+            )
+          ),
+          h('tbody', null,
+            filteredPsychologists.length === 0
+              ? h('tr', null,
+                  h('td', { colSpan: 6, style: { textAlign: 'center', padding: '32px 14px', color: 'var(--text-muted)' } },
+                    'No se encontraron psicólogos registrados con el criterio de búsqueda.'
+                  )
+                )
+              : filteredPsychologists.map((psico, idx) => {
+                  const isComplete = psico.perfilCompleto;
+                  const isCopied = copiedRowId === psico.id;
+
+                  return h('tr', { key: psico.id },
+                    // 1. Especialista (Foto cuadrada o iniciales estilizadas con borde colorido)
+                    h('td', null,
+                      h('div', { className: 'table-user-cell compact' },
+                        psico.imagen
+                          ? h('img', {
+                              src: psico.imagen,
+                              alt: psico.nombre,
+                              className: 'psico-photo-square',
+                              onError: (e) => { e.target.style.display = 'none'; }
+                            })
+                          : h('div', { className: 'psico-photo-square psico-photo-placeholder' },
+                              getInitials(psico.nombre)
+                            ),
+                        h('div', { className: 'user-names-meta' },
+                          h('div', { className: 'user-full-name' }, psico.nombre),
+                          h('div', { className: 'user-handle-name', style: { color: '#047857', fontWeight: 600 } },
+                            psico.especialidad ? psico.especialidad : 'Perfil clínico sin completar'
+                          ),
+                          psico.cedula &&
+                            h('div', { style: { fontSize: 10.5, color: '#64748B' } }, `Céd. ${psico.cedula}`)
+                        )
+                      )
+                    ),
+
+                    // 2. Contacto (Correo y WhatsApp)
+                    h('td', null,
+                      h('div', { className: 'user-email-cell compact' },
+                        h('div', { style: { display: 'flex', alignItems: 'center', gap: 4 } },
+                          h(Icon, { name: 'mail', size: 11, color: '#64748B' }),
+                          h('span', null, psico.correo)
+                        ),
+                        psico.whatsapp &&
+                          h('div', { style: { display: 'flex', alignItems: 'center', gap: 4, marginTop: 2, color: '#059669', fontSize: 11 } },
+                            h(Icon, { name: 'phone', size: 10, color: '#059669' }),
+                            h('span', null, psico.whatsapp)
+                          )
+                      )
+                    ),
+
+                    // 3. Estado en la App (Badge con borde sólido colorido)
+                    h('td', null,
+                      isComplete
+                        ? h('span', { className: 'badge-status-app' },
+                            h(Icon, { name: 'check', size: 11, color: '#047857' }),
+                            '✓ Perfil en la App'
+                          )
+                        : h('span', { className: 'badge-status-pending' },
+                            h(Icon, { name: 'clock', size: 11, color: '#B45309' }),
+                            '⏳ Pendiente de Registro'
+                          )
+                    ),
+
+                    // 4. Enlace al Portal (Botón de 1-clic Copiar Enlace)
+                    h('td', null,
+                      h('button', {
+                        className: `btn-copy-url ${isCopied ? 'copied' : ''}`,
+                        onClick: () => handleCopyRowUrl(psico),
+                        title: 'Copiar enlace directo de acceso al portal',
+                      },
+                        h(Icon, { name: isCopied ? 'check' : 'link', size: 12 }),
+                        isCopied ? '¡Enlace Copiado!' : 'Copiar Enlace'
+                      )
+                    ),
+
+                    // 5. Fecha de Alta
+                    h('td', { className: 'date-cell compact' }, formatDateSafe(psico.createdAt)),
+
+                    // 6. Acciones: Ver Tarjeta, Ver Enlace/Credenciales, Eliminar
+                    h('td', null,
+                      h('div', { className: 'table-actions-cell compact user-actions-group', style: { justifyContent: 'flex-end' } },
+                        // Ver Tarjeta / Perfil (Preview de la App)
+                        h('button', {
+                          className: 'action-icon-btn compact user-action-btn view-posts',
+                          title: 'Ver tarjeta de presentación en la App',
+                          onClick: () => setPreviewModal({ isOpen: true, psychologist: psico }),
+                        },
+                          h(Icon, { name: 'eye', size: 13, color: '#4338CA' })
+                        ),
+
+                        // Ver Enlace y Credenciales
+                        h('button', {
+                          className: 'action-icon-btn compact user-action-btn suspend',
+                          title: 'Ver credenciales y enlace único del portal',
+                          onClick: () => setAccessModal({ isOpen: true, psychologist: psico }),
+                        },
+                          h(Icon, { name: 'key', size: 13, color: '#059669' })
+                        ),
+
+                        // Eliminar Psicólogo
+                        h('button', {
+                          className: 'action-icon-btn compact user-action-btn delete',
+                          title: 'Eliminar especialista del sistema',
+                          onClick: () => setDeleteModal({ isOpen: true, psychologist: psico }),
+                        },
+                          h(Icon, { name: 'trash', size: 13, color: '#DC2626' })
+                        )
+                      )
+                    )
+                  );
+                })
+          )
+        )
+      ),
+
+      // 5. MODALES INTERACTIVOS
+      h(PsychologistAccessModal, {
+        isOpen: accessModal.isOpen,
+        psychologist: accessModal.psychologist,
+        onClose: () => setAccessModal({ isOpen: false, psychologist: null }),
+      }),
+
+      h(PsychologistCardPreviewModal, {
+        isOpen: previewModal.isOpen,
+        psychologist: previewModal.psychologist,
+        onClose: () => setPreviewModal({ isOpen: false, psychologist: null }),
+      }),
+
+      h(PsychologistDeleteModal, {
+        isOpen: deleteModal.isOpen,
+        psychologist: deleteModal.psychologist,
+        onClose: () => setDeleteModal({ isOpen: false, psychologist: null }),
+        onConfirm: (id) => {
+          if (typeof onDeletePsychologist === 'function') {
+            onDeletePsychologist(id);
+          }
+        },
       })
     );
   };
@@ -2994,7 +3975,21 @@
       return INITIAL_REPORTED_POSTS;
     });
 
-    // 1.3 Contador de moderaciones resueltas
+    // 1.3 Cargar lista de psicólogos de la app (caché inicial o semilla segura)
+    const [psychologistsList, setPsychologistsList] = useState(() => {
+      try {
+        const saved = localStorage.getItem(STORAGE_PSYCHOLOGISTS_LIST);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+      } catch (e) {
+        console.warn('Error leyendo psicólogos de caché:', e);
+      }
+      return INITIAL_PSYCHOLOGISTS;
+    });
+
+    // 1.4 Contador de moderaciones resueltas
     const [resolvedCount, setResolvedCount] = useState(() => {
       try {
         const saved = localStorage.getItem(STORAGE_RESOLVED_COUNT);
@@ -3106,10 +4101,34 @@
           }
         );
 
+        // Listener para colección 'psicologos' (especialistas clínicos de Entre Nosotros)
+        const unsubscribePsicos = firestoreDb
+          .collection(COLLECTION_PSYCHOLOGISTS)
+          .onSnapshot(
+            (snapshot) => {
+              if (!snapshot.empty) {
+                const list = [];
+                snapshot.forEach((doc) => {
+                  const data = doc.data() || {};
+                  list.push(sanitizePsychologist({ id: doc.id, ...data }));
+                });
+                list.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+                setPsychologistsList(list);
+                try {
+                  localStorage.setItem(STORAGE_PSYCHOLOGISTS_LIST, JSON.stringify(list));
+                } catch (e) {}
+              }
+            },
+            (error) => {
+              console.warn('⚠️ [Firebase Psicologos] Error en listener de psicologos:', error);
+            }
+          );
+
       return () => {
         unsubscribeAdmins();
         unsubscribeUsers();
         unsubscribePosts();
+        unsubscribePsicos();
       };
     }, []);
 
@@ -3289,12 +4308,6 @@
 
       const updated = reportedPostsList.filter((p) => p.id !== postId);
       setReportedPostsList(updated);
-      const nextResolved = resolvedCount + 1;
-      setResolvedCount(nextResolved);
-      try {
-        localStorage.setItem(STORAGE_REPORTED_POSTS, JSON.stringify(updated));
-        localStorage.setItem(STORAGE_RESOLVED_COUNT, String(nextResolved));
-      } catch (e) {}
     };
 
     // Descartar reportes y mantener publicación (Decisión: Mantener / Absolver)
@@ -3319,6 +4332,56 @@
       try {
         localStorage.setItem(STORAGE_REPORTED_POSTS, JSON.stringify(updated));
         localStorage.setItem(STORAGE_RESOLVED_COUNT, String(nextResolved));
+      } catch (e) {}
+    };
+
+    // Guardar nuevo psicólogo o actualizar datos en Firestore y LocalStorage
+    const handleSavePsychologist = async (psicoData) => {
+      const docId = psicoData.id || `psico_${Date.now()}`;
+      const payload = {
+        ...psicoData,
+        id: docId,
+        updatedAt: new Date().toISOString(),
+      };
+
+      if (firestoreDb) {
+        try {
+          await firestoreDb.collection(COLLECTION_PSYCHOLOGISTS).doc(docId).set(payload, { merge: true });
+          console.log('✅ [Firestore] Especialista guardado en psicologos:', docId);
+        } catch (err) {
+          console.error('[Firestore] Error guardando psicólogo en la nube:', err);
+        }
+      }
+
+      const exists = psychologistsList.some((p) => p.id === docId);
+      let updated;
+      if (exists) {
+        updated = psychologistsList.map((p) => (p.id === docId ? payload : p));
+      } else {
+        updated = [payload, ...psychologistsList];
+      }
+      setPsychologistsList(updated);
+      try {
+        localStorage.setItem(STORAGE_PSYCHOLOGISTS_LIST, JSON.stringify(updated));
+      } catch (e) {}
+    };
+
+    // Eliminar psicólogo de Firestore y LocalStorage
+    const handleDeletePsychologist = async (psicoId) => {
+      if (firestoreDb) {
+        try {
+          await firestoreDb.collection(COLLECTION_PSYCHOLOGISTS).doc(psicoId).delete();
+          console.log('🗑️ [Firestore] Especialista eliminado de psicologos:', psicoId);
+        } catch (err) {
+          console.error('[Firestore] Error eliminando especialista en la nube:', err);
+          alert('Error al eliminar en Firebase: ' + (err.message || 'Verifica la conexión.'));
+        }
+      }
+
+      const updated = psychologistsList.filter((p) => p.id !== psicoId);
+      setPsychologistsList(updated);
+      try {
+        localStorage.setItem(STORAGE_PSYCHOLOGISTS_LIST, JSON.stringify(updated));
       } catch (e) {}
     };
 
@@ -3419,6 +4482,7 @@
                   reportedPostsCount: reportedPostsList.length,
                   resolvedCount: resolvedCount,
                   adminsCount: adminsList.length,
+                  psychologistsCount: psychologistsList.length,
                 })
               : activeModule === 'accesos'
               ? h(AccesosView, {
@@ -3431,6 +4495,12 @@
               : activeModule === 'usuarios'
               ? h(UsuariosView, {
                   usersList: usersList,
+                })
+              : activeModule === 'psicologos'
+              ? h(PsicologosView, {
+                  psychologistsList: psychologistsList,
+                  onSavePsychologist: handleSavePsychologist,
+                  onDeletePsychologist: handleDeletePsychologist,
                 })
               : activeModule === 'moderacion'
               ? h(ModeracionView, {

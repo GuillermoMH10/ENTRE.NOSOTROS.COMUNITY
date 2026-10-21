@@ -7,6 +7,14 @@
       "destination": "/registro_psicologos.html"
     },
     {
+      "source": "/portal_psicologo.html",
+      "destination": "/portal_psicologo.html"
+    },
+    {
+      "source": "/ADMIN ENTRENOSOTROS/(.*)",
+      "destination": "/ADMIN ENTRENOSOTROS/$1"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
