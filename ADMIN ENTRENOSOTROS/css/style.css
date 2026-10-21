@@ -3362,203 +3362,897 @@ body {
   background: #059669;
 }
 
-/* 6. Mockup de Tarjeta de la App */
-.psico-preview-card-modal {
-  max-width: 480px;
+/* ==========================================================================
+   MÓDULO PSICÓLOGOS: GRID DE 5 CON FOTO DESTACANDO Y DATOS DEBAJO
+   ========================================================================== */
+.psico-grid-5 {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 10px;
+  margin-bottom: 24px;
 }
 
-.app-mockup-card-container {
+@media (max-width: 1400px) {
+  .psico-grid-5 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1100px) {
+  .psico-grid-5 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 780px) {
+  .psico-grid-5 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 500px) {
+  .psico-grid-5 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.psico-empty-grid {
+  padding: 44px 20px;
+  text-align: center;
   background: #FFFFFF;
-  border: 1px solid #E2E8F0;
-  border-radius: 18px;
-  overflow: hidden;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  border: 2px dashed #CBD5E1;
+  border-radius: 16px;
+  margin-top: 10px;
 }
 
-.app-card-cover-image {
-  height: 110px;
-  background-size: cover;
-  background-position: center;
-  position: relative;
+.psico-empty-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: #F1F5F9;
   display: flex;
-  align-items: flex-start;
-  justify-content: flex-end;
-  padding: 10px;
-}
-
-.app-card-cover-overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.25);
-}
-
-.app-card-verified-tag {
-  position: relative;
-  z-index: 1;
-  display: inline-flex;
   align-items: center;
-  gap: 4px;
-  background: #059669;
-  color: #FFFFFF;
-  font-size: 10.5px;
-  font-weight: 700;
-  padding: 3px 8px;
-  border-radius: 9999px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  justify-content: center;
+  margin: 0 auto 10px auto;
 }
 
-.app-card-content {
-  padding: 0 16px 16px 16px;
-  position: relative;
-}
-
-.app-card-header-row {
+/* Tarjeta individual en el Grid de 5 */
+.psico-grid-card {
+  background: #FFFFFF;
+  border-radius: 16px;
+  border: 2px solid #E2E8F0;
+  overflow: hidden;
   display: flex;
-  gap: 14px;
-  align-items: flex-end;
-  margin-top: -36px;
-  margin-bottom: 12px;
+  flex-direction: column;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.psico-grid-card.card-complete:hover {
+  border-color: #059669;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(5, 150, 105, 0.18);
+}
+
+.psico-grid-card.card-pending:hover {
+  border-color: #D97706;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(217, 119, 6, 0.18);
+}
+
+/* A. FOTO DESTACANDO */
+.psico-card-photo-hero {
   position: relative;
+  width: 100%;
+  height: 160px;
+  background: #F1F5F9;
+  overflow: hidden;
+}
+
+.psico-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+.psico-grid-card:hover .psico-card-img {
+  transform: scale(1.05);
+}
+
+.psico-card-img-placeholder {
+  width: 100%;
+  height: 100%;
+  background: #ECFDF5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.psico-placeholder-initials {
+  font-size: 30px;
+  font-weight: 900;
+  color: #047857;
+  line-height: 1;
+}
+
+.psico-card-photo-overlay-top {
+  position: absolute;
+  top: 9px;
+  left: 9px;
+  right: 9px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   z-index: 2;
 }
 
-.app-card-avatar-square {
-  width: 72px;
-  height: 72px;
-  border-radius: 12px;
-  object-fit: cover;
-  border: 3px solid #FFFFFF;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-  background: #FFFFFF;
-}
-
-.app-card-avatar-placeholder {
-  background: #ECFDF5;
-  color: #047857;
-  font-weight: 800;
-  font-size: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.app-card-titles {
-  flex: 1;
-  padding-top: 36px;
-}
-
-.app-card-name {
-  font-size: 16px;
-  font-weight: 800;
-  color: #0F172A;
-  margin: 0;
-  line-height: 1.25;
-}
-
-.app-card-specialty {
-  font-size: 12px;
-  font-weight: 600;
-  color: #059669;
-  margin-top: 2px;
-}
-
-.app-card-cedula {
-  font-size: 11px;
-  color: #64748B;
-  margin-top: 1px;
-}
-
-.app-card-pills-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 12px;
-}
-
-.app-card-pill {
+.badge-grid-pill {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  background: #F1F5F9;
-  color: #334155;
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 10px;
+  font-weight: 800;
   padding: 3px 8px;
-  border-radius: 6px;
+  border-radius: 9999px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
 }
 
-.app-card-section {
-  margin-bottom: 12px;
+.badge-grid-pill.complete {
+  background: #059669;
+  color: #FFFFFF;
 }
 
-.app-card-section-label {
+.badge-grid-pill.pending {
+  background: #D97706;
+  color: #FFFFFF;
+}
+
+.btn-grid-quick-eye {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.btn-grid-quick-eye:hover {
+  background: #059669;
+  border-color: #059669;
+  transform: scale(1.1);
+}
+
+/* B. DATOS DEBAJO */
+.psico-card-body {
+  padding: 12px 14px 12px 14px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.psico-card-name {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #0F172A;
+  margin: 0 0 2px 0;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.psico-card-specialty {
   font-size: 11px;
   font-weight: 700;
-  color: #64748B;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 5px;
+  color: #047857;
+  margin-bottom: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-height: 16px;
 }
 
-.app-card-tags-list {
+.psico-card-meta-chips {
   display: flex;
-  flex-wrap: wrap;
   gap: 5px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
 }
 
-.app-card-theme-tag {
-  font-size: 10.5px;
-  font-weight: 600;
+.psico-card-chip {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.psico-card-chip.cedula {
+  background: #F1F5F9;
+  color: #334155;
+  border: 1px solid #E2E8F0;
+}
+
+.psico-card-chip.modalidad {
   background: #ECFDF5;
   color: #047857;
   border: 1px solid #A7F3D0;
-  padding: 2px 7px;
-  border-radius: 5px;
 }
 
-.app-card-bio-text {
+.psico-card-contacts {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 11px;
+  margin-bottom: 10px;
+  padding: 6px 8px;
+  background: #F8FAFC;
+  border-radius: 8px;
+  border: 1px solid #F1F5F9;
+}
+
+.psico-card-contact-line {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #64748B;
+  min-width: 0;
+}
+
+.psico-card-contact-line.whatsapp {
+  color: #059669;
+  font-weight: 700;
+}
+
+.contact-text.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.btn-card-copy-url {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 8px;
+  background: #F8FAFC;
+  border: 1px solid #CBD5E1;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-card-copy-url:hover {
+  background: #FFFFFF;
+  border-color: #059669;
+  color: #059669;
+}
+
+.btn-card-copy-url.copied {
+  background: #ECFDF5;
+  border-color: #10B981;
+  color: #047857;
+  font-weight: 700;
+}
+
+.psico-card-actions-footer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #F1F5F9;
+}
+
+.btn-card-primary-action {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 6px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  background: #355971;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-card-primary-action:hover {
+  background: #233B4B;
+}
+
+.btn-card-icon-action {
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: 1px solid #CBD5E1;
+  background: #FFFFFF;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.btn-card-icon-action:hover {
+  background: #F1F5F9;
+  border-color: #059669;
+}
+
+.btn-card-icon-action.delete:hover {
+  background: #FEF2F2;
+  border-color: #FECACA;
+}
+
+/* ==========================================================================
+   VISTA PREVIA DE TARJETA EN LA APP: MUCHO MÁS GRANDE, ANCHA Y COMPLETA CON SCROLL
+   ========================================================================== */
+.psico-preview-card-modal.wide-preview-modal {
+  max-width: 920px !important;
+  width: 95% !important;
+  max-height: 90vh !important;
+  display: flex;
+  flex-direction: column;
+}
+
+.psico-preview-scroll-body {
+  overflow-y: auto;
+  max-height: calc(90vh - 120px);
+  background: #F8FAFC;
+  padding-bottom: 16px;
+}
+
+.app-wide-card-container {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 20px;
+  overflow: hidden;
+  margin: 14px 20px 20px 20px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+}
+
+/* Portada Panorámica Amplia */
+.app-wide-cover-banner {
+  height: 200px;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.app-wide-cover-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.68) 100%);
+}
+
+.app-wide-cover-top-bar {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.app-brand-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(4px);
+  color: #0F172A;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 11px;
+  border-radius: 9999px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.app-verified-banner-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #059669;
+  color: #FFFFFF;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Bloque Principal del Perfil (Avatar + Info) */
+.app-wide-profile-header {
+  display: flex;
+  gap: 20px;
+  align-items: flex-end;
+  padding: 0 24px 20px 24px;
+  margin-top: -55px;
+  position: relative;
+  z-index: 3;
+  border-bottom: 1px solid #F1F5F9;
+}
+
+@media (max-width: 640px) {
+  .app-wide-profile-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    margin-top: -45px;
+  }
+}
+
+.app-wide-avatar-wrap {
+  flex-shrink: 0;
+}
+
+.app-wide-avatar-img {
+  width: 105px;
+  height: 105px;
+  border-radius: 20px;
+  object-fit: cover;
+  border: 4px solid #FFFFFF;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  background: #FFFFFF;
+}
+
+.app-wide-avatar-placeholder {
+  background: #ECFDF5;
+  color: #047857;
+  font-weight: 900;
+  font-size: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.app-wide-header-info {
+  flex: 1;
+  min-width: 0;
+  padding-top: 55px;
+}
+
+@media (max-width: 640px) {
+  .app-wide-header-info {
+    padding-top: 10px;
+    width: 100%;
+  }
+}
+
+.app-wide-name-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+
+.app-wide-name {
+  font-size: 22px;
+  font-weight: 900;
+  color: #0F172A;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.app-wide-specialty-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #ECFDF5;
+  border: 1px solid #A7F3D0;
+  color: #047857;
   font-size: 12px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 9999px;
+}
+
+.app-wide-cedula-row {
+  margin-bottom: 6px;
+}
+
+.app-wide-cedula-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #355971;
+  background: #F0F6F9;
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid #CBD9E2;
+}
+
+.app-wide-cedula-tag.pending {
+  color: #B45309;
+  background: #FEF3C7;
+  border-color: #FDE68A;
+}
+
+.app-wide-contacts-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 12px;
+  color: #64748B;
+}
+
+.app-wide-contact-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.app-wide-contact-meta.whatsapp {
+  color: #059669;
+  font-weight: 700;
+}
+
+/* 4 KPIs informativos de Atención Clínica */
+.app-wide-kpis-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  padding: 16px 24px;
+  background: #F8FAFC;
+  border-bottom: 1px solid #F1F5F9;
+}
+
+@media (max-width: 768px) {
+  .app-wide-kpis-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.app-wide-kpi-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #FFFFFF;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid #E2E8F0;
+}
+
+.app-wide-kpi-icon-box {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.app-wide-kpi-icon-box.emerald {
+  background: #ECFDF5;
+  border: 1px solid #A7F3D0;
+}
+
+.app-wide-kpi-icon-box.blue {
+  background: #EFF6FF;
+  border: 1px solid #BFDBFE;
+}
+
+.app-wide-kpi-icon-box.amber {
+  background: #FEF3C7;
+  border: 1px solid #FDE68A;
+}
+
+.app-wide-kpi-icon-box.purple {
+  background: #F5F3FF;
+  border: 1px solid #DDD6FE;
+}
+
+.app-wide-kpi-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #64748B;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.app-wide-kpi-val {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #0F172A;
+  white-space: nowrap;
+}
+
+/* Secciones Internas de la Tarjeta */
+.app-wide-section {
+  padding: 20px 24px;
+  border-bottom: 1px solid #F1F5F9;
+}
+
+.app-wide-section-title {
+  font-size: 14.5px;
+  font-weight: 800;
+  color: #0F172A;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.app-wide-section-subtitle {
+  font-size: 12px;
+  color: #64748B;
+  margin-bottom: 12px;
+}
+
+.app-wide-tags-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.app-wide-theme-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  background: #ECFDF5;
+  color: #047857;
+  border: 1.5px solid #A7F3D0;
+  padding: 6px 14px;
+  border-radius: 9999px;
+}
+
+.app-wide-bio-card {
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 14px;
+  padding: 16px 20px;
+}
+
+.app-wide-bio-paragraph {
+  font-size: 13px;
+  color: #334155;
+  line-height: 1.65;
+  margin: 0 0 14px 0;
+}
+
+.app-wide-bio-highlights {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #E2E8F0;
+}
+
+@media (max-width: 640px) {
+  .app-wide-bio-highlights {
+    grid-template-columns: 1fr;
+  }
+}
+
+.app-wide-bio-bullet {
+  font-size: 11.5px;
   color: #475569;
-  line-height: 1.5;
+  line-height: 1.4;
+}
+
+.app-wide-consultas-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+@media (max-width: 768px) {
+  .app-wide-consultas-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.app-wide-consulta-card {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.consulta-card-badge {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #7C3AED;
+  background: #F5F3FF;
+  padding: 2px 7px;
+  border-radius: 4px;
+  width: fit-content;
+  margin-bottom: 8px;
+}
+
+.app-wide-consulta-card h4 {
+  font-size: 13px;
+  font-weight: 800;
+  color: #0F172A;
+  margin: 0 0 4px 0;
+}
+
+.app-wide-consulta-card p {
+  font-size: 11.5px;
+  color: #64748B;
+  line-height: 1.45;
+  margin: 0 0 8px 0;
+  flex: 1;
+}
+
+.consulta-card-meta {
+  font-size: 11px;
+  font-weight: 700;
+  color: #059669;
+  padding-top: 6px;
+  border-top: 1px dashed #E2E8F0;
+}
+
+.app-wide-articles-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+@media (max-width: 640px) {
+  .app-wide-articles-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.app-wide-article-card {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 14px;
+  padding: 14px 16px;
+}
+
+.article-cat-pill {
+  font-size: 10px;
+  font-weight: 800;
+  color: #D97706;
+  background: #FEF3C7;
+  padding: 2px 7px;
+  border-radius: 4px;
+  display: inline-block;
+  margin-bottom: 6px;
+}
+
+.app-wide-article-card h5 {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #0F172A;
+  margin: 0 0 4px 0;
+}
+
+.app-wide-article-card p {
+  font-size: 11.5px;
+  color: #64748B;
+  line-height: 1.45;
+  margin: 0 0 8px 0;
+}
+
+.article-footer-meta {
+  font-size: 10.5px;
+  color: #94A3B8;
+  font-weight: 500;
+}
+
+/* Banner CTA Inferior de WhatsApp */
+.app-wide-cta-banner {
+  padding: 22px 24px;
+  background: #F0FDF4;
+  border-top: 2px solid #86EFAC;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.app-wide-cta-info h3 {
+  font-size: 16px;
+  font-weight: 900;
+  color: #065F46;
+  margin: 0 0 4px 0;
+}
+
+.app-wide-cta-info p {
+  font-size: 12px;
+  color: #047857;
   margin: 0;
 }
 
-.app-card-action-box {
-  margin-top: 14px;
+.app-wide-cta-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
 }
 
-.app-card-whatsapp-btn {
-  display: flex;
+.app-wide-whatsapp-btn {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
   gap: 8px;
-  width: 100%;
   background: #25D366;
   color: #FFFFFF;
-  padding: 10px;
-  border-radius: 10px;
-  font-weight: 700;
-  font-size: 13px;
+  font-size: 13.5px;
+  font-weight: 800;
+  padding: 12px 22px;
+  border-radius: 12px;
   text-decoration: none;
-  box-shadow: 0 4px 12px rgba(37, 211, 102, 0.25);
+  box-shadow: 0 4px 14px rgba(37, 211, 102, 0.35);
   transition: all 0.15s ease;
 }
 
-.app-card-whatsapp-btn:hover {
+.app-wide-whatsapp-btn:hover {
   background: #1EBE5D;
   transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(37, 211, 102, 0.45);
 }
 
-.app-card-no-whatsapp {
-  display: flex;
+.app-wide-share-btn {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
+  gap: 6px;
+  background: #FFFFFF;
+  border: 1.5px solid #A7F3D0;
+  color: #047857;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 11px 16px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.app-wide-share-btn:hover {
+  background: #ECFDF5;
+}
+
+.app-wide-no-whatsapp {
+  display: inline-flex;
+  align-items: center;
   gap: 6px;
   background: #F1F5F9;
   color: #64748B;
-  padding: 9px;
-  border-radius: 8px;
-  font-size: 11.5px;
-  font-weight: 500;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
 }
 
