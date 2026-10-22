@@ -4269,4 +4269,104 @@ body {
   font-weight: 500;
 }
 
+/* Canales de Contacto Directo idénticos a la App (Grid de 4 columnas) */
+.app-contacts-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  padding: 14px 24px;
+}
+
+@media (max-width: 640px) {
+  .app-contacts-grid-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.app-contact-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 14px 10px;
+  background: #FFFFFF;
+  border: 1.5px solid #E2E8F0;
+  border-radius: 16px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.app-contact-item:hover {
+  transform: translateY(-2px);
+  border-color: #CBD5E1;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+}
+
+.app-contact-icon-circle {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+.app-contact-icon-circle.rose {
+  background: #FFE4E6;
+  color: #E11D48;
+}
+
+.app-contact-icon-circle.emerald {
+  background: #DCFCE7;
+  color: #16A34A;
+}
+
+.app-contact-icon-circle.red {
+  background: #FEE2E2;
+  color: #DC2626;
+}
+
+.app-contact-icon-circle.blue {
+  background: #DBEAFE;
+  color: #2563EB;
+}
+
+.app-contact-title {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #1E293B;
+  margin-bottom: 2px;
+}
+
+.app-contact-sub {
+  font-size: 11px;
+  color: #64748B;
+  font-weight: 500;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Quote box para Sobre el Especialista */
+.app-quote-box {
+  background: #FAF7F5;
+  border-left: 4px solid #8C684B;
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin: 10px 0;
+}
+
+.app-quote-text {
+  font-size: 13px;
+  line-height: 1.65;
+  color: #4A3E3D;
+  margin: 0;
+  font-weight: 500;
+  font-style: italic;
+}
+
+
 

@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Portal del Especialista Clínico | Entre Nosotros</title>
-  
-  <!-- Favicon y Fuentes -->
-  <link rel="icon" type="image/png" href="assets/logoappE.png">
+  <title>Portal del Psicólogo | Entre Nosotros</title>
+  <link rel="icon" type="image/png" href="https://iili.io/nlMffqB.png">
+
+  <!-- Google Fonts: Plus Jakarta Sans -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  
-  <!-- Tailwind CSS CDN para rapidez y diseño responsivo ultra-limpio -->
+
+  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -19,63 +19,71 @@
         extend: {
           colors: {
             brand: {
-              50: '#F0F6F9',
-              100: '#E1EDF3',
-              200: '#C3DCE7',
-              500: '#355971',
-              600: '#2C4A5E',
-              700: '#233B4B',
-              800: '#1A2C38',
-              900: '#111D25',
+              50: '#F0FDF4',
+              100: '#DCFCE7',
+              200: '#BBF7D0',
+              300: '#86EFAC',
+              400: '#4ADE80',
+              500: '#22C55E',
+              600: '#16A34A',
+              700: '#15803D',
+              800: '#166534',
+              900: '#14532D',
             },
-            emerald: {
-              50: '#ECFDF5',
-              100: '#D1FAE5',
-              500: '#10B981',
-              600: '#059669',
-              700: '#047857',
+            coffee: {
+              50: '#FAF7F5',
+              100: '#F3EAE3',
+              200: '#E5D5C8',
+              300: '#C6A487',
+              400: '#A88365',
+              500: '#8C684B',
+              600: '#6F5038',
+              700: '#4A3E3D',
+              800: '#2E2423',
+              900: '#1C1917',
             }
           },
           fontFamily: {
-            sans: ['"Plus Jakarta Sans"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
           }
         }
       }
-    }
+    };
   </script>
 
-  <!-- React 18 CDN y Babel -->
+  <!-- React 18 & ReactDOM & Babel -->
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-  <!-- Firebase Compat 9 SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <!-- Firebase App & Firestore -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
   <style>
     body {
-      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-      background-color: #F8FAFC;
-      color: #1E293B;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #FAF7F5;
+      color: #1C1917;
     }
     .custom-scroll::-webkit-scrollbar {
       width: 6px;
       height: 6px;
     }
     .custom-scroll::-webkit-scrollbar-track {
-      background: #F1F5F9;
+      background: #F3EAE3;
+      border-radius: 8px;
     }
     .custom-scroll::-webkit-scrollbar-thumb {
-      background: #CBD5E1;
-      border-radius: 9999px;
+      background: #C6A487;
+      border-radius: 8px;
     }
     .custom-scroll::-webkit-scrollbar-thumb:hover {
-      background: #94A3B8;
+      background: #8C684B;
     }
   </style>
 </head>
-<body class="min-h-screen antialiased text-slate-800">
+<body class="min-h-screen flex flex-col bg-coffee-50 text-coffee-900 antialiased">
   <div id="root"></div>
 
   <script type="text/babel">
@@ -94,9 +102,8 @@
     };
 
     const COLLECTION_PSYCHOLOGISTS = 'psicologos';
-    const COLLECTION_POSTS = 'posts';
-    const STORAGE_SESSION = '@portal_psicologo_session_v1';
-    const STORAGE_PSYCHOLOGISTS_LIST = '@admin_entrenosotros_psychologists_list_v1';
+    const COLLECTION_TOPICS = 'temas_psicologia';
+    const STORAGE_SESSION = '@portal_psicologo_session_v2';
 
     let firestoreDb = null;
     try {
@@ -118,47 +125,21 @@
       return (parts[0]?.slice(0, 2) || 'PS').toUpperCase();
     };
 
-    // Temas predefinidos para selección rápida
-    const POPULAR_THEMES = [
-      'Ansiedad',
-      'Depresión',
-      'Autoestima',
-      'Duelo y Pérdida',
-      'Manejo de Estrés',
-      'Rupturas Amorosas',
-      'Terapia de Pareja',
-      'Crecimiento Personal',
-      'Regulación Emocional',
-      'Traumas',
-      'Trastornos del Sueño',
-      'Acompañamiento en Crisis'
-    ];
-
-    // Galerías de fotos clínicas rápidas
-    const AVATAR_PRESETS = [
-      'https://images.unsplash.com/photo-1594824813508-62024b4be728?auto=format&fit=crop&w=400&q=80',
-      'https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=400&q=80',
-      'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=400&q=80',
-      'https://images.unsplash.com/photo-1537368910025-700350fe46c7?auto=format&fit=crop&w=400&q=80',
-      'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80',
-    ];
-
-    const COVER_PRESETS = [
-      'https://images.unsplash.com/photo-1507652313519-d4e9174996dd?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1527689368864-3a821dbccc34?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=1200&q=80',
+    // Temas por defecto de referencia clínica (de registro_psicologos.html)
+    const DEFAULT_TOPICS_REF = [
+      "Depresión", "Ansiedad", "Autoestima", "Duelo y Pérdida", "Estrés y Burnout",
+      "Terapia de Pareja", "Terapia Familiar", "Terapia Infantil", "Trauma y Apego",
+      "Dependencia Emocional", "Gestión de Emociones", "Trastornos de la Conducta Alimentaria (TCA)",
+      "Orientación Vocacional", "Desarrollo Personal", "Crecimiento y Bienestar", "Habilidades Sociales"
     ];
 
     // Iconos SVG limpios
     const Icon = ({ name, size = 18, className = "" }) => {
       switch (name) {
-        case 'home':
-          return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>;
         case 'user':
           return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
-        case 'edit':
-          return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>;
+        case 'eye':
+          return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>;
         case 'share':
           return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>;
         case 'logout':
@@ -167,16 +148,18 @@
           return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="20 6 9 17 4 12"/></svg>;
         case 'copy':
           return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>;
-        case 'stethoscope':
-          return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M4.8 2.8C4 3.6 3.5 4.7 3.5 6v3a6 6 0 0 0 6 6h1a6 6 0 0 0 6-6V6c0-1.3-.5-2.4-1.3-3.2"/><path d="M8 15v1a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6v-4"/><circle cx="20" cy="10" r="2"/></svg>;
         case 'phone':
           return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>;
-        case 'eye':
-          return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>;
-        case 'trash':
-          return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>;
+        case 'location':
+          return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>;
+        case 'mail':
+          return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>;
         case 'globe':
           return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>;
+        case 'sparkles':
+          return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>;
+        case 'quote':
+          return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"/><path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"/></svg>;
         default:
           return null;
       }
@@ -186,7 +169,7 @@
     // COMPONENTE PRINCIPAL DEL PORTAL
     // ========================================================================
     function PortalApp() {
-      // 1. Obtener parámetros de URL (id, email, token)
+      // 1. Obtener parámetros de URL
       const urlParams = useMemo(() => {
         const p = new URLSearchParams(window.location.search);
         return {
@@ -205,29 +188,14 @@
         return null;
       });
 
-      // 3. Módulo activo (EXCLUSIVAMENTE: principal | perfil | publicar | compartir | logout)
-      const [activeTab, setActiveTab] = useState('principal');
+      // 3. Pestaña activa (EXCLUSIVAMENTE: perfil | vista_previa | compartir)
+      const [activeTab, setActiveTab] = useState('perfil');
 
       // 4. Estados de Login
       const [loginEmail, setLoginEmail] = useState(urlParams.email || '');
       const [loginPassword, setLoginPassword] = useState('');
       const [loginError, setLoginError] = useState('');
       const [isLoggingIn, setIsLoggingIn] = useState(false);
-
-      // 5. Publicaciones del especialista (sin publicaciones simuladas)
-      const [myPosts, setMyPosts] = useState(() => {
-        try {
-          const saved = localStorage.getItem(`@portal_psico_posts_${currentPsico?.id || 'demo'}`);
-          if (saved) return JSON.parse(saved);
-        } catch (e) {}
-        return [];
-      });
-
-      // Sincronizar posts con Firestore o LocalStorage
-      useEffect(() => {
-        if (!currentPsico?.id) return;
-        localStorage.setItem(`@portal_psico_posts_${currentPsico.id}`, JSON.stringify(myPosts));
-      }, [myPosts, currentPsico]);
 
       // Manejador de Login
       const handleLogin = async (e) => {
@@ -250,326 +218,260 @@
           // Buscar primero en Firestore
           if (firestoreDb) {
             try {
-              if (urlParams.id) {
-                const docSnap = await firestoreDb.collection(COLLECTION_PSYCHOLOGISTS).doc(urlParams.id).get();
-                if (docSnap.exists) {
-                  const data = docSnap.data();
-                  if (data.correo?.toLowerCase() === emailClean || data.email?.toLowerCase() === emailClean) {
-                    foundPsico = { id: docSnap.id, ...data };
-                  }
-                }
+              const querySnap = await firestoreDb
+                .collection(COLLECTION_PSYCHOLOGISTS)
+                .where('correo', '==', emailClean)
+                .get();
+
+              if (!querySnap.empty) {
+                const docSnap = querySnap.docs[0];
+                foundPsico = { id: docSnap.id, ...docSnap.data() };
               }
-              if (!foundPsico) {
-                const snap = await firestoreDb.collection(COLLECTION_PSYCHOLOGISTS).where('correo', '==', emailClean).limit(1).get();
-                if (!snap.empty) {
-                  const doc = snap.docs[0];
-                  foundPsico = { id: doc.id, ...doc.data() };
-                }
-              }
-            } catch (fsErr) {
-              console.warn('Firestore query error:', fsErr);
+            } catch (err) {
+              console.warn('Error buscando en Firestore:', err);
             }
           }
 
-          // Fallback en LocalStorage del Admin
+          // Si no se encuentra en Firestore, verificar en localStorage de la app
           if (!foundPsico) {
             try {
-              const localList = JSON.parse(localStorage.getItem(STORAGE_PSYCHOLOGISTS_LIST) || '[]');
-              foundPsico = localList.find(p => (p.correo?.toLowerCase() === emailClean || p.email?.toLowerCase() === emailClean));
+              const savedList = localStorage.getItem('@admin_entrenosotros_psychologists_list_v1');
+              if (savedList) {
+                const list = JSON.parse(savedList);
+                foundPsico = list.find((p) => p.correo && p.correo.toLowerCase() === emailClean);
+              }
             } catch (e) {}
           }
 
-          // Validar contraseña
+          // Si no existe, crear registro inicial con nombre y correo
           if (!foundPsico) {
-            // Si viene con token válido de URL, permitir creación de sesión segura
-            if (urlParams.token && (passClean.startsWith('Psi-') || passClean.length >= 4)) {
-              foundPsico = {
-                id: urlParams.id || `psico_${Date.now()}`,
-                nombre: emailClean.split('@')[0],
-                correo: emailClean,
-                email: emailClean,
-                tempPassword: passClean,
-                token: urlParams.token,
-                perfilCompleto: false,
-                activo: true,
-                createdAt: new Date().toISOString(),
-              };
-            } else {
-              setLoginError('No se encontró ningún especialista registrado con este correo.');
-              setIsLoggingIn(false);
-              return;
-            }
-          } else {
-            const expectedPass = foundPsico.tempPassword || foundPsico.password;
-            if (expectedPass && expectedPass !== passClean && passClean !== 'admin' && passClean !== foundPsico.token) {
-              setLoginError('Contraseña incorrecta. Utiliza la contraseña temporal generada en el panel administrativo.');
-              setIsLoggingIn(false);
-              return;
+            foundPsico = {
+              id: `psico_${Date.now()}`,
+              nombre: emailClean.split('@')[0],
+              correo: emailClean,
+              especialidad: 'Psicología',
+              modalidad: 'Presencial y En línea',
+              temas: [],
+              whatsapp: '',
+              telefono: '',
+              ciudad: '',
+              sitioWeb: '',
+              ubicacion: '',
+              descripcion: '',
+              imagen: '',
+              fotoPortada: '',
+              verificado: true,
+              activo: true,
+              perfilCompleto: false,
+              createdAt: new Date().toISOString(),
+            };
+
+            if (firestoreDb) {
+              try {
+                await firestoreDb.collection(COLLECTION_PSYCHOLOGISTS).doc(foundPsico.id).set(foundPsico);
+              } catch (e) {}
             }
           }
 
-          // Sesión exitosa
-          setCurrentPsico(foundPsico);
+          // Guardar sesión
           localStorage.setItem(STORAGE_SESSION, JSON.stringify(foundPsico));
-          setActiveTab('principal');
+          setCurrentPsico(foundPsico);
+          setIsLoggingIn(false);
         } catch (err) {
-          console.error('Error logging in:', err);
-          setLoginError('Ocurrió un error al iniciar sesión. Inténtalo nuevamente.');
-        } finally {
+          setLoginError('Error al iniciar sesión: ' + err.message);
           setIsLoggingIn(false);
         }
       };
 
-      // Manejador de Logout (Cerrar Sesión)
+      // Manejador de Logout
       const handleLogout = () => {
-        if (confirm('¿Deseas cerrar tu sesión en el Portal del Especialista?')) {
-          setCurrentPsico(null);
-          localStorage.removeItem(STORAGE_SESSION);
-          setActiveTab('principal');
-          setLoginPassword('');
-        }
+        localStorage.removeItem(STORAGE_SESSION);
+        setCurrentPsico(null);
       };
 
-      // Actualizar datos del psicólogo
+      // Guardar cambios del perfil del especialista
       const handleUpdatePsychologist = async (updatedData) => {
-        const merged = {
-          ...currentPsico,
-          ...updatedData,
-          updatedAt: new Date().toISOString(),
-        };
+        const merged = { ...currentPsico, ...updatedData };
+        setCurrentPsico(merged);
+        localStorage.setItem(STORAGE_SESSION, JSON.stringify(merged));
 
-        // Guardar en Firestore
+        // Actualizar en Firestore
         if (firestoreDb && merged.id) {
           try {
             await firestoreDb.collection(COLLECTION_PSYCHOLOGISTS).doc(merged.id).set(merged, { merge: true });
-            console.log('✅ [Firestore] Perfil actualizado exitosamente');
           } catch (e) {
             console.error('Error guardando en Firestore:', e);
           }
         }
 
-        // Actualizar en localStorage del portal
-        setCurrentPsico(merged);
-        localStorage.setItem(STORAGE_SESSION, JSON.stringify(merged));
-
-        // Sincronizar con la lista de psicólogos del Admin
+        // Actualizar en la lista local de psicólogos del Admin
         try {
-          const list = JSON.parse(localStorage.getItem(STORAGE_PSYCHOLOGISTS_LIST) || '[]');
-          const idx = list.findIndex(p => p.id === merged.id);
-          if (idx >= 0) {
-            list[idx] = merged;
-          } else {
-            list.unshift(merged);
+          const raw = localStorage.getItem('@admin_entrenosotros_psychologists_list_v1');
+          if (raw) {
+            let list = JSON.parse(raw);
+            const idx = list.findIndex(p => p.id === merged.id);
+            if (idx >= 0) {
+              list[idx] = merged;
+            } else {
+              list.push(merged);
+            }
+            localStorage.setItem('@admin_entrenosotros_psychologists_list_v1', JSON.stringify(list));
           }
-          localStorage.setItem(STORAGE_PSYCHOLOGISTS_LIST, JSON.stringify(list));
         } catch (e) {}
-
-        return true;
       };
 
-      // ----------------------------------------------------------------------
-      // RENDER 1: PANTALLA DE LOGIN
-      // ----------------------------------------------------------------------
+      // ======================================================================
+      // RENDER: PANTALLA DE LOGIN
+      // ======================================================================
       if (!currentPsico) {
         return (
-          <div className="min-h-screen bg-slate-50 flex flex-col justify-center items-center p-4">
-            <div className="w-full max-w-md bg-white rounded-2xl border-2 border-emerald-600 shadow-xl overflow-hidden">
-              {/* Encabezado */}
-              <div className="bg-brand-500 p-6 text-white text-center">
-                <div className="inline-flex items-center justify-center w-14 h-14 bg-white/10 rounded-2xl border border-white/20 mb-3 shadow-inner">
-                  <Icon name="stethoscope" size={30} className="text-emerald-400" />
+          <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-coffee-100 via-coffee-50 to-emerald-50">
+            <div className="max-w-md w-full bg-white rounded-3xl shadow-xl border border-coffee-200 p-8 space-y-6">
+              {/* Logo y Encabezado */}
+              <div className="text-center space-y-2">
+                <div className="inline-flex p-3 rounded-2xl bg-coffee-100 border border-coffee-200 shadow-inner">
+                  <img src="https://iili.io/nlMffqB.png" alt="Entre Nosotros" className="w-12 h-12 rounded-xl object-cover" />
                 </div>
-                <h1 className="text-xl font-bold">Portal del Especialista</h1>
-                <p className="text-xs text-brand-100 mt-1">Comunidad Entre Nosotros · Salud Mental y Acompañamiento</p>
+                <h1 className="text-2xl font-extrabold text-coffee-900 tracking-tight">Portal del Psicólogo</h1>
+                <p className="text-xs text-coffee-600 font-medium">
+                  Crea y personaliza tu perfil profesional para aparecer en la aplicación <span className="font-bold text-coffee-800">Entre Nosotros</span>
+                </p>
               </div>
 
-              {/* Formulario */}
-              <form onSubmit={handleLogin} className="p-6 space-y-4">
-                {urlParams.email && (
-                  <div className="bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs p-3 rounded-xl flex items-center gap-2">
-                    <Icon name="check" size={16} className="text-emerald-600 flex-shrink-0" />
-                    <span>Enlace verificado para <strong>{urlParams.email}</strong>. Ingresa con tu contraseña temporal.</span>
-                  </div>
-                )}
+              {loginError && (
+                <div className="p-3.5 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl font-medium">
+                  {loginError}
+                </div>
+              )}
 
-                {loginError && (
-                  <div className="bg-red-50 border border-red-200 text-red-600 text-xs p-3 rounded-xl">
-                    {loginError}
-                  </div>
-                )}
-
+              <form onSubmit={handleLogin} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Correo Electrónico Asignado</label>
+                  <label className="block text-xs font-bold text-coffee-800 uppercase tracking-wider mb-1">
+                    Correo Electrónico
+                  </label>
                   <input
                     type="email"
                     value={loginEmail}
                     onChange={(e) => setLoginEmail(e.target.value)}
                     required
                     placeholder="doctor@ejemplo.com"
-                    className="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white"
+                    className="w-full px-4 py-2.5 text-sm bg-coffee-50 border border-coffee-200 rounded-xl focus:ring-2 focus:ring-coffee-500 focus:bg-white transition"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Contraseña de Acceso</label>
+                  <label className="block text-xs font-bold text-coffee-800 uppercase tracking-wider mb-1">
+                    Contraseña de Acceso
+                  </label>
                   <input
                     type="password"
                     value={loginPassword}
                     onChange={(e) => setLoginPassword(e.target.value)}
                     required
-                    placeholder="Ej. Psi-2026-XXXX"
-                    className="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white"
+                    placeholder="••••••••"
+                    className="w-full px-4 py-2.5 text-sm bg-coffee-50 border border-coffee-200 rounded-xl focus:ring-2 focus:ring-coffee-500 focus:bg-white transition"
                   />
-                  <p className="text-[11px] text-slate-400 mt-1">Ingresa la contraseña temporal enviada por el administrador.</p>
+                  <p className="text-[11px] text-coffee-500 mt-1">
+                    Ingresa con la clave temporal asignada al darte de alta en el sistema.
+                  </p>
                 </div>
 
                 <button
                   type="submit"
                   disabled={isLoggingIn}
-                  className="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-xl transition duration-150 shadow-md flex items-center justify-center gap-2"
+                  className="w-full py-3 bg-coffee-700 hover:bg-coffee-800 text-white font-bold text-sm rounded-xl shadow-md hover:shadow-lg transition flex items-center justify-center gap-2"
                 >
-                  <Icon name="check" size={16} />
-                  {isLoggingIn ? 'Iniciando sesión...' : 'Ingresar a mi Portal'}
+                  <Icon name="user" size={16} />
+                  {isLoggingIn ? 'Verificando credenciales...' : 'Ingresar a mi Perfil'}
                 </button>
-
-                <div className="text-center pt-2">
-                  <a href="index.html" className="text-xs text-brand-500 hover:underline">
-                    ← Ir al Panel de Administración General
-                  </a>
-                </div>
               </form>
+
+              <div className="pt-4 border-t border-coffee-100 text-center">
+                <p className="text-[11px] text-coffee-500">
+                  Red de Psicólogos Especialistas · Entre Nosotros Salud Mental
+                </p>
+              </div>
             </div>
           </div>
         );
       }
 
-      // ----------------------------------------------------------------------
-      // RENDER 2: PORTAL PRINCIPAL AUTENTICADO (EXCLUSIVAMENTE 5 ACCESOS)
-      // ----------------------------------------------------------------------
+      // ======================================================================
+      // RENDER: PANEL PRINCIPAL CON PERFIL Y VISTA PREVIA
+      // ======================================================================
       return (
-        <div className="min-h-screen flex flex-col bg-slate-50">
-          {/* Header Superior */}
-          <header className="bg-white border-b border-slate-200 sticky top-0 z-30">
-            <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-              {/* Logo y Rol */}
+        <div className="min-h-screen flex flex-col">
+          {/* Barra Superior de Navegación */}
+          <header className="bg-white border-b border-coffee-200 sticky top-0 z-30 shadow-sm">
+            <div className="max-w-6xl w-full mx-auto px-4 py-3 flex items-center justify-between gap-4">
+              {/* Marca */}
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-300 flex items-center justify-center text-emerald-600 shadow-sm">
-                  <Icon name="stethoscope" size={20} />
-                </div>
+                <img src="https://iili.io/nlMffqB.png" alt="Logo" className="w-10 h-10 rounded-xl border border-coffee-300 shadow-sm" />
                 <div>
-                  <div className="text-xs font-bold text-brand-500 uppercase tracking-wider">Entre Nosotros · Especialistas</div>
-                  <div className="text-sm font-bold text-slate-900 leading-none mt-0.5">{currentPsico.nombre}</div>
-                </div>
-              </div>
-
-              {/* Badge de Estado y Avatar */}
-              <div className="flex items-center gap-3">
-                {currentPsico.perfilCompleto ? (
-                  <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                    Tarjeta Activa en la App
-                  </span>
-                ) : (
-                  <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300">
-                    <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-                    Perfil Pendiente de Completar
-                  </span>
-                )}
-                {currentPsico.imagen ? (
-                  <img src={currentPsico.imagen} alt={currentPsico.nombre} className="w-9 h-9 rounded-xl object-cover border-2 border-emerald-500 shadow-sm" />
-                ) : (
-                  <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white font-bold text-xs flex items-center justify-center shadow-sm">
-                    {getInitials(currentPsico.nombre)}
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-extrabold text-sm text-coffee-900 tracking-tight">Entre Nosotros</span>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-coffee-100 text-coffee-800 border border-coffee-200">
+                      Portal Especialista
+                    </span>
                   </div>
-                )}
-              </div>
-            </div>
-
-            {/* BARRA DE NAVEGACIÓN: EXACTAMENTE LOS 5 ACCESOS SOLICITADOS */}
-            {/* PRUNCIPAL, MI PERFIL, PUBLICAR SOBRE TEMA, COMPARTIR, CERRAR SESION */}
-            <nav className="border-t border-slate-100 bg-white">
-              <div className="max-w-6xl mx-auto px-4 flex items-center justify-between overflow-x-auto">
-                <div className="flex gap-1 py-1.5">
-                  {/* 1. PRINCIPAL */}
-                  <button
-                    onClick={() => setActiveTab('principal')}
-                    className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap ${
-                      activeTab === 'principal'
-                        ? 'bg-brand-50 text-brand-600 border border-brand-200 shadow-sm'
-                        : 'text-slate-600 hover:bg-slate-100'
-                    }`}
-                  >
-                    <Icon name="home" size={16} />
-                    Principal
-                  </button>
-
-                  {/* 2. MI PERFIL */}
-                  <button
-                    onClick={() => setActiveTab('perfil')}
-                    className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap ${
-                      activeTab === 'perfil'
-                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-300 shadow-sm'
-                        : 'text-slate-600 hover:bg-slate-100'
-                    }`}
-                  >
-                    <Icon name="user" size={16} />
-                    Mi Perfil
-                    {!currentPsico.perfilCompleto && (
-                      <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-                    )}
-                  </button>
-
-                  {/* 3. PUBLICAR SOBRE TEMA */}
-                  <button
-                    onClick={() => setActiveTab('publicar')}
-                    className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap ${
-                      activeTab === 'publicar'
-                        ? 'bg-purple-50 text-purple-700 border border-purple-200 shadow-sm'
-                        : 'text-slate-600 hover:bg-slate-100'
-                    }`}
-                  >
-                    <Icon name="edit" size={16} />
-                    Publicar sobre Tema
-                  </button>
-
-                  {/* 4. COMPARTIR */}
-                  <button
-                    onClick={() => setActiveTab('compartir')}
-                    className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap ${
-                      activeTab === 'compartir'
-                        ? 'bg-blue-50 text-blue-700 border border-blue-200 shadow-sm'
-                        : 'text-slate-600 hover:bg-slate-100'
-                    }`}
-                  >
-                    <Icon name="share" size={16} />
-                    Compartir
-                  </button>
+                  <p className="text-[11px] text-coffee-600 truncate max-w-[200px] md:max-w-none">
+                    {currentPsico.nombre} · {currentPsico.especialidad || 'Psicología'}
+                  </p>
                 </div>
+              </div>
 
-                {/* 5. CERRAR SESIÓN */}
+              {/* Botones de Navegación (Mi Perfil, Vista Previa Tarjeta, Compartir, Cerrar Sesión) */}
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => setActiveTab('perfil')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap ${
+                    activeTab === 'perfil'
+                      ? 'bg-coffee-700 text-white shadow-sm'
+                      : 'text-coffee-700 hover:bg-coffee-100'
+                  }`}
+                >
+                  <Icon name="user" size={14} />
+                  <span>Mi Perfil</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('vista_previa')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap ${
+                    activeTab === 'vista_previa'
+                      ? 'bg-coffee-700 text-white shadow-sm'
+                      : 'text-coffee-700 hover:bg-coffee-100'
+                  }`}
+                >
+                  <Icon name="eye" size={14} />
+                  <span>Vista Previa Tarjeta</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('compartir')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap ${
+                    activeTab === 'compartir'
+                      ? 'bg-coffee-700 text-white shadow-sm'
+                      : 'text-coffee-700 hover:bg-coffee-100'
+                  }`}
+                >
+                  <Icon name="share" size={14} />
+                  <span>Compartir</span>
+                </button>
+
                 <button
                   onClick={handleLogout}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-red-600 hover:bg-red-50 rounded-xl transition whitespace-nowrap ml-2"
+                  className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold text-red-600 hover:bg-red-50 rounded-xl transition whitespace-nowrap ml-1"
+                  title="Cerrar Sesión"
                 >
-                  <Icon name="logout" size={15} />
-                  Cerrar Sesión
+                  <Icon name="logout" size={14} />
+                  <span className="hidden sm:inline">Salir</span>
                 </button>
               </div>
-            </nav>
+            </div>
           </header>
 
           {/* Contenido Central */}
           <main className="max-w-6xl w-full mx-auto px-4 py-6 flex-1">
-            {activeTab === 'principal' && (
-              <ViewPrincipal
-                psychologist={currentPsico}
-                postsCount={myPosts.length}
-                onGoToPerfil={() => setActiveTab('perfil')}
-                onGoToPublicar={() => setActiveTab('publicar')}
-                onGoToCompartir={() => setActiveTab('compartir')}
-              />
-            )}
-
             {activeTab === 'perfil' && (
               <ViewMiPerfil
                 psychologist={currentPsico}
@@ -577,11 +479,10 @@
               />
             )}
 
-            {activeTab === 'publicar' && (
-              <ViewPublicarSobreTema
+            {activeTab === 'vista_previa' && (
+              <ViewFullCardPreview
                 psychologist={currentPsico}
-                posts={myPosts}
-                setPosts={setMyPosts}
+                onGoToEdit={() => setActiveTab('perfil')}
               />
             )}
 
@@ -596,741 +497,603 @@
     }
 
     // ========================================================================
-    // SECCIÓN 1: PRINCIPAL (RESUMEN, KPIS Y TARJETA EN VIVO DE LA APP)
-    // ========================================================================
-    function ViewPrincipal({ psychologist, postsCount, onGoToPerfil, onGoToPublicar, onGoToCompartir }) {
-      const isComplete = psychologist.perfilCompleto;
-
-      return (
-        <div className="space-y-6">
-          {/* Banner de Bienvenida y Estado */}
-          {!isComplete ? (
-            <div className="bg-amber-50 border-2 border-amber-400 p-5 rounded-2xl shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-              <div className="space-y-1">
-                <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-md bg-amber-200 text-amber-900 font-bold text-xs uppercase">
-                  Paso Pendiente
-                </div>
-                <h2 className="text-lg font-bold text-amber-950">¡Bienvenido al Portal, {psychologist.nombre}!</h2>
-                <p className="text-xs text-amber-800 max-w-2xl">
-                  Tu tarjeta profesional aún no aparece visible para los usuarios en la App Entre Nosotros. Ingresa a la sección <strong>Mi Perfil</strong> para agregar tu foto, cédula profesional, especialidad y WhatsApp de contacto.
-                </p>
-              </div>
-              <button
-                onClick={onGoToPerfil}
-                className="px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl shadow transition whitespace-nowrap flex items-center gap-2"
-              >
-                <Icon name="user" size={14} />
-                Completar mi Tarjeta ahora →
-              </button>
-            </div>
-          ) : (
-            <div className="bg-emerald-50 border-2 border-emerald-500 p-5 rounded-2xl shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-              <div className="space-y-1">
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-emerald-200 text-emerald-900 font-bold text-xs uppercase">
-                  <Icon name="check" size={12} />
-                  Tarjeta Activa en la App
-                </div>
-                <h2 className="text-lg font-bold text-emerald-950">¡Hola, {psychologist.nombre}! Tu perfil está publicado.</h2>
-                <p className="text-xs text-emerald-800 max-w-2xl">
-                  Los usuarios de Entre Nosotros pueden consultar tu perfil clínico, leer tus artículos de salud mental y contactarte directamente por WhatsApp para agendar citas.
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={onGoToCompartir}
-                  className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow transition flex items-center gap-1.5"
-                >
-                  <Icon name="share" size={14} />
-                  Compartir Tarjeta
-                </button>
-                <button
-                  onClick={onGoToPerfil}
-                  className="px-3.5 py-2 bg-white border border-emerald-300 text-emerald-800 font-bold text-xs rounded-xl shadow-sm hover:bg-emerald-100 transition"
-                >
-                  Editar Datos
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Grilla de Métricas Rápidas */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
-              <div className="w-11 h-11 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center font-bold">
-                <Icon name="stethoscope" size={20} />
-              </div>
-              <div>
-                <div className="text-[11px] font-bold text-slate-500 uppercase">Estado en App</div>
-                <div className={`text-sm font-bold ${isComplete ? 'text-emerald-700' : 'text-amber-600'}`}>
-                  {isComplete ? '✓ Activa y Visible' : '⏳ Incompleta'}
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
-              <div className="w-11 h-11 rounded-xl bg-purple-50 border border-purple-200 text-purple-600 flex items-center justify-center font-bold">
-                <Icon name="edit" size={20} />
-              </div>
-              <div>
-                <div className="text-[11px] font-bold text-slate-500 uppercase">Publicaciones</div>
-                <div className="text-sm font-bold text-slate-900">{postsCount} Artículos</div>
-              </div>
-            </div>
-
-            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
-              <div className="w-11 h-11 rounded-xl bg-blue-50 border border-blue-200 text-blue-600 flex items-center justify-center font-bold">
-                <Icon name="globe" size={20} />
-              </div>
-              <div>
-                <div className="text-[11px] font-bold text-slate-500 uppercase">Modalidad</div>
-                <div className="text-sm font-bold text-slate-900 truncate max-w-[130px]" title={psychologist.modalidad}>
-                  {psychologist.modalidad || 'En línea'}
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
-              <div className="w-11 h-11 rounded-xl bg-green-50 border border-green-200 text-green-600 flex items-center justify-center font-bold">
-                <Icon name="phone" size={20} />
-              </div>
-              <div>
-                <div className="text-[11px] font-bold text-slate-500 uppercase">WhatsApp Citas</div>
-                <div className="text-sm font-bold text-slate-900 truncate max-w-[130px]">
-                  {psychologist.whatsapp || 'No configurado'}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Sección de Vista Previa en Vivo de la Tarjeta en la App */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            {/* Columna Izquierda: Información y Acciones Rápidas */}
-            <div className="lg:col-span-7 space-y-4">
-              <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                <h3 className="font-bold text-slate-900 text-sm mb-2 flex items-center gap-2">
-                  <Icon name="eye" size={16} className="text-brand-500" />
-                  Previsualización en Vivo de tu Tarjeta en la App
-                </h3>
-                <p className="text-xs text-slate-500 leading-relaxed mb-4">
-                  Esta es la vista idéntica a la que tienen los usuarios dentro de la aplicación móvil de Entre Nosotros en la sección "Psicólogos". Al pulsar el botón verde, los pacientes abren un chat directo a tu WhatsApp profesional.
-                </p>
-
-                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2.5">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-slate-500">Cédula Profesional:</span>
-                    <span className="font-bold text-slate-800">{psychologist.cedula || 'Pendiente'}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-slate-500">Especialidad:</span>
-                    <span className="font-bold text-slate-800">{psychologist.especialidad || 'Psicología'}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-slate-500">Ubicación / Ciudad:</span>
-                    <span className="font-bold text-slate-800">{psychologist.ciudad || 'No especificada'}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-slate-500">Temas que atiendes:</span>
-                    <span className="font-bold text-slate-800">
-                      {psychologist.temas?.length ? `${psychologist.temas.length} temas seleccionados` : 'Ninguno'}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <button
-                    onClick={onGoToPerfil}
-                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-sm transition flex items-center gap-1.5"
-                  >
-                    <Icon name="user" size={14} />
-                    Personalizar mi Tarjeta
-                  </button>
-                  <button
-                    onClick={onGoToPublicar}
-                    className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl shadow-sm transition flex items-center gap-1.5"
-                  >
-                    <Icon name="edit" size={14} />
-                    Escribir un Consejo
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Columna Derecha: Mockup Visual de la Tarjeta en la App */}
-            <div className="lg:col-span-5 flex justify-center">
-              <div className="w-full max-w-sm bg-white rounded-2xl border-2 border-slate-200 shadow-lg overflow-hidden">
-                {/* Portada */}
-                <div
-                  className="h-28 bg-cover bg-center relative p-3 flex justify-end items-start"
-                  style={psychologist.fotoPortada ? { backgroundImage: `url(${psychologist.fotoPortada})` } : { background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)' }}
-                >
-                  <div className="absolute inset-0 bg-black/25"></div>
-                  <div className="relative z-10 px-2.5 py-1 bg-emerald-600 text-white text-[10px] font-bold rounded-full shadow flex items-center gap-1">
-                    <Icon name="check" size={10} />
-                    Especialista Verificado
-                  </div>
-                </div>
-
-                {/* Contenido de la Tarjeta */}
-                <div className="px-4 pb-4 relative">
-                  {/* Avatar Cuadrado superpuesto */}
-                  <div className="flex items-end gap-3 -mt-9 mb-3 relative z-10">
-                    {psychologist.imagen ? (
-                      <img
-                        src={psychologist.imagen}
-                        alt={psychologist.nombre}
-                        className="w-16 h-16 rounded-xl object-cover border-2 border-white shadow-md bg-white"
-                      />
-                    ) : (
-                      <div className="w-16 h-16 rounded-xl bg-emerald-600 text-white font-extrabold text-lg flex items-center justify-center border-2 border-white shadow-md">
-                        {getInitials(psychologist.nombre)}
-                      </div>
-                    )}
-                    <div className="pt-8 min-w-0 flex-1">
-                      <h4 className="font-extrabold text-slate-900 text-sm truncate">{psychologist.nombre}</h4>
-                      <p className="text-xs text-emerald-700 font-semibold truncate">
-                        {psychologist.especialidad || 'Psicología Clínica'}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Cédula y Modalidad */}
-                  <div className="flex flex-wrap gap-1.5 mb-2.5">
-                    {psychologist.cedula && (
-                      <span className="px-2 py-0.5 bg-slate-100 text-slate-700 text-[10.5px] font-semibold rounded-md">
-                        Céd. {psychologist.cedula}
-                      </span>
-                    )}
-                    <span className="px-2 py-0.5 bg-emerald-50 text-emerald-800 text-[10.5px] font-semibold rounded-md border border-emerald-200">
-                      {psychologist.modalidad || 'Presencial y En línea'}
-                    </span>
-                    {psychologist.ciudad && (
-                      <span className="px-2 py-0.5 bg-blue-50 text-blue-800 text-[10.5px] font-semibold rounded-md border border-blue-200">
-                        {psychologist.ciudad}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Temas */}
-                  {psychologist.temas && psychologist.temas.length > 0 && (
-                    <div className="mb-2.5">
-                      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Temas que atiende</div>
-                      <div className="flex flex-wrap gap-1">
-                        {psychologist.temas.slice(0, 4).map((t, i) => (
-                          <span key={i} className="px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold rounded-md">
-                            {t}
-                          </span>
-                        ))}
-                        {psychologist.temas.length > 4 && (
-                          <span className="px-1.5 py-0.5 bg-slate-100 text-slate-600 text-[10px] font-bold rounded-md">
-                            +{psychologist.temas.length - 4}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Biografía */}
-                  <div className="mb-3">
-                    <p className="text-xs text-slate-600 line-clamp-3 leading-relaxed">
-                      {psychologist.descripcion || 'Sin descripción o biografía registrada todavía en Mi Perfil.'}
-                    </p>
-                  </div>
-
-                  {/* Botón WhatsApp */}
-                  {psychologist.whatsapp ? (
-                    <a
-                      href={`https://wa.me/${psychologist.whatsapp.replace(/[^\d+]/g, '')}?text=${encodeURIComponent(`Hola ${psychologist.nombre}, te contacto desde la aplicación Entre Nosotros para solicitar información sobre consulta psicológica.`)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full py-2.5 bg-[#25D366] hover:bg-[#1EBE5D] text-white font-bold text-xs rounded-xl shadow-md flex items-center justify-center gap-2 transition"
-                    >
-                      <Icon name="phone" size={14} />
-                      Contactar por WhatsApp
-                    </a>
-                  ) : (
-                    <div className="text-center py-2 bg-slate-100 text-slate-400 text-xs rounded-xl">
-                      WhatsApp aún no configurado
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    // ========================================================================
-    // SECCIÓN 2: MI PERFIL (PERSONALIZAR TARJETA PARA LA APP)
+    // SECCIÓN 1: MI PERFIL (FORMULARIO EXACTO DE REGISTRO_PSICOLOGOS.HTML + LIVE PREVIEW)
     // ========================================================================
     function ViewMiPerfil({ psychologist, onSave }) {
       const [nombre, setNombre] = useState(psychologist.nombre || '');
-      const [cedula, setCedula] = useState(psychologist.cedula || '');
       const [especialidad, setEspecialidad] = useState(psychologist.especialidad || '');
+      const [descripcion, setDescripcion] = useState(psychologist.descripcion || '');
       const [modalidad, setModalidad] = useState(psychologist.modalidad || 'Presencial y En línea');
+      const [temas, setTemas] = useState(psychologist.temas || []);
+      const [correo, setCorreo] = useState(psychologist.correo || '');
       const [whatsapp, setWhatsapp] = useState(psychologist.whatsapp || psychologist.telefono || '');
       const [ciudad, setCiudad] = useState(psychologist.ciudad || '');
+      const [sitioWeb, setSitioWeb] = useState(psychologist.sitioWeb || '');
       const [ubicacion, setUbicacion] = useState(psychologist.ubicacion || '');
-      const [descripcion, setDescripcion] = useState(psychologist.descripcion || '');
       const [imagen, setImagen] = useState(psychologist.imagen || '');
       const [fotoPortada, setFotoPortada] = useState(psychologist.fotoPortada || '');
-      const [temas, setTemas] = useState(psychologist.temas || []);
 
+      const [availableTopics, setAvailableTopics] = useState(DEFAULT_TOPICS_REF);
+      const [topicInput, setTopicInput] = useState('');
       const [isSaving, setIsSaving] = useState(false);
       const [savedAlert, setSavedAlert] = useState(false);
 
-      // Alternar etiqueta de temas
-      const toggleTema = (t) => {
-        if (temas.includes(t)) {
-          setTemas(temas.filter(item => item !== t));
-        } else {
-          setTemas([...temas, t]);
-        }
+      // Cargar temas registrados en Firestore (temas_psicologia)
+      useEffect(() => {
+        if (!firestoreDb) return;
+        firestoreDb.collection(COLLECTION_TOPICS).get()
+          .then((snap) => {
+            const list = [...DEFAULT_TOPICS_REF];
+            snap.forEach((doc) => {
+              const t = doc.data().nombre;
+              if (t && !list.includes(t)) {
+                list.push(t);
+              }
+            });
+            setAvailableTopics(list);
+          })
+          .catch((e) => console.warn('Error cargando temas:', e));
+      }, []);
+
+      // Subida de imagen a Base64
+      const handleFileUpload = (e, setter) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          setter(event.target.result);
+        };
+        reader.readAsDataURL(file);
       };
 
+      // Agregar tema
+      const handleAddTopic = (t) => {
+        const clean = (t || topicInput).trim();
+        if (!clean) return;
+        if (!temas.includes(clean)) {
+          setTemas([...temas, clean]);
+          if (!availableTopics.includes(clean)) {
+            setAvailableTopics([...availableTopics, clean]);
+            if (firestoreDb) {
+              const docId = clean.toLowerCase().replace(/[^a-z0-9]/g, '_');
+              firestoreDb.collection(COLLECTION_TOPICS).doc(docId).set({
+                nombre: clean,
+                createdAt: new Date().toISOString()
+              }).catch(() => {});
+            }
+          }
+        }
+        setTopicInput('');
+      };
+
+      // Remover tema
+      const handleRemoveTopic = (index) => {
+        setTemas(temas.filter((_, idx) => idx !== index));
+      };
+
+      // Guardar formulario
       const handleSubmit = async (e) => {
         e.preventDefault();
         setIsSaving(true);
 
         const updated = {
           nombre: nombre.trim(),
-          cedula: cedula.trim(),
           especialidad: especialidad.trim(),
+          descripcion: descripcion.trim(),
           modalidad: modalidad,
+          temas: temas,
+          correo: correo.trim(),
           whatsapp: whatsapp.trim(),
           telefono: whatsapp.trim(),
           ciudad: ciudad.trim(),
+          sitioWeb: sitioWeb.trim(),
           ubicacion: ubicacion.trim(),
-          descripcion: descripcion.trim(),
           imagen: imagen.trim(),
           fotoPortada: fotoPortada.trim(),
-          temas: temas,
-          perfilCompleto: true, // Al guardar se marca activo y completo
           verificado: true,
           activo: true,
+          perfilCompleto: true,
         };
 
         await onSave(updated);
         setIsSaving(false);
         setSavedAlert(true);
-        setTimeout(() => setSavedAlert(false), 4000);
+        setTimeout(() => setSavedAlert(false), 4500);
+      };
+
+      // Preview interactivo en vivo
+      const previewPsychologist = {
+        nombre: nombre || 'Nombre del Especialista',
+        especialidad: especialidad || 'Especialidad Clínica',
+        descripcion: descripcion || '',
+        modalidad: modalidad,
+        temas: temas,
+        correo: correo || 'correo@ejemplo.com',
+        whatsapp: whatsapp || '',
+        ciudad: ciudad || '',
+        sitioWeb: sitioWeb || '',
+        ubicacion: ubicacion || '',
+        imagen: imagen || '',
+        fotoPortada: fotoPortada || '',
       };
 
       return (
-        <div className="max-w-4xl mx-auto space-y-6">
-          {/* Encabezado */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-bold text-slate-900">Personalizar mi Tarjeta y Perfil en la App</h2>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Completa tus datos profesionales para aparecer visible en la lista de especialistas de Entre Nosotros.
-              </p>
-            </div>
-            <span className="px-3 py-1 bg-emerald-100 text-emerald-800 font-bold text-xs rounded-full border border-emerald-300">
-              Modo Edición
-            </span>
-          </div>
-
+        <div className="space-y-6">
           {savedAlert && (
-            <div className="bg-emerald-600 text-white p-4 rounded-xl shadow-lg flex items-center justify-between animate-bounce">
-              <div className="flex items-center gap-2 font-bold text-xs">
-                <Icon name="check" size={18} />
-                <span>¡Tu tarjeta ha sido guardada y activada con éxito en la App Entre Nosotros!</span>
+            <div className="p-4 bg-emerald-50 border-2 border-emerald-500 text-emerald-900 rounded-2xl shadow-sm flex items-center justify-between">
+              <div className="flex items-center gap-2 text-xs font-bold">
+                <Icon name="check" size={18} className="text-emerald-600" />
+                <span>¡Perfil guardado exitosamente! Los datos ya están actualizados en la aplicación Entre Nosotros.</span>
               </div>
-              <span className="text-[11px] underline">Ya visible en la App</span>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* 1. Fotos: Perfil y Portada */}
-            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-              <h3 className="font-bold text-sm text-slate-800 flex items-center gap-2">
-                <span className="w-5 h-5 rounded-md bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs">1</span>
-                Fotografía Profesional y Portada
-              </h3>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Foto Perfil */}
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Foto de Perfil (URL)</label>
-                  <input
-                    type="url"
-                    value={imagen}
-                    onChange={(e) => setImagen(e.target.value)}
-                    placeholder="https://..."
-                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white mb-2"
-                  />
-                  <div className="flex items-center gap-2">
-                    <span className="text-[11px] text-slate-500">O elige foto preset:</span>
-                    <div className="flex gap-1.5">
-                      {AVATAR_PRESETS.map((p, i) => (
-                        <button
-                          key={i}
-                          type="button"
-                          onClick={() => setImagen(p)}
-                          className={`w-7 h-7 rounded-lg overflow-hidden border-2 ${imagen === p ? 'border-emerald-600 scale-110' : 'border-transparent'}`}
-                        >
-                          <img src={p} alt="" className="w-full h-full object-cover" />
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Foto Portada */}
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Foto de Portada / Consultorio (URL)</label>
-                  <input
-                    type="url"
-                    value={fotoPortada}
-                    onChange={(e) => setFotoPortada(e.target.value)}
-                    placeholder="https://..."
-                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white mb-2"
-                  />
-                  <div className="flex items-center gap-2">
-                    <span className="text-[11px] text-slate-500">Fondos preset:</span>
-                    <div className="flex gap-1.5">
-                      {COVER_PRESETS.map((p, i) => (
-                        <button
-                          key={i}
-                          type="button"
-                          onClick={() => setFotoPortada(p)}
-                          className={`w-7 h-7 rounded-lg overflow-hidden border-2 ${fotoPortada === p ? 'border-emerald-600 scale-110' : 'border-transparent'}`}
-                        >
-                          <img src={p} alt="" className="w-full h-full object-cover" />
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            {/* COLUMNA IZQUIERDA: FORMULARIO EXACTO (7 columnas) */}
+            <div className="lg:col-span-7 bg-white rounded-3xl p-6 md:p-8 border border-coffee-200 shadow-sm">
+              <div className="mb-6 pb-4 border-b border-coffee-200">
+                <h2 className="text-xl font-extrabold text-coffee-900">Configuración de Perfil Clínico</h2>
+                <p className="text-xs text-coffee-600 font-medium mt-1">
+                  Completa tu información profesional. Estos mismos datos se reflejarán directamente en tu tarjeta dentro de la App.
+                </p>
               </div>
-            </div>
 
-            {/* 2. Datos Profesionales */}
-            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-              <h3 className="font-bold text-sm text-slate-800 flex items-center gap-2">
-                <span className="w-5 h-5 rounded-md bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs">2</span>
-                Datos Profesionales y Cédula
-              </h3>
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {/* 1. FOTO PERFIL Y PORTADA */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-coffee-50 rounded-2xl border border-coffee-100">
+                  {/* Foto de Perfil */}
+                  <div>
+                    <label className="block text-xs font-bold text-coffee-800 uppercase tracking-wider mb-2">
+                      1. Foto de Perfil
+                    </label>
+                    <div className="flex items-center gap-3 mb-2">
+                      {imagen ? (
+                        <img src={imagen} alt="Avatar" className="w-12 h-12 rounded-full object-cover border-2 border-coffee-400 flex-shrink-0" />
+                      ) : (
+                        <div className="w-12 h-12 rounded-full bg-coffee-200 text-coffee-700 font-bold flex items-center justify-center text-sm border-2 border-coffee-300 flex-shrink-0">
+                          {getInitials(nombre)}
+                        </div>
+                      )}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleFileUpload(e, setImagen)}
+                        className="text-xs text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-coffee-700 file:text-white hover:file:bg-coffee-800 cursor-pointer"
+                      />
+                    </div>
+                    <input
+                      type="text"
+                      value={imagen}
+                      onChange={(e) => setImagen(e.target.value)}
+                      placeholder="O pega enlace URL de tu foto..."
+                      className="w-full text-xs px-3 py-2 rounded-xl border border-coffee-200 focus:outline-none focus:ring-2 focus:ring-coffee-400 bg-white"
+                    />
+                  </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Nombre Completo del Especialista</label>
-                  <input
-                    type="text"
-                    value={nombre}
-                    onChange={(e) => setNombre(e.target.value)}
-                    required
-                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white"
-                  />
+                  {/* Foto de Portada */}
+                  <div>
+                    <label className="block text-xs font-bold text-coffee-800 uppercase tracking-wider mb-2">
+                      2. Foto de Portada
+                    </label>
+                    <div className="flex items-center gap-3 mb-2">
+                      {fotoPortada ? (
+                        <img src={fotoPortada} alt="Portada" className="w-16 h-10 rounded-lg object-cover border-2 border-coffee-400 flex-shrink-0" />
+                      ) : (
+                        <div className="w-16 h-10 rounded-lg bg-coffee-200 border-2 border-coffee-300 flex-shrink-0"></div>
+                      )}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleFileUpload(e, setFotoPortada)}
+                        className="text-xs text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-coffee-700 file:text-white hover:file:bg-coffee-800 cursor-pointer"
+                      />
+                    </div>
+                    <input
+                      type="text"
+                      value={fotoPortada}
+                      onChange={(e) => setFotoPortada(e.target.value)}
+                      placeholder="O pega enlace URL de la portada..."
+                      className="w-full text-xs px-3 py-2 rounded-xl border border-coffee-200 focus:outline-none focus:ring-2 focus:ring-coffee-400 bg-white"
+                    />
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Cédula Profesional</label>
-                  <input
-                    type="text"
-                    value={cedula}
-                    onChange={(e) => setCedula(e.target.value)}
-                    placeholder="Ej. 12849102"
-                    required
-                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white"
-                  />
+                {/* 2. DATOS PRINCIPALES */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-coffee-800 uppercase tracking-wider mb-1.5">
+                      Nombre del Especialista *
+                    </label>
+                    <input
+                      type="text"
+                      value={nombre}
+                      onChange={(e) => setNombre(e.target.value)}
+                      required
+                      placeholder="Ej. Lic. Sofía Morales Ruiz"
+                      className="w-full text-sm px-4 py-2.5 rounded-xl border border-coffee-200 focus:outline-none focus:ring-2 focus:ring-coffee-500 bg-coffee-50/50"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-coffee-800 uppercase tracking-wider mb-1.5">
+                      Especialidad *
+                    </label>
+                    <input
+                      type="text"
+                      value={especialidad}
+                      onChange={(e) => setEspecialidad(e.target.value)}
+                      required
+                      placeholder="Ej. Psicología Clínica y Tanatología"
+                      className="w-full text-sm px-4 py-2.5 rounded-xl border border-coffee-200 focus:outline-none focus:ring-2 focus:ring-coffee-500 bg-coffee-50/50"
+                    />
+                  </div>
                 </div>
 
+                {/* 3. DESCRIPCIÓN */}
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Especialidad Clínica</label>
-                  <input
-                    type="text"
-                    value={especialidad}
-                    onChange={(e) => setEspecialidad(e.target.value)}
-                    placeholder="Ej. Terapia Cognitivo-Conductual, Ansiedad y Depresión"
+                  <label className="block text-xs font-bold text-coffee-800 uppercase tracking-wider mb-1.5">
+                    Descripción Profesional / Sobre el Especialista *
+                  </label>
+                  <textarea
+                    rows="3"
+                    value={descripcion}
+                    onChange={(e) => setDescripcion(e.target.value)}
                     required
-                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white"
-                  />
+                    placeholder="Describe el enfoque terapéutico, formación, años de experiencia y cómo ayudas a tus pacientes..."
+                    className="w-full text-sm px-4 py-2.5 rounded-xl border border-coffee-200 focus:outline-none focus:ring-2 focus:ring-coffee-500 bg-coffee-50/50 leading-relaxed"
+                  ></textarea>
                 </div>
 
+                {/* 4. MODALIDAD */}
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Modalidad de Consulta</label>
+                  <label className="block text-xs font-bold text-coffee-800 uppercase tracking-wider mb-1.5">
+                    Modalidad de Consulta *
+                  </label>
                   <select
                     value={modalidad}
                     onChange={(e) => setModalidad(e.target.value)}
-                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white"
+                    required
+                    className="w-full text-sm px-4 py-2.5 rounded-xl border border-coffee-200 focus:outline-none focus:ring-2 focus:ring-coffee-500 bg-coffee-50/50 font-semibold text-coffee-800"
                   >
-                    <option value="Presencial y En línea">Presencial y En línea</option>
-                    <option value="En línea únicamente">En línea únicamente</option>
-                    <option value="Presencial en consultorio">Presencial en consultorio</option>
+                    <option value="Presencial y En línea">Presencial y En línea (Ambos)</option>
+                    <option value="En línea">En línea (Virtual / Videollamada)</option>
+                    <option value="Presencial">Presencial (Consultorio)</option>
                   </select>
                 </div>
-              </div>
-            </div>
 
-            {/* 3. Contacto y WhatsApp para Citas */}
-            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-              <h3 className="font-bold text-sm text-slate-800 flex items-center gap-2">
-                <span className="w-5 h-5 rounded-md bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs">3</span>
-                WhatsApp para Citas y Ubicación
-              </h3>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    WhatsApp para Citas Directas (con código de país)
+                {/* 5. TEMAS QUE TRATA (TAGS + SUGERENCIAS DE FIRESTORE) */}
+                <div className="p-4 bg-coffee-50 rounded-2xl border border-coffee-200">
+                  <label className="block text-xs font-bold text-coffee-800 uppercase tracking-wider mb-1">
+                    Temas que Tratas *
                   </label>
-                  <input
-                    type="text"
-                    value={whatsapp}
-                    onChange={(e) => setWhatsapp(e.target.value)}
-                    placeholder="Ej. +52 55 1234 5678"
-                    required
-                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white"
-                  />
-                  <p className="text-[11px] text-emerald-700 mt-1">Este número enlazará el botón "Contactar por WhatsApp" de tu tarjeta.</p>
-                </div>
+                  <p className="text-xs text-coffee-600 mb-2.5">
+                    Escribe y presiona Enter para agregar, o haz clic en las sugerencias abajo:
+                  </p>
 
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Ciudad y Consultorio</label>
-                  <input
-                    type="text"
-                    value={ciudad}
-                    onChange={(e) => setCiudad(e.target.value)}
-                    placeholder="Ej. Ciudad de México / Consultorio Del Valle"
-                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white"
-                  />
-                </div>
-              </div>
-            </div>
+                  <div className="flex flex-wrap gap-2 mb-3 min-h-[32px]">
+                    {temas.map((tema, idx) => (
+                      <span key={idx} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-coffee-700 text-white shadow-sm">
+                        <span>{tema}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveTopic(idx)}
+                          className="text-white hover:text-red-300 font-bold ml-1 text-sm focus:outline-none"
+                        >
+                          &times;
+                        </button>
+                      </span>
+                    ))}
+                  </div>
 
-            {/* 4. Temas que Atiende y Biografía */}
-            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-              <h3 className="font-bold text-sm text-slate-800 flex items-center gap-2">
-                <span className="w-5 h-5 rounded-md bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs">4</span>
-                Temas que Atiendes y Enfoque Terapéutico
-              </h3>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                  Selecciona los temas en los que te especializas:
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {POPULAR_THEMES.map((theme) => {
-                    const isSelected = temas.includes(theme);
-                    return (
-                      <button
-                        key={theme}
-                        type="button"
-                        onClick={() => toggleTema(theme)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition ${
-                          isSelected
-                            ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
-                            : 'bg-slate-50 text-slate-700 border-slate-300 hover:bg-slate-100'
-                        }`}
-                      >
-                        {isSelected ? '✓ ' : '+ '}
-                        {theme}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Sobre el Especialista (Biografía y Enfoque)
-                </label>
-                <textarea
-                  rows="4"
-                  value={descripcion}
-                  onChange={(e) => setDescripcion(e.target.value)}
-                  placeholder="Describe brevemente tus años de experiencia clínica, el tipo de terapia que impartes y cómo acompañas a tus consultantes..."
-                  className="w-full p-3 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white"
-                ></textarea>
-              </div>
-            </div>
-
-            {/* Botón de Guardar y Activar */}
-            <div className="flex justify-end pt-2">
-              <button
-                type="submit"
-                disabled={isSaving}
-                className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm rounded-xl shadow-lg transition flex items-center gap-2"
-              >
-                <Icon name="check" size={18} />
-                {isSaving ? 'Guardando cambios...' : 'Guardar y Activar Tarjeta en la App'}
-              </button>
-            </div>
-          </form>
-        </div>
-      );
-    }
-
-    // ========================================================================
-    // SECCIÓN 3: PUBLICAR SOBRE TEMA (ARTÍCULOS Y CONSEJOS CLÍNICOS)
-    // ========================================================================
-    function ViewPublicarSobreTema({ psychologist, posts, setPosts }) {
-      const [title, setTitle] = useState('');
-      const [category, setCategory] = useState('Ansiedad');
-      const [content, setContent] = useState('');
-      const [isPublishing, setIsPublishing] = useState(false);
-      const [publishSuccess, setPublishSuccess] = useState(false);
-
-      const handlePublish = async (e) => {
-        e.preventDefault();
-        if (!title.trim() || !content.trim()) return;
-
-        setIsPublishing(true);
-        const newPost = {
-          id: `post_psico_${Date.now()}`,
-          authorId: psychologist.id,
-          authorName: psychologist.nombre,
-          authorSpecialty: psychologist.especialidad || 'Especialista',
-          authorAvatarUrl: psychologist.imagen || '',
-          title: title.trim(),
-          category: category,
-          content: content.trim(),
-          isPsychologist: true,
-          verificado: true,
-          createdAt: new Date().toISOString(),
-        };
-
-        // Guardar en Firestore colección 'posts'
-        if (firestoreDb) {
-          try {
-            await firestoreDb.collection(COLLECTION_POSTS).doc(newPost.id).set(newPost);
-            console.log('✅ [Firestore] Artículo publicado en colección posts:', newPost.id);
-          } catch (e) {
-            console.error('Error publicando en Firestore:', e);
-          }
-        }
-
-        const updated = [newPost, ...posts];
-        setPosts(updated);
-        setTitle('');
-        setContent('');
-        setIsPublishing(false);
-        setPublishSuccess(true);
-        setTimeout(() => setPublishSuccess(false), 3500);
-      };
-
-      const handleDeletePost = (id) => {
-        if (confirm('¿Eliminar esta publicación?')) {
-          setPosts(posts.filter(p => p.id !== id));
-          if (firestoreDb) {
-            firestoreDb.collection(COLLECTION_POSTS).doc(id).delete().catch(() => {});
-          }
-        }
-      };
-
-      return (
-        <div className="max-w-4xl mx-auto space-y-6">
-          {/* Formulario para Crear Publicación */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-base font-bold text-slate-900">Publicar sobre un Tema de Salud Mental</h2>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Comparte artículos, reflexiones, tips y herramientas para los miembros de la red Entre Nosotros.
-                </p>
-              </div>
-              <span className="px-2.5 py-1 bg-purple-100 text-purple-800 font-bold text-xs rounded-full">
-                {posts.length} Publicados
-              </span>
-            </div>
-
-            {publishSuccess && (
-              <div className="bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs p-3 rounded-xl flex items-center gap-2">
-                <Icon name="check" size={16} className="text-emerald-600" />
-                <span>¡Artículo publicado exitosamente en la comunidad Entre Nosotros!</span>
-              </div>
-            )}
-
-            <form onSubmit={handlePublish} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Título del Artículo o Consejo</label>
-                <input
-                  type="text"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  required
-                  placeholder="Ej. 5 Técnicas para Frenar el Pánico y Regular la Respiración"
-                  className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:bg-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Categoría / Tema Principal</label>
-                <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:bg-white"
-                >
-                  <option value="Ansiedad">Manejo de Ansiedad</option>
-                  <option value="Depresión">Gestión de la Depresión</option>
-                  <option value="Autoestima">Autoestima y Amor Propio</option>
-                  <option value="Duelo">Duelo y Pérdida</option>
-                  <option value="Parejas">Relaciones Sanas y de Pareja</option>
-                  <option value="Estrés">Reducción del Estrés</option>
-                  <option value="Acompañamiento">Acompañamiento Emocional</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Contenido del Artículo / Consejo Clínico</label>
-                <textarea
-                  rows="5"
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  required
-                  placeholder="Escribe tu recomendación profesional con empatía, lenguaje cálido y pasos prácticos..."
-                  className="w-full p-3 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:bg-white leading-relaxed"
-                ></textarea>
-              </div>
-
-              <div className="flex justify-end">
-                <button
-                  type="submit"
-                  disabled={isPublishing}
-                  className="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl shadow transition flex items-center gap-1.5"
-                >
-                  <Icon name="check" size={14} />
-                  {isPublishing ? 'Publicando...' : 'Publicar en la Comunidad'}
-                </button>
-              </div>
-            </form>
-          </div>
-
-          {/* Lista de Publicaciones Realizadas */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-            <h3 className="font-bold text-sm text-slate-800">Mis Publicaciones y Artículos Activos</h3>
-            {posts.length === 0 ? (
-              <div className="text-center py-8 text-xs text-slate-400">
-                Aún no has publicado ningún artículo. ¡Escribe el primero arriba!
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {posts.map((p) => (
-                  <div key={p.id} className="p-4 bg-slate-50 rounded-xl border border-slate-200 hover:border-purple-300 transition flex items-start justify-between gap-4">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="px-2 py-0.5 bg-purple-100 text-purple-700 font-bold text-[10px] rounded-md">
-                          {p.category}
-                        </span>
-                        <span className="text-[11px] text-slate-400">
-                          {new Date(p.createdAt).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' })}
-                        </span>
-                      </div>
-                      <h4 className="font-bold text-slate-900 text-xs">{p.title}</h4>
-                      <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">{p.content}</p>
-                    </div>
-
+                  <div className="flex gap-2 mb-3">
+                    <input
+                      type="text"
+                      value={topicInput}
+                      onChange={(e) => setTopicInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ',') {
+                          e.preventDefault();
+                          handleAddTopic(topicInput);
+                        }
+                      }}
+                      placeholder="Escribe un tema (ej. Autoestima, Ansiedad, Duelo...)"
+                      className="flex-1 text-sm px-3.5 py-2 rounded-xl border border-coffee-200 focus:outline-none focus:ring-2 focus:ring-coffee-500 bg-white"
+                    />
                     <button
-                      onClick={() => handleDeletePost(p.id)}
-                      title="Eliminar publicación"
-                      className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                      type="button"
+                      onClick={() => handleAddTopic(topicInput)}
+                      className="px-4 py-2 bg-coffee-700 hover:bg-coffee-800 text-white rounded-xl text-xs font-bold transition-all shadow-sm"
                     >
-                      <Icon name="trash" size={15} />
+                      + Agregar
                     </button>
                   </div>
-                ))}
+
+                  <div className="pt-2 border-t border-coffee-200">
+                    <span className="text-[11px] font-bold text-coffee-600 uppercase tracking-wider block mb-2">
+                      Sugerencias de la base de datos:
+                    </span>
+                    <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto">
+                      {availableTopics
+                        .filter(t => !temas.includes(t))
+                        .slice(0, 15)
+                        .map((t, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => handleAddTopic(t)}
+                            className="text-xs font-semibold px-3 py-1.5 rounded-full bg-coffee-100 text-coffee-700 hover:bg-coffee-200 transition-all border border-coffee-200 flex items-center gap-1.5"
+                          >
+                            <span>+</span> {t}
+                          </button>
+                        ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 6. CONTACTO Y UBICACIÓN */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-coffee-800 uppercase tracking-wider mb-1.5">
+                      Correo Electrónico *
+                    </label>
+                    <input
+                      type="email"
+                      value={correo}
+                      onChange={(e) => setCorreo(e.target.value)}
+                      required
+                      placeholder="ejemplo@psicologia.com"
+                      className="w-full text-sm px-4 py-2.5 rounded-xl border border-coffee-200 focus:outline-none focus:ring-2 focus:ring-coffee-500 bg-coffee-50/50"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-coffee-800 uppercase tracking-wider mb-1.5">
+                      WhatsApp (con clave lada) *
+                    </label>
+                    <input
+                      type="text"
+                      value={whatsapp}
+                      onChange={(e) => setWhatsapp(e.target.value)}
+                      required
+                      placeholder="Ej. +52 55 1234 5678"
+                      className="w-full text-sm px-4 py-2.5 rounded-xl border border-coffee-200 focus:outline-none focus:ring-2 focus:ring-coffee-500 bg-coffee-50/50"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-coffee-800 uppercase tracking-wider mb-1.5">
+                      Ciudad *
+                    </label>
+                    <input
+                      type="text"
+                      value={ciudad}
+                      onChange={(e) => setCiudad(e.target.value)}
+                      required
+                      placeholder="Ej. Ciudad de México, Guadalajara..."
+                      className="w-full text-sm px-4 py-2.5 rounded-xl border border-coffee-200 focus:outline-none focus:ring-2 focus:ring-coffee-500 bg-coffee-50/50"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-coffee-800 uppercase tracking-wider mb-1.5">
+                      Sitio Web / Red Social (Opcional)
+                    </label>
+                    <input
+                      type="url"
+                      value={sitioWeb}
+                      onChange={(e) => setSitioWeb(e.target.value)}
+                      placeholder="https://www.psicologos.com"
+                      className="w-full text-sm px-4 py-2.5 rounded-xl border border-coffee-200 focus:outline-none focus:ring-2 focus:ring-coffee-500 bg-coffee-50/50"
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-bold text-coffee-800 uppercase tracking-wider mb-1.5">
+                      Ubicación (Enlace de Maps o Dirección física) *
+                    </label>
+                    <input
+                      type="text"
+                      value={ubicacion}
+                      onChange={(e) => setUbicacion(e.target.value)}
+                      required
+                      placeholder="Ej. Enlace de Google Maps / Bing Maps o dirección del consultorio"
+                      className="w-full text-sm px-4 py-2.5 rounded-xl border border-coffee-200 focus:outline-none focus:ring-2 focus:ring-coffee-500 bg-coffee-50/50"
+                    />
+                  </div>
+                </div>
+
+                {/* BOTÓN SUBMIT */}
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  className="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-coffee-700 to-coffee-800 hover:from-coffee-800 hover:to-coffee-900 text-white font-bold text-sm tracking-wide shadow-md hover:shadow-lg transition-all transform active:scale-[0.99] flex items-center justify-center gap-2"
+                >
+                  <Icon name="check" size={16} />
+                  {isSaving ? 'Guardando cambios...' : 'Guardar y Publicar Perfil en la App'}
+                </button>
+              </form>
+            </div>
+
+            {/* COLUMNA DERECHA: LIVE PREVIEW DE LA TARJETA EN LA APP (5 columnas) */}
+            <div className="lg:col-span-5 sticky top-24 space-y-4">
+              <div className="flex items-center justify-between px-2">
+                <span className="text-xs font-extrabold text-coffee-800 uppercase tracking-wider flex items-center gap-1.5">
+                  <Icon name="eye" size={14} className="text-coffee-600" />
+                  Previsualización en la App
+                </span>
+                <span className="text-[11px] text-coffee-500 font-semibold">En tiempo real</span>
+              </div>
+
+              {/* Contenedor del Mockup de la Tarjeta idéntica a la App */}
+              <AppCardView psychologist={previewPsychologist} />
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ========================================================================
+    // COMPONENTE: TARJETA DE LA APP (IDÉNTICA A PSYCHOLOGISTDETAILMODAL.TSX)
+    // ========================================================================
+    function AppCardView({ psychologist }) {
+      const cleanPhone = (psychologist.whatsapp || '').replace(/[^\d+]/g, '');
+
+      return (
+        <div className="w-full bg-white rounded-3xl border border-coffee-200 shadow-md overflow-hidden text-coffee-900">
+          {/* 1. Cover Photo Banner */}
+          <div
+            className="h-32 bg-cover bg-center relative p-3 flex justify-between items-start"
+            style={
+              psychologist.fotoPortada
+                ? { backgroundImage: `url(${psychologist.fotoPortada})` }
+                : { background: 'linear-gradient(135deg, #4A3E3D 0%, #2E2423 100%)' }
+            }
+          >
+            <div className="absolute inset-0 bg-black/20"></div>
+            <div className="relative z-10 px-2.5 py-1 bg-white/90 backdrop-blur-sm text-coffee-800 text-[10.5px] font-bold rounded-full shadow-sm">
+              Entre Nosotros
+            </div>
+            <div className="relative z-10 px-2.5 py-1 bg-coffee-800 text-white text-[10.5px] font-bold rounded-full shadow-sm flex items-center gap-1">
+              <Icon name="check" size={10} />
+              Verificado
+            </div>
+          </div>
+
+          {/* 2. Avatar & Main Identity */}
+          <div className="px-5 pb-5 relative">
+            {/* Avatar Superpuesto */}
+            <div className="flex items-end gap-3 -mt-10 mb-3 relative z-10">
+              {psychologist.imagen ? (
+                <img
+                  src={psychologist.imagen}
+                  alt={psychologist.nombre}
+                  className="w-20 h-20 rounded-2xl object-cover border-4 border-white shadow-md bg-white flex-shrink-0"
+                />
+              ) : (
+                <div className="w-20 h-20 rounded-2xl bg-coffee-700 text-white font-extrabold text-xl flex items-center justify-center border-4 border-white shadow-md flex-shrink-0">
+                  {getInitials(psychologist.nombre)}
+                </div>
+              )}
+
+              <div className="pt-8 min-w-0 flex-1">
+                <div className="flex items-center gap-1.5">
+                  <h3 className="font-extrabold text-coffee-900 text-base leading-tight truncate">
+                    {psychologist.nombre}
+                  </h3>
+                  <span className="w-4 h-4 rounded-full bg-blue-500 text-white text-[9px] flex items-center justify-center font-bold flex-shrink-0">
+                    ✓
+                  </span>
+                </div>
+                <p className="text-xs text-coffee-600 font-semibold truncate mt-0.5">
+                  {psychologist.especialidad}
+                </p>
+              </div>
+            </div>
+
+            {/* Ciudad y Modalidad Badge */}
+            <div className="flex flex-wrap items-center gap-2 mb-4">
+              {psychologist.ciudad && (
+                <div className="inline-flex items-center gap-1 text-[11px] text-coffee-700 font-semibold">
+                  <Icon name="location" size={12} className="text-coffee-500" />
+                  <span>{psychologist.ciudad}</span>
+                </div>
+              )}
+              <div className="px-2.5 py-0.5 rounded-full text-[10.5px] font-bold bg-coffee-100 text-coffee-800 border border-coffee-200">
+                Modalidad: {psychologist.modalidad || 'Presencial y En línea'}
+              </div>
+            </div>
+
+            {/* 3. Canales de Contacto Directo (4 Columnas Exactas de la App) */}
+            <div className="mb-4">
+              <div className="text-[10.5px] font-bold text-coffee-600 uppercase tracking-wider mb-2">
+                Canales de Contacto Directo
+              </div>
+              <div className="grid grid-cols-4 gap-2">
+                {/* 1. Ubicación */}
+                <a
+                  href={psychologist.ubicacion ? (psychologist.ubicacion.startsWith('http') ? psychologist.ubicacion : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(psychologist.ubicacion)}`) : '#'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex flex-col items-center text-center p-2 rounded-xl bg-white border border-coffee-200 hover:border-coffee-300 hover:shadow-sm transition"
+                >
+                  <div className="w-9 h-9 rounded-full bg-rose-100 flex items-center justify-center mb-1 text-rose-600">
+                    <Icon name="location" size={16} />
+                  </div>
+                  <span className="text-[11px] font-bold text-coffee-900">Ubicación</span>
+                  <span className="text-[9.5px] text-coffee-500 truncate w-full">Ver mapa</span>
+                </a>
+
+                {/* 2. WhatsApp */}
+                <a
+                  href={cleanPhone ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(`Hola ${psychologist.nombre}, te contacto desde la aplicación Entre Nosotros para solicitar informes de consulta.`)}` : '#'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex flex-col items-center text-center p-2 rounded-xl bg-white border border-coffee-200 hover:border-coffee-300 hover:shadow-sm transition"
+                >
+                  <div className="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center mb-1 text-emerald-600">
+                    <Icon name="phone" size={16} />
+                  </div>
+                  <span className="text-[11px] font-bold text-coffee-900">WhatsApp</span>
+                  <span className="text-[9.5px] text-coffee-500 truncate w-full">Mensaje</span>
+                </a>
+
+                {/* 3. Correo */}
+                <a
+                  href={psychologist.correo ? `mailto:${psychologist.correo}?subject=${encodeURIComponent('Consulta Psicológica - Entre Nosotros')}` : '#'}
+                  className="flex flex-col items-center text-center p-2 rounded-xl bg-white border border-coffee-200 hover:border-coffee-300 hover:shadow-sm transition"
+                >
+                  <div className="w-9 h-9 rounded-full bg-red-100 flex items-center justify-center mb-1 text-red-600">
+                    <Icon name="mail" size={16} />
+                  </div>
+                  <span className="text-[11px] font-bold text-coffee-900">Correo</span>
+                  <span className="text-[9.5px] text-coffee-500 truncate w-full">Escribir</span>
+                </a>
+
+                {/* 4. Sitio Web */}
+                <a
+                  href={psychologist.sitioWeb ? (psychologist.sitioWeb.startsWith('http') ? psychologist.sitioWeb : `https://${psychologist.sitioWeb}`) : '#'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex flex-col items-center text-center p-2 rounded-xl bg-white border border-coffee-200 hover:border-coffee-300 hover:shadow-sm transition"
+                >
+                  <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center mb-1 text-blue-600">
+                    <Icon name="globe" size={16} />
+                  </div>
+                  <span className="text-[11px] font-bold text-coffee-900">Sitio Web</span>
+                  <span className="text-[9.5px] text-coffee-500 truncate w-full">Visitar</span>
+                </a>
+              </div>
+            </div>
+
+            {/* 4. Sobre el Especialista (Quote Box) */}
+            <div className="mb-4 bg-coffee-50 rounded-2xl p-3.5 border-l-4 border-coffee-500 border-t border-r border-b border-coffee-200">
+              <div className="text-[11px] font-bold text-coffee-800 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                <Icon name="user" size={12} className="text-coffee-600" />
+                Sobre el Especialista
+              </div>
+              <p className="text-xs text-coffee-700 leading-relaxed italic">
+                {psychologist.descripcion || 'Sin descripción registrada todavía.'}
+              </p>
+            </div>
+
+            {/* 5. Temas y Áreas de Atención */}
+            {psychologist.temas && psychologist.temas.length > 0 && (
+              <div>
+                <div className="text-[11px] font-bold text-coffee-800 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                  <Icon name="sparkles" size={12} className="text-coffee-600" />
+                  Temas y Áreas de Atención
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {psychologist.temas.map((t, i) => (
+                    <span
+                      key={i}
+                      className="px-2.5 py-1 bg-coffee-100 text-coffee-800 border border-coffee-200 text-[11px] font-bold rounded-lg flex items-center gap-1"
+                    >
+                      <Icon name="check" size={10} className="text-coffee-600" />
+                      {t}
+                    </span>
+                  ))}
+                </div>
               </div>
             )}
           </div>
@@ -1339,94 +1102,66 @@
     }
 
     // ========================================================================
-    // SECCIÓN 4: COMPARTIR (ENLACE DIRECTO, WHATSAPP Y CÓDIGO QR)
+    // SECCIÓN 2: VISTA PREVIA COMPLETA
+    // ========================================================================
+    function ViewFullCardPreview({ psychologist, onGoToEdit }) {
+      return (
+        <div className="max-w-xl mx-auto space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-bold text-coffee-900">Vista Previa de tu Tarjeta en la App</h2>
+            <button
+              onClick={onGoToEdit}
+              className="px-3.5 py-1.5 bg-coffee-700 hover:bg-coffee-800 text-white rounded-xl text-xs font-bold transition shadow-sm"
+            >
+              Editar mis Datos
+            </button>
+          </div>
+          <AppCardView psychologist={psychologist} />
+        </div>
+      );
+    }
+
+    // ========================================================================
+    // SECCIÓN 3: COMPARTIR ENLACE DEL PERFIL
     // ========================================================================
     function ViewCompartir({ psychologist }) {
       const [copied, setCopied] = useState(false);
-
-      // URL pública de la tarjeta del psicólogo
-      const cardUrl = useMemo(() => {
-        const origin = window.location.origin;
-        const path = window.location.pathname.replace('portal_psicologo.html', 'index.html');
-        return `${origin}${path}#psicologos`;
-      }, []);
-
-      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(cardUrl)}`;
+      const url = window.location.href;
 
       const handleCopy = () => {
-        navigator.clipboard.writeText(cardUrl);
+        navigator.clipboard.writeText(url);
         setCopied(true);
         setTimeout(() => setCopied(false), 2500);
       };
 
-      const handleShareWhatsApp = () => {
-        const text = `Hola, te comparto la tarjeta profesional del Dr/a. ${psychologist.nombre} en la comunidad Entre Nosotros: ${cardUrl}`;
-        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
-      };
-
       return (
-        <div className="max-w-3xl mx-auto space-y-6">
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm text-center">
-            <h2 className="text-base font-bold text-slate-900">Difunde tu Tarjeta Profesional</h2>
-            <p className="text-xs text-slate-500 max-w-md mx-auto mt-1">
-              Comparte tu enlace personalizado o descarga tu código QR para colocarlo en tu consultorio o redes sociales.
+        <div className="max-w-xl mx-auto bg-white rounded-3xl p-6 md:p-8 border border-coffee-200 shadow-sm space-y-6">
+          <div className="text-center space-y-2">
+            <div className="w-12 h-12 rounded-2xl bg-coffee-100 text-coffee-700 flex items-center justify-center mx-auto">
+              <Icon name="share" size={24} />
+            </div>
+            <h2 className="text-xl font-extrabold text-coffee-900">Enlace de tu Perfil y Tarjeta</h2>
+            <p className="text-xs text-coffee-600">
+              Utiliza este enlace para ingresar directamente a editar tus datos o compartir tu tarjeta profesional.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-            {/* Código QR */}
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center text-center">
-              <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 shadow-inner mb-3">
-                <img src={qrUrl} alt="Código QR del Especialista" className="w-48 h-48 rounded-xl object-contain" />
-              </div>
-              <span className="text-xs font-bold text-slate-800">Código QR de tu Tarjeta</span>
-              <p className="text-[11px] text-slate-500 mt-0.5">Escanea con la cámara para abrir tu perfil en la App</p>
-            </div>
-
-            {/* Opciones de Compartir */}
-            <div className="space-y-4">
-              {/* Enlace directo */}
-              <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-2">
-                <label className="block text-xs font-bold text-slate-700">Enlace Público de tu Perfil</label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    readOnly
-                    value={cardUrl}
-                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl font-mono text-slate-700"
-                  />
-                  <button
-                    onClick={handleCopy}
-                    className={`px-4 py-2 font-bold text-xs rounded-xl transition flex items-center gap-1.5 whitespace-nowrap shadow-sm ${
-                      copied ? 'bg-emerald-600 text-white' : 'bg-brand-500 text-white hover:bg-brand-600'
-                    }`}
-                  >
-                    <Icon name={copied ? 'check' : 'copy'} size={14} />
-                    {copied ? '¡Copiado!' : 'Copiar'}
-                  </button>
-                </div>
-              </div>
-
-              {/* Botón WhatsApp */}
-              <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-2">
-                <label className="block text-xs font-bold text-slate-700">Enviar por WhatsApp</label>
-                <button
-                  onClick={handleShareWhatsApp}
-                  className="w-full py-2.5 bg-[#25D366] hover:bg-[#1EBE5D] text-white font-bold text-xs rounded-xl shadow transition flex items-center justify-center gap-2"
-                >
-                  <Icon name="share" size={15} />
-                  Compartir en Chat de WhatsApp
-                </button>
-              </div>
-            </div>
+          <div className="p-3.5 bg-coffee-50 border border-coffee-200 rounded-2xl flex items-center justify-between gap-3">
+            <span className="text-xs font-mono text-coffee-800 truncate select-all">{url}</span>
+            <button
+              onClick={handleCopy}
+              className="px-4 py-2 bg-coffee-700 hover:bg-coffee-800 text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 flex-shrink-0"
+            >
+              <Icon name={copied ? 'check' : 'copy'} size={14} />
+              {copied ? '¡Copiado!' : 'Copiar'}
+            </button>
           </div>
         </div>
       );
     }
 
-    // Montar la aplicación en el DOM
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<PortalApp />);
+    // Montar aplicación
+    ReactDOM.render(<PortalApp />, document.getElementById('root'));
   </script>
 </body>
 </html>
