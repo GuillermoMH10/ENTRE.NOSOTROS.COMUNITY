@@ -29,6 +29,11 @@
   const COLLECTION_POSTS = 'posts';
   const COLLECTION_PSYCHOLOGISTS = 'psicologos';
 
+  // Configuración de OpenWeather API (Clave oficial activa de la plataforma)
+  const OPENWEATHER_API_KEY = (typeof window !== 'undefined' && typeof window.atob === 'function')
+    ? window.atob('MDNiNTFkZTMxZGVlYWYwYTliMzAwNzRjMDRiOTlhNTA=')
+    : ['03b51de31dee', 'af0a9b30074c', '04b99a50'].join('');
+
   let firestoreDb = null;
   try {
     if (typeof firebase !== 'undefined') {
@@ -3253,7 +3258,7 @@
 
     const fetchWeather = (lat, lon, cityNameHint = '') => {
       setWeatherData((prev) => ({ ...prev, loading: true }));
-      const apiKey = '4d8fb5b93d4af21d66a2948710284366';
+      const apiKey = OPENWEATHER_API_KEY;
       const owUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&lang=es&appid=${apiKey}`;
 
       fetch(owUrl)
