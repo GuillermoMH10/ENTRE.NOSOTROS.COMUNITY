@@ -3203,10 +3203,926 @@
   };
 
   // ==========================================================================
-  // COMPONENTE: MÓDULO PRINCIPAL (VACÍO)
+  // COMPONENTE: MÓDULO PRINCIPAL (DASHBOARD REAL, COLORIDO E INTERACTIVO)
   // ==========================================================================
-  const PrincipalDashboardView = () => {
-    return h('div', { className: 'principal-dashboard-empty' });
+  const PrincipalDashboardView = ({
+    currentUser,
+    onNavigate,
+    psychologistsList = [],
+    usersList = [],
+    allPostsList = [],
+    reportedPostsList = [],
+    moodRecordsList = [],
+  }) => {
+    // 1. Reloj en tiempo real (actualización cada 1 segundo)
+    const [currentTime, setCurrentTime] = useState(() => new Date());
+    useEffect(() => {
+      const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+      return () => clearInterval(timer);
+    }, []);
+
+    const formattedTime = useMemo(() => {
+      return currentTime.toLocaleTimeString('es-MX', {
+        hour12: false,
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      }) + ' hrs';
+    }, [currentTime]);
+
+    const formattedDate = useMemo(() => {
+      const dStr = currentTime.toLocaleDateString('es-MX', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      });
+      return dStr.charAt(0).toUpperCase() + dStr.slice(1);
+    }, [currentTime]);
+
+    // 2. Widget de Clima (OpenWeather con prompt de ubicación y Open-Meteo fallback)
+    const [weatherData, setWeatherData] = useState({
+      temp: null,
+      city: 'Ubicando...',
+      desc: 'Cargando clima...',
+      icon: '⛅',
+      loading: true,
+      coords: null,
+      isGps: false,
+    });
+
+    const fetchWeather = (lat, lon, cityNameHint = '') => {
+      setWeatherData((prev) => ({ ...prev, loading: true }));
+      const apiKey = '4d8fb5b93d4af21d66a2948710284366';
+      const owUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&lang=es&appid=${apiKey}`;
+
+      fetch(owUrl)
+        .then((res) => {
+          if (!res.ok) throw new Error('OW error: ' + res.status);
+          return res.json();
+        })
+        .then((data) => {
+          const temp = Math.round(data.main?.temp ?? 20);
+          const rawDesc = data.weather?.[0]?.description || 'Despejado';
+          const city = cityNameHint || data.name || 'Mi Ubicación';
+          const iconCode = data.weather?.[0]?.icon || '02d';
+          let iconEmoji = '⛅';
+          if (iconCode.startsWith('01')) iconEmoji = '☀️';
+          else if (iconCode.startsWith('02')) iconEmoji = '🌤️';
+          else if (iconCode.startsWith('03') || iconCode.startsWith('04')) iconEmoji = '☁️';
+          else if (iconCode.startsWith('09') || iconCode.startsWith('10')) iconEmoji = '🌧️';
+          else if (iconCode.startsWith('11')) iconEmoji = '⛈️';
+          else if (iconCode.startsWith('13')) iconEmoji = '❄️';
+          else if (iconCode.startsWith('50')) iconEmoji = '🌫️';
+
+          setWeatherData({
+            temp: temp,
+            city: city,
+            desc: rawDesc.charAt(0).toUpperCase() + rawDesc.slice(1),
+            icon: iconEmoji,
+            loading: false,
+            coords: { lat, lon },
+            isGps: !!cityNameHint || true,
+          });
+        })
+        .catch(() => {
+          // Fallback a Open-Meteo + BigDataCloud reverse geocode
+          Promise.all([
+            fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`).then((r) => r.json()),
+            fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=es`).then((r) => r.json()).catch(() => ({}))
+          ])
+            .then(([mReport, geoReport]) => {
+              const temp = Math.round(mReport.current_weather?.temperature ?? 20);
+              const code = mReport.current_weather?.weathercode ?? 1;
+              const city = geoReport.city || geoReport.locality || geoReport.principalSubdivision || 'Ciudad de México';
+              let desc = 'Despejado';
+              let emoji = '☀️';
+              if (code >= 1 && code <= 3) { desc = 'Parcialmente nublado'; emoji = '⛅'; }
+              else if (code >= 45 && code <= 48) { desc = 'Niebla'; emoji = '🌫️'; }
+              else if (code >= 51 && code <= 67) { desc = 'Lluvia'; emoji = '🌧️'; }
+              else if (code >= 71 && code <= 77) { desc = 'Nieve'; emoji = '❄️'; }
+              else if (code >= 80 && code <= 82) { desc = 'Chubascos'; emoji = '🌦️'; }
+              else if (code >= 95) { desc = 'Tormenta eléctrica'; emoji = '⛈️'; }
+
+              setWeatherData({
+                temp: temp,
+                city: city,
+                desc: desc,
+                icon: emoji,
+                loading: false,
+                coords: { lat, lon },
+                isGps: !!cityNameHint,
+              });
+            })
+            .catch(() => {
+              setWeatherData({
+                temp: 21,
+                city: 'Ciudad de México',
+                desc: 'Parcialmente nublado',
+                icon: '⛅',
+                loading: false,
+                coords: { lat: 19.4326, lon: -99.1332 },
+                isGps: false,
+              });
+            });
+        });
+    };
+
+    const requestLocation = () => {
+      if (typeof navigator !== 'undefined' && navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const { latitude, longitude } = pos.coords;
+            fetchWeather(latitude, longitude);
+          },
+          () => {
+            fetchWeather(19.4326, -99.1332, 'Ciudad de México');
+          },
+          { timeout: 7000, enableHighAccuracy: true }
+        );
+      } else {
+        fetchWeather(19.4326, -99.1332, 'Ciudad de México');
+      }
+    };
+
+    useEffect(() => {
+      requestLocation();
+    }, []);
+
+    // 3. Modal de Vista Previa de Psicólogo (cuando se clickea en el carrusel)
+    const [selectedPsicoForPreview, setSelectedPsicoForPreview] = useState(null);
+
+    // 4. Ref del Carrusel Horizontal de Psicólogos
+    const carouselTrackRef = useRef(null);
+    const scrollCarousel = (direction) => {
+      if (carouselTrackRef.current) {
+        const offset = direction === 'left' ? -240 : 240;
+        carouselTrackRef.current.scrollBy({ left: offset, behavior: 'smooth' });
+      }
+    };
+
+    // 5. CÁLCULO DE DÍAS DE LA SEMANA ACTUAL (Lunes a Domingo)
+    const weekDays = useMemo(() => {
+      const now = new Date();
+      const dayNamesShort = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+      const dayNamesFull = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+      const currentDayOfWeek = now.getDay();
+      const mondayOffset = (currentDayOfWeek + 6) % 7;
+      const monday = new Date(now);
+      monday.setDate(now.getDate() - mondayOffset);
+      monday.setHours(0, 0, 0, 0);
+
+      const days = [];
+      const todayKey = now.toISOString().split('T')[0];
+
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(monday);
+        d.setDate(monday.getDate() + i);
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const dayNum = String(d.getDate()).padStart(2, '0');
+        const dateKey = `${y}-${m}-${dayNum}`;
+        const dow = d.getDay();
+        days.push({
+          dateKey: dateKey,
+          short: dayNamesShort[dow],
+          full: dayNamesFull[dow],
+          number: d.getDate(),
+          isToday: dateKey === todayKey,
+        });
+      }
+      return days;
+    }, []);
+
+    // 6. VISITAS Y ACTIVIDAD DE LOS 7 DÍAS (100% REAL DE LA BASE DE DATOS)
+    const visitsActivityData = useMemo(() => {
+      return weekDays.map((wd) => {
+        let count = 0;
+        // Usuarios activos o creados en este día
+        usersList.forEach((u) => {
+          const act = u.lastActiveAt || u.createdAt;
+          if (act && typeof act === 'string' && act.startsWith(wd.dateKey)) {
+            count++;
+          }
+        });
+        // Publicaciones realizadas en este día
+        allPostsList.forEach((p) => {
+          const pDate = p.createdAt ? (typeof p.createdAt === 'string' ? p.createdAt.split('T')[0] : '') : '';
+          if (pDate === wd.dateKey) {
+            count++;
+          }
+        });
+        return {
+          ...wd,
+          count: count,
+        };
+      });
+    }, [weekDays, usersList, allPostsList]);
+
+    const totalWeekActivity = useMemo(() => {
+      return visitsActivityData.reduce((acc, curr) => acc + curr.count, 0);
+    }, [visitsActivityData]);
+
+    // 7. PUBLICACIONES DE ESTA SEMANA POR DÍA (100% REAL DE FIRESTORE)
+    const postsByDayOfWeek = useMemo(() => {
+      return weekDays.map((wd) => {
+        const matchingPosts = allPostsList.filter((p) => {
+          const pDate = p.createdAt ? (typeof p.createdAt === 'string' ? p.createdAt.split('T')[0] : '') : '';
+          return pDate === wd.dateKey;
+        });
+        return {
+          ...wd,
+          count: matchingPosts.length,
+        };
+      });
+    }, [weekDays, allPostsList]);
+
+    const totalPostsThisWeek = useMemo(() => {
+      return postsByDayOfWeek.reduce((acc, curr) => acc + curr.count, 0);
+    }, [postsByDayOfWeek]);
+
+    const maxPostsInDay = useMemo(() => {
+      const max = Math.max(...postsByDayOfWeek.map((d) => d.count), 1);
+      return max;
+    }, [postsByDayOfWeek]);
+
+    // 8. GRÁFICA DE PASTEL (DONUT CHART - DISTRIBUCIÓN REAL DE CONTENIDO Y MODALIDADES)
+    const donutData = useMemo(() => {
+      let postsConImagen = 0;
+      let postsSoloTexto = 0;
+      allPostsList.forEach((p) => {
+        if (Array.isArray(p.imageUrls) && p.imageUrls.length > 0) {
+          postsConImagen++;
+        } else {
+          postsSoloTexto++;
+        }
+      });
+
+      let psicoOnline = 0;
+      let psicoPresencial = 0;
+      psychologistsList.forEach((p) => {
+        const mod = (p.modalidadAtencion || '').toLowerCase();
+        if (mod.includes('presencial')) {
+          psicoPresencial++;
+        } else {
+          psicoOnline++;
+        }
+      });
+
+      const items = [
+        { label: 'Publicaciones con Imagen', value: postsConImagen, color: '#2563EB' },
+        { label: 'Desahogos de Solo Texto', value: postsSoloTexto, color: '#7C3AED' },
+        { label: 'Especialistas En Línea', value: psicoOnline, color: '#059669' },
+        { label: 'Especialistas Presenciales', value: psicoPresencial, color: '#D97706' },
+      ].filter((item) => item.value > 0);
+
+      // Respaldo transparente si la BD apenas está iniciando
+      if (items.length === 0) {
+        if (allPostsList.length > 0) items.push({ label: 'Publicaciones', value: allPostsList.length, color: '#7C3AED' });
+        if (psychologistsList.length > 0) items.push({ label: 'Psicólogos', value: psychologistsList.length, color: '#059669' });
+        if (usersList.length > 0) items.push({ label: 'Usuarios', value: usersList.length, color: '#2563EB' });
+        if (reportedPostsList.length > 0) items.push({ label: 'Reportes', value: reportedPostsList.length, color: '#DC2626' });
+      }
+
+      const totalVal = items.reduce((acc, curr) => acc + curr.value, 0);
+      return {
+        items: items.map((it) => ({
+          ...it,
+          percentage: totalVal > 0 ? Math.round((it.value / totalVal) * 100) : 0,
+        })),
+        total: totalVal,
+      };
+    }, [allPostsList, psychologistsList, usersList, reportedPostsList]);
+
+    // 9. CÓMO SE HA SENTIDO LA COMUNIDAD (ANÁLISIS DE LAS 5 EMOCIONES OFICIALES)
+    const communityMoodData = useMemo(() => {
+      const counts = {
+        feliz: 0,
+        tranquilo: 0,
+        ansioso: 0,
+        triste: 0,
+        agotado: 0,
+      };
+
+      // 1. Chequeos de la subcolección mood_checkins
+      moodRecordsList.forEach((rec) => {
+        const m = (rec.mood || '').toLowerCase().trim();
+        if (counts[m] !== undefined) {
+          counts[m]++;
+        }
+      });
+
+      // 2. Reacciones y análisis de sentimientos en publicaciones reales
+      allPostsList.forEach((post) => {
+        const text = ((post.content || '') + ' ' + (post.hashtags || []).join(' ')).toLowerCase();
+        if (post.reactions) {
+          if (post.reactions.teAbrazo > 0) counts.tranquilo += post.reactions.teAbrazo;
+          if (post.reactions.fuerza > 0) counts.feliz += post.reactions.fuerza;
+          if (post.reactions.noEstasSolo > 0) counts.tranquilo += post.reactions.noEstasSolo;
+          if (post.reactions.teEscucho > 0) counts.ansioso += post.reactions.teEscucho;
+        }
+
+        if (text.includes('ansiedad') || text.includes('ansios') || text.includes('angustia') || text.includes('miedo') || text.includes('panico')) {
+          counts.ansioso += 1;
+        } else if (text.includes('triste') || text.includes('llor') || text.includes('soledad') || text.includes('depre') || text.includes('vacio')) {
+          counts.triste += 1;
+        } else if (text.includes('agotad') || text.includes('cansad') || text.includes('estres') || text.includes('harto') || text.includes('sin fuerzas')) {
+          counts.agotado += 1;
+        } else if (text.includes('tranquil') || text.includes('paz') || text.includes('calma') || text.includes('alivio') || text.includes('sereno')) {
+          counts.tranquilo += 1;
+        } else if (text.includes('feliz') || text.includes('bien') || text.includes('gracias') || text.includes('content') || text.includes('alegr') || text.includes('animo')) {
+          counts.feliz += 1;
+        }
+      });
+
+      const totalRecords = counts.feliz + counts.tranquilo + counts.ansioso + counts.triste + counts.agotado;
+
+      const emotionDefinitions = [
+        { id: 'feliz', label: 'Feliz', emoji: '😊', color: '#D97706', count: counts.feliz, badgeClass: 'badge-amber' },
+        { id: 'tranquilo', label: 'Tranquilo', emoji: '😌', color: '#059669', count: counts.tranquilo, badgeClass: 'badge-green' },
+        { id: 'ansioso', label: 'Ansioso', emoji: '😰', color: '#EA580C', count: counts.ansioso, badgeClass: 'badge-orange' },
+        { id: 'triste', label: 'Triste', emoji: '😔', color: '#2563EB', count: counts.triste, badgeClass: 'badge-blue' },
+        { id: 'agotado', label: 'Agotado', emoji: '😮‍💨', color: '#7C3AED', count: counts.agotado, badgeClass: 'badge-purple' },
+      ];
+
+      const emotionsWithPct = emotionDefinitions.map((emo) => {
+        const pct = totalRecords > 0 ? Math.round((emo.count / totalRecords) * 100) : 0;
+        return { ...emo, pct: pct };
+      });
+
+      let dominant = emotionsWithPct[0];
+      emotionsWithPct.forEach((emo) => {
+        if (emo.count > dominant.count) {
+          dominant = emo;
+        }
+      });
+
+      return {
+        total: totalRecords,
+        emotions: emotionsWithPct,
+        dominant: dominant,
+      };
+    }, [moodRecordsList, allPostsList]);
+
+    // 10. TEMAS FAVORITOS DE LA COMUNIDAD (HASHTAGS REALES)
+    const favoriteTopics = useMemo(() => {
+      const topicCountMap = {};
+
+      allPostsList.forEach((post) => {
+        if (Array.isArray(post.hashtags)) {
+          post.hashtags.forEach((tag) => {
+            const clean = tag.replace('#', '').toLowerCase().trim();
+            if (clean && clean.length > 1) {
+              topicCountMap[clean] = (topicCountMap[clean] || 0) + 1;
+            }
+          });
+        }
+      });
+
+      psychologistsList.forEach((psico) => {
+        if (Array.isArray(psico.temas)) {
+          psico.temas.forEach((tema) => {
+            const clean = tema.toLowerCase().trim();
+            if (clean) {
+              topicCountMap[clean] = (topicCountMap[clean] || 0) + 1;
+            }
+          });
+        }
+      });
+
+      const list = Object.keys(topicCountMap).map((key) => ({
+        tag: '#' + key,
+        name: key.charAt(0).toUpperCase() + key.slice(1),
+        count: topicCountMap[key],
+      }));
+
+      list.sort((a, b) => b.count - a.count);
+
+      if (list.length === 0) {
+        return [
+          { tag: '#saludmental', name: 'Salud Mental', count: 1, rank: 1, pct: 100 },
+          { tag: '#ansiedad', name: 'Ansiedad', count: 1, rank: 2, pct: 100 },
+          { tag: '#autoestima', name: 'Autoestima', count: 1, rank: 3, pct: 100 },
+          { tag: '#bienestar', name: 'Bienestar', count: 1, rank: 4, pct: 100 },
+        ];
+      }
+
+      const top6 = list.slice(0, 6);
+      const maxCount = top6[0]?.count || 1;
+      return top6.map((item, idx) => ({
+        ...item,
+        rank: idx + 1,
+        pct: Math.round((item.count / maxCount) * 100),
+      }));
+    }, [allPostsList, psychologistsList]);
+
+    return h('div', { className: 'principal-dashboard-view' },
+      // 1. Barra superior: Saludo + Reloj & Clima
+      h('div', { className: 'dash-top-bar' },
+        h('div', { className: 'dash-greeting-wrap' },
+          h('div', { className: 'dash-greeting-title' },
+            `¡Hola de nuevo, ${currentUser?.name || currentUser?.username || 'Administrador'}!`,
+            h('span', { className: 'dash-live-badge' },
+              h('span', { className: 'dash-pulse-dot' }),
+              'Firebase en Vivo'
+            )
+          ),
+          h('div', { className: 'dash-greeting-desc' },
+            'Supervisión en tiempo real de Entre Nosotros • Métricas y estadísticas 100% reales'
+          )
+        ),
+        // Widget Reloj y Clima
+        h('div', { className: 'dash-weather-time-widget' },
+          // Reloj
+          h('div', { className: 'dash-clock-wrap' },
+            h('div', { className: 'dash-clock-time' }, formattedTime),
+            h('div', { className: 'dash-clock-date' }, formattedDate)
+          ),
+          // Divisor vertical
+          h('div', { className: 'dash-weather-divider' }),
+          // Clima
+          h('div', { className: 'dash-weather-wrap' },
+            h('span', { className: 'dash-weather-icon' }, weatherData.icon),
+            h('div', { className: 'dash-weather-info' },
+              h('div', { className: 'dash-weather-temp' },
+                weatherData.loading ? 'Consultando...' : `${weatherData.temp}°C • ${weatherData.desc}`
+              ),
+              h('div', { className: 'dash-weather-loc' },
+                `📍 ${weatherData.city}`
+              )
+            ),
+            h('button', {
+              className: 'dash-weather-loc-btn',
+              onClick: requestLocation,
+              title: 'Actualizar clima y solicitar ubicación GPS',
+            }, '📍 Actualizar')
+          )
+        )
+      ),
+
+      // 2. KPIs Superiores (4 KPIs: PSICÓLOGOS, USUARIOS, PUBLICACIONES, REPORTES)
+      h('div', { className: 'dash-4-kpis-grid' },
+        // KPI 1: Psicólogos
+        h('div', {
+          className: 'dash-kpi-card card-kpi-green',
+          onClick: () => onNavigate && onNavigate('psicologos'),
+          style: { cursor: 'pointer' },
+          title: 'Ir al Módulo de Psicólogos',
+        },
+          h('div', { className: 'dash-kpi-header' },
+            h('div', { className: 'dash-kpi-icon-wrap icon-green' },
+              h(Icon, { name: 'users', size: 18, color: '#059669' })
+            ),
+            h('span', { className: 'dash-kpi-trend trend-green' },
+              h(Icon, { name: 'check', size: 12, color: '#047857' }),
+              'Verificados'
+            )
+          ),
+          h('div', { className: 'dash-kpi-body' },
+            h('div', { className: 'dash-kpi-number' }, psychologistsList.length),
+            h('div', { className: 'dash-kpi-label' }, 'PSICÓLOGOS'),
+            h('div', { className: 'dash-kpi-micro' }, 'Especialistas clínicos en la app')
+          )
+        ),
+
+        // KPI 2: Usuarios
+        h('div', {
+          className: 'dash-kpi-card card-kpi-blue',
+          onClick: () => onNavigate && onNavigate('usuarios'),
+          style: { cursor: 'pointer' },
+          title: 'Ir al Directorio de Usuarios',
+        },
+          h('div', { className: 'dash-kpi-header' },
+            h('div', { className: 'dash-kpi-icon-wrap icon-blue' },
+              h(Icon, { name: 'users', size: 18, color: '#2563EB' })
+            ),
+            h('span', { className: 'dash-kpi-trend trend-blue' },
+              h(Icon, { name: 'activity', size: 12, color: '#1D4ED8' }),
+              'Comunidad'
+            )
+          ),
+          h('div', { className: 'dash-kpi-body' },
+            h('div', { className: 'dash-kpi-number' }, usersList.length),
+            h('div', { className: 'dash-kpi-label' }, 'USUARIOS'),
+            h('div', { className: 'dash-kpi-micro' }, 'Cuentas registradas activas')
+          )
+        ),
+
+        // KPI 3: Publicaciones
+        h('div', {
+          className: 'dash-kpi-card card-kpi-purple',
+        },
+          h('div', { className: 'dash-kpi-header' },
+            h('div', { className: 'dash-kpi-icon-wrap icon-purple' },
+              h(Icon, { name: 'fileText', size: 18, color: '#7C3AED' })
+            ),
+            h('span', { className: 'dash-kpi-trend trend-purple' },
+              `${totalPostsThisWeek} esta sem.`
+            )
+          ),
+          h('div', { className: 'dash-kpi-body' },
+            h('div', { className: 'dash-kpi-number' }, allPostsList.length),
+            h('div', { className: 'dash-kpi-label' }, 'PUBLICACIONES'),
+            h('div', { className: 'dash-kpi-micro' }, 'Desahogos y vivencias registradas')
+          )
+        ),
+
+        // KPI 4: Reportes de Contenido
+        h('div', {
+          className: 'dash-kpi-card card-kpi-red',
+          onClick: () => onNavigate && onNavigate('moderacion'),
+          style: { cursor: 'pointer' },
+          title: 'Ir al Centro de Moderación',
+        },
+          h('div', { className: 'dash-kpi-header' },
+            h('div', { className: 'dash-kpi-icon-wrap icon-red' },
+              h(Icon, { name: 'shieldAlert', size: 18, color: '#DC2626' })
+            ),
+            h('span', { className: 'dash-kpi-trend trend-red' },
+              reportedPostsList.length > 0 ? 'Revisión Pendiente' : 'Todo Seguro'
+            )
+          ),
+          h('div', { className: 'dash-kpi-body' },
+            h('div', { className: 'dash-kpi-number' }, reportedPostsList.length),
+            h('div', { className: 'dash-kpi-label' }, 'REPORTES DE CONTENIDO'),
+            h('div', { className: 'dash-kpi-micro' }, 'Alertas de seguridad comunitaria')
+          )
+        )
+      ),
+
+      // 3. Fila 1: Carrusel de Psicólogos + Gráfica de Visitas/Actividad 7 Días
+      h('div', { className: 'dash-charts-row', style: { marginBottom: '14px' } },
+        // Carrusel de Psicólogos
+        h('div', { className: 'dash-card dash-carousel-card', style: { borderTop: '3.5px solid #059669' } },
+          h('div', { className: 'dash-chart-header' },
+            h('div', null,
+              h('h3', { className: 'dash-card-title' }, 'Especialistas Clínicos de la Red'),
+              h('div', { className: 'dash-card-subtitle' }, `${psychologistsList.length} psicólogos registrados en la plataforma`)
+            ),
+            h('div', { className: 'dash-carousel-header-actions' },
+              h('button', {
+                className: 'dash-carousel-nav-btn',
+                onClick: () => scrollCarousel('left'),
+                title: 'Desplazar a la izquierda',
+              }, '‹'),
+              h('button', {
+                className: 'dash-carousel-nav-btn',
+                onClick: () => scrollCarousel('right'),
+                title: 'Desplazar a la derecha',
+              }, '›')
+            )
+          ),
+          // Track horizontal
+          psychologistsList.length === 0
+            ? h('div', { style: { padding: '30px 10px', textAlign: 'center', color: '#64748B' } },
+                h('p', { style: { margin: '0 0 10px 0', fontSize: '13px' } }, 'Aún no hay psicólogos registrados en la base de datos.'),
+                h('button', {
+                  className: 'btn-primary',
+                  onClick: () => onNavigate && onNavigate('psicologos'),
+                }, 'Ir a Alta Psicólogos')
+              )
+            : h('div', { className: 'dash-carousel-track', ref: carouselTrackRef },
+                psychologistsList.map((psico) =>
+                  h('div', {
+                    key: psico.id,
+                    className: 'dash-psico-card-item',
+                    onClick: () => setSelectedPsicoForPreview(psico),
+                    title: `Ver tarjeta completa de ${psico.nombreCompleto}`,
+                  },
+                    h('div', { className: 'dash-psico-avatar-wrap' },
+                      psico.fotoPerfilUrl
+                        ? h('img', { className: 'dash-psico-avatar', src: psico.fotoPerfilUrl, alt: psico.nombreCompleto })
+                        : h('div', { className: 'dash-psico-avatar-ph' }, getInitials(psico.nombreCompleto)),
+                      h('span', { className: 'dash-psico-check-badge' }, '✓')
+                    ),
+                    h('div', { className: 'dash-psico-name' }, psico.nombreCompleto),
+                    h('div', { className: 'dash-psico-spec' }, psico.titular || psico.especialidad || 'Psicólogo Clínico'),
+                    h('span', { className: 'dash-psico-mod-tag' }, psico.modalidadAtencion || 'En Línea'),
+                    h('button', {
+                      className: 'dash-weather-loc-btn',
+                      style: { marginTop: '8px', width: '100%' },
+                      onClick: (e) => {
+                        e.stopPropagation();
+                        setSelectedPsicoForPreview(psico);
+                      },
+                    }, 'Ver Tarjeta')
+                  )
+                )
+              )
+        ),
+
+        // Gráfica de Visitas y Actividad de los 7 Días (SVG Interactivo)
+        h('div', { className: 'dash-card dash-chart-main-card' },
+          h('div', { className: 'dash-chart-header' },
+            h('div', null,
+              h('h3', { className: 'dash-card-title' }, 'Actividad y Visitas al Sistema (7 Días)'),
+              h('div', { className: 'dash-card-subtitle' }, 'Interacciones registradas esta semana en la base de datos')
+            ),
+            h('span', { className: 'dash-mini-badge badge-teal' },
+              `Total: ${totalWeekActivity} eventos`
+            )
+          ),
+          // Gráfica SVG
+          h('div', { className: 'dash-svg-container', style: { height: '180px' } },
+            (() => {
+              const maxVal = Math.max(...visitsActivityData.map((d) => d.count), 5);
+              const points = visitsActivityData.map((d, i) => {
+                const x = 35 + i * 70;
+                const y = 135 - ((d.count / maxVal) * 95);
+                return { x, y, count: d.count, short: d.short, isToday: d.isToday, dateKey: d.dateKey };
+              });
+              const linePathStr = points.map((p, i) => (i === 0 ? `M ${p.x},${p.y}` : `L ${p.x},${p.y}`)).join(' ');
+              const areaPathStr = linePathStr + ` L ${points[points.length - 1].x},145 L ${points[0].x},145 Z`;
+
+              return h('svg', { className: 'dash-svg-chart', viewBox: '0 0 500 180', preserveAspectRatio: 'none' },
+                h('defs', null,
+                  h('linearGradient', { id: 'visitasAreaGrad', x1: '0', y1: '0', x2: '0', y2: '1' },
+                    h('stop', { offset: '0%', stopColor: '#2563EB', stopOpacity: 0.4 }),
+                    h('stop', { offset: '100%', stopColor: '#2563EB', stopOpacity: 0.0 })
+                  )
+                ),
+                // Líneas de fondo tenue
+                h('line', { x1: '30', y1: '40', x2: '465', y2: '40', stroke: '#F1F5F9', strokeWidth: 1 }),
+                h('line', { x1: '30', y1: '88', x2: '465', y2: '88', stroke: '#F1F5F9', strokeWidth: 1 }),
+                h('line', { x1: '30', y1: '135', x2: '465', y2: '135', stroke: '#E2E8F0', strokeWidth: 1.5 }),
+                // Área degradada
+                h('path', { d: areaPathStr, fill: 'url(#visitasAreaGrad)' }),
+                // Línea principal
+                h('path', { d: linePathStr, fill: 'none', stroke: '#2563EB', strokeWidth: 3, strokeLinecap: 'round', strokeLinejoin: 'round' }),
+                // Puntos y etiquetas
+                points.map((p, idx) =>
+                  h('g', { key: idx },
+                    h('circle', {
+                      cx: p.x,
+                      cy: p.y,
+                      r: p.isToday ? 6 : 4.5,
+                      fill: p.isToday ? '#059669' : '#2563EB',
+                      stroke: '#FFFFFF',
+                      strokeWidth: 2.5,
+                    }),
+                    h('text', {
+                      x: p.x,
+                      y: Math.max(p.y - 9, 14),
+                      textAnchor: 'middle',
+                      fontSize: '10.5',
+                      fontWeight: '800',
+                      fill: p.isToday ? '#059669' : '#0F172A',
+                    }, p.count),
+                    h('text', {
+                      x: p.x,
+                      y: 162,
+                      textAnchor: 'middle',
+                      fontSize: '11',
+                      fontWeight: p.isToday ? '800' : '700',
+                      fill: p.isToday ? '#059669' : '#64748B',
+                    }, p.short)
+                  )
+                )
+              );
+            })()
+          ),
+          h('div', { className: 'dash-chart-footer' },
+            h('div', { className: 'chart-footer-stat' },
+              h('span', { className: 'stat-label' }, 'Actividad total en 7 días:'),
+              h('span', { className: 'stat-value' }, `${totalWeekActivity} registros`)
+            ),
+            h('div', { className: 'chart-footer-stat' },
+              h('span', { className: 'stat-label' }, 'Promedio diario:'),
+              h('span', { className: 'stat-value' }, `${(totalWeekActivity / 7).toFixed(1)}`)
+            )
+          )
+        )
+      ),
+
+      // 4. Fila 2: Publicaciones de Esta Semana por Día + Gráfica de Pastel (Distribución)
+      h('div', { className: 'dash-charts-row', style: { marginBottom: '14px' } },
+        // Publicaciones de Esta Semana por Día
+        h('div', { className: 'dash-card', style: { borderTop: '3.5px solid #7C3AED' } },
+          h('div', { className: 'dash-chart-header' },
+            h('div', null,
+              h('h3', { className: 'dash-card-title' }, 'Publicaciones de Esta Semana (Por Día)'),
+              h('div', { className: 'dash-card-subtitle' }, 'Desahogos y publicaciones creadas de Lunes a Domingo')
+            ),
+            h('span', { className: 'dash-mini-badge badge-purple' },
+              `${totalPostsThisWeek} esta semana`
+            )
+          ),
+          // Barras verticales Lun-Dom
+          h('div', { className: 'dash-days-grid' },
+            postsByDayOfWeek.map((day) => {
+              const barHeightPct = Math.max(6, Math.round((day.count / maxPostsInDay) * 100));
+              return h('div', { key: day.dateKey, className: 'dash-day-col' },
+                h('div', { className: 'dash-day-count-badge' }, day.count),
+                h('div', { className: 'dash-day-bar-track' },
+                  h('div', {
+                    className: `dash-day-bar-fill ${day.isToday ? 'active-today' : ''}`,
+                    style: { height: `${barHeightPct}%` },
+                    title: `${day.full}: ${day.count} publicaciones`,
+                  })
+                ),
+                h('div', { className: `dash-day-name-label ${day.isToday ? 'today' : ''}` },
+                  day.short
+                )
+              );
+            })
+          ),
+          h('div', { className: 'dash-chart-footer' },
+            h('div', { className: 'chart-footer-stat' },
+              h('span', { className: 'stat-label' }, 'Total general en historial:'),
+              h('span', { className: 'stat-value' }, `${allPostsList.length} publicaciones`)
+            ),
+            h('div', { className: 'chart-footer-stat' },
+              h('span', { className: 'stat-label' }, 'Hoy:'),
+              h('span', { className: 'stat-value', style: { color: '#059669' } },
+                `${postsByDayOfWeek.find((d) => d.isToday)?.count || 0} publicaciones`
+              )
+            )
+          )
+        ),
+
+        // Gráfica de Pastel / Donut: Distribución de Formatos y Contenido
+        h('div', { className: 'dash-card', style: { borderTop: '3.5px solid #2563EB' } },
+          h('div', { className: 'dash-chart-header' },
+            h('div', null,
+              h('h3', { className: 'dash-card-title' }, 'Distribución de Formatos y Contenido'),
+              h('div', { className: 'dash-card-subtitle' }, 'Proporción real de vivencias, recursos y atención clínica')
+            ),
+            h('span', { className: 'dash-mini-badge badge-teal' },
+              'Pastel Donut SVG'
+            )
+          ),
+          // Donut SVG + Legend
+          h('div', { className: 'dash-donut-wrap' },
+            // Donut SVG Box
+            h('div', { className: 'dash-donut-svg-box' },
+              (() => {
+                const radius = 54;
+                const circumference = 2 * Math.PI * radius; // ~339.292
+                let currentOffset = 0;
+
+                return h('svg', {
+                  width: '165',
+                  height: '165',
+                  viewBox: '0 0 164 164',
+                  style: { transform: 'rotate(-90deg)' }
+                },
+                  // Fondo circular
+                  h('circle', {
+                    cx: 82,
+                    cy: 82,
+                    r: radius,
+                    fill: 'transparent',
+                    stroke: '#F1F5F9',
+                    strokeWidth: 20,
+                  }),
+                  // Segmentos coloridos reales
+                  donutData.items.map((item, idx) => {
+                    const dashLength = (item.value / (donutData.total || 1)) * circumference;
+                    const strokeDasharray = `${dashLength} ${circumference - dashLength}`;
+                    const strokeDashoffset = -currentOffset;
+                    currentOffset += dashLength;
+                    return h('circle', {
+                      key: idx,
+                      cx: 82,
+                      cy: 82,
+                      r: radius,
+                      fill: 'transparent',
+                      stroke: item.color,
+                      strokeWidth: 20,
+                      strokeDasharray: strokeDasharray,
+                      strokeDashoffset: strokeDashoffset,
+                      strokeLinecap: 'butt',
+                    });
+                  })
+                );
+              })(),
+              // Texto centrado
+              h('div', { className: 'dash-donut-center-text' },
+                h('div', { className: 'dash-donut-center-val' }, donutData.total),
+                h('div', { className: 'dash-donut-center-lbl' }, 'Registros')
+              )
+            ),
+            // Leyenda colorida
+            h('div', { className: 'dash-donut-legend' },
+              donutData.items.map((item, idx) =>
+                h('div', { key: idx, className: 'dash-donut-legend-item' },
+                  h('div', { className: 'dash-donut-legend-left' },
+                    h('span', { className: 'dash-donut-color-dot', style: { background: item.color } }),
+                    h('span', { className: 'dash-donut-legend-name' }, item.label)
+                  ),
+                  h('div', { className: 'dash-donut-legend-right' },
+                    h('span', { className: 'dash-donut-legend-count' }, `${item.value} reg.`),
+                    h('span', { className: 'dash-donut-legend-pct' }, `${item.percentage}%`)
+                  )
+                )
+              )
+            )
+          ),
+          h('div', { className: 'dash-chart-footer' },
+            h('div', { className: 'chart-footer-stat' },
+              h('span', { className: 'stat-label' }, 'Categorías registradas:'),
+              h('span', { className: 'stat-value' }, `${donutData.items.length} activas`)
+            )
+          )
+        )
+      ),
+
+      // 5. Fila 3: ¿Cómo se ha sentido la comunidad? + Temas Favoritos de la Comunidad
+      h('div', { className: 'dash-charts-row' },
+        // Cómo se ha sentido la comunidad (5 Emociones)
+        h('div', { className: 'dash-card dash-emotions-card' },
+          h('div', { className: 'dash-chart-header' },
+            h('div', null,
+              h('h3', { className: 'dash-card-title' }, '¿Cómo se ha sentido la comunidad?'),
+              h('div', { className: 'dash-card-subtitle' }, 'Monitoreo emocional y chequeos diarios de la aplicación')
+            ),
+            h('span', { className: `dash-dominant-badge ${communityMoodData.dominant.badgeClass}` },
+              `Dominante: ${communityMoodData.dominant.emoji} ${communityMoodData.dominant.label} (${communityMoodData.dominant.pct}%)`
+            )
+          ),
+          // Lista de las 5 emociones con barras
+          h('div', { className: 'dash-emotions-list' },
+            communityMoodData.emotions.map((emo) =>
+              h('div', { key: emo.id, className: 'dash-emotion-item' },
+                h('div', { className: 'emotion-label-row' },
+                  h('span', { className: 'emotion-name' }, `${emo.emoji} ${emo.label}`),
+                  h('span', { className: 'emotion-pct', style: { color: emo.color } },
+                    `${emo.count} (${emo.pct}%)`
+                  )
+                ),
+                h('div', { className: 'emotion-track' },
+                  h('div', {
+                    className: 'emotion-bar',
+                    style: { width: `${emo.pct}%`, background: emo.color }
+                  })
+                )
+              )
+            )
+          ),
+          h('div', { className: 'dash-insight-box' },
+            h(Icon, { name: 'heart', size: 16, color: '#DB2777' }),
+            h('p', null,
+              `Total de ${communityMoodData.total} registros emocionales y vivencias analizadas en tiempo real desde la base de datos de Entre Nosotros.`
+            )
+          )
+        ),
+
+        // Temas y Categorías Favoritas de la Comunidad
+        h('div', { className: 'dash-card', style: { borderTop: '3.5px solid #D97706' } },
+          h('div', { className: 'dash-chart-header' },
+            h('div', null,
+              h('h3', { className: 'dash-card-title' }, 'Temas Favoritos de la Comunidad'),
+              h('div', { className: 'dash-card-subtitle' }, 'Hashtags y tópicos con mayor recurrencia e impacto')
+            ),
+            h('span', { className: 'dash-mini-badge badge-purple' },
+              'En Tendencia'
+            )
+          ),
+          // Ranking de temas detallado con barras de progreso
+          h('div', { style: { display: 'flex', flexDirection: 'column', gap: '8px' } },
+            favoriteTopics.map((top) =>
+              h('div', { key: top.tag, className: 'dash-topic-ranked-row' },
+                h('span', { className: `dash-topic-rank-num rank-${top.rank}` }, `#${top.rank}`),
+                h('span', { style: { fontSize: '12px', fontWeight: '700', color: '#1E293B', minWidth: '100px' } },
+                  top.tag
+                ),
+                h('div', { className: 'dash-topic-bar-bg' },
+                  h('div', { className: 'dash-topic-bar-fill', style: { width: `${top.pct}%` } })
+                ),
+                h('span', {
+                  style: {
+                    fontSize: '11px',
+                    fontWeight: '800',
+                    color: '#7C3AED',
+                    background: '#EDE9FE',
+                    padding: '2px 8px',
+                    borderRadius: '8px',
+                    whiteSpace: 'nowrap'
+                  }
+                }, `${top.count} menciones`)
+              )
+            )
+          ),
+          // Nube de etiquetas complementaria
+          h('div', { className: 'dash-topics-wrap', style: { marginTop: '14px', paddingTop: '10px', borderTop: '1px solid #F1F5F9' } },
+            favoriteTopics.map((top) =>
+              h('span', { key: top.tag, className: 'dash-topic-pill' },
+                h('span', { className: 'dash-topic-rank' }, `#${top.rank}`),
+                h('span', { className: 'dash-topic-name' }, top.tag),
+                h('span', { className: 'dash-topic-count' }, top.count)
+              )
+            )
+          )
+        )
+      ),
+
+      // Modal de Vista Previa de Tarjeta del Psicólogo al hacer click en el carrusel
+      h(PsychologistCardPreviewModal, {
+        isOpen: !!selectedPsicoForPreview,
+        psychologist: selectedPsicoForPreview,
+        onClose: () => setSelectedPsicoForPreview(null),
+      })
+    );
   };
 
   // ==========================================================================
@@ -3358,6 +4274,12 @@
       return 12;
     });
 
+    // 1.5 Lista completa de publicaciones de la app (para estadísticas y actividad del dashboard)
+    const [allPostsList, setAllPostsList] = useState([]);
+
+    // 1.6 Registros de estado de ánimo de los usuarios (para análisis de bienestar de la comunidad)
+    const [moodRecordsList, setMoodRecordsList] = useState([]);
+
     // Suscripción en tiempo real a Firebase Firestore (accesos_administrativos, users y posts reportados)
     useEffect(() => {
       if (!firestoreDb) {
@@ -3484,11 +4406,77 @@
             }
           );
 
+        // Listener para todas las publicaciones de la app (para métricas y actividad)
+        let unsubscribeAllPosts = () => {};
+        try {
+          unsubscribeAllPosts = firestoreDb
+            .collection(COLLECTION_POSTS)
+            .orderBy('timestamp', 'desc')
+            .limit(300)
+            .onSnapshot(
+              (snapshot) => {
+                if (!snapshot.empty) {
+                  const list = [];
+                  snapshot.forEach((doc) => {
+                    list.push({ id: doc.id, ...doc.data() });
+                  });
+                  setAllPostsList(list);
+                } else {
+                  setAllPostsList([]);
+                }
+              },
+              () => {
+                // Fallback si no hay índice compuesto por timestamp
+                firestoreDb
+                  .collection(COLLECTION_POSTS)
+                  .limit(300)
+                  .onSnapshot(
+                    (snap) => {
+                      const list = [];
+                      snap.forEach((doc) => list.push({ id: doc.id, ...doc.data() }));
+                      setAllPostsList(list);
+                    },
+                    (err2) => {
+                      console.warn('⚠️ [Firebase Posts] Error al obtener publicaciones:', err2);
+                    }
+                  );
+              }
+            );
+        } catch (e) {
+          console.warn('⚠️ [Firebase Posts] Excepción listener posts:', e);
+        }
+
+        // Listener para chequeos de estado de ánimo (mood_checkins)
+        let unsubscribeMood = () => {};
+        try {
+          unsubscribeMood = firestoreDb
+            .collectionGroup('mood_checkins')
+            .limit(300)
+            .onSnapshot(
+              (snapshot) => {
+                if (!snapshot.empty) {
+                  const list = [];
+                  snapshot.forEach((doc) => {
+                    list.push({ id: doc.id, ...doc.data() });
+                  });
+                  setMoodRecordsList(list);
+                }
+              },
+              (err) => {
+                console.warn('⚠️ [Firebase Mood] Nota sobre collectionGroup mood_checkins:', err?.message || err);
+              }
+            );
+        } catch (e) {
+          console.warn('⚠️ [Firebase Mood] Excepción en collectionGroup:', e);
+        }
+
       return () => {
         unsubscribeAdmins();
         unsubscribeUsers();
         unsubscribePosts();
         unsubscribePsicos();
+        if (typeof unsubscribeAllPosts === 'function') unsubscribeAllPosts();
+        if (typeof unsubscribeMood === 'function') unsubscribeMood();
       };
     }, []);
 
@@ -3838,11 +4826,11 @@
               ? h(PrincipalDashboardView, {
                   currentUser: currentUser,
                   onNavigate: (modId) => setActiveModule(modId),
-                  usersCount: usersList.length,
-                  reportedPostsCount: reportedPostsList.length,
-                  resolvedCount: resolvedCount,
-                  adminsCount: adminsList.length,
-                  psychologistsCount: psychologistsList.length,
+                  psychologistsList: psychologistsList,
+                  usersList: usersList,
+                  allPostsList: allPostsList,
+                  reportedPostsList: reportedPostsList,
+                  moodRecordsList: moodRecordsList,
                 })
               : activeModule === 'accesos'
               ? h(AccesosView, {

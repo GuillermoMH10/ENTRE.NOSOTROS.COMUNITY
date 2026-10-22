@@ -2999,6 +2999,571 @@ body {
 }
 
 /* ==========================================================================
+   DASHBOARD PRINCIPAL: WIDGET CLIMA/HORA, CARRUSEL PSICÓLOGOS, ESTADÍSTICAS REALES
+   ========================================================================== */
+.dash-weather-time-widget {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: #FFFFFF;
+  border: 1.5px solid #E2E8F0;
+  border-radius: 18px;
+  padding: 8px 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+.dash-clock-wrap {
+  display: flex;
+  flex-direction: column;
+}
+
+.dash-clock-time {
+  font-size: 15px;
+  font-weight: 800;
+  color: #0F172A;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.dash-clock-date {
+  font-size: 11px;
+  color: #64748B;
+  font-weight: 600;
+}
+
+.dash-weather-divider {
+  width: 1px;
+  height: 30px;
+  background: #E2E8F0;
+}
+
+.dash-weather-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dash-weather-icon {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.dash-weather-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.dash-weather-temp {
+  font-size: 14px;
+  font-weight: 800;
+  color: #0F172A;
+  line-height: 1.2;
+}
+
+.dash-weather-loc {
+  font-size: 11px;
+  color: #64748B;
+  font-weight: 600;
+}
+
+.dash-weather-loc-btn {
+  background: #EFF6FF;
+  border: 1px solid #BFDBFE;
+  color: #2563EB;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.dash-weather-loc-btn:hover {
+  background: #DBEAFE;
+}
+
+/* Carrusel de Psicólogos */
+.dash-carousel-card {
+  position: relative;
+}
+
+.dash-carousel-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dash-carousel-nav-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: #F8FAFC;
+  border: 1px solid #CBD5E1;
+  color: #334155;
+  font-weight: 800;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.dash-carousel-nav-btn:hover {
+  background: #0F172A;
+  color: #FFFFFF;
+  border-color: #0F172A;
+}
+
+.dash-carousel-track {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  padding: 4px 2px 10px 2px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.dash-carousel-track::-webkit-scrollbar {
+  height: 6px;
+}
+
+.dash-carousel-track::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 4px;
+}
+
+.dash-psico-card-item {
+  flex: 0 0 160px;
+  background: #FAF7F5;
+  border: 1.5px solid #E5D5C8;
+  border-radius: 18px;
+  padding: 14px 10px;
+  text-align: center;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+}
+
+.dash-psico-card-item:hover {
+  transform: translateY(-3px);
+  border-color: #8C684B;
+  box-shadow: 0 6px 18px rgba(140, 104, 75, 0.15);
+  background: #FFFFFF;
+}
+
+.dash-psico-avatar-wrap {
+  position: relative;
+  margin-bottom: 8px;
+}
+
+.dash-psico-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  object-fit: cover;
+  border: 2px solid #FFFFFF;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: #FFFFFF;
+}
+
+.dash-psico-avatar-ph {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: #E5D5C8;
+  color: #4A3E3D;
+  font-weight: 800;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #FFFFFF;
+}
+
+.dash-psico-check-badge {
+  position: absolute;
+  bottom: -3px;
+  right: -3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #2563EB;
+  color: #FFFFFF;
+  font-size: 9px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid #FFFFFF;
+}
+
+.dash-psico-name {
+  font-size: 12px;
+  font-weight: 800;
+  color: #1C1917;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0 0 2px 0;
+}
+
+.dash-psico-spec {
+  font-size: 10.5px;
+  color: #6F5038;
+  font-weight: 600;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0 0 6px 0;
+}
+
+.dash-psico-mod-tag {
+  font-size: 9.5px;
+  font-weight: 700;
+  background: #F3EAE3;
+  color: #4A3E3D;
+  padding: 2px 6px;
+  border-radius: 6px;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Gráfica de Barras de Publicaciones por Día */
+.dash-days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  align-items: flex-end;
+  height: 150px;
+  padding-top: 20px;
+}
+
+.dash-day-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  justify-content: flex-end;
+}
+
+.dash-day-bar-track {
+  width: 100%;
+  max-width: 28px;
+  height: 110px;
+  background: #F1F5F9;
+  border-radius: 8px;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+  position: relative;
+}
+
+.dash-day-bar-fill {
+  width: 100%;
+  background: linear-gradient(180deg, #7C3AED 0%, #A855F7 100%);
+  border-radius: 8px 8px 0 0;
+  transition: height 0.4s ease;
+  min-height: 4px;
+}
+
+.dash-day-bar-fill.active-today {
+  background: linear-gradient(180deg, #059669 0%, #10B981 100%);
+}
+
+.dash-day-count-badge {
+  font-size: 10px;
+  font-weight: 800;
+  color: #1E293B;
+  margin-bottom: 4px;
+}
+
+.dash-day-name-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #64748B;
+  margin-top: 6px;
+}
+
+.dash-day-name-label.today {
+  color: #059669;
+  font-weight: 800;
+}
+
+/* Temas Favoritos de la Comunidad */
+.dash-topics-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dash-topic-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 12px;
+  background: #F8FAFC;
+  border: 1.5px solid #E2E8F0;
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+
+.dash-topic-pill:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.dash-topic-rank {
+  font-size: 10px;
+  font-weight: 800;
+  color: #7C3AED;
+}
+
+.dash-topic-name {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #1E293B;
+}
+
+.dash-topic-count {
+  font-size: 10px;
+  font-weight: 800;
+  background: #EDE9FE;
+  color: #6D28D9;
+  padding: 1px 6px;
+  border-radius: 999px;
+}
+
+/* Dashboard Grid de 4 KPIs Superiores */
+.dash-4-kpis-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 1024px) {
+  .dash-4-kpis-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .dash-4-kpis-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Gráfica de Pastel / Donut */
+.dash-donut-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  gap: 18px;
+  padding: 8px 0;
+  flex-wrap: wrap;
+}
+
+.dash-donut-svg-box {
+  position: relative;
+  width: 165px;
+  height: 165px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.dash-donut-center-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  pointer-events: none;
+}
+
+.dash-donut-center-val {
+  font-size: 22px;
+  font-weight: 900;
+  color: #0F172A;
+  line-height: 1;
+}
+
+.dash-donut-center-lbl {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #64748B;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 3px;
+}
+
+.dash-donut-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  min-width: 180px;
+}
+
+.dash-donut-legend-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 10px;
+  background: #F8FAFC;
+  border-radius: 8px;
+  border: 1px solid #E2E8F0;
+  transition: all 0.15s ease;
+}
+
+.dash-donut-legend-item:hover {
+  background: #FFFFFF;
+  border-color: #CBD5E1;
+  transform: translateX(2px);
+}
+
+.dash-donut-legend-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dash-donut-color-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dash-donut-legend-name {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #1E293B;
+}
+
+.dash-donut-legend-right {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.dash-donut-legend-count {
+  font-size: 10px;
+  color: #64748B;
+  font-weight: 600;
+}
+
+.dash-donut-legend-pct {
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #0F172A;
+}
+
+/* Badges de emociones y temas */
+.dash-dominant-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.dash-dominant-badge.badge-amber {
+  background: #FEF3C7;
+  color: #B45309;
+  border: 1px solid #FDE68A;
+}
+
+.dash-dominant-badge.badge-green {
+  background: #D1FAE5;
+  color: #047857;
+  border: 1px solid #A7F3D0;
+}
+
+.dash-dominant-badge.badge-orange {
+  background: #FFEDD5;
+  color: #C2410C;
+  border: 1px solid #FED7AA;
+}
+
+.dash-dominant-badge.badge-blue {
+  background: #DBEAFE;
+  color: #1D4ED8;
+  border: 1px solid #BFDBFE;
+}
+
+.dash-dominant-badge.badge-purple {
+  background: #EDE9FE;
+  color: #6D28D9;
+  border: 1px solid #DDD6FE;
+}
+
+/* Ranking de temas detallado */
+.dash-topic-ranked-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+}
+
+.dash-topic-rank-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: #F1F5F9;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.dash-topic-rank-num.rank-1 {
+  background: #FEF3C7;
+  color: #B45309;
+}
+
+.dash-topic-rank-num.rank-2 {
+  background: #E2E8F0;
+  color: #334155;
+}
+
+.dash-topic-rank-num.rank-3 {
+  background: #FFEDD5;
+  color: #C2410C;
+}
+
+.dash-topic-bar-bg {
+  flex: 1;
+  height: 8px;
+  background: #F1F5F9;
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 0 8px;
+}
+
+.dash-topic-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #7C3AED 0%, #3B82F6 100%);
+  transition: width 0.4s ease;
+}
+
+/* ==========================================================================
    MÓDULO DE ALTA PSICÓLOGOS (1 KPI SUPERIOR, BUSCADOR, ALTA Y TABLA)
    ========================================================================== */
 .psicologos-module {
