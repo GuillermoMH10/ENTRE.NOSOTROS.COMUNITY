@@ -3250,21 +3250,21 @@
       return dStr.charAt(0).toUpperCase() + dStr.slice(1);
     }, [currentTime]);
 
-    // 2. Widget de Clima (OpenWeather con prompt de ubicación y Open-Meteo fallback)
+    // 2. Widget de Clima (SIEMPRE Santa Catarina, N.L.)
+    const SANTA_CATARINA_COORDS = { lat: 25.6761, lon: -100.4639, name: 'Santa Catarina, N.L.' };
+
     const [weatherData, setWeatherData] = useState({
       temp: null,
-      city: 'Ubicando...',
+      city: 'Santa Catarina, N.L.',
       desc: 'Cargando clima...',
-      icon: '⛅',
+      icon: '☀️',
       loading: true,
-      coords: null,
-      isGps: false,
     });
 
-    const fetchWeather = (lat, lon, cityNameHint = '') => {
+    const fetchWeather = () => {
       setWeatherData((prev) => ({ ...prev, loading: true }));
       const apiKey = OPENWEATHER_API_KEY;
-      const owUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&lang=es&appid=${apiKey}`;
+      const owUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${SANTA_CATARINA_COORDS.lat}&lon=${SANTA_CATARINA_COORDS.lon}&units=metric&lang=es&appid=${apiKey}`;
 
       fetch(owUrl)
         .then((res) => {
@@ -3272,11 +3272,10 @@
           return res.json();
         })
         .then((data) => {
-          const temp = Math.round(data.main?.temp ?? 20);
-          const rawDesc = data.weather?.[0]?.description || 'Despejado';
-          const city = cityNameHint || data.name || 'Mi Ubicación';
-          const iconCode = data.weather?.[0]?.icon || '02d';
-          let iconEmoji = '⛅';
+          const temp = Math.round(data.main?.temp ?? 23);
+          const rawDesc = data.weather?.[0]?.description || 'Cielo claro';
+          const iconCode = data.weather?.[0]?.icon || '01d';
+          let iconEmoji = '☀️';
           if (iconCode.startsWith('01')) iconEmoji = '☀️';
           else if (iconCode.startsWith('02')) iconEmoji = '🌤️';
           else if (iconCode.startsWith('03') || iconCode.startsWith('04')) iconEmoji = '☁️';
@@ -3287,76 +3286,48 @@
 
           setWeatherData({
             temp: temp,
-            city: city,
+            city: 'Santa Catarina, N.L.',
             desc: rawDesc.charAt(0).toUpperCase() + rawDesc.slice(1),
             icon: iconEmoji,
             loading: false,
-            coords: { lat, lon },
-            isGps: !!cityNameHint || true,
           });
         })
         .catch(() => {
-          // Fallback a Open-Meteo + BigDataCloud reverse geocode
-          Promise.all([
-            fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`).then((r) => r.json()),
-            fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=es`).then((r) => r.json()).catch(() => ({}))
-          ])
-            .then(([mReport, geoReport]) => {
-              const temp = Math.round(mReport.current_weather?.temperature ?? 20);
-              const code = mReport.current_weather?.weathercode ?? 1;
-              const city = geoReport.city || geoReport.locality || geoReport.principalSubdivision || 'Ciudad de México';
-              let desc = 'Despejado';
+          // Fallback a Open-Meteo
+          fetch(`https://api.open-meteo.com/v1/forecast?latitude=${SANTA_CATARINA_COORDS.lat}&longitude=${SANTA_CATARINA_COORDS.lon}&current_weather=true`)
+            .then((r) => r.json())
+            .then((mReport) => {
+              const temp = Math.round(mReport.current_weather?.temperature ?? 23);
+              const code = mReport.current_weather?.weathercode ?? 0;
+              let desc = 'Cielo claro';
               let emoji = '☀️';
               if (code >= 1 && code <= 3) { desc = 'Parcialmente nublado'; emoji = '⛅'; }
               else if (code >= 45 && code <= 48) { desc = 'Niebla'; emoji = '🌫️'; }
               else if (code >= 51 && code <= 67) { desc = 'Lluvia'; emoji = '🌧️'; }
-              else if (code >= 71 && code <= 77) { desc = 'Nieve'; emoji = '❄️'; }
               else if (code >= 80 && code <= 82) { desc = 'Chubascos'; emoji = '🌦️'; }
-              else if (code >= 95) { desc = 'Tormenta eléctrica'; emoji = '⛈️'; }
 
               setWeatherData({
                 temp: temp,
-                city: city,
+                city: 'Santa Catarina, N.L.',
                 desc: desc,
                 icon: emoji,
                 loading: false,
-                coords: { lat, lon },
-                isGps: !!cityNameHint,
               });
             })
             .catch(() => {
               setWeatherData({
-                temp: 21,
-                city: 'Ciudad de México',
-                desc: 'Parcialmente nublado',
-                icon: '⛅',
+                temp: 23,
+                city: 'Santa Catarina, N.L.',
+                desc: 'Cielo claro',
+                icon: '☀️',
                 loading: false,
-                coords: { lat: 19.4326, lon: -99.1332 },
-                isGps: false,
               });
             });
         });
     };
 
-    const requestLocation = () => {
-      if (typeof navigator !== 'undefined' && navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            const { latitude, longitude } = pos.coords;
-            fetchWeather(latitude, longitude);
-          },
-          () => {
-            fetchWeather(19.4326, -99.1332, 'Ciudad de México');
-          },
-          { timeout: 7000, enableHighAccuracy: true }
-        );
-      } else {
-        fetchWeather(19.4326, -99.1332, 'Ciudad de México');
-      }
-    };
-
     useEffect(() => {
-      requestLocation();
+      fetchWeather();
     }, []);
 
     // 3. Modal de Vista Previa de Psicólogo (cuando se clickea en el carrusel)
@@ -3471,10 +3442,11 @@
       let psicoOnline = 0;
       let psicoPresencial = 0;
       psychologistsList.forEach((p) => {
-        const mod = (p.modalidadAtencion || '').toLowerCase();
+        const mod = (p.modalidad || p.modalidadAtencion || '').toLowerCase();
         if (mod.includes('presencial')) {
           psicoPresencial++;
-        } else {
+        }
+        if (mod.includes('línea') || mod.includes('linea') || !mod.includes('presencial')) {
           psicoOnline++;
         }
       });
@@ -3632,8 +3604,8 @@
             ),
             h('button', {
               className: 'dash-weather-loc-btn',
-              onClick: requestLocation,
-              title: 'Actualizar clima y solicitar ubicación GPS',
+              onClick: fetchWeather,
+              title: 'Actualizar clima de Santa Catarina, N.L.',
             }, '📍 Actualizar')
           )
         )
@@ -3763,21 +3735,41 @@
                 }, 'Ir a Alta Psicólogos')
               )
             : h('div', { className: 'dash-carousel-track', ref: carouselTrackRef },
-                psychologistsList.map((psico) =>
-                  h('div', {
+                psychologistsList.map((psico) => {
+                  const nombre = (psico.nombre || psico.name || psico.nombreCompleto || 'Especialista').trim();
+                  const foto = psico.imagen || psico.fotoPerfilUrl || '';
+                  const initials = getInitials(nombre);
+
+                  return h('div', {
                     key: psico.id,
                     className: 'dash-psico-card-item',
                     onClick: () => setSelectedPsicoForPreview(psico),
-                    title: psico.nombreCompleto,
+                    title: nombre,
                   },
                     h('div', { className: 'dash-psico-avatar-wrap' },
-                      psico.fotoPerfilUrl
-                        ? h('img', { className: 'dash-psico-avatar', src: psico.fotoPerfilUrl, alt: psico.nombreCompleto })
-                        : h('div', { className: 'dash-psico-avatar-ph' }, getInitials(psico.nombreCompleto))
+                      foto
+                        ? h('img', {
+                            className: 'dash-psico-avatar',
+                            src: foto,
+                            alt: nombre,
+                            onError: (e) => {
+                              e.currentTarget.style.display = 'none';
+                              const parent = e.currentTarget.parentElement;
+                              if (parent) {
+                                const ph = parent.querySelector('.dash-psico-avatar-ph');
+                                if (ph) ph.style.display = 'flex';
+                              }
+                            }
+                          })
+                        : null,
+                      h('div', {
+                        className: 'dash-psico-avatar-ph',
+                        style: { display: foto ? 'none' : 'flex' }
+                      }, initials)
                     ),
-                    h('div', { className: 'dash-psico-name' }, psico.nombreCompleto)
-                  )
-                )
+                    h('div', { className: 'dash-psico-name', title: nombre }, nombre)
+                  );
+                })
               )
         ),
 
