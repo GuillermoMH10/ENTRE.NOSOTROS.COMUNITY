@@ -438,6 +438,11 @@
         h('path', { d: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z' }),
         h('path', { d: 'M9 12l2 2 4-4' })
       ),
+      shieldAlert: h('svg', { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth, strokeLinecap: 'round', strokeLinejoin: 'round' },
+        h('path', { d: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z' }),
+        h('line', { x1: '12', y1: '8', x2: '12', y2: '12' }),
+        h('line', { x1: '12', y1: '16', x2: '12.01', y2: '16' })
+      ),
       flag: h('svg', { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth, strokeLinecap: 'round', strokeLinejoin: 'round' },
         h('path', { d: 'M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z' }),
         h('line', { x1: '4', y1: '22', x2: '4', y2: '15' })
@@ -596,7 +601,7 @@
       ),
     };
 
-    return icons[name] || null;
+    return icons[name] || icons.info || null;
   };
 
   // Sanitizar registro de usuario para garantizar integridad en vista de Usuarios
@@ -3499,7 +3504,7 @@
       };
     }, [allPostsList, psychologistsList, usersList, reportedPostsList]);
 
-    // 9. CÓMO SE HA SENTIDO LA COMUNIDAD (ANÁLISIS DE LAS 5 EMOCIONES OFICIALES)
+    // 9. CÓMO SE HA SENTIDO LA COMUNIDAD (100% REAL DE LA BASE DE DATOS: mood_checkins)
     const communityMoodData = useMemo(() => {
       const counts = {
         feliz: 0,
@@ -3509,34 +3514,11 @@
         agotado: 0,
       };
 
-      // 1. Chequeos de la subcolección mood_checkins
-      moodRecordsList.forEach((rec) => {
+      // Contar EXCLUSIVAMENTE los chequeos emocionales auténticos de mood_checkins
+      (moodRecordsList || []).forEach((rec) => {
         const m = (rec.mood || '').toLowerCase().trim();
         if (counts[m] !== undefined) {
           counts[m]++;
-        }
-      });
-
-      // 2. Reacciones y análisis de sentimientos en publicaciones reales
-      allPostsList.forEach((post) => {
-        const text = ((post.content || '') + ' ' + (post.hashtags || []).join(' ')).toLowerCase();
-        if (post.reactions) {
-          if (post.reactions.teAbrazo > 0) counts.tranquilo += post.reactions.teAbrazo;
-          if (post.reactions.fuerza > 0) counts.feliz += post.reactions.fuerza;
-          if (post.reactions.noEstasSolo > 0) counts.tranquilo += post.reactions.noEstasSolo;
-          if (post.reactions.teEscucho > 0) counts.ansioso += post.reactions.teEscucho;
-        }
-
-        if (text.includes('ansiedad') || text.includes('ansios') || text.includes('angustia') || text.includes('miedo') || text.includes('panico')) {
-          counts.ansioso += 1;
-        } else if (text.includes('triste') || text.includes('llor') || text.includes('soledad') || text.includes('depre') || text.includes('vacio')) {
-          counts.triste += 1;
-        } else if (text.includes('agotad') || text.includes('cansad') || text.includes('estres') || text.includes('harto') || text.includes('sin fuerzas')) {
-          counts.agotado += 1;
-        } else if (text.includes('tranquil') || text.includes('paz') || text.includes('calma') || text.includes('alivio') || text.includes('sereno')) {
-          counts.tranquilo += 1;
-        } else if (text.includes('feliz') || text.includes('bien') || text.includes('gracias') || text.includes('content') || text.includes('alegr') || text.includes('animo')) {
-          counts.feliz += 1;
         }
       });
 
@@ -3555,19 +3537,18 @@
         return { ...emo, pct: pct };
       });
 
-      let dominant = emotionsWithPct[0];
-      emotionsWithPct.forEach((emo) => {
-        if (emo.count > dominant.count) {
-          dominant = emo;
-        }
-      });
+      // Emoción predominante (solo si existen registros reales)
+      let dominant = null;
+      if (totalRecords > 0) {
+        dominant = emotionsWithPct.reduce((max, emo) => (emo.count > max.count ? emo : max), emotionsWithPct[0]);
+      }
 
       return {
         total: totalRecords,
         emotions: emotionsWithPct,
         dominant: dominant,
       };
-    }, [moodRecordsList, allPostsList]);
+    }, [moodRecordsList]);
 
     // 10. TEMAS FAVORITOS DE LA COMUNIDAD (HASHTAGS REALES)
     const favoriteTopics = useMemo(() => {
@@ -3626,14 +3607,7 @@
       h('div', { className: 'dash-top-bar' },
         h('div', { className: 'dash-greeting-wrap' },
           h('div', { className: 'dash-greeting-title' },
-            `¡Hola de nuevo, ${currentUser?.name || currentUser?.username || 'Administrador'}!`,
-            h('span', { className: 'dash-live-badge' },
-              h('span', { className: 'dash-pulse-dot' }),
-              'Firebase en Vivo'
-            )
-          ),
-          h('div', { className: 'dash-greeting-desc' },
-            'Supervisión en tiempo real de Entre Nosotros • Métricas y estadísticas 100% reales'
+            `¡Hola de nuevo, ${currentUser?.name || currentUser?.username || 'Administrador'}!`
           )
         ),
         // Widget Reloj y Clima
@@ -3676,7 +3650,7 @@
         },
           h('div', { className: 'dash-kpi-header' },
             h('div', { className: 'dash-kpi-icon-wrap icon-green' },
-              h(Icon, { name: 'users', size: 18, color: '#059669' })
+              h(Icon, { name: 'stethoscope', size: 18, color: '#059669' })
             ),
             h('span', { className: 'dash-kpi-trend trend-green' },
               h(Icon, { name: 'check', size: 12, color: '#047857' }),
@@ -3722,6 +3696,7 @@
               h(Icon, { name: 'fileText', size: 18, color: '#7C3AED' })
             ),
             h('span', { className: 'dash-kpi-trend trend-purple' },
+              h(Icon, { name: 'trendingUp', size: 12, color: '#6D28D9' }),
               `${totalPostsThisWeek} esta sem.`
             )
           ),
@@ -3744,6 +3719,7 @@
               h(Icon, { name: 'shieldAlert', size: 18, color: '#DC2626' })
             ),
             h('span', { className: 'dash-kpi-trend trend-red' },
+              h(Icon, { name: 'alert', size: 12, color: '#B91C1C' }),
               reportedPostsList.length > 0 ? 'Revisión Pendiente' : 'Todo Seguro'
             )
           ),
@@ -3777,7 +3753,7 @@
               }, '›')
             )
           ),
-          // Track horizontal
+          // Track horizontal (Solo foto y nombre, destacando imagen)
           psychologistsList.length === 0
             ? h('div', { style: { padding: '30px 10px', textAlign: 'center', color: '#64748B' } },
                 h('p', { style: { margin: '0 0 10px 0', fontSize: '13px' } }, 'Aún no hay psicólogos registrados en la base de datos.'),
@@ -3792,25 +3768,14 @@
                     key: psico.id,
                     className: 'dash-psico-card-item',
                     onClick: () => setSelectedPsicoForPreview(psico),
-                    title: `Ver tarjeta completa de ${psico.nombreCompleto}`,
+                    title: psico.nombreCompleto,
                   },
                     h('div', { className: 'dash-psico-avatar-wrap' },
                       psico.fotoPerfilUrl
                         ? h('img', { className: 'dash-psico-avatar', src: psico.fotoPerfilUrl, alt: psico.nombreCompleto })
-                        : h('div', { className: 'dash-psico-avatar-ph' }, getInitials(psico.nombreCompleto)),
-                      h('span', { className: 'dash-psico-check-badge' }, '✓')
+                        : h('div', { className: 'dash-psico-avatar-ph' }, getInitials(psico.nombreCompleto))
                     ),
-                    h('div', { className: 'dash-psico-name' }, psico.nombreCompleto),
-                    h('div', { className: 'dash-psico-spec' }, psico.titular || psico.especialidad || 'Psicólogo Clínico'),
-                    h('span', { className: 'dash-psico-mod-tag' }, psico.modalidadAtencion || 'En Línea'),
-                    h('button', {
-                      className: 'dash-weather-loc-btn',
-                      style: { marginTop: '8px', width: '100%' },
-                      onClick: (e) => {
-                        e.stopPropagation();
-                        setSelectedPsicoForPreview(psico);
-                      },
-                    }, 'Ver Tarjeta')
+                    h('div', { className: 'dash-psico-name' }, psico.nombreCompleto)
                   )
                 )
               )
@@ -4041,9 +4006,11 @@
               h('h3', { className: 'dash-card-title' }, '¿Cómo se ha sentido la comunidad?'),
               h('div', { className: 'dash-card-subtitle' }, 'Monitoreo emocional y chequeos diarios de la aplicación')
             ),
-            h('span', { className: `dash-dominant-badge ${communityMoodData.dominant.badgeClass}` },
-              `Dominante: ${communityMoodData.dominant.emoji} ${communityMoodData.dominant.label} (${communityMoodData.dominant.pct}%)`
-            )
+            communityMoodData.dominant && communityMoodData.total > 0
+              ? h('span', { className: `dash-dominant-badge ${communityMoodData.dominant.badgeClass}` },
+                  `Dominante: ${communityMoodData.dominant.emoji} ${communityMoodData.dominant.label} (${communityMoodData.dominant.pct}%)`
+                )
+              : h('span', { className: 'dash-mini-badge badge-teal' }, 'Sin registros aún')
           ),
           // Lista de las 5 emociones con barras
           h('div', { className: 'dash-emotions-list' },
@@ -4067,7 +4034,7 @@
           h('div', { className: 'dash-insight-box' },
             h(Icon, { name: 'heart', size: 16, color: '#DB2777' }),
             h('p', null,
-              `Total de ${communityMoodData.total} registros emocionales y vivencias analizadas en tiempo real desde la base de datos de Entre Nosotros.`
+              `Total de ${communityMoodData.total} registros de bienestar emocional leídos directamente de la base de datos de Entre Nosotros.`
             )
           )
         ),
@@ -4465,12 +4432,22 @@
                     list.push({ id: doc.id, ...doc.data() });
                   });
                   setMoodRecordsList(list);
+                } else {
+                  setMoodRecordsList([]);
                 }
               },
               (err) => {
                 console.warn('⚠️ [Firebase Mood] Nota sobre collectionGroup mood_checkins:', err?.message || err);
               }
             );
+
+          firestoreDb.collectionGroup('mood_checkins').limit(300).get().then((snap) => {
+            if (!snap.empty) {
+              const list = [];
+              snap.forEach((doc) => list.push({ id: doc.id, ...doc.data() }));
+              setMoodRecordsList(list);
+            }
+          }).catch(() => {});
         } catch (e) {
           console.warn('⚠️ [Firebase Mood] Excepción en collectionGroup:', e);
         }
