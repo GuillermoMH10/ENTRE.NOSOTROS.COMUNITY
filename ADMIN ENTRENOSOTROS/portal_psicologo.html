@@ -245,6 +245,7 @@
               ubicacion: '',
               descripcion: '',
               imagen: '',
+              fotoPortada: '',
               verificado: true,
               activo: true,
               createdAt: new Date().toISOString(),
@@ -273,8 +274,6 @@
 
       const handleUpdatePsychologist = async (updatedData) => {
         const merged = { ...currentPsico, ...updatedData };
-        // Asegurar que no se guarde fotoPortada
-        delete merged.fotoPortada;
 
         setCurrentPsico(merged);
         localStorage.setItem(STORAGE_SESSION, JSON.stringify(merged));
@@ -514,7 +513,7 @@
               )}
 
               {activeTab === 'publicar' && (
-                <div className="w-full max-w-2xl bg-white rounded-3xl p-8 border border-coffee-200 text-center my-auto">
+                <div className="w-full max-w-3xl bg-white rounded-3xl p-8 border border-coffee-200 text-center my-auto shadow-sm">
                   <div className="w-12 h-12 rounded-2xl bg-coffee-100 text-coffee-700 flex items-center justify-center mx-auto mb-3">
                     <Icon name="edit" size={24} />
                   </div>
@@ -524,7 +523,7 @@
               )}
 
               {activeTab === 'feed' && (
-                <div className="w-full max-w-2xl bg-white rounded-3xl p-8 border border-coffee-200 text-center my-auto">
+                <div className="w-full max-w-3xl bg-white rounded-3xl p-8 border border-coffee-200 text-center my-auto shadow-sm">
                   <div className="w-12 h-12 rounded-2xl bg-coffee-100 text-coffee-700 flex items-center justify-center mx-auto mb-3">
                     <Icon name="feed" size={24} />
                   </div>
@@ -539,7 +538,7 @@
     }
 
     // ========================================================================
-    // FORMULARIO DE PERFIL: COMPACTO, PROFESIONAL, SIN PLACEHOLDERS NI VISTA PREVIA
+    // FORMULARIO DE PERFIL: AMPLIO, COMPACTO, PROFESIONAL, SIN PLACEHOLDERS
     // ========================================================================
     function ViewPerfilForm({ psychologist, onSave }) {
       const [nombre, setNombre] = useState(psychologist.nombre || '');
@@ -554,6 +553,7 @@
       const [sitioWeb, setSitioWeb] = useState(psychologist.sitioWeb || '');
       const [ubicacion, setUbicacion] = useState(psychologist.ubicacion || '');
       const [imagen, setImagen] = useState(psychologist.imagen || '');
+      const [fotoPortada, setFotoPortada] = useState(psychologist.fotoPortada || '');
 
       const [availableTopics, setAvailableTopics] = useState(DEFAULT_TOPICS_REF);
       const [topicInput, setTopicInput] = useState('');
@@ -576,12 +576,12 @@
           .catch((e) => console.warn('Error cargando temas:', e));
       }, []);
 
-      const handleFileUpload = (e) => {
+      const handleFileUpload = (e, setter) => {
         const file = e.target.files[0];
         if (!file) return;
         const reader = new FileReader();
         reader.onload = (event) => {
-          setImagen(event.target.result);
+          setter(event.target.result);
         };
         reader.readAsDataURL(file);
       };
@@ -627,6 +627,7 @@
           sitioWeb: sitioWeb.trim(),
           ubicacion: ubicacion.trim(),
           imagen: imagen.trim(),
+          fotoPortada: fotoPortada.trim(),
           verificado: true,
           activo: true,
           perfilCompleto: true,
@@ -639,7 +640,7 @@
       };
 
       return (
-        <div className="w-full max-w-3xl space-y-5">
+        <div className="w-full max-w-5xl space-y-6">
           {savedAlert && (
             <div className="p-3.5 bg-emerald-50 border border-emerald-400 text-emerald-800 rounded-2xl flex items-center gap-2 text-xs font-bold shadow-sm">
               <Icon name="check" size={16} className="text-emerald-600" />
@@ -647,52 +648,90 @@
             </div>
           )}
 
-          <div className="bg-white rounded-3xl p-6 md:p-8 border border-coffee-200 shadow-sm">
-            <div className="pb-4 mb-5 border-b border-coffee-200 flex items-center justify-between">
+          <div className="bg-white rounded-3xl p-6 md:p-10 border border-coffee-200 shadow-sm">
+            <div className="pb-4 mb-6 border-b border-coffee-200 flex items-center justify-between">
               <div>
-                <h1 className="text-lg font-extrabold text-coffee-900">Perfil Profesional</h1>
+                <h1 className="text-xl font-extrabold text-coffee-900">Perfil Profesional</h1>
                 <p className="text-xs text-coffee-500 font-medium">Información del especialista</p>
               </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
-              {/* Foto de Perfil */}
-              <div className="p-4 bg-coffee-50 rounded-2xl border border-coffee-200">
-                <label className="block text-xs font-bold text-coffee-800 uppercase tracking-wider mb-2">
-                  Foto de Perfil
-                </label>
-                <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                  {imagen ? (
-                    <img
-                      src={imagen}
-                      alt={nombre}
-                      className="w-16 h-16 rounded-2xl object-cover border-2 border-coffee-300 flex-shrink-0"
-                    />
-                  ) : (
-                    <div className="w-16 h-16 rounded-2xl bg-coffee-200 text-coffee-700 font-bold flex items-center justify-center text-sm border-2 border-coffee-300 flex-shrink-0">
-                      {getInitials(nombre)}
-                    </div>
-                  )}
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Fotos: Perfil y Portada (Grid 2 Columnas) */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {/* Foto de Perfil */}
+                <div className="p-4 bg-coffee-50 rounded-2xl border border-coffee-200">
+                  <label className="block text-xs font-bold text-coffee-800 uppercase tracking-wider mb-2">
+                    Foto de Perfil
+                  </label>
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                    {imagen ? (
+                      <img
+                        src={imagen}
+                        alt={nombre}
+                        className="w-16 h-16 rounded-2xl object-cover border-2 border-coffee-300 flex-shrink-0"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 rounded-2xl bg-coffee-200 text-coffee-700 font-bold flex items-center justify-center text-sm border-2 border-coffee-300 flex-shrink-0">
+                        {getInitials(nombre)}
+                      </div>
+                    )}
 
-                  <div className="flex-1 space-y-2">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleFileUpload}
-                      className="block w-full text-xs text-coffee-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-coffee-800 file:text-white hover:file:bg-coffee-900 cursor-pointer"
-                    />
-                    <input
-                      type="text"
-                      value={imagen}
-                      onChange={(e) => setImagen(e.target.value)}
-                      className="w-full text-xs px-3 py-2 rounded-xl border border-coffee-200 focus:outline-none focus:ring-2 focus:ring-coffee-600 bg-white"
-                    />
+                    <div className="flex-1 space-y-2">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleFileUpload(e, setImagen)}
+                        className="block w-full text-xs text-coffee-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-coffee-800 file:text-white hover:file:bg-coffee-900 cursor-pointer"
+                      />
+                      <input
+                        type="text"
+                        value={imagen}
+                        onChange={(e) => setImagen(e.target.value)}
+                        className="w-full text-xs px-3 py-2 rounded-xl border border-coffee-200 focus:outline-none focus:ring-2 focus:ring-coffee-600 bg-white"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Foto de Portada */}
+                <div className="p-4 bg-coffee-50 rounded-2xl border border-coffee-200">
+                  <label className="block text-xs font-bold text-coffee-800 uppercase tracking-wider mb-2">
+                    Foto de Portada
+                  </label>
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                    {fotoPortada ? (
+                      <img
+                        src={fotoPortada}
+                        alt="Portada"
+                        className="w-24 h-16 rounded-xl object-cover border-2 border-coffee-300 flex-shrink-0"
+                      />
+                    ) : (
+                      <div className="w-24 h-16 rounded-xl bg-coffee-200 border-2 border-coffee-300 flex items-center justify-center text-coffee-400 flex-shrink-0">
+                        <Icon name="image" size={20} />
+                      </div>
+                    )}
+
+                    <div className="flex-1 space-y-2">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleFileUpload(e, setFotoPortada)}
+                        className="block w-full text-xs text-coffee-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-coffee-800 file:text-white hover:file:bg-coffee-900 cursor-pointer"
+                      />
+                      <input
+                        type="text"
+                        value={fotoPortada}
+                        onChange={(e) => setFotoPortada(e.target.value)}
+                        className="w-full text-xs px-3 py-2 rounded-xl border border-coffee-200 focus:outline-none focus:ring-2 focus:ring-coffee-600 bg-white"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
 
               {/* Nombre y Especialidad */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
                   <label className="block text-xs font-bold text-coffee-800 uppercase tracking-wider mb-1">
                     Nombre
@@ -721,7 +760,7 @@
               </div>
 
               {/* Cédula y Modalidad */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
                   <label className="block text-xs font-bold text-coffee-800 uppercase tracking-wider mb-1">
                     Cédula Profesional
@@ -832,7 +871,7 @@
               </div>
 
               {/* Correo y WhatsApp */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
                   <label className="block text-xs font-bold text-coffee-800 uppercase tracking-wider mb-1">
                     Correo Electrónico
@@ -861,7 +900,7 @@
               </div>
 
               {/* Ciudad y Sitio Web */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
                   <label className="block text-xs font-bold text-coffee-800 uppercase tracking-wider mb-1">
                     Ciudad
@@ -906,7 +945,7 @@
               <button
                 type="submit"
                 disabled={isSaving}
-                className="w-full py-3 px-6 rounded-2xl bg-coffee-800 hover:bg-coffee-900 text-white font-bold text-sm shadow transition flex items-center justify-center gap-2 mt-4"
+                className="w-full py-3.5 px-6 rounded-2xl bg-coffee-800 hover:bg-coffee-900 text-white font-bold text-sm shadow transition flex items-center justify-center gap-2 mt-4"
               >
                 <Icon name="check" size={16} />
                 <span>{isSaving ? 'Guardando...' : 'Guardar'}</span>
