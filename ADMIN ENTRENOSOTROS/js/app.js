@@ -333,84 +333,8 @@
     },
   ];
 
-  // Psicólogos iniciales semilla para el módulo de Alta Psicólogos y Portal
-  const INITIAL_PSYCHOLOGISTS = [
-    {
-      id: 'psico_claudia',
-      nombre: 'Dra. Claudia Ramos Morales',
-      correo: 'claudia.ramos@saludmental.mx',
-      email: 'claudia.ramos@saludmental.mx',
-      tempPassword: 'Psi-2026-8812',
-      token: 'tk_claudia_7812',
-      cedula: '12849102',
-      especialidad: 'Psicología Clínica y TCC',
-      modalidad: 'Presencial y En línea',
-      telefono: '+52 55 4192 8831',
-      whatsapp: '+525541928831',
-      ciudad: 'Ciudad de México, CDMX',
-      ubicacion: 'Consultorio Del Valle Norte, CDMX',
-      descripcion: 'Especialista en intervención de crisis, ansiedad generalizada y regulación emocional con más de 8 años de experiencia en clínica.',
-      temas: ['Ansiedad', 'Depresión', 'Autoestima', 'Regulación Emocional'],
-      imagen: 'https://images.unsplash.com/photo-1594824813508-62024b4be728?auto=format&fit=crop&w=400&q=80',
-      fotoPortada: 'https://images.unsplash.com/photo-1507652313519-d4e9174996dd?auto=format&fit=crop&w=1200&q=80',
-      perfilCompleto: true,
-      activo: true,
-      verificado: true,
-      postsCount: 5,
-      createdAt: '2026-10-14T10:00:00.000Z',
-      updatedAt: '2026-10-18T16:00:00.000Z',
-    },
-    {
-      id: 'psico_fernando',
-      nombre: 'Mtro. Fernando Navarro',
-      correo: 'fernando.navarro@menteactiva.org',
-      email: 'fernando.navarro@menteactiva.org',
-      tempPassword: 'Psi-2026-3914',
-      token: 'tk_fernando_3914',
-      cedula: '9845211',
-      especialidad: 'Terapia de Pareja y Duelo',
-      modalidad: 'En línea únicamente',
-      telefono: '+52 33 1892 4477',
-      whatsapp: '+523318924477',
-      ciudad: 'Guadalajara, Jalisco',
-      ubicacion: 'Atención en Línea Nacional',
-      descripcion: 'Acompañamiento en procesos de duelo afectivo, comunicación asertiva de parejas y reconstrucción de vínculos saludables.',
-      temas: ['Duelo', 'Parejas', 'Rupturas', 'Autoestima'],
-      imagen: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=400&q=80',
-      fotoPortada: 'https://images.unsplash.com/photo-1527689368864-3a821dbccc34?auto=format&fit=crop&w=1200&q=80',
-      perfilCompleto: true,
-      activo: true,
-      verificado: true,
-      postsCount: 3,
-      createdAt: '2026-10-16T14:30:00.000Z',
-      updatedAt: '2026-10-19T11:20:00.000Z',
-    },
-    {
-      id: 'psico_mariana',
-      nombre: 'Lic. Mariana Valenzuela Garza',
-      correo: 'mvalenzuela@terapias.com',
-      email: 'mvalenzuela@terapias.com',
-      tempPassword: 'Psi-2026-5520',
-      token: 'tk_mariana_5520',
-      cedula: '',
-      especialidad: '',
-      modalidad: 'Presencial y En línea',
-      telefono: '',
-      whatsapp: '',
-      ciudad: '',
-      ubicacion: '',
-      descripcion: '',
-      temas: [],
-      imagen: '',
-      fotoPortada: '',
-      perfilCompleto: false,
-      activo: true,
-      verificado: false,
-      postsCount: 0,
-      createdAt: '2026-10-21T09:15:00.000Z',
-      updatedAt: '2026-10-21T09:15:00.000Z',
-    },
-  ];
+  // Psicólogos iniciales semilla (sin datos simulados: solo registros reales de Firestore)
+  const INITIAL_PSYCHOLOGISTS = [];
 
   // Helper para sanitizar publicaciones reportadas con seguridad absoluta contra nulos
   const sanitizeReportedPost = (post, idx) => {
@@ -2080,8 +2004,8 @@
     if (!isOpen || !psychologist) return null;
 
     const [copiedCardUrl, setCopiedCardUrl] = useState(false);
-    const isComplete = psychologist.perfilCompleto;
-    const coverUrl = psychologist.fotoPortada || 'https://images.unsplash.com/photo-1507652313519-d4e9174996dd?auto=format&fit=crop&w=1200&q=80';
+    const isComplete = Boolean(psychologist.perfilCompleto);
+    const coverUrl = psychologist.fotoPortada || '';
     const avatarUrl = psychologist.imagen || '';
     const cleanPhone = (psychologist.whatsapp || psychologist.telefono || '').replace(/[^\d+]/g, '');
 
@@ -2094,9 +2018,8 @@
       } catch (e) {}
     };
 
-    const displayTemas = (psychologist.temas && psychologist.temas.length > 0)
-      ? psychologist.temas
-      : ['Ansiedad y Sobrepensadera', 'Depresión y Desánimo', 'Autoestima y Amor Propio', 'Duelo y Pérdidas', 'Regulación Emocional', 'Relaciones de Pareja'];
+    const temasList = Array.isArray(psychologist.temas) ? psychologist.temas.filter(Boolean) : [];
+    const postsList = Array.isArray(psychologist.posts) ? psychologist.posts.filter(Boolean) : [];
 
     return h('div', { className: 'modal-overlay', onClick: onClose },
       h('div', { className: 'modal-card psico-preview-card-modal wide-preview-modal', onClick: (e) => e.stopPropagation() },
@@ -2119,7 +2042,7 @@
             h(Icon, { name: 'clock', size: 16, color: '#D97706' }),
             h('div', null,
               h('strong', null, 'Tarjeta en Proceso de Registro: '),
-              'El especialista aún no ha completado todos sus datos clínicos en el portal. A continuación se muestra cómo se visualiza su tarjeta en la App.'
+              'El especialista aún no ha completado todos sus datos clínicos en su portal. A continuación se muestran los datos registrados actualmente en la App.'
             )
           ),
 
@@ -2128,7 +2051,9 @@
             // 1. Portada Panorámica
             h('div', {
               className: 'app-wide-cover-banner',
-              style: { backgroundImage: `url(${coverUrl})` }
+              style: coverUrl
+                ? { backgroundImage: `url(${coverUrl})` }
+                : { background: 'linear-gradient(135deg, #1E293B 0%, #334155 50%, #0F172A 100%)' }
             },
               h('div', { className: 'app-wide-cover-overlay' }),
               h('div', { className: 'app-wide-cover-top-bar' },
@@ -2138,7 +2063,7 @@
                 ),
                 h('div', { className: 'app-verified-banner-pill' },
                   h(Icon, { name: 'check', size: 12, color: '#FFFFFF' }),
-                  'Especialista Clínico Verificado'
+                  isComplete ? 'Especialista Clínico Verificado' : 'Registro de Especialista'
                 )
               )
             ),
@@ -2163,7 +2088,7 @@
                   h('h2', { className: 'app-wide-name' }, psychologist.nombre),
                   h('span', { className: 'app-wide-specialty-badge' },
                     h(Icon, { name: 'stethoscope', size: 13, color: '#047857' }),
-                    psychologist.especialidad || 'Psicología y Acompañamiento Clínico'
+                    psychologist.especialidad || 'Psicología'
                   )
                 ),
 
@@ -2171,15 +2096,15 @@
                   psychologist.cedula
                     ? h('span', { className: 'app-wide-cedula-tag' },
                         h(Icon, { name: 'award', size: 12, color: '#355971' }),
-                        `Cédula Profesional: ${psychologist.cedula} · Registro Nacional de Profesionistas`
+                        `Cédula Profesional: ${psychologist.cedula}`
                       )
                     : h('span', { className: 'app-wide-cedula-tag pending' },
-                        'Cédula profesional en proceso de validación documental'
+                        'Cédula profesional pendiente de captura en el portal'
                       )
                 ),
 
                 h('div', { className: 'app-wide-contacts-row' },
-                  h('span', { className: 'app-wide-contact-meta' },
+                  psychologist.correo && h('span', { className: 'app-wide-contact-meta' },
                     h(Icon, { name: 'mail', size: 12, color: '#64748B' }),
                     psychologist.correo
                   ),
@@ -2195,7 +2120,7 @@
               )
             ),
 
-            // 3. Barra de Métricas y Credenciales Clínicas (4 KPIs informativos)
+            // 3. Barra de Métricas Reales (4 KPIs informativos sin simulaciones)
             h('div', { className: 'app-wide-kpis-grid' },
               h('div', { className: 'app-wide-kpi-item' },
                 h('div', { className: 'app-wide-kpi-icon-box emerald' },
@@ -2203,7 +2128,7 @@
                 ),
                 h('div', null,
                   h('div', { className: 'app-wide-kpi-label' }, 'Modalidad de Consulta'),
-                  h('div', { className: 'app-wide-kpi-val' }, psychologist.modalidad || 'Presencial y En línea')
+                  h('div', { className: 'app-wide-kpi-val' }, psychologist.modalidad || 'Pendiente de definir')
                 )
               ),
 
@@ -2213,76 +2138,74 @@
                 ),
                 h('div', null,
                   h('div', { className: 'app-wide-kpi-label' }, 'Ubicación / Consultorio'),
-                  h('div', { className: 'app-wide-kpi-val' }, psychologist.ciudad || 'Atención Nacional en Línea')
+                  h('div', { className: 'app-wide-kpi-val' }, psychologist.ciudad || psychologist.ubicacion || 'No especificada')
                 )
               ),
 
               h('div', { className: 'app-wide-kpi-item' },
                 h('div', { className: 'app-wide-kpi-icon-box amber' },
-                  h(Icon, { name: 'clock', size: 16, color: '#D97706' })
+                  h(Icon, { name: 'award', size: 16, color: '#D97706' })
                 ),
                 h('div', null,
-                  h('div', { className: 'app-wide-kpi-label' }, 'Tiempo de Respuesta'),
-                  h('div', { className: 'app-wide-kpi-val' }, '< 15 minutos en WhatsApp')
+                  h('div', { className: 'app-wide-kpi-label' }, 'Cédula Profesional'),
+                  h('div', { className: 'app-wide-kpi-val' }, psychologist.cedula || 'Pendiente de registrar')
                 )
               ),
 
               h('div', { className: 'app-wide-kpi-item' },
                 h('div', { className: 'app-wide-kpi-icon-box purple' },
-                  h(Icon, { name: 'award', size: 16, color: '#7C3AED' })
+                  h(Icon, { name: isComplete ? 'check' : 'clock', size: 16, color: isComplete ? '#059669' : '#7C3AED' })
                 ),
                 h('div', null,
-                  h('div', { className: 'app-wide-kpi-label' }, 'Valoración Comunidad'),
-                  h('div', { className: 'app-wide-kpi-val' }, '⭐⭐⭐⭐⭐ 4.9 / 5.0')
+                  h('div', { className: 'app-wide-kpi-label' }, 'Estado de la Tarjeta'),
+                  h('div', { className: 'app-wide-kpi-val' }, isComplete ? 'Perfil Activo' : 'En Registro')
                 )
               )
             ),
 
-            // 4. Sección: Temas y Áreas de Atención Clínica
+            // 4. Sección: Temas y Áreas de Atención Clínica (Solo datos reales)
             h('div', { className: 'app-wide-section' },
               h('div', { className: 'app-wide-section-title' },
                 h(Icon, { name: 'heart', size: 15, color: '#059669' }),
                 'Áreas de Acompañamiento y Temas que Atiende'
               ),
-              h('p', { className: 'app-wide-section-subtitle' },
-                'Especialidad clínica orientada a la contención emocional, diagnóstico y tratamiento psicoterapéutico:'
-              ),
-              h('div', { className: 'app-wide-tags-grid' },
-                displayTemas.map((tema, idx) =>
-                  h('span', { key: idx, className: 'app-wide-theme-pill' },
-                    h(Icon, { name: 'check', size: 12, color: '#059669' }),
-                    tema
+              temasList.length > 0
+                ? h('div', { className: 'app-wide-tags-grid' },
+                    temasList.map((tema, idx) =>
+                      h('span', { key: idx, className: 'app-wide-theme-pill' },
+                        h(Icon, { name: 'check', size: 12, color: '#059669' }),
+                        tema
+                      )
+                    )
                   )
-                )
-              )
+                : h('div', { className: 'app-wide-empty-note' },
+                    h(Icon, { name: 'info', size: 14, color: '#64748B' }),
+                    'El especialista no ha seleccionado temas o áreas clínicas de atención todavía.'
+                  )
             ),
 
-            // 5. Sección: Sobre el Especialista y Enfoque Terapéutico
+            // 5. Sección: Sobre el Especialista y Enfoque Terapéutico (Solo datos reales)
             h('div', { className: 'app-wide-section' },
               h('div', { className: 'app-wide-section-title' },
                 h(Icon, { name: 'userCheck', size: 15, color: '#2563EB' }),
                 'Sobre el Especialista y Enfoque Terapéutico'
               ),
-              h('div', { className: 'app-wide-bio-card' },
-                h('p', { className: 'app-wide-bio-paragraph' },
-                  psychologist.descripcion ||
-                  'Especialista en psicología clínica enfocado en brindar un espacio de escucha segura, libre de juicios y confidencial. Su abordaje combina técnicas cognitivo-conductuales y de regulación emocional para acompañarte a comprender el origen de tus pensamientos, procesar el dolor emocional y construir herramientas prácticas y duraderas para tu bienestar cotidiano.'
-                ),
-                h('div', { className: 'app-wide-bio-highlights' },
-                  h('div', { className: 'app-wide-bio-bullet' },
-                    h('strong', null, 'Espacio Seguro: '), 'Atención confidencial basada en el código ético del psicólogo.'
-                  ),
-                  h('div', { className: 'app-wide-bio-bullet' },
-                    h('strong', null, 'Enfoque Práctico: '), 'Herramientas de afrontamiento aplicables a tu vida diaria.'
-                  ),
-                  h('div', { className: 'app-wide-bio-bullet' },
-                    h('strong', null, 'Acompañamiento Humano: '), 'Trato cálido y personalizado adaptado a tus necesidades.'
+              psychologist.descripcion
+                ? h('div', { className: 'app-wide-bio-card' },
+                    h('p', { className: 'app-wide-bio-paragraph' }, psychologist.descripcion),
+                    psychologist.enfoque && h('div', { className: 'app-wide-bio-highlights' },
+                      h('div', { className: 'app-wide-bio-bullet' },
+                        h('strong', null, 'Enfoque: '), psychologist.enfoque
+                      )
+                    )
                   )
-                )
-              )
+                : h('div', { className: 'app-wide-empty-note' },
+                    h(Icon, { name: 'info', size: 14, color: '#64748B' }),
+                    'El especialista aún no ha agregado su descripción profesional o enfoque terapéutico.'
+                  )
             ),
 
-            // 6. Sección: Modalidad de Consultas y Horarios
+            // 6. Sección: Modalidad de Consultas y Horarios (Solo datos reales)
             h('div', { className: 'app-wide-section' },
               h('div', { className: 'app-wide-section-title' },
                 h(Icon, { name: 'stethoscope', size: 15, color: '#7C3AED' }),
@@ -2290,53 +2213,59 @@
               ),
               h('div', { className: 'app-wide-consultas-grid' },
                 h('div', { className: 'app-wide-consulta-card' },
-                  h('div', { className: 'consulta-card-badge' }, 'Sesiones Online'),
-                  h('h4', null, 'Terapia en Línea por Videollamada'),
-                  h('p', null, 'Sesiones virtuales por plataforma cifrada de alta seguridad desde cualquier lugar del país con conexión estable.'),
-                  h('div', { className: 'consulta-card-meta' }, 'Duración: 50 a 60 minutos')
+                  h('div', { className: 'consulta-card-badge' }, 'Modalidad'),
+                  h('h4', null, psychologist.modalidad || 'Pendiente'),
+                  h('p', null, psychologist.modalidad ? `Atención en modalidad ${psychologist.modalidad}.` : 'Modalidad de atención no especificada por el especialista.'),
+                  h('div', { className: 'consulta-card-meta' }, psychologist.modalidad ? 'Configurado' : 'Sin especificar')
                 ),
                 h('div', { className: 'app-wide-consulta-card' },
-                  h('div', { className: 'consulta-card-badge' }, 'Consultorio Presencial'),
-                  h('h4', null, 'Atención Privada en Consultorio'),
-                  h('p', null, psychologist.ubicacion || 'Consultorio clínico privado, cómodo y tranquilo para sesiones presenciales directas.'),
-                  h('div', { className: 'consulta-card-meta' }, 'Previa cita programada')
+                  h('div', { className: 'consulta-card-badge' }, 'Ubicación / Consultorio'),
+                  h('h4', null, psychologist.ciudad || 'Ubicación'),
+                  h('p', null, psychologist.ubicacion || psychologist.ciudad || 'Dirección de consultorio o sede no especificada.'),
+                  h('div', { className: 'consulta-card-meta' }, psychologist.ubicacion ? 'Consultorio Registrado' : 'Previa cita')
                 ),
                 h('div', { className: 'app-wide-consulta-card' },
-                  h('div', { className: 'consulta-card-badge' }, 'Horarios Habituales'),
-                  h('h4', null, 'Lunes a Sábado'),
-                  h('p', null, 'Lunes a Viernes: 08:00 a 20:00 hrs\nSábados: 09:00 a 14:00 hrs.'),
-                  h('div', { className: 'consulta-card-meta' }, 'Sujeto a disponibilidad')
+                  h('div', { className: 'consulta-card-badge' }, 'Horarios de Atención'),
+                  h('h4', null, 'Disponibilidad'),
+                  h('p', null, psychologist.horarios || 'Horarios a acordar directamente con el especialista a través de su canal de contacto.'),
+                  h('div', { className: 'consulta-card-meta' }, psychologist.horarios ? 'Horario Definido' : 'Sujeto a agenda')
                 )
               )
             ),
 
-            // 7. Sección: Artículos y Aportaciones en la Comunidad
+            // 7. Sección: Artículos y Aportaciones en la Comunidad (Solo reales si existen)
             h('div', { className: 'app-wide-section' },
               h('div', { className: 'app-wide-section-title' },
                 h(Icon, { name: 'edit', size: 15, color: '#D97706' }),
                 'Artículos y Consejos Publicados en la Comunidad'
               ),
-              h('div', { className: 'app-wide-articles-grid' },
-                h('div', { className: 'app-wide-article-card' },
-                  h('span', { className: 'article-cat-pill' }, 'Ansiedad y Regulación'),
-                  h('h5', null, '5 Claves para Calmar la Sobrepensadera y la Ansiedad Nocturna'),
-                  h('p', null, 'Aprende a pausar el bucle mental antes de dormir utilizando la técnica de respiración diafragmática 4-4-4.'),
-                  h('div', { className: 'article-footer-meta' }, 'Comunidad Entre Nosotros · 1,420 lecturas')
-                ),
-                h('div', { className: 'app-wide-article-card' },
-                  h('span', { className: 'article-cat-pill' }, 'Autoestima y Vínculos'),
-                  h('h5', null, 'Cómo Establecer Límites Afectivos sin Sentir Culpa'),
-                  h('p', null, 'El autocuidado empieza por decir no a lo que te drena. Pautas prácticas para cuidar tu paz mental.'),
-                  h('div', { className: 'article-footer-meta' }, 'Comunidad Entre Nosotros · 980 lecturas')
-                )
-              )
+              postsList.length > 0
+                ? h('div', { className: 'app-wide-articles-grid' },
+                    postsList.map((post, idx) =>
+                      h('div', { key: post.id || idx, className: 'app-wide-article-card' },
+                        post.category && h('span', { className: 'article-cat-pill' }, post.category),
+                        h('h5', null, post.title),
+                        h('p', null, post.content),
+                        h('div', { className: 'article-footer-meta' },
+                          post.createdAt ? new Date(post.createdAt).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Publicación'
+                        )
+                      )
+                    )
+                  )
+                : h('div', { className: 'app-wide-empty-note' },
+                    h(Icon, { name: 'info', size: 14, color: '#64748B' }),
+                    'El especialista aún no cuenta con artículos o consejos clínicos publicados en la comunidad.'
+                  )
             ),
 
             // 8. Botón Destacado de WhatsApp y CTA de Contacto
             h('div', { className: 'app-wide-cta-banner' },
               h('div', { className: 'app-wide-cta-info' },
                 h('h3', null, '¿Deseas iniciar tu proceso terapéutico?'),
-                h('p', null, `Contacta directamente al especialista ${psychologist.nombre} para consultar disponibilidad y agendar tu primera sesión.`)
+                h('p', null, cleanPhone
+                  ? `Contacta directamente al especialista ${psychologist.nombre} para consultar disponibilidad y agendar tu primera sesión.`
+                  : `El especialista ${psychologist.nombre} aún no ha registrado su número de WhatsApp de contacto.`
+                )
               ),
               h('div', { className: 'app-wide-cta-actions' },
                 cleanPhone
@@ -2369,7 +2298,7 @@
         // Footer del Modal
         h('div', { className: 'modal-footer', style: { justifyContent: 'space-between' } },
           h('span', { style: { fontSize: 11.5, color: '#64748B' } },
-            'Vista previa idéntica de la tarjeta desplegable en la App Entre Nosotros.'
+            'Vista previa de la tarjeta del especialista en la App Entre Nosotros.'
           ),
           h('button', { type: 'button', className: 'btn-secondary', onClick: onClose }, 'Cerrar Vista Previa')
         )
@@ -3852,7 +3781,7 @@
                 tag: 'Especialista',
                 tagColor: '#D97706',
                 tagBg: '#FFFBEB',
-                text: 'Dr. Fernando Valdés (Psicólogo) confirmó 2 citas de terapia para hoy.',
+                text: 'Especialista clínico actualizó disponibilidad de agenda para consultas.',
                 time: 'Hace 24 min',
                 icon: 'stethoscope',
               },
@@ -4145,18 +4074,22 @@
       return INITIAL_REPORTED_POSTS;
     });
 
-    // 1.3 Cargar lista de psicólogos de la app (caché inicial o semilla segura)
+    // 1.3 Cargar lista de psicólogos de la app (solo registros reales, sin datos simulados)
     const [psychologistsList, setPsychologistsList] = useState(() => {
       try {
         const saved = localStorage.getItem(STORAGE_PSYCHOLOGISTS_LIST);
         if (saved) {
           const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            // Filtrar psicólogos de prueba anteriores
+            const realList = parsed.filter(p => !p.id?.startsWith('psico_claudia') && !p.id?.startsWith('psico_fernando') && !p.id?.startsWith('psico_mariana'));
+            return realList;
+          }
         }
       } catch (e) {
         console.warn('Error leyendo psicólogos de caché:', e);
       }
-      return INITIAL_PSYCHOLOGISTS;
+      return [];
     });
 
     // 1.4 Contador de moderaciones resueltas

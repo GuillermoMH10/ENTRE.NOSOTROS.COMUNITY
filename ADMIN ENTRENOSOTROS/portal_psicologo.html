@@ -214,21 +214,13 @@
       const [loginError, setLoginError] = useState('');
       const [isLoggingIn, setIsLoggingIn] = useState(false);
 
-      // 5. Publicaciones del especialista
+      // 5. Publicaciones del especialista (sin publicaciones simuladas)
       const [myPosts, setMyPosts] = useState(() => {
         try {
           const saved = localStorage.getItem(`@portal_psico_posts_${currentPsico?.id || 'demo'}`);
           if (saved) return JSON.parse(saved);
         } catch (e) {}
-        return [
-          {
-            id: 'post_sample_1',
-            title: '5 Hábitos Diarios para Calmar la Sobrepensadera y la Ansiedad',
-            category: 'Ansiedad',
-            content: 'Cuando la mente entra en bucle, el primer paso es volver al cuerpo mediante la respiración diafragmática 4-4-4. Aprende a pausar antes de responder al impulso del miedo.',
-            createdAt: '2026-10-18T10:00:00.000Z',
-          }
-        ];
+        return [];
       });
 
       // Sincronizar posts con Firestore o LocalStorage
@@ -769,7 +761,7 @@
                 {/* Portada */}
                 <div
                   className="h-28 bg-cover bg-center relative p-3 flex justify-end items-start"
-                  style={{ backgroundImage: `url(${psychologist.fotoPortada || COVER_PRESETS[0]})` }}
+                  style={psychologist.fotoPortada ? { backgroundImage: `url(${psychologist.fotoPortada})` } : { background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)' }}
                 >
                   <div className="absolute inset-0 bg-black/25"></div>
                   <div className="relative z-10 px-2.5 py-1 bg-emerald-600 text-white text-[10px] font-bold rounded-full shadow flex items-center gap-1">
@@ -840,7 +832,7 @@
                   {/* Biografía */}
                   <div className="mb-3">
                     <p className="text-xs text-slate-600 line-clamp-3 leading-relaxed">
-                      {psychologist.descripcion || 'Especialista en acompañamiento terapéutico y salud mental comprometido con la comunidad de Entre Nosotros.'}
+                      {psychologist.descripcion || 'Sin descripción o biografía registrada todavía en Mi Perfil.'}
                     </p>
                   </div>
 
