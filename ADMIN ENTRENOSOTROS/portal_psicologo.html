@@ -81,6 +81,20 @@
     .custom-scroll::-webkit-scrollbar-thumb:hover {
       background: #8C684B;
     }
+    .login-bg-container {
+      background-color: #EEF6FE;
+      background-image: url('assets/FONDOLOGIANIMA.png');
+      background-repeat: no-repeat;
+      background-position: center center;
+      background-size: 1820px 864px;
+    }
+    @media (max-width: 768px) {
+      .login-bg-container {
+        background-image: url('assets/FONDO%20ANIMA%20MOVIL.png') !important;
+        background-size: cover !important;
+        background-position: center bottom !important;
+      }
+    }
   </style>
 </head>
 <body class="min-h-screen bg-coffee-50 text-coffee-900 antialiased">
@@ -306,16 +320,7 @@
       // ======================================================================
       if (!currentPsico) {
         return (
-          <div
-            className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden"
-            style={{
-              backgroundColor: '#EEF6FE',
-              backgroundImage: "url('assets/FONDOLOGIANIMA.png')",
-              backgroundRepeat: 'no-repeat',
-              backgroundPosition: 'center center',
-              backgroundSize: '1820px 864px',
-            }}
-          >
+          <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden login-bg-container">
             <div className="max-w-sm w-full bg-white/95 backdrop-blur-sm rounded-3xl shadow-[0_12px_32px_rgba(43,74,111,0.12)] border border-blue-100 p-8 space-y-6 relative z-10">
               <div className="text-center space-y-2">
                 <img

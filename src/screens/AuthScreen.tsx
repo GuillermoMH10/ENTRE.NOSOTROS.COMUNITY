@@ -11,6 +11,8 @@ import {
   ActivityIndicator,
   Modal,
   Alert,
+  useWindowDimensions,
+  ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
@@ -25,6 +27,8 @@ interface AuthScreenProps {
 
 export const AuthScreen: React.FC<AuthScreenProps> = ({ visible, onClose }) => {
   const { login, register } = useAuth();
+  const { width: windowWidth } = useWindowDimensions();
+  const isMobile = windowWidth < 768;
 
   // Mode: 'login' | 'register'
   const [mode, setMode] = useState<'login' | 'register'>('login');
@@ -134,18 +138,22 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ visible, onClose }) => {
         style={styles.rootContainer}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        {/* Background Image ANIMA de tamaño fijo para mantener proporciones al redimensionar la pantalla */}
+        {/* Background Image ANIMA (Desktop / Móvil reactivo) */}
         <View style={styles.backgroundWrapper} pointerEvents="none">
           <Image
-            source={require('../../assets/FONDOLOGIANIMA.png')}
-            style={styles.backgroundImage}
+            source={
+              isMobile
+                ? require('../../assets/FONDO ANIMA MOVIL.png')
+                : require('../../assets/FONDOLOGIANIMA.png')
+            }
+            style={isMobile ? styles.backgroundImageMobile : styles.backgroundImageDesktop}
             resizeMode="cover"
           />
         </View>
 
         {/* Botón Cerrar Modal */}
         <TouchableOpacity
-          style={styles.closeButton}
+          style={[styles.closeButton, isMobile && styles.closeButtonMobile]}
           onPress={onClose}
           hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           accessibilityLabel="Cerrar"
@@ -153,7 +161,16 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ visible, onClose }) => {
           <Ionicons name="close" size={22} color={colors.coffeeDark} />
         </TouchableOpacity>
 
-        <View style={styles.centerContainer}>
+        <ScrollView
+          contentContainerStyle={[
+            styles.scrollContent,
+            isMobile && styles.scrollContentMobile,
+          ]}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          bounces={false}
+        >
+          <View style={[styles.centerContainer, isMobile && styles.centerContainerMobile]}>
           {/* Logo and Brand Header (Prominent & Centered) */}
           <View style={styles.headerContainer}>
             <Image
@@ -450,7 +467,8 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ visible, onClose }) => {
             )}
           </View>
         </View>
-      </KeyboardAvoidingView>
+      </ScrollView>
+    </KeyboardAvoidingView>
 
       {/* Password Reset Modal */}
       <ForgotPasswordModal
@@ -470,10 +488,21 @@ const styles = StyleSheet.create({
   rootContainer: {
     flex: 1,
     backgroundColor: '#EEF6FE',
-    justifyContent: 'center',
-    alignItems: 'center',
     position: 'relative',
     overflow: 'hidden',
+  },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 24,
+    paddingHorizontal: 16,
+    width: '100%',
+    zIndex: 10,
+  },
+  scrollContentMobile: {
+    paddingTop: 44,
+    paddingBottom: 28,
   },
   backgroundWrapper: {
     position: 'absolute',
@@ -485,9 +514,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     overflow: 'hidden',
   },
-  backgroundImage: {
+  backgroundImageDesktop: {
     width: 1820,
     height: 864,
+  },
+  backgroundImageMobile: {
+    width: '100%',
+    height: '100%',
   },
   closeButton: {
     position: 'absolute',
@@ -506,12 +539,18 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 4,
   },
+  closeButtonMobile: {
+    top: Platform.OS === 'ios' ? 44 : 20,
+    right: 20,
+  },
   centerContainer: {
     width: '100%',
     maxWidth: 390,
-    paddingHorizontal: 20,
     justifyContent: 'center',
     zIndex: 10,
+  },
+  centerContainerMobile: {
+    maxWidth: 360,
   },
   headerContainer: {
     alignItems: 'center',

@@ -1184,6 +1184,14 @@ body {
   padding: 20px;
 }
 
+@media (max-width: 768px) {
+  .login-screen-wrapper {
+    background-image: url('../assets/FONDO%20ANIMA%20MOVIL.png') !important;
+    background-size: cover !important;
+    background-position: center bottom !important;
+  }
+}
+
 .login-card {
   width: 100%;
   max-width: 380px;
