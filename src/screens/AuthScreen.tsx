@@ -134,10 +134,24 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ visible, onClose }) => {
         style={styles.rootContainer}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        {/* Decorative Background Elements */}
-        <View style={styles.bgCircleTopLeft} />
-        <View style={styles.bgCircleTopRight} />
-        <View style={styles.bgCircleBottom} />
+        {/* Background Image ANIMA de tamaño fijo para mantener proporciones al redimensionar la pantalla */}
+        <View style={styles.backgroundWrapper} pointerEvents="none">
+          <Image
+            source={require('../../assets/FONDOLOGIANIMA.png')}
+            style={styles.backgroundImage}
+            resizeMode="cover"
+          />
+        </View>
+
+        {/* Botón Cerrar Modal */}
+        <TouchableOpacity
+          style={styles.closeButton}
+          onPress={onClose}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          accessibilityLabel="Cerrar"
+        >
+          <Ionicons name="close" size={22} color={colors.coffeeDark} />
+        </TouchableOpacity>
 
         <View style={styles.centerContainer}>
           {/* Logo and Brand Header (Prominent & Centered) */}
@@ -455,45 +469,49 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ visible, onClose }) => {
 const styles = StyleSheet.create({
   rootContainer: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: '#EEF6FE',
     justifyContent: 'center',
     alignItems: 'center',
+    position: 'relative',
+    overflow: 'hidden',
   },
-  bgCircleTopLeft: {
+  backgroundWrapper: {
     position: 'absolute',
-    top: -50,
-    left: -50,
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    backgroundColor: colors.surface,
-    opacity: 0.75,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
   },
-  bgCircleTopRight: {
-    position: 'absolute',
-    top: 30,
-    right: -60,
-    width: 170,
-    height: 170,
-    borderRadius: 85,
-    backgroundColor: colors.surfaceHover,
-    opacity: 0.65,
+  backgroundImage: {
+    width: 1820,
+    height: 864,
   },
-  bgCircleBottom: {
+  closeButton: {
     position: 'absolute',
-    bottom: -60,
-    right: -40,
-    width: 220,
-    height: 220,
-    borderRadius: 110,
-    backgroundColor: colors.surfaceSoft,
-    opacity: 0.6,
+    top: 24,
+    right: 24,
+    zIndex: 30,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: colors.coffeeDeep,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    elevation: 4,
   },
   centerContainer: {
     width: '100%',
     maxWidth: 390,
     paddingHorizontal: 20,
     justifyContent: 'center',
+    zIndex: 10,
   },
   headerContainer: {
     alignItems: 'center',
