@@ -1189,18 +1189,18 @@ body {
   max-width: 380px;
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(6px);
-  border: 1px solid var(--border-light);
+  border: 1px solid rgba(215, 230, 245, 0.8);
   border-radius: var(--radius-lg);
   padding: 26px 24px;
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 12px 32px -4px rgba(43, 74, 111, 0.12), 0 4px 12px -2px rgba(43, 74, 111, 0.08);
   text-align: center;
   position: relative;
   z-index: 10;
 }
 
 .login-logo {
-  max-width: 170px;
-  max-height: 48px;
+  max-width: 240px;
+  max-height: 90px;
   object-fit: contain;
   margin-bottom: 12px;
 }
