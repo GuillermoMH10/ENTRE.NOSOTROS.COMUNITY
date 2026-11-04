@@ -174,10 +174,10 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
         onTestCompleted(saved);
       }
 
-      // Single clean ANIMA Toast
+      // Single clean ANIMA Bottom Toast
       showAnimaToast({
         title: '¡Ruta de 7 Días Activada!',
-        message: 'Bienvenido a tu pantalla de Racha. ¡Comencemos con tu actividad del Día 1!',
+        message: 'Al subir la fotografía de tu actividad del día, tu avance se publicará en Principal para inspirar a la comunidad.',
         emoji: '🔥',
         accentColor: '#FF7A00',
       });

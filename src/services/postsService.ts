@@ -114,27 +114,41 @@ export async function createPost(
     // Save post document to Firestore
     await setDoc(doc(db, 'posts', postId), newPost);
 
-    // Register hashtags in background
-    cleanedHashtags.forEach(async (tag) => {
-      const tagKey = tag.replace('#', '').toLowerCase();
-      if (tagKey) {
-        try {
-          const tagRef = doc(db, 'hashtags', tagKey);
-          const tagSnap = await getDoc(tagRef);
-          if (tagSnap.exists()) {
-            await updateDoc(tagRef, { count: increment(1) });
-          } else {
-            await setDoc(tagRef, {
-              id: tagKey,
-              tag: tag.startsWith('#') ? tag : `#${tag}`,
-              count: 1,
-            });
+    // Register hashtags in Firestore `hashtags` collection so users can navigate & discover them
+    await Promise.all(
+      cleanedHashtags.map(async (tag) => {
+        const tagKey = tag
+          .replace(/^#+/, '')
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .trim();
+        if (tagKey) {
+          try {
+            const tagRef = doc(db, 'hashtags', tagKey);
+            const tagSnap = await getDoc(tagRef);
+            if (tagSnap.exists()) {
+              await updateDoc(tagRef, {
+                count: increment(1),
+                updatedAt: createdAt,
+                lastPostId: postId,
+              });
+            } else {
+              await setDoc(tagRef, {
+                id: tagKey,
+                tag: tag.startsWith('#') ? tag : `#${tag}`,
+                count: 1,
+                createdAt,
+                updatedAt: createdAt,
+                lastPostId: postId,
+              });
+            }
+          } catch (e) {
+            // Non-critical if offline
           }
-        } catch (e) {
-          // Non-critical background task
         }
-      }
-    });
+      })
+    );
 
     return { success: true };
   } catch (error: any) {

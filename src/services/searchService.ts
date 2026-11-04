@@ -1,6 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   collection,
+  doc,
+  setDoc,
+  getDoc,
   getDocs,
   query,
   orderBy,
@@ -12,6 +15,44 @@ import { UserProfile } from '../types/auth';
 
 const RECENT_SEARCHES_KEY = '@entre_nosotros_recent_searches_v1';
 const MAX_RECENT_SEARCHES = 15;
+
+export const OFFICIAL_STREAK_AND_COMMUNITY_HASHTAGS: { id: string; tag: string; defaultCount: number }[] = [
+  { id: 'mirachaentrenosotros', tag: '#MiRachaEntreNosotros', defaultCount: 1 },
+  { id: 'racha7dias', tag: '#Racha7Dias', defaultCount: 1 },
+  { id: 'pasoapaso', tag: '#PasoAPaso', defaultCount: 1 },
+  { id: 'lologre', tag: '#LoLogre', defaultCount: 1 },
+  { id: 'bienestaremocional', tag: '#BienestarEmocional', defaultCount: 1 },
+  { id: 'dia1de7', tag: '#Dia1De7', defaultCount: 1 },
+  { id: 'dia2de7', tag: '#Dia2De7', defaultCount: 1 },
+  { id: 'dia3de7', tag: '#Dia3De7', defaultCount: 1 },
+  { id: 'dia4de7', tag: '#Dia4De7', defaultCount: 1 },
+  { id: 'dia5de7', tag: '#Dia5De7', defaultCount: 1 },
+  { id: 'dia6de7', tag: '#Dia6De7', defaultCount: 1 },
+  { id: 'dia7de7', tag: '#Dia7De7', defaultCount: 1 },
+  { id: 'entrenosotros', tag: '#EntreNosotros', defaultCount: 1 },
+];
+
+let hashtagsSeededOnce = false;
+export async function ensureOfficialHashtagsRegistered(): Promise<void> {
+  if (hashtagsSeededOnce) return;
+  hashtagsSeededOnce = true;
+  try {
+    await Promise.all(
+      OFFICIAL_STREAK_AND_COMMUNITY_HASHTAGS.map(async (item) => {
+        const ref = doc(db, 'hashtags', item.id);
+        const snap = await getDoc(ref);
+        if (!snap.exists()) {
+          await setDoc(ref, {
+            id: item.id,
+            tag: item.tag,
+            count: 0,
+            createdAt: new Date().toISOString(),
+          });
+        }
+      })
+    );
+  } catch (e) {}
+}
 
 export interface SearchResults {
   users: UserProfile[];
@@ -179,21 +220,58 @@ export async function executeUniversalSearch(rawQuery: string): Promise<SearchRe
     matchedUsersWithScore.sort((a, b) => b.score - a.score);
     const filteredUsers = matchedUsersWithScore.map((item) => item.user);
 
-    // 4. Hashtag Aggregation & Scoring
-    const hashtagMap = new Map<string, number>();
+    // 4. Hashtag Aggregation & Scoring (from Firestore `hashtags` collection + posts)
+    ensureOfficialHashtagsRegistered().catch(() => {});
+    const hashtagMap = new Map<string, { displayTag: string; count: number }>();
+
+    try {
+      const hashtagsSnap = await getDocs(query(collection(db, 'hashtags'), limit(100)));
+      hashtagsSnap.forEach((docSnap) => {
+        const d = docSnap.data();
+        const rawTag = d.tag || `#${docSnap.id}`;
+        const normTag = normalizeSearchText(rawTag).replace(/^#/, '');
+        if (normTag) {
+          hashtagMap.set(normTag, {
+            displayTag: rawTag.startsWith('#') ? rawTag : `#${rawTag}`,
+            count: typeof d.count === 'number' ? d.count : 0,
+          });
+        }
+      });
+    } catch (e) {}
+
+    // Count real occurrences in posts
+    const postTagCounts = new Map<string, { displayTag: string; count: number }>();
     allPosts.forEach((post) => {
       if (post.hashtags && Array.isArray(post.hashtags)) {
         post.hashtags.forEach((tag) => {
           const normTag = normalizeSearchText(tag).replace(/^#/, '');
           if (normTag) {
-            hashtagMap.set(normTag, (hashtagMap.get(normTag) || 0) + 1);
+            const existing = postTagCounts.get(normTag);
+            postTagCounts.set(normTag, {
+              displayTag: existing?.displayTag || (tag.startsWith('#') ? tag : `#${tag}`),
+              count: (existing?.count || 0) + 1,
+            });
           }
         });
       }
     });
 
+    postTagCounts.forEach((val, key) => {
+      const existing = hashtagMap.get(key);
+      hashtagMap.set(key, {
+        displayTag: existing?.displayTag || val.displayTag,
+        count: Math.max(val.count, existing?.count || 0),
+      });
+    });
+
+    OFFICIAL_STREAK_AND_COMMUNITY_HASHTAGS.forEach((off) => {
+      if (!hashtagMap.has(off.id)) {
+        hashtagMap.set(off.id, { displayTag: off.tag, count: 0 });
+      }
+    });
+
     const matchedHashtags: { tag: string; count: number; score: number }[] = [];
-    hashtagMap.forEach((count, normTag) => {
+    hashtagMap.forEach(({ displayTag, count }, normTag) => {
       let score = 0;
       if (normTag === cleanQueryWithoutHash) {
         score += 250; // Exact hashtag match
@@ -210,7 +288,7 @@ export async function executeUniversalSearch(rawQuery: string): Promise<SearchRe
 
       if (score > 0 || isHashSearch) {
         if (score > 0) {
-          matchedHashtags.push({ tag: `#${normTag}`, count, score: score + count });
+          matchedHashtags.push({ tag: displayTag, count, score: score + count });
         }
       }
     });
@@ -300,31 +378,60 @@ export async function fetchRecommendedContent(): Promise<RecommendedContent> {
       allPosts.push({ ...docSnap.data(), id: docSnap.id } as Post);
     });
 
-    // 2. Aggregate Trending Hashtags from real posts
-    const hashtagCountMap = new Map<string, number>();
+    // 2. Aggregate Trending Hashtags from real posts + Firestore `hashtags` collection + official streak tags
+    await ensureOfficialHashtagsRegistered();
+    const hashtagCountMap = new Map<string, { tag: string; count: number }>();
+
+    try {
+      const hashtagsSnap = await getDocs(query(collection(db, 'hashtags'), limit(50)));
+      hashtagsSnap.forEach((docSnap) => {
+        const d = docSnap.data();
+        const rawTag = d.tag || `#${docSnap.id}`;
+        const formattedTag = rawTag.startsWith('#') ? rawTag : `#${rawTag}`;
+        const key = normalizeSearchText(formattedTag).replace(/^#/, '');
+        if (key) {
+          hashtagCountMap.set(key, {
+            tag: formattedTag,
+            count: typeof d.count === 'number' ? d.count : 0,
+          });
+        }
+      });
+    } catch (e) {}
+
+    const postRealCounts = new Map<string, { tag: string; count: number }>();
     allPosts.forEach((post) => {
       if (post.hashtags && Array.isArray(post.hashtags)) {
         post.hashtags.forEach((tag) => {
           const formattedTag = tag.startsWith('#') ? tag : `#${tag}`;
-          hashtagCountMap.set(formattedTag, (hashtagCountMap.get(formattedTag) || 0) + 1);
+          const key = normalizeSearchText(formattedTag).replace(/^#/, '');
+          if (key) {
+            const prev = postRealCounts.get(key);
+            postRealCounts.set(key, {
+              tag: prev?.tag || formattedTag,
+              count: (prev?.count || 0) + 1,
+            });
+          }
         });
       }
     });
 
-    // If no hashtags in posts, provide default warm community topics
-    if (hashtagCountMap.size === 0) {
-      hashtagCountMap.set('#desahogo', 12);
-      hashtagCountMap.set('#fuerza', 9);
-      hashtagCountMap.set('#noEstasSolo', 8);
-      hashtagCountMap.set('#reflexion', 6);
-      hashtagCountMap.set('#apoyo', 5);
-      hashtagCountMap.set('#sentimientos', 4);
-    }
+    postRealCounts.forEach((val, key) => {
+      const existing = hashtagCountMap.get(key);
+      hashtagCountMap.set(key, {
+        tag: existing?.tag || val.tag,
+        count: Math.max(val.count, existing?.count || 0),
+      });
+    });
 
-    const trendingHashtags = Array.from(hashtagCountMap.entries())
-      .map(([tag, count]) => ({ tag, count }))
+    OFFICIAL_STREAK_AND_COMMUNITY_HASHTAGS.forEach((off) => {
+      if (!hashtagCountMap.has(off.id)) {
+        hashtagCountMap.set(off.id, { tag: off.tag, count: 0 });
+      }
+    });
+
+    const trendingHashtags = Array.from(hashtagCountMap.values())
       .sort((a, b) => b.count - a.count)
-      .slice(0, 10);
+      .slice(0, 12);
 
     // 3. Fetch Suggested Users
     const usersQuery = query(collection(db, 'users'), limit(15));

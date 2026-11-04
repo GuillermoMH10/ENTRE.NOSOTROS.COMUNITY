@@ -12,6 +12,7 @@ import { colors } from '../../theme/colors';
 import { Post, ReactionType, REACTIONS_MAP } from '../../types/post';
 import { PostMediaView } from './PostMediaView';
 import { ReactionPicker } from './ReactionPicker';
+import { HashtagFeedModal } from './HashtagFeedModal';
 import { ImageViewerModal } from '../UI/ImageViewerModal';
 import { togglePostReaction, toggleSavePost, toggleFollowUser } from '../../services/postsService';
 import { useAuth } from '../../context/AuthContext';
@@ -46,6 +47,7 @@ export const PostCard: React.FC<PostCardProps> = ({
   const [pickerPosition, setPickerPosition] = useState<{ x: number; y: number } | undefined>(undefined);
   const [viewerVisible, setViewerVisible] = useState(false);
   const [viewerIndex, setViewerIndex] = useState(0);
+  const [selectedHashtag, setSelectedHashtag] = useState<string | null>(null);
   const [isFollowing, setIsFollowing] = useState<boolean>(Boolean(isFollowingProp));
   const reactionBtnRef = React.useRef<View>(null);
 
@@ -153,6 +155,14 @@ export const PostCard: React.FC<PostCardProps> = ({
         onClose={() => setViewerVisible(false)}
       />
 
+      {/* Interactive Hashtag Explorer Modal */}
+      <HashtagFeedModal
+        visible={selectedHashtag !== null}
+        initialHashtag={selectedHashtag}
+        onClose={() => setSelectedHashtag(null)}
+        onUserPress={onUserPress}
+      />
+
       {/* Floating Reaction Picker */}
       <ReactionPicker
         visible={showReactionPicker}
@@ -237,13 +247,18 @@ export const PostCard: React.FC<PostCardProps> = ({
         onMediaPress={handleMediaPress}
       />
 
-      {/* Hashtags in discrete modern slate/sky blue */}
+      {/* Clickable Hashtags so users can navigate & discover community posts */}
       {post.hashtags && post.hashtags.length > 0 ? (
         <View style={styles.hashtagsRow}>
           {post.hashtags.map((tag, idx) => (
-            <Text key={idx} style={styles.hashtagText}>
-              {tag}{' '}
-            </Text>
+            <TouchableOpacity
+              key={idx}
+              onPress={() => setSelectedHashtag(tag.startsWith('#') ? tag : `#${tag}`)}
+              activeOpacity={0.7}
+              style={{ marginRight: 6, marginBottom: 4 }}
+            >
+              <Text style={styles.hashtagText}>{tag}</Text>
+            </TouchableOpacity>
           ))}
         </View>
       ) : null}

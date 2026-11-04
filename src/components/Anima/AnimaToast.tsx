@@ -35,11 +35,12 @@ export const showAnimaToast = (payload: AnimaToastPayload) => {
 
 interface AnimaToastHostProps {
   topOffset?: number;
+  bottomOffset?: number;
 }
 
-export const AnimaToastHost: React.FC<AnimaToastHostProps> = ({ topOffset = 18 }) => {
+export const AnimaToastHost: React.FC<AnimaToastHostProps> = ({ bottomOffset }) => {
   const [toast, setToast] = useState<AnimaToastPayload | null>(null);
-  const translateY = useRef(new Animated.Value(-120)).current;
+  const translateY = useRef(new Animated.Value(120)).current;
   const opacity = useRef(new Animated.Value(0)).current;
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -50,7 +51,7 @@ export const AnimaToastHost: React.FC<AnimaToastHostProps> = ({ topOffset = 18 }
     }
     Animated.parallel([
       Animated.timing(translateY, {
-        toValue: -120,
+        toValue: 120,
         duration: 240,
         useNativeDriver: Platform.OS !== 'web',
       }),
@@ -70,7 +71,7 @@ export const AnimaToastHost: React.FC<AnimaToastHostProps> = ({ topOffset = 18 }
         clearTimeout(timerRef.current);
       }
       setToast(incoming);
-      translateY.setValue(-90);
+      translateY.setValue(90);
       opacity.setValue(0);
 
       Animated.parallel([
@@ -102,6 +103,14 @@ export const AnimaToastHost: React.FC<AnimaToastHostProps> = ({ topOffset = 18 }
   if (!toast) return null;
 
   const accent = toast.accentColor || '#FF7A00';
+  const resolvedBottom =
+    typeof bottomOffset === 'number'
+      ? bottomOffset
+      : Platform.OS === 'web'
+      ? 26
+      : Platform.OS === 'ios'
+      ? 88
+      : 74;
 
   return (
     <Animated.View
@@ -109,7 +118,7 @@ export const AnimaToastHost: React.FC<AnimaToastHostProps> = ({ topOffset = 18 }
       style={[
         styles.hostWrapper,
         {
-          top: Platform.OS === 'ios' ? topOffset + 34 : topOffset,
+          bottom: resolvedBottom,
           opacity,
           transform: [{ translateY }],
         },

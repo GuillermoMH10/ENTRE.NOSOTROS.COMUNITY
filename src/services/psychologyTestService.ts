@@ -321,13 +321,13 @@ export const completeStreakDayWithEvidence = async (params: {
   const targetDay = streak.days.find((d) => d.dayNumber === dayNumber) || streak.days[0];
   const quoteForDay = getRandomStreakMotivationalQuote();
 
-  // 3. Build inspiring community post content
+  // 3. Build inspiring community post content (without any ANIMA quote line)
   const cleanNote = userNote.trim();
   const postHeader = `🔥 Racha Día ${dayNumber}/7 • ${focusMeta.postTagText}`;
-  const taskLine = `${targetDay.task.emoji} Reto de hoy cumplido: "${targetDay.task.title}"`;
+  const taskLine = `Actividad de hoy: "${targetDay.task.title}"`;
   const postBody = cleanNote
-    ? `${postHeader}\n${taskLine}\n\n"${cleanNote}"\n\n💬 ANIMA: ${quoteForDay}`
-    : `${postHeader}\n${taskLine}\n\nHoy di un paso más en mi camino de 7 días ${focusMeta.shortProblemLabel}.\n\n💬 ANIMA: ${quoteForDay}`;
+    ? `${postHeader}\n${taskLine}\n\n"${cleanNote}"`
+    : `${postHeader}\n${taskLine}\n\nHoy di un paso más en mi camino de 7 días ${focusMeta.shortProblemLabel}.`;
 
   await createPost(
     authorId,
@@ -406,18 +406,18 @@ export const completeStreakDayWithEvidence = async (params: {
     const unlockedBadgeObj = OFFICIAL_STREAK_BADGES.find((b) => b.id === newlyUnlockedBadgeId);
     showAnimaToast({
       title: `¡Completaste los 7 Días! ${unlockedBadgeObj?.emoji || '🏆'}`,
-      message: `¡Lo lograste! Desbloqueaste la insignia "${unlockedBadgeObj?.name || 'Semilla de Valentía'}" en tu perfil. ¡Estoy muy orgullosa de ti!`,
+      message: `Tu Día 7 se publicó en Principal y desbloqueaste la insignia "${unlockedBadgeObj?.name || 'Semilla de Valentía'}". ¡Ahora puedes publicar tu resumen completo!`,
       emoji: '👑',
-      accentColor: '#10B981',
+      accentColor: '#FF7A00',
       durationMs: 7000,
     });
   } else {
     showAnimaToast({
-      title: `¡Día ${dayNumber} de 7 Completado! 🔥`,
-      message: quoteForDay,
+      title: `¡Día ${dayNumber} de 7 publicado en Principal! 🔥`,
+      message: `Tu evidencia ya fue publicada en la comunidad. ${quoteForDay}`,
       emoji: '✨',
       accentColor: '#FF7A00',
-      durationMs: 5800,
+      durationMs: 6000,
     });
   }
 
@@ -517,9 +517,7 @@ export const publishFullStreakSummaryToFeed = async (params: {
     `"${userText}"`,
     ``,
     `📋 Mis 7 pasos superados:`,
-    ...streak.days.map((d) => `• Día ${d.dayNumber}: ${d.task.emoji} ${d.task.title}`),
-    ``,
-    `💬 Mensaje de ANIMA: ${finalQuote}`,
+    ...streak.days.map((d) => `• Día ${d.dayNumber}: ${d.task.title}`),
   ].join('\n');
 
   await createPost(
