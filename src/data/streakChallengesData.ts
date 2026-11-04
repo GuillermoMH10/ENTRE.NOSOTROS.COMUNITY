@@ -972,6 +972,56 @@ export const STREAK_MOTIVATIONAL_QUOTES: string[] = [
   '48. Cada fotografía de tu ruta es la huella de tu dedicación personal.',
   '49. Hoy diste un paso firme hacia tu mejor versión.',
   '50. ¡Lo estás logrando! Sigue avanzando con esa determinación que te caracteriza.',
+  '51. Cada día es una página en blanco para diseñar momentos que te llenen de energía.',
+  '52. Tu constancia de hoy es la tranquilidad que disfrutarás mañana.',
+  '53. Dedicarte tiempo de calidad es la mejor inversión que puedes hacer esta semana.',
+  '54. Un cambio de ambiente, una buena canción o un platillo hecho por ti transforman tu día.',
+  '55. Avanza con calma pero con paso firme; cada día suma en tu camino.',
+  '56. Qué bien se siente cuando conviertes tu bienestar en tu prioridad diaria.',
+  '57. Hoy es un gran día para descubrir algo nuevo y disfrutar el momento presente.',
+  '58. Tu fortaleza crece cada vez que eliges cuidar tu mente y tu entorno.',
+  '59. Los mejores hábitos nacen de actividades que realmente disfrutas hacer.',
+  '60. Celebra tu disciplina: estar aquí hoy habla muy bien de tu compromiso contigo.',
+  '61. Respira profundo, suelta la prisa y disfruta la experiencia de este día.',
+  '62. Cada acción consciente que realizas ilumina tu semana entera.',
+  '63. Date permiso de disfrutar las cosas buenas que construyes día con día.',
+  '64. Tu energía se renueva cuando conectas con lo que te apasiona.',
+  '65. Construir equilibrio es un arte que practicas un día a la vez.',
+  '66. Hoy tienes frente a ti una nueva oportunidad para sorprenderte a ti mismo.',
+  '67. La paz interior comienza cuando te tratas con paciencia y determinación.',
+  '68. Haz de este día un recuerdo que valga la pena capturar y compartir.',
+  '69. Tu bienestar no es una meta lejana, es lo que vives y eliges hoy.',
+  '70. Cuando cuidas tu espacio y tu tiempo, tu mente encuentra claridad.',
+  '71. Un paso constante vale más que mil planes sin empezar. ¡Sigue así!',
+  '72. Hoy suma una experiencia auténtica a tu semana de crecimiento.',
+  '73. Confía en tu ritmo: vas exactamente por el camino que necesitas recorrer.',
+  '74. La inspiración aparece cuando te pones en movimiento.',
+  '75. Rodéate de hábitos que te impulsen a sentirte pleno y en calma.',
+  '76. Tu dedicación en esta ruta de 7 días refleja tu gran capacidad de superación.',
+  '77. Siempre hay algo extraordinario esperando en las actividades de tu día.',
+  '78. Regálate unos minutos de desconexión para reconectar con lo mejor de ti.',
+  '79. Lo que hoy parece un paso sencillo, mañana será parte de tu gran transformación.',
+  '80. Mantén viva tu curiosidad: probar cosas distintas renueva el ánimo.',
+  '81. Qué admirable es verte construir tu propio bienestar día tras día.',
+  '82. Hoy elige disfrutar el proceso tanto como el resultado final.',
+  '83. Tu serenidad es tu mayor superpoder frente a cualquier reto cotidiano.',
+  '84. Cada día completado en tu ruta demuestra todo lo que eres capaz de lograr.',
+  '85. Haz una pausa, sonríe y reconoce todo el camino que ya has avanzado.',
+  '86. Crear momentos especiales para ti cambia por completo la perspectiva de tu semana.',
+  '87. La constancia convierte pequeños momentos en grandes logros personales.',
+  '88. Hoy es el momento ideal para recargar tu energía con una actividad que te encante.',
+  '89. Sigue cultivando hábitos que te hagan sentir orgulloso al terminar el día.',
+  '90. Tu equilibrio emocional se fortalece con cada acción real que emprendes.',
+  '91. Disfruta tu ruta a tu manera; este espacio es totalmente para ti.',
+  '92. La mejor forma de predecir una gran semana es crearla día por día.',
+  '93. Reconecta con tus gustos, tus proyectos y todo aquello que te inspira.',
+  '94. Cada fotografía que sumas es testimonio de tu compromiso y evolución.',
+  '95. Agradece tu esfuerzo de hoy: estás construyendo una rutina llena de propósito.',
+  '96. Nunca subestimes el impacto positivo de dedicarte media hora solo para ti.',
+  '97. Tu actitud y tu constancia hacen la diferencia en cada etapa del camino.',
+  '98. Hoy transforma tu rutina en una experiencia creativa y renovadora.',
+  '99. Estás más cerca de tu meta de 7 días; disfruta cada paso del recorrido.',
+  '100. ANIMA está contigo en cada día de tu ruta: ¡sigue brillando con fuerza!',
 ];
 
 const DAY_NAMES = [
@@ -990,6 +1040,22 @@ export const getRandomStreakMotivationalQuote = (): string => {
       Math.floor(Math.random() * STREAK_MOTIVATIONAL_QUOTES.length)
     ] || STREAK_MOTIVATIONAL_QUOTES[0];
   return raw.replace(/^\d+\.\s*/, '');
+};
+
+export const resolveFreshTaskItem = (
+  task: StreakTaskItem,
+  dayNumber = 1
+): StreakTaskItem => {
+  if (!task) {
+    return ALL_STREAK_TASKS[(dayNumber - 1) % ALL_STREAK_TASKS.length];
+  }
+  const foundById = ALL_STREAK_TASKS.find((t) => t.id === task.id);
+  if (foundById) return foundById;
+  const byCategory = ALL_STREAK_TASKS.filter((t) => t.category === task.category);
+  if (byCategory.length > 0) {
+    return byCategory[(dayNumber - 1) % byCategory.length];
+  }
+  return ALL_STREAK_TASKS[(dayNumber - 1) % ALL_STREAK_TASKS.length];
 };
 
 export const generateSevenDayTasksForUser = (

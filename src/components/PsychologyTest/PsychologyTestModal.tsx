@@ -87,6 +87,11 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
   const [viewerIndex, setViewerIndex] = useState<number>(0);
   const [viewerVisible, setViewerVisible] = useState<boolean>(false);
 
+  // Random phrase (1 of 100) shown next to ANIMA in the Streak Header
+  const [headerQuote, setHeaderQuote] = useState<string>(() =>
+    getRandomStreakMotivationalQuote()
+  );
+
   // Final 7-day summary celebration state
   const [celebrationQuote, setCelebrationQuote] = useState<string>(() =>
     getRandomStreakMotivationalQuote()
@@ -116,6 +121,7 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
       setEvidencePhotoUri(null);
       setEvidenceNote('');
       setPostponedEncouragementQuote(null);
+      setHeaderQuote(getRandomStreakMotivationalQuote());
     }
   }, [visible, startMode, initialResult, userId, user?.id]);
 
@@ -652,35 +658,82 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
           <View style={{ height: 36 }} />
         </ScrollView>
       ) : (
-        /* =================== VIEW 3: CLEAN WHITE / LIGHT-GRAY / SUBTLE ORANGE STREAK DASHBOARD =================== */
+        /* =================== VIEW 3: REDESIGNED COMPACT & PROFESSIONAL STREAK DASHBOARD =================== */
         <ScrollView
           style={styles.scrollBody}
           contentContainerStyle={styles.resultScrollContent}
           showsVerticalScrollIndicator={Platform.OS === 'web'}
         >
-          {/* 1. Clean White Top Streak Summary Card */}
+          {/* 1. Header Card: Centered Counter + ANIMA Mascot on Side with 100 Random Phrases + 7-Day Selector */}
           <View style={styles.cleanStreakHeaderCard}>
-            <View style={styles.cleanStreakTopRow}>
-              <View style={styles.cleanStreakTitleCol}>
-                <View style={styles.streakBadgeRow}>
-                  <Text style={styles.flameIconText}>🔥</Text>
-                  <Text style={styles.streakMainCountText}>
-                    {streak?.completedDaysCount || 0} / 7 Días
-                  </Text>
-                  <View style={styles.subtleOrangeTag}>
-                    <Text style={styles.subtleOrangeTagText}>RACHA ACTIVA</Text>
-                  </View>
-                </View>
-                <Text style={styles.streakFocusName}>{focusMeta.title}</Text>
-              </View>
-
-              <View style={styles.metaBadgeRightBox}>
-                <Text style={styles.metaBadgeEmoji}>{targetBadge.emoji}</Text>
-                <Text style={styles.metaBadgeLabel}>Meta Día 7</Text>
+            {/* Centered 1 / 7 Días Counter */}
+            <View style={{ alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Text style={{ fontSize: 22 }}>🔥</Text>
+                <Text style={{ fontSize: 21, fontWeight: '900', color: '#0F172A', letterSpacing: -0.3 }}>
+                  {streak?.completedDaysCount || 0} / 7 Días
+                </Text>
               </View>
             </View>
 
-            {/* Minimalist 7-Day Selector Pills */}
+            {/* ANIMA Mascot on the Side + 1 of 100 Random Inspiring Phrases */}
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                backgroundColor: '#F8FAFC',
+                borderRadius: 14,
+                paddingVertical: 10,
+                paddingHorizontal: 12,
+                borderWidth: 1,
+                borderColor: '#E2E8F0',
+                marginBottom: 12,
+                gap: 12,
+              }}
+            >
+              <Image
+                source={require('../../../assets/perfilANIMA.png')}
+                style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: 24,
+                  borderWidth: 1.5,
+                  borderColor: '#FF7A00',
+                }}
+                resizeMode="cover"
+              />
+              <View style={{ flex: 1 }}>
+                <Text
+                  style={{
+                    fontSize: 12.5,
+                    fontWeight: '600',
+                    color: '#334155',
+                    lineHeight: 17.5,
+                    fontStyle: 'italic',
+                  }}
+                >
+                  "{headerQuote}"
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => setHeaderQuote(getRandomStreakMotivationalQuote())}
+                activeOpacity={0.7}
+                style={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: 14,
+                  backgroundColor: '#FFFFFF',
+                  borderWidth: 1,
+                  borderColor: '#E2E8F0',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Ionicons name="reload" size={13} color="#FF7A00" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Minimalist 7-Day Selector Pills (No Emojis) */}
             <View style={styles.cleanSevenDaysBar}>
               {streak?.days.map((d) => {
                 const isSelected = d.dayNumber === selectedDayNum;
@@ -711,81 +764,112 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
                     >
                       D{d.dayNumber}
                     </Text>
-                    {isDone ? (
-                      <Ionicons
-                        name="checkmark"
-                        size={13}
-                        color={isSelected ? '#FFFFFF' : '#FF7A00'}
-                      />
-                    ) : (
-                      <View
-                        style={[
-                          styles.miniDotIndicator,
-                          isSelected
-                            ? { backgroundColor: '#FFFFFF' }
-                            : isCurrent
-                            ? { backgroundColor: '#FF7A00' }
-                            : { backgroundColor: '#CBD5E1' },
-                        ]}
-                      />
-                    )}
+                    <View
+                      style={[
+                        styles.miniDotIndicator,
+                        isSelected
+                          ? { backgroundColor: '#FFFFFF' }
+                          : isDone || isCurrent
+                          ? { backgroundColor: '#FF7A00' }
+                          : { backgroundColor: '#CBD5E1' },
+                      ]}
+                    />
                   </TouchableOpacity>
                 );
               })}
             </View>
           </View>
 
-          {/* 2. Active Day Challenge & Publish Card (Refined White & Light Gray) */}
+          {/* 2. COMPACT Active Day Challenge & Register Card */}
           {activeDayObj && (
-            <View style={styles.cleanWhiteCard}>
-              <View style={styles.dayCardTopBar}>
-                <View style={styles.dayStepTag}>
-                  <Text style={styles.dayStepTagText}>{activeDayObj.dayName}</Text>
+            <View
+              style={[
+                styles.cleanWhiteCard,
+                { paddingVertical: 13, paddingHorizontal: 14, marginBottom: 14 },
+              ]}
+            >
+              {/* Compact Top Header + Title in one sleek block */}
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: 8,
+                }}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
+                  <Text style={{ fontSize: 24 }}>{activeDayObj.task.emoji}</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 10.5, fontWeight: '800', color: '#FF7A00' }}>
+                      {activeDayObj.dayName}
+                    </Text>
+                    <Text
+                      style={{
+                        fontSize: 14.5,
+                        fontWeight: '800',
+                        color: '#0F172A',
+                        lineHeight: 19,
+                      }}
+                    >
+                      {activeDayObj.task.title}
+                    </Text>
+                  </View>
                 </View>
+
                 {activeDayObj.status === 'completed' ? (
                   <View style={styles.completedGrayTag}>
-                    <Ionicons name="checkmark-circle" size={14} color="#FF7A00" />
+                    <Ionicons name="checkmark-circle" size={13} color="#FF7A00" />
                     <Text style={styles.completedGrayTagText}>Completado</Text>
                   </View>
                 ) : activeDayObj.status === 'postponed' ? (
                   <View style={styles.completedGrayTag}>
-                    <Ionicons name="reload-circle" size={14} color="#64748B" />
-                    <Text style={styles.completedGrayTagText}>Día recorrido</Text>
+                    <Ionicons name="reload-circle" size={13} color="#64748B" />
+                    <Text style={styles.completedGrayTagText}>Recorrido</Text>
                   </View>
                 ) : null}
               </View>
 
-              {/* Task Header: Large clean emoji without background + Title */}
-              <View style={styles.taskHeroRow}>
-                <Text style={styles.taskHeroEmoji}>{activeDayObj.task.emoji}</Text>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.taskHeroTitle}>{activeDayObj.task.title}</Text>
-                  <Text style={styles.taskHeroSub}>{focusMeta.postTagText}</Text>
-                </View>
-              </View>
-
-              <View style={styles.taskDescriptionBox}>
-                <Text style={styles.taskDescriptionText}>
-                  {activeDayObj.task.description}
-                </Text>
-              </View>
+              {/* Compact Description */}
+              <Text
+                style={{
+                  fontSize: 12.5,
+                  color: '#475569',
+                  lineHeight: 17.5,
+                  backgroundColor: '#F8FAFC',
+                  paddingVertical: 8,
+                  paddingHorizontal: 10,
+                  borderRadius: 10,
+                  borderWidth: 1,
+                  borderColor: '#E2E8F0',
+                  marginBottom: 10,
+                }}
+              >
+                {activeDayObj.task.description}
+              </Text>
 
               {/* Encouragement Box if user postponed this day */}
               {postponedEncouragementQuote && activeDayObj.status !== 'completed' && (
-                <View style={styles.cleanAnimaNoteBox}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    backgroundColor: '#F8FAFC',
+                    borderRadius: 10,
+                    padding: 8,
+                    borderWidth: 1,
+                    borderColor: '#E2E8F0',
+                    marginBottom: 10,
+                    gap: 8,
+                  }}
+                >
                   <Image
                     source={require('../../../assets/perfilANIMA.png')}
-                    style={styles.animaAvatarMedium}
+                    style={{ width: 32, height: 32, borderRadius: 16, borderWidth: 1, borderColor: '#FF7A00' }}
                     resizeMode="cover"
                   />
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.cleanAnimaNoteTitle}>
-                      ANIMA recorrió este día para ti:
-                    </Text>
-                    <Text style={styles.cleanAnimaNoteText}>
-                      "{postponedEncouragementQuote}"
-                    </Text>
-                  </View>
+                  <Text style={{ flex: 1, fontSize: 11.5, color: '#475569', fontStyle: 'italic' }}>
+                    "{postponedEncouragementQuote}"
+                  </Text>
                 </View>
               )}
 
@@ -798,13 +882,13 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
                     >
                       <Image
                         source={{ uri: activeDayObj.evidenceImageUrl }}
-                        style={styles.completedDayPreviewImg}
+                        style={{ width: '100%', height: 150, borderRadius: 10, marginBottom: 6 }}
                         resizeMode="cover"
                       />
                     </TouchableOpacity>
                   ) : null}
-                  <Text style={styles.completedDayPreviewStatus}>
-                    ✓ Actividad del Día {activeDayObj.dayNumber} registrada y compartida
+                  <Text style={{ fontSize: 12, fontWeight: '800', color: '#0F172A' }}>
+                    Actividad del Día {activeDayObj.dayNumber} registrada y compartida
                   </Text>
                   {activeDayObj.evidenceNote ? (
                     <Text style={styles.completedDayPreviewNote}>
@@ -813,116 +897,176 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
                   ) : null}
                 </View>
               ) : (
-                /* Clean Evidence Upload & Publish Form */
-                <View style={styles.publishSectionWrap}>
-                  <View style={styles.publishHeaderLine}>
-                    <Ionicons name="camera-outline" size={17} color="#0F172A" />
-                    <Text style={styles.publishHeaderLabel}>
-                      Registrar y publicar mi Día {activeDayObj.dayNumber}
-                    </Text>
+                /* COMPACT Evidence Upload & Publish Form */
+                <View>
+                  <Text
+                    style={{
+                      fontSize: 11.5,
+                      fontWeight: '800',
+                      color: '#334155',
+                      marginBottom: 6,
+                    }}
+                  >
+                    Registrar y publicar mi Día {activeDayObj.dayNumber}
+                  </Text>
+
+                  {/* Horizontal Compact Row: Photo Picker Box + Note Input */}
+                  <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
+                    <TouchableOpacity
+                      onPress={handlePickEvidencePhoto}
+                      activeOpacity={0.85}
+                      style={{
+                        width: 74,
+                        height: 66,
+                        borderRadius: 12,
+                        backgroundColor: '#F8FAFC',
+                        borderWidth: 1.5,
+                        borderColor: evidencePhotoUri ? '#FF7A00' : '#CBD5E1',
+                        borderStyle: evidencePhotoUri ? 'solid' : 'dashed',
+                        overflow: 'hidden',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      {evidencePhotoUri ? (
+                        <Image
+                          source={{ uri: evidencePhotoUri }}
+                          style={{ width: '100%', height: '100%' }}
+                          resizeMode="cover"
+                        />
+                      ) : (
+                        <>
+                          <Ionicons name="camera-outline" size={20} color="#FF7A00" />
+                          <Text
+                            style={{
+                              fontSize: 9.5,
+                              fontWeight: '800',
+                              color: '#475569',
+                              marginTop: 2,
+                            }}
+                          >
+                            Subir foto
+                          </Text>
+                        </>
+                      )}
+                    </TouchableOpacity>
+
+                    <TextInput
+                      style={{
+                        flex: 1,
+                        height: 66,
+                        backgroundColor: '#F8FAFC',
+                        borderRadius: 12,
+                        borderWidth: 1,
+                        borderColor: '#E2E8F0',
+                        paddingHorizontal: 10,
+                        paddingVertical: 8,
+                        fontSize: 12,
+                        color: '#0F172A',
+                        textAlignVertical: 'top',
+                      }}
+                      placeholder="Comentario de tu experiencia hoy... (opcional)"
+                      placeholderTextColor="#94A3B8"
+                      value={evidenceNote}
+                      onChangeText={setEvidenceNote}
+                      multiline
+                      maxLength={240}
+                    />
                   </View>
 
-                  {evidencePhotoUri ? (
-                    <View style={styles.evidencePreviewBox}>
-                      <Image
-                        source={{ uri: evidencePhotoUri }}
-                        style={styles.evidencePreviewImage}
-                        resizeMode="cover"
-                      />
-                      <TouchableOpacity
-                        style={styles.changePhotoPill}
-                        onPress={handlePickEvidencePhoto}
-                        activeOpacity={0.85}
-                      >
-                        <Ionicons name="camera" size={14} color="#FFFFFF" />
-                        <Text style={styles.changePhotoPillText}>Cambiar fotografía</Text>
-                      </TouchableOpacity>
-                    </View>
-                  ) : (
+                  {/* Compact Action Row: Primary Publish Button + Subtle Postpone Button */}
+                  <View style={{ flexDirection: 'row', gap: 8 }}>
                     <TouchableOpacity
-                      style={styles.cleanPhotoDropzone}
-                      onPress={handlePickEvidencePhoto}
-                      activeOpacity={0.8}
+                      style={{
+                        flex: 1,
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: '#FF7A00',
+                        paddingVertical: 10,
+                        paddingHorizontal: 12,
+                        borderRadius: 11,
+                      }}
+                      onPress={handleCompleteDay}
+                      disabled={isSubmittingDay}
+                      activeOpacity={0.88}
                     >
-                      <Ionicons name="image-outline" size={28} color="#FF7A00" />
-                      <Text style={styles.cleanPhotoDropzoneTitle}>
-                        Seleccionar fotografía de mi actividad
-                      </Text>
-                      <Text style={styles.cleanPhotoDropzoneSub}>
-                        Toca para subir tu foto del Día {activeDayObj.dayNumber} y compartirla en Principal
+                      {isSubmittingDay ? (
+                        <ActivityIndicator size="small" color="#FFFFFF" />
+                      ) : (
+                        <>
+                          <Ionicons name="checkmark-circle" size={15} color="#FFFFFF" style={{ marginRight: 6 }} />
+                          <Text style={{ color: '#FFFFFF', fontSize: 12.5, fontWeight: '800' }}>
+                            Publicar Día {activeDayObj.dayNumber}
+                          </Text>
+                        </>
+                      )}
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: '#F8FAFC',
+                        paddingVertical: 10,
+                        paddingHorizontal: 11,
+                        borderRadius: 11,
+                        borderWidth: 1,
+                        borderColor: '#E2E8F0',
+                      }}
+                      onPress={handlePostponeDay}
+                      activeOpacity={0.75}
+                    >
+                      <Ionicons name="time-outline" size={14} color="#64748B" style={{ marginRight: 4 }} />
+                      <Text style={{ fontSize: 11.5, fontWeight: '700', color: '#475569' }}>
+                        Recorrer día
                       </Text>
                     </TouchableOpacity>
-                  )}
-
-                  <TextInput
-                    style={styles.cleanInputBox}
-                    placeholder="Agrega un comentario sobre tu experiencia de hoy... (opcional)"
-                    placeholderTextColor="#94A3B8"
-                    value={evidenceNote}
-                    onChangeText={setEvidenceNote}
-                    multiline
-                    maxLength={280}
-                  />
-
-                  <TouchableOpacity
-                    style={styles.primaryOrangeBtn}
-                    onPress={handleCompleteDay}
-                    disabled={isSubmittingDay}
-                    activeOpacity={0.88}
-                  >
-                    {isSubmittingDay ? (
-                      <ActivityIndicator size="small" color="#FFFFFF" />
-                    ) : (
-                      <>
-                        <Ionicons name="flame" size={18} color="#FFFFFF" style={{ marginRight: 8 }} />
-                        <Text style={styles.primaryOrangeBtnText}>
-                          Publicar Avance y Completar Día {activeDayObj.dayNumber}
-                        </Text>
-                      </>
-                    )}
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={styles.postponeCleanBtn}
-                    onPress={handlePostponeDay}
-                    activeOpacity={0.75}
-                  >
-                    <Ionicons name="time-outline" size={16} color="#64748B" style={{ marginRight: 6 }} />
-                    <Text style={styles.postponeCleanBtnText}>
-                      Hoy no pude realizarlo • Recorrer día y recibir motivación
-                    </Text>
-                  </TouchableOpacity>
+                  </View>
                 </View>
               )}
             </View>
           )}
 
-          {/* 3. NEW SECTION: MIS AVANCES (GRID DE 7 FOTOS RESPONSIVO PARA CELULAR Y WEB) */}
-          <View style={styles.cleanWhiteCard}>
-            <View style={styles.sectionHeaderRow}>
-              <View>
-                <Text style={styles.sectionTitleText}>Mis Avances • Galería de 7 Días</Text>
-                <Text style={styles.sectionSubText}>
-                  Tu camino fotográfico día por día ({streak?.completedDaysCount || 0} de 7 registrados)
-                </Text>
-              </View>
+          {/* 3. MIS AVANCES (GRID DE 7 EN UNA SOLA FILA EN WEB/LAPTOP, SIN EMOJIS) */}
+          <View style={[styles.cleanWhiteCard, { paddingVertical: 14, paddingHorizontal: 14, marginBottom: 14 }]}>
+            <View style={[styles.sectionHeaderRow, { marginBottom: 10 }]}>
+              <Text style={{ fontSize: 13.5, fontWeight: '800', color: '#0F172A' }}>
+                Mis Avances (7 Días)
+              </Text>
               <View style={styles.countGrayBadge}>
                 <Text style={styles.countGrayBadgeText}>
-                  {streak?.completedDaysCount || 0}/7
+                  {streak?.completedDaysCount || 0} / 7
                 </Text>
               </View>
             </View>
 
-            <View style={styles.sevenPhotosGrid}>
+            <View
+              style={{
+                flexDirection: 'row',
+                flexWrap: windowWidth >= 768 ? 'nowrap' : 'wrap',
+                gap: 6,
+              }}
+            >
               {streak?.days.map((d) => {
                 const hasPhoto = Boolean(d.evidenceImageUrl);
                 const isSelected = d.dayNumber === selectedDayNum;
+                const isDesktopGrid = windowWidth >= 768;
                 return (
                   <TouchableOpacity
                     key={d.dayNumber}
                     style={[
-                      styles.advanceGridCell,
-                      isSelected && styles.advanceGridCellSelected,
+                      {
+                        aspectRatio: 1,
+                        borderRadius: 12,
+                        overflow: 'hidden',
+                        backgroundColor: '#F8FAFC',
+                        borderWidth: isSelected ? 1.5 : 1,
+                        borderColor: hasPhoto || isSelected ? '#FF7A00' : '#E2E8F0',
+                        position: 'relative',
+                      },
+                      isDesktopGrid ? { flex: 1 } : { width: '23%', minWidth: 68 },
                     ]}
                     activeOpacity={0.85}
                     onPress={() => {
@@ -946,10 +1090,25 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
                       </>
                     ) : (
                       <View style={styles.advanceEmptySlot}>
-                        <Text style={styles.advanceEmptyDayNum}>Día {d.dayNumber}</Text>
-                        <Text style={styles.advanceEmptyEmoji}>{d.task.emoji}</Text>
-                        <Text style={styles.advanceEmptyLabel} numberOfLines={1}>
-                          {d.status === 'unlocked' ? 'En curso' : 'Pendiente'}
+                        <Text
+                          style={{
+                            fontSize: 11,
+                            fontWeight: '800',
+                            color: isSelected ? '#FF7A00' : '#475569',
+                          }}
+                        >
+                          Día {d.dayNumber}
+                        </Text>
+                        <Text
+                          style={{
+                            fontSize: 9,
+                            color: '#94A3B8',
+                            fontWeight: '600',
+                            marginTop: 2,
+                          }}
+                          numberOfLines={1}
+                        >
+                          {d.status === 'unlocked' ? 'Actual' : 'Pendiente'}
                         </Text>
                       </View>
                     )}
@@ -959,60 +1118,81 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
             </View>
           </View>
 
-          {/* 4. INSIGNIAS Y NIVELES (CLEAN, SPACED OUT, MINIMALIST WHITE & LIGHT GRAY) */}
-          <View style={styles.cleanWhiteCard}>
-            <Text style={styles.sectionTitleText}>Insignias y Niveles</Text>
-            <Text style={[styles.sectionSubText, { marginBottom: 14 }]}>
-              Completa tus rutas de 7 días para desbloquearlas en tu Perfil:
-            </Text>
+          {/* 4. INSIGNIAS EN 1 SOLA LÍNEA (PEQUEÑAS/OCULTAS/INACTIVAS HASTA DESBLOQUEARSE, Y MÁS GRANDES/COLOR AL DESBLOQUEARSE) */}
+          <View style={[styles.cleanWhiteCard, { paddingVertical: 12, paddingHorizontal: 14 }]}>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: 8,
+              }}
+            >
+              <Text style={{ fontSize: 12.5, fontWeight: '800', color: '#475569' }}>
+                Insignias
+              </Text>
+              <Text style={{ fontSize: 10.5, fontWeight: '700', color: '#94A3B8' }}>
+                {(result.unlockedBadges?.length || 0)} / 4 desbloqueadas
+              </Text>
+            </View>
 
-            <View style={styles.cleanBadgesList}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               {OFFICIAL_STREAK_BADGES.map((b) => {
                 const isUnlocked = Boolean(result.unlockedBadges?.includes(b.id));
-                const isTarget = b.id === targetBadge.id;
                 return (
                   <View
                     key={b.id}
-                    style={[
-                      styles.cleanBadgeItemCard,
-                      isTarget && styles.cleanBadgeItemActiveBorder,
-                    ]}
+                    style={{
+                      flex: 1,
+                      backgroundColor: isUnlocked ? '#FFF7ED' : '#F8FAFC',
+                      borderRadius: 12,
+                      paddingVertical: isUnlocked ? 10 : 7,
+                      paddingHorizontal: 4,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderWidth: isUnlocked ? 1.5 : 1,
+                      borderColor: isUnlocked ? '#FF7A00' : '#E2E8F0',
+                      opacity: isUnlocked ? 1 : 0.42,
+                      transform: [{ scale: isUnlocked ? 1.03 : 0.94 }],
+                    }}
                   >
-                    <Text style={styles.cleanBadgeEmoji}>{b.emoji}</Text>
-                    <View style={{ flex: 1 }}>
-                      <View style={styles.cleanBadgeHeaderRow}>
-                        <Text style={styles.cleanBadgeName}>{b.name}</Text>
-                        <View
-                          style={[
-                            styles.cleanBadgeLevelPill,
-                            (isUnlocked || isTarget) && { backgroundColor: '#FFF7ED', borderColor: '#FDBA74' },
-                          ]}
+                    {isUnlocked ? (
+                      <>
+                        <Text style={{ fontSize: 22, marginBottom: 3 }}>{b.emoji}</Text>
+                        <Text
+                          style={{
+                            fontSize: 9.5,
+                            fontWeight: '800',
+                            color: '#FF7A00',
+                            textAlign: 'center',
+                          }}
+                          numberOfLines={1}
                         >
-                          <Text
-                            style={[
-                              styles.cleanBadgeLevelText,
-                              (isUnlocked || isTarget) && { color: '#FF7A00' },
-                            ]}
-                          >
-                            Nivel {b.level}
-                          </Text>
-                        </View>
-                      </View>
-                      <Text style={styles.cleanBadgeDesc}>
-                        {isUnlocked
-                          ? '✓ Desbloqueada en tu perfil'
-                          : isTarget
-                          ? 'En progreso en esta racha'
-                          : b.subtitle}
-                      </Text>
-                    </View>
+                          {b.name}
+                        </Text>
+                      </>
+                    ) : (
+                      <>
+                        <Ionicons name="lock-closed" size={14} color="#94A3B8" style={{ marginBottom: 2 }} />
+                        <Text
+                          style={{
+                            fontSize: 9,
+                            fontWeight: '700',
+                            color: '#94A3B8',
+                            textAlign: 'center',
+                          }}
+                        >
+                          Nivel {b.level}
+                        </Text>
+                      </>
+                    )}
                   </View>
                 );
               })}
             </View>
           </View>
 
-          <View style={{ height: 32 }} />
+          <View style={{ height: 24 }} />
         </ScrollView>
       )}
     </SafeAreaView>

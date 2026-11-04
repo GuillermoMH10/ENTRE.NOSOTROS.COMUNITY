@@ -12,6 +12,7 @@ import {
   ActivityIndicator,
   TextInput,
   Dimensions,
+  useWindowDimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -39,7 +40,10 @@ import {
   getLatestTestResult,
   subscribeToUserTestAndStreak,
 } from '../services/psychologyTestService';
-import { OFFICIAL_STREAK_BADGES } from '../data/streakChallengesData';
+import {
+  OFFICIAL_STREAK_BADGES,
+  getRandomStreakMotivationalQuote,
+} from '../data/streakChallengesData';
 import { TestResult } from '../types/psychologyTest';
 import { PsychologyTestModal } from '../components/PsychologyTest/PsychologyTestModal';
 import { WeeklyMoodTracker } from '../components/Profile/WeeklyMoodTracker';
@@ -66,6 +70,10 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   embedded = false,
 }) => {
   const { user, logout, updateUserProfile } = useAuth();
+  const { width: windowWidth } = useWindowDimensions();
+  const [profileRandomQuote, setProfileRandomQuote] = useState<string>(() =>
+    getRandomStreakMotivationalQuote()
+  );
 
   // Active Tab: null initially (clean blank space as requested), or 'posts' | 'saved' | 'reacted'
   const [selectedTab, setSelectedTab] = useState<ProfileTab>(null);
@@ -510,15 +518,16 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             </View>
           </View>
 
-          {/* TOP OF PROFILE: GRID DE 4 INSIGNIAS (Blanco, Gris Claro y toque Naranja) */}
+          {/* TOP OF PROFILE: GRID DE 4 INSIGNIAS EN 1 SOLA LÍNEA (Pequeñas/Inactivas hasta desbloquearse, Grandes/Color al desbloquearse) */}
           <View
             style={{
               marginHorizontal: 16,
               marginTop: 6,
               marginBottom: 14,
               backgroundColor: '#FFFFFF',
-              borderRadius: 18,
-              padding: 14,
+              borderRadius: 16,
+              paddingVertical: 11,
+              paddingHorizontal: 12,
               borderWidth: 1,
               borderColor: '#E2E8F0',
             }}
@@ -528,91 +537,68 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 flexDirection: 'row',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                marginBottom: 12,
+                marginBottom: 8,
               }}
             >
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Ionicons name="ribbon-outline" size={16} color="#FF7A00" style={{ marginRight: 6 }} />
-                <Text style={{ fontSize: 13, fontWeight: '800', color: '#0F172A' }}>
-                  Mis Insignias
-                </Text>
-              </View>
-              <View
-                style={{
-                  backgroundColor: '#F8FAFC',
-                  paddingHorizontal: 9,
-                  paddingVertical: 3,
-                  borderRadius: 8,
-                  borderWidth: 1,
-                  borderColor: '#E2E8F0',
-                }}
-              >
-                <Text style={{ fontSize: 10.5, fontWeight: '800', color: '#64748B' }}>
-                  {(latestTestResult?.unlockedBadges?.length || 0)} / 4
-                </Text>
-              </View>
+              <Text style={{ fontSize: 12, fontWeight: '800', color: '#475569' }}>
+                Insignias
+              </Text>
+              <Text style={{ fontSize: 10.5, fontWeight: '700', color: '#94A3B8' }}>
+                {(latestTestResult?.unlockedBadges?.length || 0)} / 4
+              </Text>
             </View>
 
-            {/* Grid de 4 columnas */}
-            <View style={{ flexDirection: 'row', gap: 8 }}>
+            {/* Grid de 4 en una sola línea */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               {OFFICIAL_STREAK_BADGES.map((badge) => {
                 const isUnlocked = Boolean(latestTestResult?.unlockedBadges?.includes(badge.id));
-                const isTarget = latestTestResult?.streakState?.targetBadgeId === badge.id;
                 return (
                   <View
                     key={badge.id}
                     style={{
                       flex: 1,
-                      backgroundColor: isUnlocked ? '#FFFFFF' : '#F8FAFC',
-                      borderRadius: 14,
-                      paddingVertical: 12,
-                      paddingHorizontal: 6,
+                      backgroundColor: isUnlocked ? '#FFF7ED' : '#F8FAFC',
+                      borderRadius: 12,
+                      paddingVertical: isUnlocked ? 10 : 7,
+                      paddingHorizontal: 4,
                       alignItems: 'center',
                       justifyContent: 'center',
-                      borderWidth: isUnlocked || isTarget ? 1.5 : 1,
-                      borderColor: isUnlocked || isTarget ? '#FF7A00' : '#E2E8F0',
+                      borderWidth: isUnlocked ? 1.5 : 1,
+                      borderColor: isUnlocked ? '#FF7A00' : '#E2E8F0',
+                      opacity: isUnlocked ? 1 : 0.42,
+                      transform: [{ scale: isUnlocked ? 1.03 : 0.94 }],
                     }}
                   >
-                    <Text
-                      style={{
-                        fontSize: 28,
-                        marginBottom: 6,
-                        opacity: isUnlocked || isTarget ? 1 : 0.4,
-                      }}
-                    >
-                      {badge.emoji}
-                    </Text>
-                    <View
-                      style={{
-                        backgroundColor: isUnlocked ? '#FF7A00' : isTarget ? '#FFF7ED' : '#F1F5F9',
-                        paddingHorizontal: 6,
-                        paddingVertical: 2,
-                        borderRadius: 6,
-                        marginBottom: 5,
-                      }}
-                    >
-                      <Text
-                        style={{
-                          fontSize: 9,
-                          fontWeight: '800',
-                          color: isUnlocked ? '#FFFFFF' : isTarget ? '#FF7A00' : '#64748B',
-                        }}
-                      >
-                        Nivel {badge.level}
-                      </Text>
-                    </View>
-                    <Text
-                      style={{
-                        fontSize: 10.5,
-                        fontWeight: '800',
-                        color: '#0F172A',
-                        textAlign: 'center',
-                        lineHeight: 13,
-                      }}
-                      numberOfLines={2}
-                    >
-                      {badge.name}
-                    </Text>
+                    {isUnlocked ? (
+                      <>
+                        <Text style={{ fontSize: 22, marginBottom: 3 }}>{badge.emoji}</Text>
+                        <Text
+                          style={{
+                            fontSize: 9.5,
+                            fontWeight: '800',
+                            color: '#FF7A00',
+                            textAlign: 'center',
+                          }}
+                          numberOfLines={1}
+                        >
+                          {badge.name}
+                        </Text>
+                      </>
+                    ) : (
+                      <>
+                        <Ionicons name="lock-closed" size={13} color="#94A3B8" style={{ marginBottom: 2 }} />
+                        <Text
+                          style={{
+                            fontSize: 9,
+                            fontWeight: '700',
+                            color: '#94A3B8',
+                            textAlign: 'center',
+                          }}
+                        >
+                          Nivel {badge.level}
+                        </Text>
+                      </>
+                    )}
                   </View>
                 );
               })}
@@ -693,7 +679,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           {/* Tab Content Rendering */}
           {selectedTab === null ? (
             <>
-              {/* TARJETA DE RUTA DE 7 DÍAS Y MIS AVANCES (Blanco, Gris Claro y toque Naranja) */}
+              {/* TARJETA COMPACTA Y PROFESIONAL DE RUTA DE 7 DÍAS Y MIS AVANCES */}
               {latestTestResult ? (
                 <View
                   style={[
@@ -702,121 +688,147 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                       backgroundColor: '#FFFFFF',
                       borderColor: '#E2E8F0',
                       borderWidth: 1,
-                      padding: 16,
+                      padding: 14,
                     },
                   ]}
                 >
-                  {/* Encabezado limpio */}
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      marginBottom: 12,
-                    }}
-                  >
-                    <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                      <Text style={{ fontSize: 22, marginRight: 8 }}>🔥</Text>
-                      <View style={{ flex: 1 }}>
-                        <Text style={{ fontSize: 15, fontWeight: '900', color: '#0F172A' }}>
-                          {latestTestResult.streakState?. status === 'completed'
-                            ? 'Ruta de 7 Días Completada'
-                            : `Mi Ruta de 7 Días (${latestTestResult.streakState?.completedDaysCount || 0}/7)`}
-                        </Text>
-                        <Text style={{ fontSize: 12, fontWeight: '600', color: '#64748B', marginTop: 2 }}>
-                          {latestTestResult.levelTitle}
-                        </Text>
-                      </View>
-                    </View>
-                    <View
-                      style={{
-                        backgroundColor: '#FFF7ED',
-                        paddingHorizontal: 9,
-                        paddingVertical: 4,
-                        borderRadius: 8,
-                        borderWidth: 1,
-                        borderColor: '#FFEDD5',
-                      }}
-                    >
-                      <Text style={{ fontSize: 10, fontWeight: '800', color: '#FF7A00' }}>
-                        {latestTestResult.streakState?.status === 'completed' ? 'LOGRO 7/7' : 'EN CURSO'}
+                  {/* 1. Contador Centrado 1 / 7 Días */}
+                  <View style={{ alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <Text style={{ fontSize: 20 }}>🔥</Text>
+                      <Text style={{ fontSize: 19, fontWeight: '900', color: '#0F172A' }}>
+                        {latestTestResult.streakState?.completedDaysCount || 0} / 7 Días
                       </Text>
                     </View>
                   </View>
 
-                  {/* Barra de Ruta de 7 Días (Blanco, Gris Claro y Naranja) */}
-                  {latestTestResult.streakState && (
-                    <View
+                  {/* 2. ANIMA Mascota a un lado + 1 de las 100 Frases Aleatorias */}
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      backgroundColor: '#F8FAFC',
+                      borderRadius: 12,
+                      paddingVertical: 8,
+                      paddingHorizontal: 10,
+                      borderWidth: 1,
+                      borderColor: '#E2E8F0',
+                      marginBottom: 10,
+                      gap: 10,
+                    }}
+                  >
+                    <Image
+                      source={require('../../assets/perfilANIMA.png')}
                       style={{
-                        backgroundColor: '#F8FAFC',
-                        borderRadius: 14,
-                        padding: 10,
-                        borderWidth: 1,
-                        borderColor: '#E2E8F0',
-                        marginBottom: 14,
+                        width: 42,
+                        height: 42,
+                        borderRadius: 21,
+                        borderWidth: 1.5,
+                        borderColor: '#FF7A00',
+                      }}
+                      resizeMode="cover"
+                    />
+                    <Text
+                      style={{
+                        flex: 1,
+                        fontSize: 12,
+                        fontWeight: '600',
+                        color: '#334155',
+                        lineHeight: 16.5,
+                        fontStyle: 'italic',
                       }}
                     >
-                      <View style={{ flexDirection: 'row', gap: 6 }}>
-                        {latestTestResult.streakState.days.map((d) => {
-                          const isDone = d.status === 'completed';
-                          const isCurr =
-                            d.dayNumber === latestTestResult.streakState?.currentDayNumber &&
-                            latestTestResult.streakState?.status !== 'completed';
-                          return (
-                            <TouchableOpacity
-                              key={d.dayNumber}
-                              activeOpacity={0.8}
-                              onPress={() => {
-                                setTestModalMode('result');
-                                setIsTestModalOpen(true);
-                              }}
+                      "{profileRandomQuote}"
+                    </Text>
+                    <TouchableOpacity
+                      onPress={() => setProfileRandomQuote(getRandomStreakMotivationalQuote())}
+                      activeOpacity={0.7}
+                      style={{
+                        width: 26,
+                        height: 26,
+                        borderRadius: 13,
+                        backgroundColor: '#FFFFFF',
+                        borderWidth: 1,
+                        borderColor: '#E2E8F0',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <Ionicons name="reload" size={12} color="#FF7A00" />
+                    </TouchableOpacity>
+                  </View>
+
+                  {/* 3. Barra de Ruta de 7 Días (Sin emojis) */}
+                  {latestTestResult.streakState && (
+                    <View style={{ flexDirection: 'row', gap: 5, marginBottom: 10 }}>
+                      {latestTestResult.streakState.days.map((d) => {
+                        const isDone = d.status === 'completed';
+                        const isCurr =
+                          d.dayNumber === latestTestResult.streakState?.currentDayNumber &&
+                          latestTestResult.streakState?.status !== 'completed';
+                        return (
+                          <TouchableOpacity
+                            key={d.dayNumber}
+                            activeOpacity={0.8}
+                            onPress={() => {
+                              setTestModalMode('result');
+                              setIsTestModalOpen(true);
+                            }}
+                            style={{
+                              flex: 1,
+                              paddingVertical: 6,
+                              borderRadius: 9,
+                              backgroundColor: isDone ? '#FF7A00' : '#F8FAFC',
+                              borderWidth: isCurr ? 1.5 : 1,
+                              borderColor: isDone || isCurr ? '#FF7A00' : '#E2E8F0',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: 3,
+                            }}
+                          >
+                            <Text
                               style={{
-                                flex: 1,
-                                paddingVertical: 8,
-                                borderRadius: 10,
-                                backgroundColor: isDone ? '#FF7A00' : '#FFFFFF',
-                                borderWidth: isCurr ? 1.5 : 1,
-                                borderColor: isDone || isCurr ? '#FF7A00' : '#E2E8F0',
-                                alignItems: 'center',
-                                justifyContent: 'center',
+                                fontSize: 10,
+                                fontWeight: '800',
+                                color: isDone ? '#FFFFFF' : isCurr ? '#FF7A00' : '#64748B',
                               }}
                             >
-                              <Text
-                                style={{
-                                  fontSize: 10,
-                                  fontWeight: '800',
-                                  color: isDone ? '#FFFFFF' : isCurr ? '#FF7A00' : '#64748B',
-                                }}
-                              >
-                                D{d.dayNumber}
-                              </Text>
-                              <Text
-                                style={{
-                                  fontSize: 10,
-                                  marginTop: 2,
-                                  color: isDone ? '#FFFFFF' : isCurr ? '#FF7A00' : '#94A3B8',
-                                  fontWeight: '800',
-                                }}
-                              >
-                                {isDone ? '✓' : isCurr ? '•' : '○'}
-                              </Text>
-                            </TouchableOpacity>
-                          );
-                        })}
-                      </View>
+                              D{d.dayNumber}
+                            </Text>
+                            <View
+                              style={{
+                                width: 4,
+                                height: 4,
+                                borderRadius: 2,
+                                backgroundColor: isDone
+                                  ? '#FFFFFF'
+                                  : isCurr
+                                  ? '#FF7A00'
+                                  : '#CBD5E1',
+                              }}
+                            />
+                          </TouchableOpacity>
+                        );
+                      })}
                     </View>
                   )}
 
-                  {/* Tarjeta del Día Actual (Diseño limpio Blanco/Gris/Naranja) */}
+                  {/* 4. Actividad del Día Actual Compacta */}
                   {latestTestResult.streakState && (
-                    <View
+                    <TouchableOpacity
+                      activeOpacity={0.88}
+                      onPress={() => {
+                        setTestModalMode('result');
+                        setIsTestModalOpen(true);
+                      }}
                       style={{
                         backgroundColor: '#F8FAFC',
-                        borderRadius: 14,
-                        padding: 14,
+                        borderRadius: 12,
+                        paddingVertical: 10,
+                        paddingHorizontal: 12,
                         borderWidth: 1,
                         borderColor: '#E2E8F0',
-                        marginBottom: 14,
+                        marginBottom: 12,
                       }}
                     >
                       {(() => {
@@ -830,79 +842,93 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                               style={{
                                 flexDirection: 'row',
                                 alignItems: 'center',
-                                justifyContent: 'space-between',
-                                marginBottom: 8,
+                                gap: 8,
+                                marginBottom: 4,
                               }}
                             >
-                              <Text
+                              <Text style={{ fontSize: 22 }}>{curr.task.emoji}</Text>
+                              <View style={{ flex: 1 }}>
+                                <Text
+                                  style={{
+                                    fontSize: 10,
+                                    fontWeight: '800',
+                                    color: '#FF7A00',
+                                  }}
+                                >
+                                  {curr.dayName}
+                                </Text>
+                                <Text
+                                  style={{
+                                    fontSize: 13.5,
+                                    fontWeight: '800',
+                                    color: '#0F172A',
+                                  }}
+                                  numberOfLines={1}
+                                >
+                                  {curr.task.title}
+                                </Text>
+                              </View>
+                              <View
                                 style={{
-                                  fontSize: 10.5,
-                                  fontWeight: '800',
-                                  color: '#FF7A00',
-                                  letterSpacing: 0.4,
+                                  backgroundColor: '#FF7A00',
+                                  paddingHorizontal: 9,
+                                  paddingVertical: 5,
+                                  borderRadius: 8,
                                 }}
                               >
-                                {latestTestResult.streakState?.status === 'completed'
-                                  ? 'RUTA FINALIZADA CON ÉXITO'
-                                  : `DÍA ${curr.dayNumber} • ACTIVIDAD DE HOY`}
-                              </Text>
-                              <Text style={{ fontSize: 11, color: '#64748B', fontWeight: '600' }}>
-                                {curr.dayName}
-                              </Text>
-                            </View>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
-                              <Text style={{ fontSize: 28, marginRight: 10 }}>{curr.task.emoji}</Text>
-                              <Text
-                                style={{
-                                  fontSize: 15,
-                                  fontWeight: '800',
-                                  color: '#0F172A',
-                                  flex: 1,
-                                }}
-                              >
-                                {curr.task.title}
-                              </Text>
+                                <Text style={{ fontSize: 10.5, fontWeight: '800', color: '#FFFFFF' }}>
+                                  Registrar
+                                </Text>
+                              </View>
                             </View>
                             <Text
                               style={{
-                                fontSize: 12.5,
+                                fontSize: 11.5,
                                 color: '#475569',
-                                lineHeight: 18,
+                                lineHeight: 16,
                               }}
+                              numberOfLines={2}
                             >
                               {curr.task.description}
                             </Text>
                           </>
                         );
                       })()}
-                    </View>
+                    </TouchableOpacity>
                   )}
 
-                  {/* SECCIÓN: MIS AVANCES (GRID DE 7 FOTOS) */}
+                  {/* 5. SECCIÓN: MIS AVANCES (GRID DE 7 EN UNA SOLA FILA EN WEB/LAPTOP, SIN EMOJIS) */}
                   {latestTestResult.streakState && (
-                    <View style={{ marginBottom: 16 }}>
+                    <View style={{ marginBottom: 12 }}>
                       <View
                         style={{
                           flexDirection: 'row',
                           alignItems: 'center',
                           justifyContent: 'space-between',
-                          marginBottom: 10,
+                          marginBottom: 8,
                         }}
                       >
-                        <Text style={{ fontSize: 13, fontWeight: '800', color: '#0F172A' }}>
+                        <Text style={{ fontSize: 12.5, fontWeight: '800', color: '#0F172A' }}>
                           Mis Avances (7 Días)
                         </Text>
-                        <Text style={{ fontSize: 11, fontWeight: '700', color: '#64748B' }}>
-                          {latestTestResult.streakState.days.filter((d) => Boolean(d.evidenceImageUrl)).length} / 7 fotos
+                        <Text style={{ fontSize: 10.5, fontWeight: '700', color: '#64748B' }}>
+                          {latestTestResult.streakState.days.filter((d) => Boolean(d.evidenceImageUrl)).length} / 7
                         </Text>
                       </View>
 
-                      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          flexWrap: windowWidth >= 768 ? 'nowrap' : 'wrap',
+                          gap: 6,
+                        }}
+                      >
                         {latestTestResult.streakState.days.map((d) => {
                           const hasPhoto = Boolean(d.evidenceImageUrl);
                           const isCurr =
                             d.dayNumber === latestTestResult.streakState?.currentDayNumber &&
                             latestTestResult.streakState?.status !== 'completed';
+                          const isDesktopGrid = windowWidth >= 768;
                           return (
                             <TouchableOpacity
                               key={d.dayNumber}
@@ -911,18 +937,20 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                                 setTestModalMode('result');
                                 setIsTestModalOpen(true);
                               }}
-                              style={{
-                                width: '23%',
-                                aspectRatio: 1,
-                                borderRadius: 12,
-                                backgroundColor: '#F8FAFC',
-                                borderWidth: isCurr ? 1.5 : 1,
-                                borderColor: hasPhoto || isCurr ? '#FF7A00' : '#E2E8F0',
-                                overflow: 'hidden',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                position: 'relative',
-                              }}
+                              style={[
+                                {
+                                  aspectRatio: 1,
+                                  borderRadius: 10,
+                                  backgroundColor: '#F8FAFC',
+                                  borderWidth: isCurr ? 1.5 : 1,
+                                  borderColor: hasPhoto || isCurr ? '#FF7A00' : '#E2E8F0',
+                                  overflow: 'hidden',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  position: 'relative',
+                                },
+                                isDesktopGrid ? { flex: 1 } : { width: '23%', minWidth: 64 },
+                              ]}
                             >
                               {hasPhoto && d.evidenceImageUrl ? (
                                 <>
@@ -936,33 +964,38 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                                       position: 'absolute',
                                       bottom: 4,
                                       left: 4,
-                                      backgroundColor: 'rgba(15,23,42,0.75)',
-                                      paddingHorizontal: 5,
+                                      right: 4,
+                                      backgroundColor: 'rgba(15,23,42,0.72)',
                                       paddingVertical: 1.5,
-                                      borderRadius: 5,
+                                      borderRadius: 4,
+                                      alignItems: 'center',
                                     }}
                                   >
-                                    <Text style={{ fontSize: 9, fontWeight: '800', color: '#FFFFFF' }}>
+                                    <Text style={{ fontSize: 8.5, fontWeight: '800', color: '#FFFFFF' }}>
                                       Día {d.dayNumber}
                                     </Text>
                                   </View>
                                 </>
                               ) : (
                                 <View style={{ alignItems: 'center', justifyContent: 'center', padding: 4 }}>
-                                  <Ionicons
-                                    name={isCurr ? 'camera-outline' : 'image-outline'}
-                                    size={18}
-                                    color={isCurr ? '#FF7A00' : '#94A3B8'}
-                                  />
                                   <Text
                                     style={{
-                                      fontSize: 9.5,
+                                      fontSize: 10,
                                       fontWeight: '800',
-                                      color: isCurr ? '#FF7A00' : '#64748B',
-                                      marginTop: 3,
+                                      color: isCurr ? '#FF7A00' : '#475569',
                                     }}
                                   >
                                     Día {d.dayNumber}
+                                  </Text>
+                                  <Text
+                                    style={{
+                                      fontSize: 8.5,
+                                      fontWeight: '600',
+                                      color: '#94A3B8',
+                                      marginTop: 2,
+                                    }}
+                                  >
+                                    {isCurr ? 'Actual' : 'Pendiente'}
                                   </Text>
                                 </View>
                               )}

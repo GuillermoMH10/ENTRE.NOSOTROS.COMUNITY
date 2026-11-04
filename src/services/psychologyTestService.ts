@@ -6,6 +6,7 @@ import {
   FOCUS_CATEGORY_META,
   OFFICIAL_STREAK_BADGES,
   getRandomStreakMotivationalQuote,
+  resolveFreshTaskItem,
 } from '../data/streakChallengesData';
 import { buildInitialStreakState } from '../data/psychologyTestQuestions';
 import { createPost, uploadMediaToStorage } from './postsService';
@@ -52,10 +53,18 @@ export const normalizeTestResultWithStreak = (
       ? raw.totalCompletedStreaks
       : unlockedBadges.length;
 
-  const streakState: EmotionalStreakState =
+  const baseStreakState: EmotionalStreakState =
     raw.streakState && Array.isArray(raw.streakState.days) && raw.streakState.days.length > 0
       ? raw.streakState
       : buildInitialStreakState(focusCategory, userId || raw.userId, unlockedBadges);
+
+  const streakState: EmotionalStreakState = {
+    ...baseStreakState,
+    days: baseStreakState.days.map((d) => ({
+      ...d,
+      task: resolveFreshTaskItem(d.task, d.dayNumber),
+    })),
+  };
 
   return {
     ...raw,
