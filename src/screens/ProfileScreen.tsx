@@ -681,7 +681,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           {/* Tab Content Rendering */}
           {selectedTab === null ? (
             <>
-              {/* TARJETA COMPACTA Y PROFESIONAL DE RUTA DE 7 DÍAS Y MIS AVANCES */}
+              {/* SECCIÓN EXCLUSIVA EN PERFIL: MIS AVANCES (7 DÍAS) + BOTÓN PEQUEÑO NUEVO TEST */}
               {latestTestResult ? (
                 <View
                   style={[
@@ -690,369 +690,177 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                       backgroundColor: '#FFFFFF',
                       borderColor: '#E2E8F0',
                       borderWidth: 1,
-                      padding: 14,
+                      paddingVertical: 14,
+                      paddingHorizontal: 14,
                     },
                   ]}
                 >
-                  {/* 1. Contador Centrado 1 / 7 Días */}
-                  <View style={{ alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                      <Text style={{ fontSize: 20 }}>🔥</Text>
-                      <Text style={{ fontSize: 19, fontWeight: '900', color: '#0F172A' }}>
-                        {latestTestResult.streakState?.completedDaysCount || 0} / 7 Días
-                      </Text>
-                    </View>
-                  </View>
-
-                  {/* 2. ANIMA Mascota a un lado + 1 de las 100 Frases Aleatorias */}
+                  {/* Encabezado limpio: Mis Avances + Contador + Botón pequeño de Nuevo test */}
                   <View
                     style={{
                       flexDirection: 'row',
                       alignItems: 'center',
-                      backgroundColor: '#F8FAFC',
-                      borderRadius: 12,
-                      paddingVertical: 8,
-                      paddingHorizontal: 10,
-                      borderWidth: 1,
-                      borderColor: '#E2E8F0',
-                      marginBottom: 10,
-                      gap: 10,
+                      justifyContent: 'space-between',
+                      marginBottom: 12,
                     }}
                   >
-                    <Image
-                      source={require('../../assets/perfilANIMA.png')}
-                      style={{
-                        width: 42,
-                        height: 42,
-                        borderRadius: 21,
-                        borderWidth: 1.5,
-                        borderColor: '#FF7A00',
-                      }}
-                      resizeMode="cover"
-                    />
-                    <Text
-                      style={{
-                        flex: 1,
-                        fontSize: 12,
-                        fontWeight: '600',
-                        color: '#334155',
-                        lineHeight: 16.5,
-                        fontStyle: 'italic',
-                      }}
-                    >
-                      "{profileRandomQuote}"
-                    </Text>
-                    <TouchableOpacity
-                      onPress={() => setProfileRandomQuote(getRandomStreakMotivationalQuote())}
-                      activeOpacity={0.7}
-                      style={{
-                        width: 26,
-                        height: 26,
-                        borderRadius: 13,
-                        backgroundColor: '#FFFFFF',
-                        borderWidth: 1,
-                        borderColor: '#E2E8F0',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <Ionicons name="reload" size={12} color="#FF7A00" />
-                    </TouchableOpacity>
-                  </View>
-
-                  {/* 3. Barra de Ruta de 7 Días (Sin emojis) */}
-                  {latestTestResult.streakState && (
-                    <View style={{ flexDirection: 'row', gap: 5, marginBottom: 10 }}>
-                      {latestTestResult.streakState.days.map((d) => {
-                        const isDone = d.status === 'completed';
-                        const isCurr =
-                          d.dayNumber === latestTestResult.streakState?.currentDayNumber &&
-                          latestTestResult.streakState?.status !== 'completed';
-                        return (
-                          <TouchableOpacity
-                            key={d.dayNumber}
-                            activeOpacity={0.8}
-                            onPress={() => {
-                              setTestModalMode('result');
-                              setIsTestModalOpen(true);
-                            }}
-                            style={{
-                              flex: 1,
-                              paddingVertical: 6,
-                              borderRadius: 9,
-                              backgroundColor: isDone ? '#FF7A00' : '#F8FAFC',
-                              borderWidth: isCurr ? 1.5 : 1,
-                              borderColor: isDone || isCurr ? '#FF7A00' : '#E2E8F0',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              gap: 3,
-                            }}
-                          >
-                            <Text
-                              style={{
-                                fontSize: 10,
-                                fontWeight: '800',
-                                color: isDone ? '#FFFFFF' : isCurr ? '#FF7A00' : '#64748B',
-                              }}
-                            >
-                              D{d.dayNumber}
-                            </Text>
-                            <View
-                              style={{
-                                width: 4,
-                                height: 4,
-                                borderRadius: 2,
-                                backgroundColor: isDone
-                                  ? '#FFFFFF'
-                                  : isCurr
-                                  ? '#FF7A00'
-                                  : '#CBD5E1',
-                              }}
-                            />
-                          </TouchableOpacity>
-                        );
-                      })}
-                    </View>
-                  )}
-
-                  {/* 4. Actividad del Día Actual Compacta */}
-                  {latestTestResult.streakState && (
-                    <TouchableOpacity
-                      activeOpacity={0.88}
-                      onPress={() => {
-                        setTestModalMode('result');
-                        setIsTestModalOpen(true);
-                      }}
-                      style={{
-                        backgroundColor: '#F8FAFC',
-                        borderRadius: 12,
-                        paddingVertical: 10,
-                        paddingHorizontal: 12,
-                        borderWidth: 1,
-                        borderColor: '#E2E8F0',
-                        marginBottom: 12,
-                      }}
-                    >
-                      {(() => {
-                        const curr =
-                          latestTestResult.streakState.days.find(
-                            (x) => x.dayNumber === latestTestResult.streakState?.currentDayNumber
-                          ) || latestTestResult.streakState.days[0];
-                        return (
-                          <>
-                            <View
-                              style={{
-                                flexDirection: 'row',
-                                alignItems: 'center',
-                                justifyContent: 'space-between',
-                                marginBottom: 8,
-                              }}
-                            >
-                              <View
-                                style={{
-                                  backgroundColor: '#FFF7ED',
-                                  paddingHorizontal: 9,
-                                  paddingVertical: 3.5,
-                                  borderRadius: 7,
-                                  borderWidth: 1,
-                                  borderColor: '#FFEDD5',
-                                }}
-                              >
-                                <Text
-                                  style={{
-                                    fontSize: 10,
-                                    fontWeight: '800',
-                                    color: '#FF7A00',
-                                  }}
-                                >
-                                  {curr.dayName}
-                                </Text>
-                              </View>
-                              <View
-                                style={{
-                                  backgroundColor: '#FF7A00',
-                                  paddingHorizontal: 9,
-                                  paddingVertical: 4,
-                                  borderRadius: 8,
-                                }}
-                              >
-                                <Text style={{ fontSize: 10.5, fontWeight: '800', color: '#FFFFFF' }}>
-                                  Registrar
-                                </Text>
-                              </View>
-                            </View>
-                            <View
-                              style={{
-                                marginBottom: 6,
-                              }}
-                            >
-                              <Text
-                                style={{
-                                  fontSize: 14,
-                                  fontWeight: '800',
-                                  color: '#0F172A',
-                                }}
-                                numberOfLines={1}
-                              >
-                                {curr.task.title}
-                              </Text>
-                            </View>
-                            <Text
-                              style={{
-                                fontSize: 11.5,
-                                color: '#475569',
-                                lineHeight: 16,
-                              }}
-                              numberOfLines={2}
-                            >
-                              {curr.task.description}
-                            </Text>
-                          </>
-                        );
-                      })()}
-                    </TouchableOpacity>
-                  )}
-
-                  {/* 5. SECCIÓN: MIS AVANCES (GRID DE 7 EN UNA SOLA FILA EN WEB/LAPTOP, SIN EMOJIS) */}
-                  {latestTestResult.streakState && (
-                    <View style={{ marginBottom: 12 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <Text style={{ fontSize: 14.5, fontWeight: '900', color: '#0F172A' }}>
+                        Mis Avances
+                      </Text>
                       <View
                         style={{
                           flexDirection: 'row',
                           alignItems: 'center',
-                          justifyContent: 'space-between',
-                          marginBottom: 8,
+                          backgroundColor: '#FFF7ED',
+                          paddingHorizontal: 8,
+                          paddingVertical: 3,
+                          borderRadius: 8,
+                          borderWidth: 1,
+                          borderColor: '#FFEDD5',
+                          gap: 3,
                         }}
                       >
-                        <Text style={{ fontSize: 12.5, fontWeight: '800', color: '#0F172A' }}>
-                          Mis Avances (7 Días)
+                        <Text style={{ fontSize: 11 }}>🔥</Text>
+                        <Text style={{ fontSize: 10.5, fontWeight: '800', color: '#FF7A00' }}>
+                          {latestTestResult.streakState?.completedDaysCount || 0} / 7 Días
                         </Text>
-                        <Text style={{ fontSize: 10.5, fontWeight: '700', color: '#64748B' }}>
-                          {latestTestResult.streakState.days.filter((d) => Boolean(d.evidenceImageUrl)).length} / 7
-                        </Text>
-                      </View>
-
-                      <View
-                        style={{
-                          flexDirection: 'row',
-                          flexWrap: windowWidth >= 768 ? 'nowrap' : 'wrap',
-                          gap: 6,
-                        }}
-                      >
-                        {latestTestResult.streakState.days.map((d) => {
-                          const hasPhoto = Boolean(d.evidenceImageUrl);
-                          const isCurr =
-                            d.dayNumber === latestTestResult.streakState?.currentDayNumber &&
-                            latestTestResult.streakState?.status !== 'completed';
-                          const isDesktopGrid = windowWidth >= 768;
-                          return (
-                            <TouchableOpacity
-                              key={d.dayNumber}
-                              activeOpacity={0.85}
-                              onPress={() => {
-                                setTestModalMode('result');
-                                setIsTestModalOpen(true);
-                              }}
-                              style={[
-                                {
-                                  aspectRatio: 1,
-                                  borderRadius: 10,
-                                  backgroundColor: '#F8FAFC',
-                                  borderWidth: isCurr ? 1.5 : 1,
-                                  borderColor: hasPhoto || isCurr ? '#FF7A00' : '#E2E8F0',
-                                  overflow: 'hidden',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  position: 'relative',
-                                },
-                                isDesktopGrid ? { flex: 1 } : { width: '23%', minWidth: 64 },
-                              ]}
-                            >
-                              {hasPhoto && d.evidenceImageUrl ? (
-                                <>
-                                  <Image
-                                    source={{ uri: d.evidenceImageUrl }}
-                                    style={{ width: '100%', height: '100%' }}
-                                    resizeMode="cover"
-                                  />
-                                  <View
-                                    style={{
-                                      position: 'absolute',
-                                      bottom: 4,
-                                      left: 4,
-                                      right: 4,
-                                      backgroundColor: 'rgba(15,23,42,0.72)',
-                                      paddingVertical: 1.5,
-                                      borderRadius: 4,
-                                      alignItems: 'center',
-                                    }}
-                                  >
-                                    <Text style={{ fontSize: 8.5, fontWeight: '800', color: '#FFFFFF' }}>
-                                      Día {d.dayNumber}
-                                    </Text>
-                                  </View>
-                                </>
-                              ) : (
-                                <View style={{ alignItems: 'center', justifyContent: 'center', padding: 4 }}>
-                                  <Text
-                                    style={{
-                                      fontSize: 10,
-                                      fontWeight: '800',
-                                      color: isCurr ? '#FF7A00' : '#475569',
-                                    }}
-                                  >
-                                    Día {d.dayNumber}
-                                  </Text>
-                                  <Text
-                                    style={{
-                                      fontSize: 8.5,
-                                      fontWeight: '600',
-                                      color: '#94A3B8',
-                                      marginTop: 2,
-                                    }}
-                                  >
-                                    {isCurr ? 'Actual' : 'Pendiente'}
-                                  </Text>
-                                </View>
-                              )}
-                            </TouchableOpacity>
-                          );
-                        })}
                       </View>
                     </View>
-                  )}
 
-                  {/* Botones de Acción (Blanco, Gris Claro y Naranja) */}
-                  <View style={styles.profileTestActionsRow}>
+                    {/* Botón pequeño y discreto de Nuevo Test */}
                     <TouchableOpacity
-                      style={[styles.profileViewResultBtn, { backgroundColor: '#FF7A00' }]}
-                      activeOpacity={0.85}
-                      onPress={() => {
-                        setTestModalMode('result');
-                        setIsTestModalOpen(true);
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        backgroundColor: '#F8FAFC',
+                        paddingHorizontal: 10,
+                        paddingVertical: 5,
+                        borderRadius: 9,
+                        borderWidth: 1,
+                        borderColor: '#E2E8F0',
+                        gap: 4,
                       }}
-                    >
-                      <Ionicons name="camera-outline" size={16} color={colors.white} style={{ marginRight: 6 }} />
-                      <Text style={styles.profileViewResultBtnText}>
-                        Subir Foto y Publicar Avance
-                      </Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      style={[
-                        styles.profileRetakeBtn,
-                        { backgroundColor: '#F8FAFC', borderColor: '#E2E8F0' },
-                      ]}
-                      activeOpacity={0.85}
+                      activeOpacity={0.8}
                       onPress={() => {
                         setTestModalMode('questionnaire');
                         setIsTestModalOpen(true);
                       }}
                     >
-                      <Ionicons name="refresh-outline" size={14} color="#475569" style={{ marginRight: 5 }} />
-                      <Text style={[styles.profileRetakeBtnText, { color: '#475569' }]}>Nuevo test</Text>
+                      <Ionicons name="refresh-outline" size={12} color="#475569" />
+                      <Text style={{ fontSize: 11, fontWeight: '700', color: '#475569' }}>
+                        Nuevo test
+                      </Text>
                     </TouchableOpacity>
                   </View>
+
+                  {/* Galería de 7 Días: 1 sola fila de 7 en Web/Laptop, y diseño balanceado 4+3 en Móvil */}
+                  {latestTestResult.streakState && (() => {
+                    const days = latestTestResult.streakState.days;
+                    const allPhotos = days
+                      .map((item) => item.evidenceImageUrl)
+                      .filter((u): u is string => Boolean(u));
+                    const isDesktopGrid = windowWidth >= 768;
+
+                    const renderAdvanceCell = (d: typeof days[0]) => {
+                      const hasPhoto = Boolean(d.evidenceImageUrl);
+                      const isCurr =
+                        d.dayNumber === latestTestResult.streakState?.currentDayNumber &&
+                        latestTestResult.streakState?.status !== 'completed';
+                      return (
+                        <TouchableOpacity
+                          key={d.dayNumber}
+                          activeOpacity={hasPhoto ? 0.85 : 1}
+                          onPress={() => {
+                            if (hasPhoto && d.evidenceImageUrl) {
+                              const idx = allPhotos.indexOf(d.evidenceImageUrl);
+                              handleOpenImageViewer(allPhotos, idx >= 0 ? idx : 0);
+                            }
+                          }}
+                          style={{
+                            flex: 1,
+                            aspectRatio: 1,
+                            borderRadius: 13,
+                            backgroundColor: hasPhoto ? '#FFFFFF' : '#F8FAFC',
+                            borderWidth: hasPhoto || isCurr ? 1.5 : 1,
+                            borderColor: hasPhoto ? '#FF7A00' : isCurr ? '#FDBA74' : '#E2E8F0',
+                            overflow: 'hidden',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            position: 'relative',
+                          }}
+                        >
+                          {hasPhoto && d.evidenceImageUrl ? (
+                            <>
+                              <Image
+                                source={{ uri: d.evidenceImageUrl }}
+                                style={{ width: '100%', height: '100%' }}
+                                resizeMode="cover"
+                              />
+                              <View
+                                style={{
+                                  position: 'absolute',
+                                  bottom: 5,
+                                  left: 5,
+                                  right: 5,
+                                  backgroundColor: 'rgba(15, 23, 42, 0.72)',
+                                  paddingVertical: 2,
+                                  borderRadius: 6,
+                                  alignItems: 'center',
+                                }}
+                              >
+                                <Text style={{ fontSize: 9, fontWeight: '800', color: '#FFFFFF' }}>
+                                  Día {d.dayNumber}
+                                </Text>
+                              </View>
+                            </>
+                          ) : (
+                            <View style={{ alignItems: 'center', justifyContent: 'center', padding: 4 }}>
+                              <Text
+                                style={{
+                                  fontSize: 11,
+                                  fontWeight: '800',
+                                  color: isCurr ? '#FF7A00' : '#475569',
+                                }}
+                              >
+                                Día {d.dayNumber}
+                              </Text>
+                              <Text
+                                style={{
+                                  fontSize: 8.5,
+                                  fontWeight: '600',
+                                  color: isCurr ? '#FF7A00' : '#94A3B8',
+                                  marginTop: 2,
+                                }}
+                              >
+                                {isCurr ? 'En curso' : 'Pendiente'}
+                              </Text>
+                            </View>
+                          )}
+                        </TouchableOpacity>
+                      );
+                    };
+
+                    if (isDesktopGrid) {
+                      return (
+                        <View style={{ flexDirection: 'row', gap: 6 }}>
+                          {days.map((d) => renderAdvanceCell(d))}
+                        </View>
+                      );
+                    }
+
+                    // Mobile balanced 2-row grid: 4 on top row (D1..D4) + 3 on bottom row (D5..D7)
+                    return (
+                      <View style={{ gap: 7 }}>
+                        <View style={{ flexDirection: 'row', gap: 7 }}>
+                          {days.slice(0, 4).map((d) => renderAdvanceCell(d))}
+                        </View>
+                        <View style={{ flexDirection: 'row', gap: 7, paddingHorizontal: '11%' }}>
+                          {days.slice(4, 7).map((d) => renderAdvanceCell(d))}
+                        </View>
+                      </View>
+                    );
+                  })()}
                 </View>
               ) : (
                 <View

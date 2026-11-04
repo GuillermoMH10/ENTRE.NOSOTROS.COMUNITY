@@ -96,6 +96,13 @@ const purgeAllLocalTestKeys = async (userId?: string | null) => {
 purgeAllLocalTestKeys().catch(() => {});
 
 /**
+ * Deeply removes any `undefined` properties so Firestore `setDoc` never rejects an object.
+ */
+const stripUndefinedDeep = <T,>(obj: T): T => {
+  return JSON.parse(JSON.stringify(obj));
+};
+
+/**
  * Saves test & streak result EXCLUSIVELY in Firestore top-level collection `streaks/{userId}`
  * (No local AsyncStorage persistence).
  */
@@ -106,24 +113,27 @@ export const saveLatestTestResult = async (
   const cleanUserId = userId && userId !== 'anonymous' ? userId.trim() : undefined;
   await purgeAllLocalTestKeys(cleanUserId);
 
-  const enrichedResult = normalizeTestResultWithStreak(
-    {
-      ...result,
-      userId: cleanUserId || 'anonymous',
-    },
-    cleanUserId
+  const enrichedResult = stripUndefinedDeep(
+    normalizeTestResultWithStreak(
+      {
+        ...result,
+        userId: cleanUserId || 'anonymous',
+      },
+      cleanUserId
+    )
   );
 
   try {
     notifyResultListeners(enrichedResult);
 
     if (cleanUserId) {
-      // Save in top-level collection `streaks/{userId}` so it is immediately visible in Firebase Console
+      // Save sanitized payload in top-level collection `streaks/{userId}`
       const streakRef = doc(db, 'streaks', cleanUserId);
-      await setDoc(streakRef, {
+      const cleanPayload = stripUndefinedDeep({
         ...enrichedResult,
         syncedAt: new Date().toISOString(),
       });
+      await setDoc(streakRef, cleanPayload);
 
       // Also clean up old hidden subcollection if it existed previously
       const legacySubRef = doc(db, 'users', cleanUserId, 'psychologyData', 'latestTest');
@@ -315,7 +325,13 @@ export const completeStreakDayWithEvidence = async (params: {
 
   // 1. Upload evidence photo so we can store the URL both in the streak day and in the community post
   const storagePath = `streaks/${authorId}/day_${dayNumber}_${Date.now()}.jpg`;
-  const publicEvidenceUrl = await uploadMediaToStorage(mediaSource, storagePath);
+  let publicEvidenceUrl = mediaSource;
+  try {
+    publicEvidenceUrl = await uploadMediaToStorage(mediaSource, storagePath);
+  } catch (uploadErr) {
+    console.warn('Fallback to direct media source for streak evidence:', uploadErr);
+    publicEvidenceUrl = mediaSource;
+  }
 
   // 2. Find the day object
   const targetDay = streak.days.find((d) => d.dayNumber === dayNumber) || streak.days[0];
@@ -386,7 +402,11 @@ export const completeStreakDayWithEvidence = async (params: {
     ...streak,
     isActive: true,
     status: isAllSevenCompleted ? 'completed' : 'active',
-    completedAt: isAllSevenCompleted ? new Date().toISOString() : streak.completedAt,
+    ...(isAllSevenCompleted
+      ? { completedAt: new Date().toISOString() }
+      : streak.completedAt
+      ? { completedAt: streak.completedAt }
+      : {}),
     currentDayNumber: nextUnlockedDay ? nextUnlockedDay.dayNumber : 7,
     completedDaysCount: completedCount,
     days: updatedDays,

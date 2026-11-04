@@ -111,17 +111,25 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
 
       if (startMode === 'result' && initialResult && isMatchingUser) {
         const normalized = normalizeTestResultWithStreak(initialResult, activeUid);
-        setResult(normalized);
-        setSelectedDayNum(normalized.streakState?.currentDayNumber || 1);
-      } else {
+        setResult((prev) => {
+          const prevCompleted = prev?.streakState?.completedDaysCount || 0;
+          const nextCompleted = normalized.streakState?.completedDaysCount || 0;
+          if (prev && prevCompleted > nextCompleted) {
+            return prev;
+          }
+          if (!prev) {
+            setSelectedDayNum(normalized.streakState?.currentDayNumber || 1);
+          }
+          return normalized;
+        });
+      } else if (startMode === 'questionnaire') {
         setResult(null);
         setCurrentIndex(0);
         setAnswers({});
+        setEvidencePhotoUri(null);
+        setEvidenceNote('');
+        setPostponedEncouragementQuote(null);
       }
-      setEvidencePhotoUri(null);
-      setEvidenceNote('');
-      setPostponedEncouragementQuote(null);
-      setHeaderQuote(getRandomStreakMotivationalQuote());
     }
   }, [visible, startMode, initialResult, userId, user?.id]);
 
@@ -270,7 +278,8 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
       setEvidencePhotoUri(null);
       setEvidenceNote('');
       setPostponedEncouragementQuote(null);
-      setSelectedDayNum(updatedResult.streakState?.currentDayNumber || 7);
+      // Keep selectedDayNum on the day just completed so the user sees their registered evidence immediately
+      setSelectedDayNum(selectedDayNum);
       setCelebrationQuote(getRandomStreakMotivationalQuote());
 
       if (onTestCompleted) {
@@ -894,19 +903,45 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
                     >
                       <Image
                         source={{ uri: activeDayObj.evidenceImageUrl }}
-                        style={{ width: '100%', height: 150, borderRadius: 10, marginBottom: 6 }}
+                        style={{ width: '100%', height: 150, borderRadius: 10, marginBottom: 8 }}
                         resizeMode="cover"
                       />
                     </TouchableOpacity>
                   ) : null}
-                  <Text style={{ fontSize: 12, fontWeight: '800', color: '#0F172A' }}>
-                    Actividad del Día {activeDayObj.dayNumber} registrada y compartida
-                  </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Ionicons name="checkmark-circle" size={16} color="#FF7A00" />
+                    <Text style={{ fontSize: 12.5, fontWeight: '800', color: '#0F172A' }}>
+                      Actividad del Día {activeDayObj.dayNumber} registrada y publicada
+                    </Text>
+                  </View>
                   {activeDayObj.evidenceNote ? (
                     <Text style={styles.completedDayPreviewNote}>
                       "{activeDayObj.evidenceNote}"
                     </Text>
                   ) : null}
+
+                  {activeDayObj.dayNumber < 7 && (
+                    <TouchableOpacity
+                      style={{
+                        marginTop: 10,
+                        backgroundColor: '#FF7A00',
+                        borderRadius: 10,
+                        paddingVertical: 9,
+                        paddingHorizontal: 12,
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 6,
+                      }}
+                      activeOpacity={0.85}
+                      onPress={() => setSelectedDayNum(activeDayObj.dayNumber + 1)}
+                    >
+                      <Text style={{ color: '#FFFFFF', fontSize: 12, fontWeight: '800' }}>
+                        Ver actividad del Día {activeDayObj.dayNumber + 1}
+                      </Text>
+                      <Ionicons name="arrow-forward" size={14} color="#FFFFFF" />
+                    </TouchableOpacity>
+                  )}
                 </View>
               ) : (
                 /* COMPACT Evidence Upload & Publish Form */
@@ -1053,32 +1088,26 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
               </View>
             </View>
 
-            <View
-              style={{
-                flexDirection: 'row',
-                flexWrap: windowWidth >= 768 ? 'nowrap' : 'wrap',
-                gap: 6,
-              }}
-            >
-              {streak?.days.map((d) => {
+            {streak?.days && (() => {
+              const days = streak.days;
+              const isDesktopGrid = windowWidth >= 768;
+
+              const renderCell = (d: typeof days[0]) => {
                 const hasPhoto = Boolean(d.evidenceImageUrl);
                 const isSelected = d.dayNumber === selectedDayNum;
-                const isDesktopGrid = windowWidth >= 768;
                 return (
                   <TouchableOpacity
                     key={d.dayNumber}
-                    style={[
-                      {
-                        aspectRatio: 1,
-                        borderRadius: 12,
-                        overflow: 'hidden',
-                        backgroundColor: '#F8FAFC',
-                        borderWidth: isSelected ? 1.5 : 1,
-                        borderColor: hasPhoto || isSelected ? '#FF7A00' : '#E2E8F0',
-                        position: 'relative',
-                      },
-                      isDesktopGrid ? { flex: 1 } : { width: '23%', minWidth: 68 },
-                    ]}
+                    style={{
+                      flex: 1,
+                      aspectRatio: 1,
+                      borderRadius: 12,
+                      overflow: 'hidden',
+                      backgroundColor: '#F8FAFC',
+                      borderWidth: isSelected ? 1.5 : 1,
+                      borderColor: hasPhoto || isSelected ? '#FF7A00' : '#E2E8F0',
+                      position: 'relative',
+                    }}
                     activeOpacity={0.85}
                     onPress={() => {
                       if (hasPhoto && d.evidenceImageUrl) {
@@ -1125,8 +1154,27 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
                     )}
                   </TouchableOpacity>
                 );
-              })}
-            </View>
+              };
+
+              if (isDesktopGrid) {
+                return (
+                  <View style={{ flexDirection: 'row', gap: 6 }}>
+                    {days.map((d) => renderCell(d))}
+                  </View>
+                );
+              }
+
+              return (
+                <View style={{ gap: 7 }}>
+                  <View style={{ flexDirection: 'row', gap: 7 }}>
+                    {days.slice(0, 4).map((d) => renderCell(d))}
+                  </View>
+                  <View style={{ flexDirection: 'row', gap: 7, paddingHorizontal: '11%' }}>
+                    {days.slice(4, 7).map((d) => renderCell(d))}
+                  </View>
+                </View>
+              );
+            })()}
           </View>
 
           {/* 4. INSIGNIAS EN 1 SOLA LÍNEA (PEQUEÑAS/OCULTAS/INACTIVAS HASTA DESBLOQUEARSE, Y MÁS GRANDES/COLOR AL DESBLOQUEARSE) */}
