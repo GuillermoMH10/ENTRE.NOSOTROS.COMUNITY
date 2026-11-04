@@ -883,16 +883,11 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                             </View>
                             <View
                               style={{
-                                flexDirection: 'row',
-                                alignItems: 'center',
-                                gap: 8,
                                 marginBottom: 6,
                               }}
                             >
-                              <Text style={{ fontSize: 22 }}>{curr.task.emoji}</Text>
                               <Text
                                 style={{
-                                  flex: 1,
                                   fontSize: 14,
                                   fontWeight: '800',
                                   color: '#0F172A',

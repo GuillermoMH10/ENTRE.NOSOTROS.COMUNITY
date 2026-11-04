@@ -823,19 +823,14 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
                 ) : null}
               </View>
 
-              {/* Separated Activity Title Row */}
+              {/* Separated Activity Title Row (Clean Typography without Emoji) */}
               <View
                 style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 10,
                   marginBottom: 10,
                 }}
               >
-                <Text style={{ fontSize: 26 }}>{activeDayObj.task.emoji}</Text>
                 <Text
                   style={{
-                    flex: 1,
                     fontSize: 15.5,
                     fontWeight: '800',
                     color: '#0F172A',

@@ -121,7 +121,7 @@ export const ActiveStreakBannerCard: React.FC<ActiveStreakBannerCardProps> = ({
             <Text style={styles.taskTitle} numberOfLines={1}>
               {isCompletedAll
                 ? `${targetBadge.emoji} ${targetBadge.name} — ¡Comparte tu resumen!`
-                : `${currentDay.task.emoji} ${currentDay.task.title}`}
+                : currentDay.task.title}
             </Text>
           </View>
           <View style={styles.actionCtaPill}>
