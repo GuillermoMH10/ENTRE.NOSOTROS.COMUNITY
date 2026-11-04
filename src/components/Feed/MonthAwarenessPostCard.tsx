@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -19,6 +19,21 @@ export const MonthAwarenessPostCard: React.FC<MonthAwarenessPostCardProps> = ({
 }) => {
   const currentMonthIndex = new Date().getMonth();
   const currentMonth: MonthTheme = MONTHS_DATA[currentMonthIndex] || MONTHS_DATA[0];
+  const [imageAspectRatio, setImageAspectRatio] = useState<number>(1.5);
+
+  useEffect(() => {
+    if (currentMonth.imageUrl) {
+      Image.getSize(
+        currentMonth.imageUrl,
+        (width, height) => {
+          if (width > 0 && height > 0) {
+            setImageAspectRatio(width / height);
+          }
+        },
+        () => {}
+      );
+    }
+  }, [currentMonth.imageUrl]);
 
   const handlePress = () => {
     if (onOpenMonthDetail) {
@@ -83,12 +98,21 @@ export const MonthAwarenessPostCard: React.FC<MonthAwarenessPostCardProps> = ({
           <TouchableOpacity
             activeOpacity={0.92}
             onPress={handlePress}
-            style={styles.imageWrapper}
+            style={[styles.imageWrapper, { aspectRatio: imageAspectRatio }]}
           >
             <Image
               source={{ uri: currentMonth.imageUrl }}
               style={styles.postImage}
               resizeMode="cover"
+              onLoad={(e) => {
+                const src = e?.nativeEvent?.source;
+                const target = (e?.nativeEvent as any)?.target;
+                const w = src?.width || target?.naturalWidth;
+                const h = src?.height || target?.naturalHeight;
+                if (w && h && w > 0 && h > 0) {
+                  setImageAspectRatio(w / h);
+                }
+              }}
             />
           </TouchableOpacity>
         ) : null}
@@ -189,11 +213,10 @@ const styles = StyleSheet.create({
   },
   imageWrapper: {
     width: '100%',
-    height: 175,
-    borderRadius: 12,
+    borderRadius: 14,
     overflow: 'hidden',
     backgroundColor: colors.surface,
-    marginBottom: 10,
+    marginBottom: 12,
   },
   postImage: {
     width: '100%',

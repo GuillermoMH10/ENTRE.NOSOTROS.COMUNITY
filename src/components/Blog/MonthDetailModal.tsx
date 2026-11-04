@@ -431,13 +431,17 @@ const styles = StyleSheet.create({
   },
   heroImageBg: {
     width: '100%',
+    minHeight: 320,
+    justifyContent: 'flex-end',
   },
   heroImageBgStyle: {
     borderRadius: 20,
   },
   heroDarkOverlay: {
-    padding: 18,
-    backgroundColor: 'rgba(12, 10, 8, 0.38)',
+    padding: 22,
+    minHeight: 320,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(12, 10, 8, 0.35)',
   },
   badgeRow: {
     flexDirection: 'row',

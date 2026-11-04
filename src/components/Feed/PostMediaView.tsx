@@ -71,14 +71,12 @@ export const PostMediaView: React.FC<PostMediaViewProps> = ({
         (width, height) => {
           if (width > 0 && height > 0) {
             const ratio = width / height;
-            // Clamp between 0.75 (portrait 3:4) and 1.91 (landscape)
-            const clamped = Math.max(0.75, Math.min(ratio, 1.91));
+            // Allow real natural proportions (from tall portrait 0.55 to wide landscape 2.4)
+            const clamped = Math.max(0.55, Math.min(ratio, 2.4));
             setSingleAspectRatio(clamped);
           }
         },
-        () => {
-          setSingleAspectRatio(4 / 3);
-        }
+        () => {}
       );
     }
   }, [mediaUrls, count]);
@@ -164,7 +162,6 @@ export const PostMediaView: React.FC<PostMediaViewProps> = ({
           styles.singleContainer,
           {
             aspectRatio: singleAspectRatio,
-            maxHeight: MAX_SINGLE_MEDIA_HEIGHT,
             minHeight: MIN_SINGLE_MEDIA_HEIGHT,
           },
         ]}
@@ -175,6 +172,16 @@ export const PostMediaView: React.FC<PostMediaViewProps> = ({
           source={{ uri: url }}
           style={styles.mediaFill}
           resizeMode="cover"
+          onLoad={(e) => {
+            const src = e?.nativeEvent?.source;
+            const target = (e?.nativeEvent as any)?.target;
+            const w = src?.width || target?.naturalWidth;
+            const h = src?.height || target?.naturalHeight;
+            if (w && h && w > 0 && h > 0) {
+              const ratio = w / h;
+              setSingleAspectRatio(Math.max(0.55, Math.min(ratio, 2.4)));
+            }
+          }}
         />
       </TouchableOpacity>
     );
@@ -304,7 +311,8 @@ const styles = StyleSheet.create({
   twoMediaContainer: {
     flexDirection: 'row',
     width: '100%',
-    height: 210,
+    aspectRatio: 1.5,
+    minHeight: 240,
     borderRadius: 14,
     overflow: 'hidden',
     marginTop: 8,
@@ -320,7 +328,8 @@ const styles = StyleSheet.create({
   threeMediaContainer: {
     flexDirection: 'row',
     width: '100%',
-    height: 250,
+    aspectRatio: 1.35,
+    minHeight: 280,
     borderRadius: 14,
     overflow: 'hidden',
     marginTop: 8,
