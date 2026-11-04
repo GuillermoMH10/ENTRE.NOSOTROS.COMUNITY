@@ -210,7 +210,7 @@ export const DesktopWebLayout: React.FC<DesktopWebLayoutProps> = ({
   const NAV_ITEMS: { id: DesktopNavId; label: string; icon: string; iconActive: string; badge?: string }[] = [
     { id: 'principal', label: 'Principal', icon: 'home-outline', iconActive: 'home' },
     { id: 'blog', label: 'Blog y Calendario', icon: 'book-outline', iconActive: 'book' },
-    { id: 'anima', label: 'ANIMA', icon: 'heart-circle-outline', iconActive: 'heart-circle', badge: 'IA' },
+    { id: 'anima', label: 'ANIMA', icon: 'heart-circle-outline', iconActive: 'heart-circle' },
     { id: 'buscar', label: 'Buscar', icon: 'search-outline', iconActive: 'search' },
     { id: 'psicologos', label: 'Psicólogos', icon: 'medkit-outline', iconActive: 'medkit' },
     { id: 'reglas', label: 'Reglas de Comunidad', icon: 'shield-checkmark-outline', iconActive: 'shield-checkmark' },

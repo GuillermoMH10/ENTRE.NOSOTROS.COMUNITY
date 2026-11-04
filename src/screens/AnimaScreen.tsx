@@ -381,11 +381,7 @@ export const AnimaScreen: React.FC<AnimaScreenProps> = ({
             <View style={styles.desktopHeaderTextWrap}>
               <View style={styles.desktopTitleRow}>
                 <Text style={styles.desktopHeaderTitle}>ANIMA</Text>
-                <View style={styles.aiBadge}>
-                  <Text style={styles.aiBadgeText}>IA</Text>
-                </View>
               </View>
-              <Text style={styles.desktopHeaderSubtitle}>Tu compañera de bienestar emocional • En línea</Text>
             </View>
           </View>
 
