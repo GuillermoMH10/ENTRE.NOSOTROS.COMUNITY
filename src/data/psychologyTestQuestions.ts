@@ -173,8 +173,8 @@ export const buildInitialStreakState = (
   return {
     id: `streak_${Date.now()}`,
     userId: userId || 'anonymous',
-    isActive: false,
-    status: 'invited',
+    isActive: true,
+    status: 'active',
     focusCategory,
     focusTitle: meta.title,
     focusSubtitle: meta.subtitle,

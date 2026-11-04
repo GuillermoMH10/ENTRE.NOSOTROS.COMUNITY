@@ -569,6 +569,7 @@ export const DesktopWebLayout: React.FC<DesktopWebLayoutProps> = ({
                   initialResult={userTestResult}
                   startMode={userTestResult ? 'result' : 'questionnaire'}
                   onClose={() => setActiveSection('principal')}
+                  onNavigateToProfile={() => setActiveSection('perfil')}
                   onOpenPsychologists={() => setActiveSection('psicologos')}
                   onOpenCreatePost={onOpenCreatePost}
                   onRequireAuth={onRequireAuth}

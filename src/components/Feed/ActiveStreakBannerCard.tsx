@@ -47,32 +47,22 @@ export const ActiveStreakBannerCard: React.FC<ActiveStreakBannerCardProps> = ({
   return (
     <View style={styles.outerWrap}>
       <TouchableOpacity
-        style={[
-          styles.bannerCard,
-          isCompletedAll && { borderColor: '#10B981', backgroundColor: '#ECFDF5' },
-        ]}
+        style={styles.bannerCard}
         activeOpacity={0.9}
         onPress={onOpenStreakModal}
       >
         {/* Top Row: Flame + Streak Counter + Badge Preview */}
         <View style={styles.topRow}>
-          <View style={styles.flameBadgeCircle}>
-            <Text style={{ fontSize: 18 }}>{isCompletedAll ? '🏆' : '🔥'}</Text>
-          </View>
+          <Text style={{ fontSize: 22 }}>{isCompletedAll ? '🏆' : '🔥'}</Text>
 
           <View style={{ flex: 1, marginLeft: 10 }}>
             <View style={styles.titleLine}>
               <Text style={styles.streakTitle}>
                 {isCompletedAll
-                  ? '¡Racha de 7 Días Lograda!'
-                  : `Mi Racha • Día ${streak.currentDayNumber} de 7`}
+                  ? '¡Ruta de 7 Días Lograda!'
+                  : `Mi Ruta • Día ${streak.currentDayNumber} de 7`}
               </Text>
-              <View
-                style={[
-                  styles.statusChip,
-                  isCompletedAll && { backgroundColor: '#10B981' },
-                ]}
-              >
+              <View style={styles.statusChip}>
                 <Text style={styles.statusChipText}>
                   {streak.completedDaysCount}/7 DÍAS
                 </Text>
@@ -84,7 +74,7 @@ export const ActiveStreakBannerCard: React.FC<ActiveStreakBannerCardProps> = ({
           </View>
 
           <View style={styles.targetBadgeChip}>
-            <Text style={{ fontSize: 15 }}>{targetBadge.emoji}</Text>
+            <Text style={{ fontSize: 16 }}>{targetBadge.emoji}</Text>
             <Text style={styles.targetBadgeChipText}>Nv.{targetBadge.level}</Text>
           </View>
         </View>
@@ -106,7 +96,8 @@ export const ActiveStreakBannerCard: React.FC<ActiveStreakBannerCardProps> = ({
                 <Text
                   style={[
                     styles.miniDayText,
-                    (done || current) && { color: '#FFFFFF', fontWeight: '800' },
+                    done && { color: '#FFFFFF', fontWeight: '800' },
+                    current && { color: '#FF7A00', fontWeight: '800' },
                   ]}
                 >
                   D{d.dayNumber}
@@ -125,7 +116,7 @@ export const ActiveStreakBannerCard: React.FC<ActiveStreakBannerCardProps> = ({
           />
           <View style={{ flex: 1 }}>
             <Text style={styles.taskLabel}>
-              {isCompletedAll ? 'Insignia desbloqueada:' : 'Reto de hoy:'}
+              {isCompletedAll ? 'Insignia desbloqueada:' : 'Actividad de hoy:'}
             </Text>
             <Text style={styles.taskTitle} numberOfLines={1}>
               {isCompletedAll
@@ -133,12 +124,7 @@ export const ActiveStreakBannerCard: React.FC<ActiveStreakBannerCardProps> = ({
                 : `${currentDay.task.emoji} ${currentDay.task.title}`}
             </Text>
           </View>
-          <View
-            style={[
-              styles.actionCtaPill,
-              isCompletedAll && { backgroundColor: '#10B981' },
-            ]}
-          >
+          <View style={styles.actionCtaPill}>
             <Text style={styles.actionCtaText}>
               {isCompletedAll ? 'Ver logro' : 'Subir foto'}
             </Text>
@@ -158,31 +144,21 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
   },
   bannerCard: {
-    backgroundColor: '#FFF7ED',
+    backgroundColor: '#FFFFFF',
     borderRadius: 18,
-    padding: 13,
-    borderWidth: 1.5,
-    borderColor: '#FB923C',
-    shadowColor: '#FF7A00',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 2,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 1,
   },
   topRow: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 10,
-  },
-  flameBadgeCircle: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1.5,
-    borderColor: '#FF7A00',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   titleLine: {
     flexDirection: 'row',
@@ -192,40 +168,42 @@ const styles = StyleSheet.create({
   streakTitle: {
     fontSize: 13.5,
     fontWeight: '900',
-    color: colors.coffeeDark,
+    color: '#0F172A',
   },
   statusChip: {
-    backgroundColor: '#FF7A00',
+    backgroundColor: '#FFF7ED',
     paddingHorizontal: 7,
     paddingVertical: 2,
     borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#FFEDD5',
   },
   statusChipText: {
-    color: '#FFFFFF',
+    color: '#FF7A00',
     fontSize: 9.5,
     fontWeight: '900',
   },
   subtitleText: {
     fontSize: 11.5,
-    color: '#C2410C',
+    color: '#64748B',
     fontWeight: '600',
     marginTop: 1,
   },
   targetBadgeChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F8FAFC',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#FDBA74',
-    gap: 3,
+    borderColor: '#E2E8F0',
+    gap: 4,
   },
   targetBadgeChipText: {
     fontSize: 10.5,
     fontWeight: '800',
-    color: colors.coffeeDark,
+    color: '#0F172A',
   },
   miniDaysStrip: {
     flexDirection: 'row',
@@ -234,48 +212,55 @@ const styles = StyleSheet.create({
   },
   miniDayPill: {
     flex: 1,
-    paddingVertical: 4,
+    paddingVertical: 5,
     borderRadius: 8,
-    backgroundColor: '#FFEDD5',
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
     alignItems: 'center',
     justifyContent: 'center',
   },
   miniDayPillDone: {
-    backgroundColor: '#10B981',
+    backgroundColor: '#FF7A00',
+    borderColor: '#FF7A00',
   },
   miniDayPillCurrent: {
-    backgroundColor: '#FF7A00',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#FF7A00',
   },
   miniDayText: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#9A3412',
+    color: '#64748B',
   },
   taskRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F8FAFC',
     paddingVertical: 8,
     paddingHorizontal: 10,
     borderRadius: 13,
-    gap: 8,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    gap: 10,
   },
   animaMiniImg: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    borderWidth: 1,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    borderWidth: 1.5,
     borderColor: '#FF7A00',
   },
   taskLabel: {
     fontSize: 10,
     fontWeight: '700',
-    color: colors.textMuted,
+    color: '#64748B',
   },
   taskTitle: {
     fontSize: 12,
     fontWeight: '800',
-    color: colors.coffeeDark,
+    color: '#0F172A',
   },
   actionCtaPill: {
     flexDirection: 'row',

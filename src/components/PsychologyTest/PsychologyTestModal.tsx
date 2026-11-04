@@ -29,7 +29,6 @@ import {
 import { TestResult } from '../../types/psychologyTest';
 import {
   saveLatestTestResult,
-  acceptEmotionalStreak,
   completeStreakDayWithEvidence,
   postponeStreakDayWithEncouragement,
   publishFullStreakSummaryToFeed,
@@ -37,7 +36,8 @@ import {
   normalizeTestResultWithStreak,
 } from '../../services/psychologyTestService';
 import { useAuth } from '../../context/AuthContext';
-import { AnimaToastHost, showAnimaToast } from '../Anima/AnimaToast';
+import { showAnimaToast } from '../Anima/AnimaToast';
+import { ImageViewerModal } from '../UI/ImageViewerModal';
 import { colors } from '../../theme/colors';
 
 interface PsychologyTestModalProps {
@@ -46,6 +46,7 @@ interface PsychologyTestModalProps {
   initialResult?: TestResult | null;
   startMode?: 'questionnaire' | 'result';
   onClose: () => void;
+  onNavigateToProfile?: () => void;
   onOpenPsychologists: () => void;
   onOpenCreatePost: () => void;
   onTestCompleted?: (result: TestResult) => void;
@@ -59,7 +60,7 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
   initialResult = null,
   startMode = 'questionnaire',
   onClose,
-  onOpenPsychologists,
+  onNavigateToProfile,
   onTestCompleted,
   onRequireAuth,
   embedded = false,
@@ -81,12 +82,17 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
   const [isSubmittingDay, setIsSubmittingDay] = useState<boolean>(false);
   const [postponedEncouragementQuote, setPostponedEncouragementQuote] = useState<string | null>(null);
 
+  // Fullscreen image viewer for "Mis Avances (Grid de 7)"
+  const [viewerImages, setViewerImages] = useState<string[]>([]);
+  const [viewerIndex, setViewerIndex] = useState<number>(0);
+  const [viewerVisible, setViewerVisible] = useState<boolean>(false);
+
   // Final 7-day summary celebration state
   const [celebrationQuote, setCelebrationQuote] = useState<string>(() =>
     getRandomStreakMotivationalQuote()
   );
   const [summaryPostText, setSummaryPostText] = useState<string>(
-    '¡Lo logré! Completé mi racha de 7 días paso a paso sin rendirme y desbloqueé mi nueva insignia en Entre Nosotros 🔥💙'
+    '¡Lo logré! Completé mi racha de 7 días paso a paso y desbloqueé mi insignia en Entre Nosotros 🔥'
   );
   const [isPublishingSummary, setIsPublishingSummary] = useState<boolean>(false);
 
@@ -130,7 +136,7 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
       } else {
         handleFinishTest(updated);
       }
-    }, 250);
+    }, 240);
   };
 
   const handlePrevious = () => {
@@ -161,12 +167,21 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
       if (onTestCompleted) {
         onTestCompleted(saved);
       }
+
+      // Single clean ANIMA Toast
       showAnimaToast({
-        title: 'He preparado un camino para ti 🌱',
-        message: 'Mira tu propuesta personalizada de 7 días para avanzar juntos paso a paso.',
-        emoji: '💙',
-        accentColor: saved.badgeColor || '#FF7A00',
+        title: '¡Ruta de 7 Días Activada!',
+        message: 'Tu racha e insignias ya están listas en tu Perfil. ¡Comencemos con el Día 1!',
+        emoji: '🔥',
+        accentColor: '#FF7A00',
       });
+
+      // Navigate directly to Profile where the streak & badges are showcased
+      if (onNavigateToProfile) {
+        onNavigateToProfile();
+      } else {
+        onClose();
+      }
     }, 450);
   };
 
@@ -179,18 +194,6 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
     setPostponedEncouragementQuote(null);
   };
 
-  // Accept the 7-day streak
-  const handleAcceptStreak = async () => {
-    if (!result) return;
-    const activeUid = user?.id || userId;
-    const updated = await acceptEmotionalStreak(result, activeUid);
-    setResult(updated);
-    setSelectedDayNum(updated.streakState?.currentDayNumber || 1);
-    if (onTestCompleted) {
-      onTestCompleted(updated);
-    }
-  };
-
   // Pick evidence image from gallery
   const handlePickEvidencePhoto = async () => {
     try {
@@ -198,7 +201,7 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
       if (status !== 'granted') {
         Alert.alert(
           'Permiso necesario',
-          'Necesitamos acceso a tus fotos para subir la evidencia de tu reto del día.'
+          'Necesitamos acceso a tus fotos para subir la evidencia de tu actividad del día.'
         );
         return;
       }
@@ -231,7 +234,7 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
       } else {
         Alert.alert(
           'Inicia sesión',
-          'Necesitas iniciar sesión en tu cuenta para publicar tu evidencia diaria en la comunidad y guardar tu racha.'
+          'Necesitas iniciar sesión en tu cuenta para publicar tu avance y guardar tu racha.'
         );
       }
       return;
@@ -239,10 +242,10 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
 
     if (!evidencePhotoUri) {
       showAnimaToast({
-        title: 'Falta tu foto de evidencia 📸',
-        message: 'Agrega una foto sencilla de tu reto de hoy para compartir tu avance y encender tu día en la racha.',
+        title: 'Agrega tu foto del día 📸',
+        message: 'Selecciona una fotografía de tu actividad de hoy para registrar tu avance en la racha.',
         emoji: '📸',
-        accentColor: '#F59E0B',
+        accentColor: '#FF7A00',
       });
       return;
     }
@@ -346,6 +349,18 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
   const activeDayObj =
     streak?.days.find((d) => d.dayNumber === selectedDayNum) || streak?.days[0];
 
+  const allCompletedPhotos = (streak?.days || [])
+    .map((d) => d.evidenceImageUrl)
+    .filter((u): u is string => Boolean(u));
+
+  const handleOpenGalleryPhoto = (url: string) => {
+    const list = allCompletedPhotos.length > 0 ? allCompletedPhotos : [url];
+    const idx = Math.max(0, list.indexOf(url));
+    setViewerImages(list);
+    setViewerIndex(idx);
+    setViewerVisible(true);
+  };
+
   const renderOptionCard = (option: typeof TEST_OPTIONS[0]) => {
     const isSelected = currentAnswer === option.value;
     return (
@@ -358,9 +373,9 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
         onPress={() => handleSelectOption(option.value)}
         activeOpacity={0.82}
       >
-        <View style={[styles.gridEmojiCircle, isSelected && styles.gridEmojiCircleSelected]}>
-          <Text style={styles.gridEmoji}>{option.emoji}</Text>
-        </View>
+        {/* Large Emoji WITHOUT any background circle */}
+        <Text style={styles.gridEmojiLarge}>{option.emoji}</Text>
+
         <Text style={[styles.gridOptionLabel, isSelected && styles.gridOptionLabelSelected]}>
           {option.label}
         </Text>
@@ -378,28 +393,31 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
 
   const modalContent = (
     <SafeAreaView style={[styles.safeArea, isDesktop && styles.desktopSafeArea]}>
-      <AnimaToastHost topOffset={12} />
+      <ImageViewerModal
+        visible={viewerVisible}
+        images={viewerImages}
+        initialIndex={viewerIndex}
+        onClose={() => setViewerVisible(false)}
+      />
 
-      {/* Top Header */}
+      {/* Top Clean White Header */}
       <View style={styles.topHeader}>
         <TouchableOpacity onPress={onClose} style={styles.closeBtn} activeOpacity={0.7}>
-          <Ionicons name="close" size={20} color={colors.coffeeDark} />
+          <Ionicons name="close" size={20} color="#0F172A" />
         </TouchableOpacity>
 
         <View style={styles.headerTitleContainer}>
           <Text style={styles.headerMainTitle}>
             {!result
-              ? 'Mi Impulso Emocional'
+              ? 'Ruta Emocional de 7 Días'
               : streak?.status === 'completed'
-              ? '¡Camino de 7 Días Logrado! 🏆'
-              : streak?.isActive
-              ? 'Mi Racha de 7 Días 🔥'
-              : 'Tu Ruta con ANIMA 💙'}
+              ? '¡Camino de 7 Días Logrado!'
+              : 'Mi Racha de 7 Días'}
           </Text>
           <Text style={styles.headerSubTitle}>
             {!result
-              ? `Paso ${currentIndex + 1} de ${totalQuestions}`
-              : `${ streak?.completedDaysCount || 0 } de 7 días completados`}
+              ? `Pregunta ${currentIndex + 1} de ${totalQuestions}`
+              : `${streak?.completedDaysCount || 0} de 7 días completados`}
           </Text>
         </View>
 
@@ -409,7 +427,7 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
           activeOpacity={0.7}
           accessibilityLabel="Nuevo test"
         >
-          <Ionicons name="refresh-outline" size={18} color={colors.coffeePrimary} />
+          <Ionicons name="refresh-outline" size={18} color="#475569" />
         </TouchableOpacity>
       </View>
 
@@ -427,26 +445,26 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
             style={styles.evaluatingAnimaImg}
             resizeMode="cover"
           />
-          <ActivityIndicator size="large" color="#FF7A00" style={{ marginVertical: 14 }} />
-          <Text style={styles.evaluatingTitle}>ANIMA está armando tu ruta de 7 días...</Text>
+          <ActivityIndicator size="large" color="#FF7A00" style={{ marginVertical: 16 }} />
+          <Text style={styles.evaluatingTitle}>Preparando tu Ruta de 7 Días...</Text>
           <Text style={styles.evaluatingDesc}>
-            Seleccionando 7 pequeños retos diarios e insignias personalizadas para ti.
+            Seleccionando tus desafíos personalizados y activando tu racha en tu Perfil.
           </Text>
         </View>
       ) : !result ? (
-        /* =================== VIEW 1: EMPATHETIC QUESTIONNAIRE =================== */
+        /* =================== VIEW 1: CLEAN QUESTIONNAIRE (BIG EMOJIS + BIG ANIMA PHOTO) =================== */
         <View style={styles.questionContainer}>
-          {/* ANIMA Companion Strip */}
+          {/* ANIMA Companion Header with Larger Avatar */}
           <View style={styles.questionAnimaBanner}>
             <Image
               source={require('../../../assets/perfilANIMA.png')}
-              style={styles.questionAnimaAvatar}
+              style={styles.questionAnimaAvatarLarge}
               resizeMode="cover"
             />
             <View style={{ flex: 1 }}>
-              <Text style={styles.questionAnimaTitle}>Cuéntame cómo te has sentido 💙</Text>
+              <Text style={styles.questionAnimaTitle}>Personaliza tu Ruta con ANIMA</Text>
               <Text style={styles.questionAnimaSub}>
-                No es un examen: tus respuestas me ayudarán a darte retos sencillos para sentirte mejor.
+                Tus respuestas diseñarán tu plan interactivo de 7 días y tus insignias en tu perfil.
               </Text>
             </View>
           </View>
@@ -487,12 +505,12 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
               <Ionicons
                 name="chevron-back"
                 size={16}
-                color={currentIndex === 0 ? colors.textMuted : colors.coffeeDark}
+                color={currentIndex === 0 ? '#94A3B8' : '#0F172A'}
               />
               <Text
                 style={[
                   styles.navControlText,
-                  currentIndex === 0 && { color: colors.textMuted },
+                  currentIndex === 0 && { color: '#94A3B8' },
                 ]}
               >
                 Anterior
@@ -506,173 +524,58 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
             <View style={{ width: 82 }} />
           </View>
         </View>
-      ) : streak && !streak.isActive && streak.status === 'invited' ? (
-        /* =================== VIEW 2: ANIMA INVITATION TO ACCEPT THE 7-DAY STREAK =================== */
-        <ScrollView
-          style={styles.scrollBody}
-          contentContainerStyle={styles.resultScrollContent}
-          showsVerticalScrollIndicator={Platform.OS === 'web'}
-        >
-          {/* ANIMA Invitation Hero Card */}
-          <View style={[styles.invitationHeroCard, { borderColor: focusMeta.color + '55' }]}>
-            <View style={styles.invitationAnimaRow}>
-              <Image
-                source={require('../../../assets/perfilANIMA.png')}
-                style={[styles.invitationAnimaAvatar, { borderColor: focusMeta.color }]}
-                resizeMode="cover"
-              />
-              <View style={{ flex: 1 }}>
-                <View style={[styles.focusPillTag, { backgroundColor: focusMeta.softBg }]}>
-                  <Text style={styles.focusPillEmoji}>{focusMeta.emoji}</Text>
-                  <Text style={[styles.focusPillText, { color: focusMeta.color }]}>
-                    {focusMeta.title}
-                  </Text>
-                </View>
-                <Text style={styles.invitationAnimaName}>Mensaje de ANIMA para ti</Text>
-              </View>
-            </View>
-
-            <View style={styles.animaSpeechBox}>
-              <Text style={styles.animaSpeechText}>{focusMeta.animaPrompt}</Text>
-            </View>
-
-            {/* Target Badge Preview inside Invitation */}
-            <View style={[styles.targetBadgePreviewBox, { backgroundColor: targetBadge.softBg, borderColor: targetBadge.borderColor }]}>
-              <View style={styles.targetBadgeIconBubble}>
-                <Text style={{ fontSize: 26 }}>{targetBadge.emoji}</Text>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.targetBadgeLevelText, { color: targetBadge.color }]}>
-                  RECOMPENSA AL DÍA 7 • {targetBadge.levelLabel}
-                </Text>
-                <Text style={styles.targetBadgeNameText}>
-                  Insignia: {targetBadge.name}
-                </Text>
-                <Text style={styles.targetBadgeDescText}>
-                  Se desbloqueará en tu Perfil al completar tus 7 retos sencillos.
-                </Text>
-              </View>
-            </View>
-
-            {/* Primary Accept Streak CTA Button */}
-            <TouchableOpacity
-              style={styles.acceptStreakPrimaryBtn}
-              onPress={handleAcceptStreak}
-              activeOpacity={0.88}
-            >
-              <Ionicons name="flame" size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
-              <Text style={styles.acceptStreakPrimaryBtnText}>
-                ¡Sí, acepto iniciar mi Racha de 7 Días!
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Preview of the 7 Personalized Daily Challenges */}
-          <View style={styles.cardSection}>
-            <View style={styles.cardHeaderRow}>
-              <View style={[styles.cardIconCircle, { backgroundColor: '#FFF7ED' }]}>
-                <Ionicons name="calendar" size={17} color="#FF7A00" />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.cardHeaderTitle}>
-                  Tu Plan de 7 Días (Retos Sencillos)
-                </Text>
-                <Text style={styles.cardHeaderSub}>
-                  Sorteados especialmente para ti entre más de 100 actividades:
-                </Text>
-              </View>
-            </View>
-
-            {streak.days.map((d) => (
-              <View key={d.dayNumber} style={styles.previewDayRow}>
-                <View style={styles.previewDayCircle}>
-                  <Text style={styles.previewDayNumText}>D{d.dayNumber}</Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.previewDayTaskTitle}>
-                    {d.task.emoji} {d.task.title}
-                  </Text>
-                  <Text style={styles.previewDayTaskDesc} numberOfLines={2}>
-                    {d.task.description}
-                  </Text>
-                </View>
-              </View>
-            ))}
-          </View>
-
-          {/* Optional Support Link */}
-          <TouchableOpacity
-            style={styles.secondaryPsicoBtn}
-            onPress={() => {
-              onClose();
-              onOpenPsychologists();
-            }}
-            activeOpacity={0.8}
-          >
-            <Ionicons name="medkit-outline" size={16} color={colors.coffeePrimary} style={{ marginRight: 6 }} />
-            <Text style={styles.secondaryPsicoBtnText}>
-              También quiero ver psicólogos especialistas
-            </Text>
-          </TouchableOpacity>
-
-          <View style={{ height: 32 }} />
-        </ScrollView>
       ) : streak && streak.status === 'completed' ? (
-        /* =================== VIEW 4: CELEBRATION "EL CAMINO RECORRIDO" + FULL SUMMARY POST =================== */
+        /* =================== VIEW 2: COMPLETED 7-DAY CELEBRATION & FULL SUMMARY POST =================== */
         <ScrollView
           style={styles.scrollBody}
           contentContainerStyle={styles.resultScrollContent}
           showsVerticalScrollIndicator={Platform.OS === 'web'}
         >
-          {/* Celebration Banner & Unlocked Badge */}
-          <View style={[styles.celebrationHeroCard, { borderColor: targetBadge.color }]}>
-            <View style={[styles.unlockedBadgeCircle, { backgroundColor: targetBadge.softBg, borderColor: targetBadge.borderColor }]}>
-              <Text style={{ fontSize: 42 }}>{targetBadge.emoji}</Text>
-            </View>
-            <View style={[styles.levelPillBadge, { backgroundColor: targetBadge.color }]}>
+          {/* Clean White Celebration Card */}
+          <View style={styles.celebrationHeroCard}>
+            <Text style={styles.unlockedEmojiBig}>{targetBadge.emoji}</Text>
+            <View style={styles.levelPillBadge}>
               <Text style={styles.levelPillBadgeText}>
-                ¡INSIGNIA DESBLOQUEADA! • {targetBadge.levelLabel}
+                INSIGNIA DESBLOQUEADA • {targetBadge.levelLabel}
               </Text>
             </View>
             <Text style={styles.celebrationTitle}>{targetBadge.name}</Text>
             <Text style={styles.celebrationSubtitle}>{targetBadge.description}</Text>
 
-            {/* Motivational Quote from the 50 Phrases Bank */}
+            {/* Motivational Quote from ANIMA */}
             <View style={styles.celebrationQuoteBox}>
               <View style={styles.celebrationQuoteHeader}>
                 <Image
                   source={require('../../../assets/perfilANIMA.png')}
-                  style={styles.miniAnimaAvatar}
+                  style={styles.animaAvatarMedium}
                   resizeMode="cover"
                 />
-                <Text style={styles.celebrationQuoteAnimaLabel}>
-                  Palabras de ANIMA para celebrar tu logro:
-                </Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.celebrationQuoteAnimaLabel}>Mensaje de ANIMA</Text>
+                  <Text style={styles.celebrationQuoteText}>"{celebrationQuote}"</Text>
+                </View>
                 <TouchableOpacity
                   onPress={() => setCelebrationQuote(getRandomStreakMotivationalQuote())}
                   style={styles.nextQuoteMiniBtn}
                 >
-                  <Ionicons name="reload" size={13} color="#FF7A00" />
-                  <Text style={styles.nextQuoteMiniBtnText}>Otra frase</Text>
+                  <Ionicons name="reload" size={14} color="#FF7A00" />
                 </TouchableOpacity>
               </View>
-              <Text style={styles.celebrationQuoteText}>"{celebrationQuote}"</Text>
             </View>
           </View>
 
           {/* Publish Full 7-Day Album & Badge to Community */}
-          <View style={styles.publishSummaryCard}>
+          <View style={styles.cleanWhiteCard}>
             <View style={styles.publishSummaryHeader}>
               <Ionicons name="sparkles" size={18} color="#FF7A00" style={{ marginRight: 8 }} />
-              <Text style={styles.publishSummaryTitle}>
-                Presume tu Camino Recorrido y tu Insignia
+              <Text style={styles.sectionTitleText}>
+                Publicar mi Resumen de 7 Días e Insignia
               </Text>
             </View>
-            <Text style={styles.publishSummarySub}>
-              Publica en la comunidad el resumen con todas tus fotos de estos 7 días y tu insignia "{targetBadge.name}" para inspirar a los demás:
+            <Text style={styles.sectionSubText}>
+              Comparte en Principal tus fotografías de la semana, tu mensaje de "¡Lo logré!" y tu insignia {targetBadge.name}:
             </Text>
 
-            {/* Horizontal strip of the 7 evidence photos */}
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -688,7 +591,7 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
                     />
                   ) : (
                     <View style={styles.summaryThumbPlaceholder}>
-                      <Text style={{ fontSize: 18 }}>{d.task.emoji}</Text>
+                      <Text style={{ fontSize: 22 }}>{d.task.emoji}</Text>
                     </View>
                   )}
                   <View style={styles.summaryThumbBadge}>
@@ -699,20 +602,17 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
             </ScrollView>
 
             <TextInput
-              style={styles.summaryMessageInput}
+              style={styles.cleanInputBox}
               multiline
               maxLength={350}
               value={summaryPostText}
               onChangeText={setSummaryPostText}
               placeholder="Escribe tu mensaje de '¡Lo logré!' para la comunidad..."
-              placeholderTextColor={colors.textMuted}
+              placeholderTextColor="#94A3B8"
             />
 
             <TouchableOpacity
-              style={[
-                styles.publishSummaryBtn,
-                streak.summaryPublished && { backgroundColor: '#10B981' },
-              ]}
+              style={styles.primaryOrangeBtn}
               onPress={handlePublishSevenDaySummary}
               disabled={isPublishingSummary}
               activeOpacity={0.88}
@@ -722,110 +622,79 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
               ) : (
                 <>
                   <Ionicons
-                    name={streak.summaryPublished ? 'checkmark-done-circle' : 'megaphone'}
-                    size={19}
+                    name={streak.summaryPublished ? 'checkmark-done-circle' : 'paper-plane'}
+                    size={18}
                     color="#FFFFFF"
                     style={{ marginRight: 8 }}
                   />
-                  <Text style={styles.publishSummaryBtnText}>
+                  <Text style={styles.primaryOrangeBtnText}>
                     {streak.summaryPublished
-                      ? '¡Resumen publicado! (Toca si deseas compartir de nuevo)'
-                      : `¡Publicar mis 7 fotos, "¡Lo logré!" y mi Insignia!`}
+                      ? 'Resumen publicado en Principal (Compartir de nuevo)'
+                      : 'Publicar mis 7 fotos, "¡Lo logré!" y mi Insignia'}
                   </Text>
                 </>
               )}
             </TouchableOpacity>
           </View>
 
-          {/* Timeline of the 7 Days Completed */}
-          <View style={styles.cardSection}>
-            <Text style={styles.cardHeaderTitle}>Resumen de tu Camino Recorrido (7/7)</Text>
-            <View style={{ marginTop: 10 }}>
-              {streak.days.map((d) => (
-                <View key={d.dayNumber} style={styles.completedTimelineItem}>
-                  <View style={styles.completedTimelineCheck}>
-                    <Ionicons name="checkmark" size={14} color="#FFFFFF" />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.completedTimelineTitle}>
-                      Día {d.dayNumber}: {d.task.emoji} {d.task.title}
-                    </Text>
-                    {d.evidenceNote ? (
-                      <Text style={styles.completedTimelineNote}>"{d.evidenceNote}"</Text>
-                    ) : null}
-                  </View>
-                  {d.evidenceImageUrl ? (
-                    <Image
-                      source={{ uri: d.evidenceImageUrl }}
-                      style={styles.completedTimelineThumb}
-                      resizeMode="cover"
-                    />
-                  ) : null}
-                </View>
-              ))}
-            </View>
-          </View>
-
           {/* Start Next 7-Day Streak Button */}
           <TouchableOpacity
-            style={styles.startNextStreakBtn}
+            style={styles.secondaryOutlineBtn}
             onPress={handleStartNextStreak}
-            activeOpacity={0.88}
+            activeOpacity={0.85}
           >
-            <Ionicons name="flame" size={19} color="#FFFFFF" style={{ marginRight: 8 }} />
-            <Text style={styles.startNextStreakBtnText}>
-              Iniciar nueva Racha de 7 Días (Siguiente Nivel)
+            <Ionicons name="flame-outline" size={18} color="#FF7A00" style={{ marginRight: 8 }} />
+            <Text style={styles.secondaryOutlineBtnText}>
+              Iniciar siguiente Ruta de 7 Días (Subir de Nivel)
             </Text>
           </TouchableOpacity>
 
           <View style={{ height: 36 }} />
         </ScrollView>
       ) : (
-        /* =================== VIEW 3: ACTIVE 7-DAY TIKTOK-STYLE STREAK DASHBOARD =================== */
+        /* =================== VIEW 3: CLEAN WHITE / LIGHT-GRAY / SUBTLE ORANGE STREAK DASHBOARD =================== */
         <ScrollView
           style={styles.scrollBody}
           contentContainerStyle={styles.resultScrollContent}
           showsVerticalScrollIndicator={Platform.OS === 'web'}
         >
-          {/* TikTok-Style Orange Flame Header Card */}
-          <View style={styles.tiktokStreakCard}>
-            <View style={styles.tiktokStreakTopRow}>
-              <View style={styles.flameCircleLarge}>
-                <Text style={{ fontSize: 28 }}>🔥</Text>
-              </View>
-              <View style={{ flex: 1, marginLeft: 12 }}>
-                <View style={styles.streakCountRow}>
-                  <Text style={styles.streakCountBig}>
+          {/* 1. Clean White Top Streak Summary Card */}
+          <View style={styles.cleanStreakHeaderCard}>
+            <View style={styles.cleanStreakTopRow}>
+              <View style={styles.cleanStreakTitleCol}>
+                <View style={styles.streakBadgeRow}>
+                  <Text style={styles.flameIconText}>🔥</Text>
+                  <Text style={styles.streakMainCountText}>
                     {streak?.completedDaysCount || 0} / 7 Días
                   </Text>
-                  <View style={styles.activeOrangePill}>
-                    <Text style={styles.activeOrangePillText}>RACHA ACTIVA</Text>
+                  <View style={styles.subtleOrangeTag}>
+                    <Text style={styles.subtleOrangeTagText}>RACHA ACTIVA</Text>
                   </View>
                 </View>
-                <Text style={styles.streakFocusTitleText}>{focusMeta.title}</Text>
+                <Text style={styles.streakFocusName}>{focusMeta.title}</Text>
               </View>
-              <View style={styles.nextBadgeMiniBox}>
-                <Text style={{ fontSize: 20 }}>{targetBadge.emoji}</Text>
-                <Text style={styles.nextBadgeMiniLabel}>Meta Día 7</Text>
+
+              <View style={styles.metaBadgeRightBox}>
+                <Text style={styles.metaBadgeEmoji}>{targetBadge.emoji}</Text>
+                <Text style={styles.metaBadgeLabel}>Meta Día 7</Text>
               </View>
             </View>
 
-            {/* 7-Day Interactive Selector Bar */}
-            <View style={styles.sevenDaysRow}>
+            {/* Minimalist 7-Day Selector Pills */}
+            <View style={styles.cleanSevenDaysBar}>
               {streak?.days.map((d) => {
                 const isSelected = d.dayNumber === selectedDayNum;
                 const isDone = d.status === 'completed';
-                const isPostponed = d.status === 'postponed';
                 const isCurrent = d.dayNumber === streak.currentDayNumber;
 
                 return (
                   <TouchableOpacity
                     key={d.dayNumber}
                     style={[
-                      styles.dayBubbleItem,
-                      isDone && styles.dayBubbleCompleted,
-                      isCurrent && !isDone && styles.dayBubbleCurrent,
-                      isSelected && styles.dayBubbleSelectedBorder,
+                      styles.cleanDayPill,
+                      isDone && styles.cleanDayPillDone,
+                      isCurrent && !isDone && styles.cleanDayPillCurrent,
+                      isSelected && styles.cleanDayPillSelected,
                     ]}
                     onPress={() => {
                       setSelectedDayNum(d.dayNumber);
@@ -835,20 +704,30 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
                   >
                     <Text
                       style={[
-                        styles.dayBubbleLabel,
-                        (isDone || isCurrent) && { color: '#FFFFFF', fontWeight: '800' },
+                        styles.cleanDayPillText,
+                        (isDone || isCurrent) && { color: '#FF7A00', fontWeight: '800' },
+                        isSelected && { color: '#FFFFFF', fontWeight: '900' },
                       ]}
                     >
                       D{d.dayNumber}
                     </Text>
                     {isDone ? (
-                      <Ionicons name="checkmark-circle" size={16} color="#FFFFFF" />
-                    ) : isPostponed ? (
-                      <Ionicons name="reload-circle" size={16} color={isCurrent ? '#FFFFFF' : '#3B82F6'} />
-                    ) : isCurrent ? (
-                      <Text style={{ fontSize: 12 }}>🔥</Text>
+                      <Ionicons
+                        name="checkmark"
+                        size={13}
+                        color={isSelected ? '#FFFFFF' : '#FF7A00'}
+                      />
                     ) : (
-                      <Ionicons name="lock-closed" size={12} color="#94A3B8" />
+                      <View
+                        style={[
+                          styles.miniDotIndicator,
+                          isSelected
+                            ? { backgroundColor: '#FFFFFF' }
+                            : isCurrent
+                            ? { backgroundColor: '#FF7A00' }
+                            : { backgroundColor: '#CBD5E1' },
+                        ]}
+                      />
                     )}
                   </TouchableOpacity>
                 );
@@ -856,57 +735,54 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
             </View>
           </View>
 
-          {/* Selected Day Challenge Card */}
+          {/* 2. Active Day Challenge & Publish Card (Refined White & Light Gray) */}
           {activeDayObj && (
-            <View style={styles.activeChallengeCard}>
-              <View style={styles.challengeHeaderRow}>
-                <View style={styles.challengeDayBadge}>
-                  <Text style={styles.challengeDayBadgeText}>{activeDayObj.dayName}</Text>
+            <View style={styles.cleanWhiteCard}>
+              <View style={styles.dayCardTopBar}>
+                <View style={styles.dayStepTag}>
+                  <Text style={styles.dayStepTagText}>{activeDayObj.dayName}</Text>
                 </View>
                 {activeDayObj.status === 'completed' ? (
-                  <View style={styles.statusCompletedPill}>
-                    <Ionicons name="checkmark-circle" size={14} color="#10B981" />
-                    <Text style={styles.statusCompletedPillText}>Completado</Text>
+                  <View style={styles.completedGrayTag}>
+                    <Ionicons name="checkmark-circle" size={14} color="#FF7A00" />
+                    <Text style={styles.completedGrayTagText}>Completado</Text>
                   </View>
                 ) : activeDayObj.status === 'postponed' ? (
-                  <View style={styles.statusPostponedPill}>
-                    <Ionicons name="heart" size={13} color="#3B82F6" />
-                    <Text style={styles.statusPostponedPillText}>
-                      Día recorrido para reponer hoy
-                    </Text>
+                  <View style={styles.completedGrayTag}>
+                    <Ionicons name="reload-circle" size={14} color="#64748B" />
+                    <Text style={styles.completedGrayTagText}>Día recorrido</Text>
                   </View>
                 ) : null}
               </View>
 
-              <View style={styles.challengeTitleRow}>
-                <View style={styles.challengeEmojiCircle}>
-                  <Text style={{ fontSize: 28 }}>{activeDayObj.task.emoji}</Text>
-                </View>
+              {/* Task Header: Large clean emoji without background + Title */}
+              <View style={styles.taskHeroRow}>
+                <Text style={styles.taskHeroEmoji}>{activeDayObj.task.emoji}</Text>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.challengeMainTitle}>{activeDayObj.task.title}</Text>
-                  <Text style={styles.challengeCategorySub}>
-                    {focusMeta.postTagText}
-                  </Text>
+                  <Text style={styles.taskHeroTitle}>{activeDayObj.task.title}</Text>
+                  <Text style={styles.taskHeroSub}>{focusMeta.postTagText}</Text>
                 </View>
               </View>
 
-              <Text style={styles.challengeDescriptionText}>
-                {activeDayObj.task.description}
-              </Text>
+              <View style={styles.taskDescriptionBox}>
+                <Text style={styles.taskDescriptionText}>
+                  {activeDayObj.task.description}
+                </Text>
+              </View>
 
               {/* Encouragement Box if user postponed this day */}
               {postponedEncouragementQuote && activeDayObj.status !== 'completed' && (
-                <View style={styles.encouragementBox}>
+                <View style={styles.cleanAnimaNoteBox}>
                   <Image
                     source={require('../../../assets/perfilANIMA.png')}
-                    style={styles.miniAnimaAvatar}
+                    style={styles.animaAvatarMedium}
                     resizeMode="cover"
                   />
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.encouragementTitle}>
-                      ANIMA recorrió este día para ti sin castigos 💙:
+                    <Text style={styles.cleanAnimaNoteTitle}>
+                      ANIMA recorrió este día para ti:
                     </Text>
-                    <Text style={styles.encouragementQuoteText}>
+                    <Text style={styles.cleanAnimaNoteText}>
                       "{postponedEncouragementQuote}"
                     </Text>
                   </View>
@@ -914,85 +790,82 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
               )}
 
               {activeDayObj.status === 'completed' ? (
-                /* Completed Day Evidence Preview */
-                <View style={styles.completedEvidenceBox}>
+                <View style={styles.completedDayPreviewBox}>
                   {activeDayObj.evidenceImageUrl ? (
-                    <Image
-                      source={{ uri: activeDayObj.evidenceImageUrl }}
-                      style={styles.completedEvidenceImg}
-                      resizeMode="cover"
-                    />
+                    <TouchableOpacity
+                      activeOpacity={0.9}
+                      onPress={() => handleOpenGalleryPhoto(activeDayObj.evidenceImageUrl!)}
+                    >
+                      <Image
+                        source={{ uri: activeDayObj.evidenceImageUrl }}
+                        style={styles.completedDayPreviewImg}
+                        resizeMode="cover"
+                      />
+                    </TouchableOpacity>
                   ) : null}
-                  <View style={styles.completedEvidenceTextCol}>
-                    <Text style={styles.completedEvidenceTitle}>
-                      ¡Reto del Día {activeDayObj.dayNumber} publicado en la comunidad! 🎉
+                  <Text style={styles.completedDayPreviewStatus}>
+                    ✓ Actividad del Día {activeDayObj.dayNumber} registrada y compartida
+                  </Text>
+                  {activeDayObj.evidenceNote ? (
+                    <Text style={styles.completedDayPreviewNote}>
+                      "{activeDayObj.evidenceNote}"
                     </Text>
-                    {activeDayObj.evidenceNote ? (
-                      <Text style={styles.completedEvidenceNote}>
-                        "{activeDayObj.evidenceNote}"
-                      </Text>
-                    ) : null}
-                    {activeDayObj.motivationalQuoteUsed ? (
-                      <Text style={styles.completedEvidenceQuote}>
-                        💬 ANIMA: {activeDayObj.motivationalQuoteUsed}
-                      </Text>
-                    ) : null}
-                  </View>
+                  ) : null}
                 </View>
               ) : (
-                /* Evidence Upload & Actions for Active Day */
-                <View style={styles.evidenceActionSection}>
-                  <Text style={styles.evidenceSectionLabel}>
-                    📸 Evidencia de tu Día {activeDayObj.dayNumber} (se publicará en Principal como inspiración):
-                  </Text>
+                /* Clean Evidence Upload & Publish Form */
+                <View style={styles.publishSectionWrap}>
+                  <View style={styles.publishHeaderLine}>
+                    <Ionicons name="camera-outline" size={17} color="#0F172A" />
+                    <Text style={styles.publishHeaderLabel}>
+                      Registrar y publicar mi Día {activeDayObj.dayNumber}
+                    </Text>
+                  </View>
 
                   {evidencePhotoUri ? (
-                    <View style={styles.selectedEvidencePreviewWrap}>
+                    <View style={styles.evidencePreviewBox}>
                       <Image
                         source={{ uri: evidencePhotoUri }}
-                        style={styles.selectedEvidenceImg}
+                        style={styles.evidencePreviewImage}
                         resizeMode="cover"
                       />
                       <TouchableOpacity
-                        style={styles.changePhotoFloatingBtn}
+                        style={styles.changePhotoPill}
                         onPress={handlePickEvidencePhoto}
                         activeOpacity={0.85}
                       >
                         <Ionicons name="camera" size={14} color="#FFFFFF" />
-                        <Text style={styles.changePhotoFloatingText}>Cambiar foto</Text>
+                        <Text style={styles.changePhotoPillText}>Cambiar fotografía</Text>
                       </TouchableOpacity>
                     </View>
                   ) : (
                     <TouchableOpacity
-                      style={styles.pickEvidencePhotoBtn}
+                      style={styles.cleanPhotoDropzone}
                       onPress={handlePickEvidencePhoto}
-                      activeOpacity={0.82}
+                      activeOpacity={0.8}
                     >
-                      <View style={styles.pickEvidenceIconCircle}>
-                        <Ionicons name="camera" size={24} color="#FF7A00" />
-                      </View>
-                      <Text style={styles.pickEvidenceTitle}>
-                        Subir foto de evidencia del Día {activeDayObj.dayNumber}
+                      <Ionicons name="image-outline" size={28} color="#FF7A00" />
+                      <Text style={styles.cleanPhotoDropzoneTitle}>
+                        Seleccionar fotografía de mi actividad
                       </Text>
-                      <Text style={styles.pickEvidenceSub}>
-                        Toca aquí para elegir una foto de tu galería que muestre tu reto de hoy
+                      <Text style={styles.cleanPhotoDropzoneSub}>
+                        Toca para subir tu foto del Día {activeDayObj.dayNumber} y compartirla en Principal
                       </Text>
                     </TouchableOpacity>
                   )}
 
                   <TextInput
-                    style={styles.evidenceNoteInput}
-                    placeholder="Escribe cómo te sentiste hoy al realizar este pequeño paso... (opcional)"
-                    placeholderTextColor={colors.textMuted}
+                    style={styles.cleanInputBox}
+                    placeholder="Agrega un comentario sobre tu experiencia de hoy... (opcional)"
+                    placeholderTextColor="#94A3B8"
                     value={evidenceNote}
                     onChangeText={setEvidenceNote}
                     multiline
                     maxLength={280}
                   />
 
-                  {/* Primary Complete & Publish Button */}
                   <TouchableOpacity
-                    style={styles.completeDayOrangeBtn}
+                    style={styles.primaryOrangeBtn}
                     onPress={handleCompleteDay}
                     disabled={isSubmittingDay}
                     activeOpacity={0.88}
@@ -1001,23 +874,22 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
                       <ActivityIndicator size="small" color="#FFFFFF" />
                     ) : (
                       <>
-                        <Ionicons name="flame" size={19} color="#FFFFFF" style={{ marginRight: 8 }} />
-                        <Text style={styles.completeDayOrangeBtnText}>
-                          Completar Día {activeDayObj.dayNumber} y Publicar Avance
+                        <Ionicons name="flame" size={18} color="#FFFFFF" style={{ marginRight: 8 }} />
+                        <Text style={styles.primaryOrangeBtnText}>
+                          Publicar Avance y Completar Día {activeDayObj.dayNumber}
                         </Text>
                       </>
                     )}
                   </TouchableOpacity>
 
-                  {/* Empathetic "I couldn't do it today" Button (Shifts Day + Motivational Quote) */}
                   <TouchableOpacity
-                    style={styles.postponeDayBtn}
+                    style={styles.postponeCleanBtn}
                     onPress={handlePostponeDay}
-                    activeOpacity={0.78}
+                    activeOpacity={0.75}
                   >
-                    <Ionicons name="heart-outline" size={16} color="#3B82F6" style={{ marginRight: 6 }} />
-                    <Text style={styles.postponeDayBtnText}>
-                      Hoy me costó lograrlo • Recorrer día y recibir ánimo de ANIMA
+                    <Ionicons name="time-outline" size={16} color="#64748B" style={{ marginRight: 6 }} />
+                    <Text style={styles.postponeCleanBtnText}>
+                      Hoy no pude realizarlo • Recorrer día y recibir motivación
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -1025,61 +897,115 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
             </View>
           )}
 
-          {/* Showcase of the 4 Official Badges & Levels */}
-          <View style={styles.cardSection}>
-            <View style={styles.cardHeaderRow}>
-              <View style={[styles.cardIconCircle, { backgroundColor: '#FEF3C7' }]}>
-                <Ionicons name="ribbon" size={17} color="#D97706" />
+          {/* 3. NEW SECTION: MIS AVANCES (GRID DE 7 FOTOS RESPONSIVO PARA CELULAR Y WEB) */}
+          <View style={styles.cleanWhiteCard}>
+            <View style={styles.sectionHeaderRow}>
+              <View>
+                <Text style={styles.sectionTitleText}>Mis Avances • Galería de 7 Días</Text>
+                <Text style={styles.sectionSubText}>
+                  Tu camino fotográfico día por día ({streak?.completedDaysCount || 0} de 7 registrados)
+                </Text>
               </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.cardHeaderTitle}>Insignias y Niveles por Desbloquear</Text>
-                <Text style={styles.cardHeaderSub}>
-                  Completa tus rachas de 7 días para coleccionarlas en tu Perfil:
+              <View style={styles.countGrayBadge}>
+                <Text style={styles.countGrayBadgeText}>
+                  {streak?.completedDaysCount || 0}/7
                 </Text>
               </View>
             </View>
 
-            <View style={styles.badgesGrid}>
+            <View style={styles.sevenPhotosGrid}>
+              {streak?.days.map((d) => {
+                const hasPhoto = Boolean(d.evidenceImageUrl);
+                const isSelected = d.dayNumber === selectedDayNum;
+                return (
+                  <TouchableOpacity
+                    key={d.dayNumber}
+                    style={[
+                      styles.advanceGridCell,
+                      isSelected && styles.advanceGridCellSelected,
+                    ]}
+                    activeOpacity={0.85}
+                    onPress={() => {
+                      if (hasPhoto && d.evidenceImageUrl) {
+                        handleOpenGalleryPhoto(d.evidenceImageUrl);
+                      } else {
+                        setSelectedDayNum(d.dayNumber);
+                      }
+                    }}
+                  >
+                    {hasPhoto && d.evidenceImageUrl ? (
+                      <>
+                        <Image
+                          source={{ uri: d.evidenceImageUrl }}
+                          style={styles.advanceGridImg}
+                          resizeMode="cover"
+                        />
+                        <View style={styles.advanceDayOverlayPill}>
+                          <Text style={styles.advanceDayOverlayText}>Día {d.dayNumber}</Text>
+                        </View>
+                      </>
+                    ) : (
+                      <View style={styles.advanceEmptySlot}>
+                        <Text style={styles.advanceEmptyDayNum}>Día {d.dayNumber}</Text>
+                        <Text style={styles.advanceEmptyEmoji}>{d.task.emoji}</Text>
+                        <Text style={styles.advanceEmptyLabel} numberOfLines={1}>
+                          {d.status === 'unlocked' ? 'En curso' : 'Pendiente'}
+                        </Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+
+          {/* 4. INSIGNIAS Y NIVELES (CLEAN, SPACED OUT, MINIMALIST WHITE & LIGHT GRAY) */}
+          <View style={styles.cleanWhiteCard}>
+            <Text style={styles.sectionTitleText}>Insignias y Niveles</Text>
+            <Text style={[styles.sectionSubText, { marginBottom: 14 }]}>
+              Completa tus rutas de 7 días para desbloquearlas en tu Perfil:
+            </Text>
+
+            <View style={styles.cleanBadgesList}>
               {OFFICIAL_STREAK_BADGES.map((b) => {
-                const isUnlocked = result.unlockedBadges?.includes(b.id);
+                const isUnlocked = Boolean(result.unlockedBadges?.includes(b.id));
                 const isTarget = b.id === targetBadge.id;
                 return (
                   <View
                     key={b.id}
                     style={[
-                      styles.badgeGridCard,
-                      isUnlocked && { backgroundColor: b.softBg, borderColor: b.borderColor },
-                      isTarget && !isUnlocked && { borderColor: '#FF7A00', borderWidth: 1.5 },
+                      styles.cleanBadgeItemCard,
+                      isTarget && styles.cleanBadgeItemActiveBorder,
                     ]}
                   >
-                    <View style={styles.badgeGridTopRow}>
-                      <Text style={{ fontSize: 24, opacity: isUnlocked || isTarget ? 1 : 0.45 }}>
-                        {b.emoji}
-                      </Text>
-                      <View
-                        style={[
-                          styles.badgeLevelMiniPill,
-                          { backgroundColor: isUnlocked ? b.color : '#E2E8F0' },
-                        ]}
-                      >
-                        <Text
+                    <Text style={styles.cleanBadgeEmoji}>{b.emoji}</Text>
+                    <View style={{ flex: 1 }}>
+                      <View style={styles.cleanBadgeHeaderRow}>
+                        <Text style={styles.cleanBadgeName}>{b.name}</Text>
+                        <View
                           style={[
-                            styles.badgeLevelMiniText,
-                            { color: isUnlocked ? '#FFFFFF' : '#475569' },
+                            styles.cleanBadgeLevelPill,
+                            (isUnlocked || isTarget) && { backgroundColor: '#FFF7ED', borderColor: '#FDBA74' },
                           ]}
                         >
-                          Nivel {b.level}
-                        </Text>
+                          <Text
+                            style={[
+                              styles.cleanBadgeLevelText,
+                              (isUnlocked || isTarget) && { color: '#FF7A00' },
+                            ]}
+                          >
+                            Nivel {b.level}
+                          </Text>
+                        </View>
                       </View>
+                      <Text style={styles.cleanBadgeDesc}>
+                        {isUnlocked
+                          ? '✓ Desbloqueada en tu perfil'
+                          : isTarget
+                          ? 'En progreso en esta racha'
+                          : b.subtitle}
+                      </Text>
                     </View>
-                    <Text style={styles.badgeGridName}>{b.name}</Text>
-                    <Text style={styles.badgeGridSub} numberOfLines={2}>
-                      {isUnlocked
-                        ? '¡Desbloqueada en tu perfil!'
-                        : isTarget
-                        ? '🔥 En progreso en esta racha'
-                        : b.subtitle}
-                    </Text>
                   </View>
                 );
               })}
@@ -1106,29 +1032,29 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FAF7F5',
+    backgroundColor: '#F8FAFC',
   },
   desktopSafeArea: {
     maxWidth: 760,
     width: '100%',
     alignSelf: 'center',
-    backgroundColor: '#FAF7F5',
+    backgroundColor: '#F8FAFC',
   },
   topHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    backgroundColor: colors.white,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight,
+    borderBottomColor: '#E2E8F0',
   },
   closeBtn: {
     width: 34,
     height: 34,
     borderRadius: 17,
-    backgroundColor: colors.surface,
+    backgroundColor: '#F1F5F9',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1138,21 +1064,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   headerMainTitle: {
-    fontSize: 15,
+    fontSize: 15.5,
     fontWeight: '800',
-    color: colors.coffeeDark,
+    color: '#0F172A',
   },
   headerSubTitle: {
-    fontSize: 11,
+    fontSize: 11.5,
     fontWeight: '600',
-    color: '#FF7A00',
+    color: '#64748B',
     marginTop: 1,
   },
   headerActionBtn: {
     width: 34,
     height: 34,
     borderRadius: 17,
-    backgroundColor: colors.surface,
+    backgroundColor: '#F1F5F9',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1172,158 +1098,147 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
   },
   evaluatingAnimaImg: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    borderWidth: 2.5,
+    width: 84,
+    height: 84,
+    borderRadius: 42,
+    borderWidth: 2,
     borderColor: '#FF7A00',
   },
   evaluatingTitle: {
-    fontSize: 16,
+    fontSize: 16.5,
     fontWeight: '800',
-    color: colors.coffeeDark,
+    color: '#0F172A',
     textAlign: 'center',
   },
   evaluatingDesc: {
-    fontSize: 12.5,
-    color: colors.textSecondary,
+    fontSize: 13,
+    color: '#64748B',
     textAlign: 'center',
     marginTop: 6,
-    lineHeight: 18,
+    lineHeight: 19,
   },
   /* Questionnaire View */
   questionContainer: {
     flex: 1,
     paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 14,
+    paddingTop: 14,
+    paddingBottom: 16,
     justifyContent: 'space-between',
   },
   questionAnimaBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.white,
-    padding: 12,
-    borderRadius: 16,
+    backgroundColor: '#FFFFFF',
+    padding: 14,
+    borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#FED7AA',
-    gap: 10,
+    borderColor: '#E2E8F0',
+    gap: 14,
   },
-  questionAnimaAvatar: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    borderWidth: 1.5,
+  questionAnimaAvatarLarge: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    borderWidth: 2,
     borderColor: '#FF7A00',
   },
   questionAnimaTitle: {
-    fontSize: 13,
+    fontSize: 14.5,
     fontWeight: '800',
-    color: colors.coffeeDark,
+    color: '#0F172A',
   },
   questionAnimaSub: {
-    fontSize: 11.5,
-    color: colors.textSecondary,
-    marginTop: 1,
-    lineHeight: 16,
+    fontSize: 12,
+    color: '#64748B',
+    marginTop: 3,
+    lineHeight: 17,
   },
   dimensionPill: {
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start',
-    backgroundColor: '#FFF7ED',
-    paddingHorizontal: 11,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 12,
     paddingVertical: 5,
-    borderRadius: 14,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#FDBA74',
+    borderColor: '#E2E8F0',
   },
   dimensionPillText: {
     fontSize: 11.5,
-    fontWeight: '800',
-    color: '#EA580C',
+    fontWeight: '700',
+    color: '#475569',
   },
   questionBox: {
-    backgroundColor: colors.white,
+    backgroundColor: '#FFFFFF',
     borderRadius: 18,
-    padding: 16,
+    padding: 18,
     borderWidth: 1,
-    borderColor: colors.borderLight,
+    borderColor: '#E2E8F0',
   },
   questionTitleText: {
-    fontSize: 16,
+    fontSize: 16.5,
     fontWeight: '800',
-    color: colors.coffeeDark,
-    lineHeight: 22,
+    color: '#0F172A',
+    lineHeight: 23,
     marginBottom: 6,
   },
   questionSubtitleText: {
-    fontSize: 12.5,
-    color: colors.textSecondary,
-    lineHeight: 18,
+    fontSize: 13,
+    color: '#64748B',
+    lineHeight: 18.5,
   },
   optionsGridContainer: {
-    gap: 10,
+    gap: 12,
   },
   optionsGridRow: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 12,
   },
   gridOptionCard: {
     flex: 1,
-    backgroundColor: colors.white,
-    borderRadius: 16,
-    paddingVertical: 14,
-    paddingHorizontal: 10,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    paddingVertical: 18,
+    paddingHorizontal: 12,
     borderWidth: 1.5,
-    borderColor: colors.borderLight,
+    borderColor: '#E2E8F0',
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
-    minHeight: 112,
+    minHeight: 124,
   },
   gridOptionCardSelected: {
     borderColor: '#FF7A00',
-    backgroundColor: '#FFF7ED',
+    backgroundColor: '#FFFFFF',
   },
-  gridEmojiCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.surfaceSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 6,
-  },
-  gridEmojiCircleSelected: {
-    backgroundColor: '#FFEDD5',
-  },
-  gridEmoji: {
-    fontSize: 21,
+  gridEmojiLarge: {
+    fontSize: 38,
+    marginBottom: 8,
   },
   gridOptionLabel: {
-    fontSize: 13,
+    fontSize: 13.5,
     fontWeight: '800',
-    color: colors.coffeeDark,
+    color: '#0F172A',
     textAlign: 'center',
   },
   gridOptionLabelSelected: {
-    color: '#EA580C',
+    color: '#FF7A00',
   },
   gridOptionSublabel: {
-    fontSize: 10.5,
-    color: colors.textSecondary,
+    fontSize: 11,
+    color: '#64748B',
     textAlign: 'center',
-    marginTop: 2,
+    marginTop: 3,
   },
   gridOptionSublabelSelected: {
-    color: '#C2410C',
+    color: '#475569',
     fontWeight: '600',
   },
   gridCheckmark: {
     position: 'absolute',
-    top: 8,
-    right: 8,
+    top: 10,
+    right: 10,
   },
   bottomNavRow: {
     flexDirection: 'row',
@@ -1334,12 +1249,12 @@ const styles = StyleSheet.create({
   navControlBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 12,
-    backgroundColor: colors.white,
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: colors.borderLight,
+    borderColor: '#E2E8F0',
   },
   navControlBtnDisabled: {
     opacity: 0.45,
@@ -1347,13 +1262,13 @@ const styles = StyleSheet.create({
   navControlText: {
     fontSize: 12.5,
     fontWeight: '700',
-    color: colors.coffeeDark,
+    color: '#0F172A',
     marginLeft: 4,
   },
   stepIndicatorText: {
-    fontSize: 12,
+    fontSize: 12.5,
     fontWeight: '700',
-    color: colors.textSecondary,
+    color: '#64748B',
   },
   /* Scrollable Dashboards */
   scrollBody: {
@@ -1362,481 +1277,279 @@ const styles = StyleSheet.create({
   resultScrollContent: {
     padding: 16,
   },
-  /* View 2: Invitation Card */
-  invitationHeroCard: {
-    backgroundColor: colors.white,
-    borderRadius: 22,
-    padding: 18,
-    borderWidth: 1.5,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
-    elevation: 3,
-  },
-  invitationAnimaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-    gap: 12,
-  },
-  invitationAnimaAvatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    borderWidth: 2,
-  },
-  focusPillTag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    marginBottom: 4,
-    gap: 5,
-  },
-  focusPillEmoji: {
-    fontSize: 13,
-  },
-  focusPillText: {
-    fontSize: 11.5,
-    fontWeight: '800',
-  },
-  invitationAnimaName: {
-    fontSize: 14.5,
-    fontWeight: '800',
-    color: colors.coffeeDark,
-  },
-  animaSpeechBox: {
-    backgroundColor: '#F8FAFC',
-    borderRadius: 16,
-    padding: 14,
-    borderLeftWidth: 4,
-    borderLeftColor: '#FF7A00',
-    marginBottom: 14,
-  },
-  animaSpeechText: {
-    fontSize: 13.5,
-    color: colors.textPrimary,
-    lineHeight: 20,
-    fontWeight: '500',
-  },
-  targetBadgePreviewBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    borderRadius: 16,
-    borderWidth: 1.2,
-    marginBottom: 16,
-    gap: 12,
-  },
-  targetBadgeIconBubble: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: colors.white,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  targetBadgeLevelText: {
-    fontSize: 10,
-    fontWeight: '900',
-    letterSpacing: 0.5,
-  },
-  targetBadgeNameText: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: colors.coffeeDark,
-    marginTop: 1,
-  },
-  targetBadgeDescText: {
-    fontSize: 11.5,
-    color: colors.textSecondary,
-    marginTop: 2,
-    lineHeight: 16,
-  },
-  acceptStreakPrimaryBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FF7A00',
-    paddingVertical: 14,
-    paddingHorizontal: 18,
-    borderRadius: 16,
-    shadowColor: '#FF7A00',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  acceptStreakPrimaryBtnText: {
-    color: '#FFFFFF',
-    fontSize: 14.5,
-    fontWeight: '900',
-  },
-  cardSection: {
-    backgroundColor: colors.white,
+  /* Clean White Streak Header Card */
+  cleanStreakHeaderCard: {
+    backgroundColor: '#FFFFFF',
     borderRadius: 20,
-    padding: 16,
+    padding: 18,
+    marginBottom: 16,
     borderWidth: 1,
-    borderColor: colors.borderLight,
+    borderColor: '#E2E8F0',
+  },
+  cleanStreakTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: 16,
   },
-  cardHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-    gap: 10,
+  cleanStreakTitleCol: {
+    flex: 1,
+    paddingRight: 10,
   },
-  cardIconCircle: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cardHeaderTitle: {
-    fontSize: 14.5,
-    fontWeight: '800',
-    color: colors.coffeeDark,
-  },
-  cardHeaderSub: {
-    fontSize: 11.5,
-    color: colors.textSecondary,
-    marginTop: 1,
-  },
-  previewDayRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 9,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
-    gap: 10,
-  },
-  previewDayCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#FFF7ED',
-    borderWidth: 1,
-    borderColor: '#FDBA74',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  previewDayNumText: {
-    fontSize: 11.5,
-    fontWeight: '800',
-    color: '#EA580C',
-  },
-  previewDayTaskTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: colors.coffeeDark,
-  },
-  previewDayTaskDesc: {
-    fontSize: 11.5,
-    color: colors.textSecondary,
-    marginTop: 2,
-    lineHeight: 16,
-  },
-  secondaryPsicoBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.white,
-    paddingVertical: 12,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: colors.borderLight,
-  },
-  secondaryPsicoBtnText: {
-    fontSize: 12.5,
-    fontWeight: '700',
-    color: colors.coffeePrimary,
-  },
-  /* View 3: TikTok-style Active Streak Dashboard */
-  tiktokStreakCard: {
-    backgroundColor: '#1E293B',
-    borderRadius: 22,
-    padding: 16,
-    marginBottom: 16,
-    borderWidth: 1.5,
-    borderColor: '#FF7A00',
-    shadowColor: '#FF7A00',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    elevation: 4,
-  },
-  tiktokStreakTopRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  flameCircleLarge: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
-    backgroundColor: 'rgba(255, 122, 0, 0.2)',
-    borderWidth: 2,
-    borderColor: '#FF7A00',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  streakCountRow: {
+  streakBadgeRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
-  streakCountBig: {
+  flameIconText: {
+    fontSize: 24,
+  },
+  streakMainCountText: {
     fontSize: 20,
     fontWeight: '900',
-    color: '#FFFFFF',
+    color: '#0F172A',
   },
-  activeOrangePill: {
-    backgroundColor: '#FF7A00',
+  subtleOrangeTag: {
+    backgroundColor: '#FFF7ED',
+    borderWidth: 1,
+    borderColor: '#FDBA74',
     paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 10,
+    paddingVertical: 2.5,
+    borderRadius: 8,
   },
-  activeOrangePillText: {
+  subtleOrangeTagText: {
     fontSize: 9.5,
-    fontWeight: '900',
-    color: '#FFFFFF',
-    letterSpacing: 0.5,
+    fontWeight: '800',
+    color: '#FF7A00',
+    letterSpacing: 0.4,
   },
-  streakFocusTitleText: {
-    fontSize: 12,
-    color: '#CBD5E1',
+  streakFocusName: {
+    fontSize: 13,
+    color: '#64748B',
     fontWeight: '600',
-    marginTop: 2,
+    marginTop: 4,
   },
-  nextBadgeMiniBox: {
+  metaBadgeRightBox: {
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    backgroundColor: '#F8FAFC',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
-  nextBadgeMiniLabel: {
-    fontSize: 9.5,
+  metaBadgeEmoji: {
+    fontSize: 24,
+  },
+  metaBadgeLabel: {
+    fontSize: 10,
     fontWeight: '700',
-    color: '#FDBA74',
+    color: '#64748B',
     marginTop: 2,
   },
-  sevenDaysRow: {
+  cleanSevenDaysBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: 6,
   },
-  dayBubbleItem: {
+  cleanDayPill: {
     flex: 1,
-    paddingVertical: 8,
-    borderRadius: 14,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    paddingVertical: 9,
+    borderRadius: 12,
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 4,
-    borderWidth: 1.5,
-    borderColor: 'transparent',
   },
-  dayBubbleCompleted: {
-    backgroundColor: '#10B981',
+  cleanDayPillDone: {
+    backgroundColor: '#FFFFFF',
+    borderColor: '#FDBA74',
   },
-  dayBubbleCurrent: {
+  cleanDayPillCurrent: {
+    backgroundColor: '#FFFFFF',
+    borderColor: '#FF7A00',
+  },
+  cleanDayPillSelected: {
     backgroundColor: '#FF7A00',
+    borderColor: '#FF7A00',
   },
-  dayBubbleSelectedBorder: {
-    borderColor: '#FFFFFF',
-  },
-  dayBubbleLabel: {
-    fontSize: 11,
+  cleanDayPillText: {
+    fontSize: 11.5,
     fontWeight: '700',
-    color: '#CBD5E1',
+    color: '#64748B',
   },
-  /* Active Day Challenge Card */
-  activeChallengeCard: {
-    backgroundColor: colors.white,
-    borderRadius: 22,
+  miniDotIndicator: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+  },
+  /* Clean White Card Container */
+  cleanWhiteCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
     padding: 18,
-    borderWidth: 1.5,
-    borderColor: '#FED7AA',
     marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
-  challengeHeaderRow: {
+  dayCardTopBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    marginBottom: 14,
   },
-  challengeDayBadge: {
-    backgroundColor: '#FFF7ED',
+  dayStepTag: {
+    backgroundColor: '#F8FAFC',
     paddingHorizontal: 11,
     paddingVertical: 5,
-    borderRadius: 12,
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#FDBA74',
+    borderColor: '#E2E8F0',
   },
-  challengeDayBadgeText: {
+  dayStepTagText: {
     fontSize: 11.5,
     fontWeight: '800',
-    color: '#EA580C',
+    color: '#334155',
   },
-  statusCompletedPill: {
+  completedGrayTag: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#ECFDF5',
+    backgroundColor: '#F8FAFC',
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
     gap: 4,
   },
-  statusCompletedPillText: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: '#10B981',
-  },
-  statusPostponedPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#EFF6FF',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    gap: 4,
-  },
-  statusPostponedPillText: {
+  completedGrayTagText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#2563EB',
+    color: '#475569',
   },
-  challengeTitleRow: {
+  taskHeroRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    marginBottom: 10,
+    gap: 14,
+    marginBottom: 12,
   },
-  challengeEmojiCircle: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
-    backgroundColor: '#FFF7ED',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#FFEDD5',
+  taskHeroEmoji: {
+    fontSize: 38,
   },
-  challengeMainTitle: {
-    fontSize: 16,
+  taskHeroTitle: {
+    fontSize: 16.5,
     fontWeight: '800',
-    color: colors.coffeeDark,
+    color: '#0F172A',
+    lineHeight: 22,
   },
-  challengeCategorySub: {
-    fontSize: 11.5,
-    color: '#EA580C',
-    fontWeight: '600',
+  taskHeroSub: {
+    fontSize: 12,
+    color: '#64748B',
+    fontWeight: '500',
     marginTop: 2,
   },
-  challengeDescriptionText: {
-    fontSize: 13.5,
-    color: colors.textPrimary,
-    lineHeight: 20,
+  taskDescriptionBox: {
     backgroundColor: '#F8FAFC',
-    padding: 12,
     borderRadius: 14,
-    marginBottom: 14,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    marginBottom: 16,
   },
-  encouragementBox: {
+  taskDescriptionText: {
+    fontSize: 13.5,
+    color: '#334155',
+    lineHeight: 20,
+  },
+  cleanAnimaNoteBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#EFF6FF',
-    borderRadius: 16,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 14,
     padding: 12,
     borderWidth: 1,
-    borderColor: '#BFDBFE',
-    marginBottom: 14,
-    gap: 10,
+    borderColor: '#E2E8F0',
+    marginBottom: 16,
+    gap: 12,
   },
-  miniAnimaAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+  animaAvatarMedium: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     borderWidth: 1.5,
-    borderColor: '#3B82F6',
+    borderColor: '#FF7A00',
   },
-  encouragementTitle: {
-    fontSize: 11.5,
-    fontWeight: '800',
-    color: '#1D4ED8',
-  },
-  encouragementQuoteText: {
+  cleanAnimaNoteTitle: {
     fontSize: 12,
-    color: '#1E3A8A',
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  cleanAnimaNoteText: {
+    fontSize: 12.5,
+    color: '#475569',
     fontStyle: 'italic',
     marginTop: 2,
-    lineHeight: 17,
+    lineHeight: 18,
   },
-  evidenceActionSection: {
+  /* Publish Section */
+  publishSectionWrap: {
     borderTopWidth: 1,
     borderTopColor: '#F1F5F9',
     paddingTop: 14,
   },
-  evidenceSectionLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: colors.coffeeDark,
+  publishHeaderLine: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     marginBottom: 10,
   },
-  pickEvidencePhotoBtn: {
-    borderWidth: 1.5,
-    borderColor: '#FDBA74',
-    borderStyle: 'dashed',
-    backgroundColor: '#FFF7ED',
+  publishHeaderLabel: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  cleanPhotoDropzone: {
+    backgroundColor: '#F8FAFC',
     borderRadius: 16,
-    paddingVertical: 20,
+    borderWidth: 1.5,
+    borderColor: '#CBD5E1',
+    borderStyle: 'dashed',
+    paddingVertical: 22,
     paddingHorizontal: 16,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
   },
-  pickEvidenceIconCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
-  },
-  pickEvidenceTitle: {
+  cleanPhotoDropzoneTitle: {
     fontSize: 13.5,
     fontWeight: '800',
-    color: '#EA580C',
+    color: '#0F172A',
+    marginTop: 8,
     textAlign: 'center',
   },
-  pickEvidenceSub: {
+  cleanPhotoDropzoneSub: {
     fontSize: 11.5,
-    color: colors.textSecondary,
-    textAlign: 'center',
+    color: '#64748B',
     marginTop: 3,
+    textAlign: 'center',
   },
-  selectedEvidencePreviewWrap: {
+  evidencePreviewBox: {
     width: '100%',
     height: 220,
     borderRadius: 16,
     overflow: 'hidden',
     marginBottom: 12,
     position: 'relative',
-    backgroundColor: '#0F172A',
+    backgroundColor: '#F1F5F9',
   },
-  selectedEvidenceImg: {
+  evidencePreviewImage: {
     width: '100%',
     height: '100%',
   },
-  changePhotoFloatingBtn: {
+  changePhotoPill: {
     position: 'absolute',
     bottom: 10,
     right: 10,
@@ -1845,246 +1558,306 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(15, 23, 42, 0.78)',
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 12,
+    borderRadius: 10,
     gap: 5,
   },
-  changePhotoFloatingText: {
+  changePhotoPillText: {
     color: '#FFFFFF',
     fontSize: 11.5,
     fontWeight: '700',
   },
-  evidenceNoteInput: {
+  cleanInputBox: {
     backgroundColor: '#F8FAFC',
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: colors.borderLight,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    borderColor: '#E2E8F0',
+    paddingHorizontal: 14,
+    paddingVertical: 11,
     fontSize: 13,
-    color: colors.textPrimary,
-    minHeight: 68,
+    color: '#0F172A',
+    minHeight: 70,
     textAlignVertical: 'top',
     marginBottom: 12,
   },
-  completeDayOrangeBtn: {
+  primaryOrangeBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#FF7A00',
     paddingVertical: 14,
-    borderRadius: 16,
+    paddingHorizontal: 16,
+    borderRadius: 14,
     marginBottom: 10,
-    shadowColor: '#FF7A00',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.28,
-    shadowRadius: 6,
-    elevation: 3,
   },
-  completeDayOrangeBtnText: {
+  primaryOrangeBtnText: {
     color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '900',
+    fontSize: 13.5,
+    fontWeight: '800',
+    textAlign: 'center',
   },
-  postponeDayBtn: {
+  postponeCleanBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#EFF6FF',
+    backgroundColor: '#F8FAFC',
     paddingVertical: 11,
     paddingHorizontal: 12,
-    borderRadius: 14,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#BFDBFE',
+    borderColor: '#E2E8F0',
   },
-  postponeDayBtnText: {
+  postponeCleanBtnText: {
     fontSize: 12,
-    fontWeight: '700',
-    color: '#2563EB',
+    fontWeight: '600',
+    color: '#475569',
   },
-  completedEvidenceBox: {
-    backgroundColor: '#ECFDF5',
-    borderRadius: 16,
+  completedDayPreviewBox: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 14,
     padding: 12,
     borderWidth: 1,
-    borderColor: '#A7F3D0',
+    borderColor: '#E2E8F0',
   },
-  completedEvidenceImg: {
+  completedDayPreviewImg: {
     width: '100%',
     height: 200,
     borderRadius: 12,
     marginBottom: 10,
   },
-  completedEvidenceTextCol: {
-    gap: 4,
-  },
-  completedEvidenceTitle: {
+  completedDayPreviewStatus: {
     fontSize: 13,
     fontWeight: '800',
-    color: '#065F46',
+    color: '#0F172A',
   },
-  completedEvidenceNote: {
+  completedDayPreviewNote: {
     fontSize: 12.5,
-    color: '#047857',
+    color: '#475569',
     fontStyle: 'italic',
+    marginTop: 4,
   },
-  completedEvidenceQuote: {
-    fontSize: 11.5,
-    color: '#059669',
-    fontWeight: '600',
-    marginTop: 2,
-  },
-  /* Badges Grid */
-  badgesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-  },
-  badgeGridCard: {
-    width: '48%',
-    backgroundColor: '#F8FAFC',
-    borderRadius: 16,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: colors.borderLight,
-  },
-  badgeGridTopRow: {
+  /* Section 3: Mis Avances Grid de 7 Días */
+  sectionHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 6,
+    marginBottom: 14,
   },
-  badgeLevelMiniPill: {
+  sectionTitleText: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  sectionSubText: {
+    fontSize: 12,
+    color: '#64748B',
+    marginTop: 2,
+  },
+  countGrayBadge: {
+    backgroundColor: '#F1F5F9',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
+  countGrayBadgeText: {
+    fontSize: 11.5,
+    fontWeight: '800',
+    color: '#334155',
+  },
+  sevenPhotosGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  advanceGridCell: {
+    width: '23%',
+    minWidth: 74,
+    aspectRatio: 0.88,
+    borderRadius: 14,
+    overflow: 'hidden',
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    position: 'relative',
+  },
+  advanceGridCellSelected: {
+    borderColor: '#FF7A00',
+    borderWidth: 1.5,
+  },
+  advanceGridImg: {
+    width: '100%',
+    height: '100%',
+  },
+  advanceDayOverlayPill: {
+    position: 'absolute',
+    bottom: 5,
+    left: 5,
+    right: 5,
+    backgroundColor: 'rgba(15, 23, 42, 0.72)',
+    paddingVertical: 2.5,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  advanceDayOverlayText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '800',
+  },
+  advanceEmptySlot: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 6,
+    gap: 4,
+  },
+  advanceEmptyDayNum: {
+    fontSize: 10.5,
+    fontWeight: '800',
+    color: '#475569',
+  },
+  advanceEmptyEmoji: {
+    fontSize: 22,
+  },
+  advanceEmptyLabel: {
+    fontSize: 9.5,
+    color: '#94A3B8',
+    fontWeight: '600',
+  },
+  /* Section 4: Minimalist Spaced Badges List */
+  cleanBadgesList: {
+    gap: 12,
+  },
+  cleanBadgeItemCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    gap: 14,
+  },
+  cleanBadgeItemActiveBorder: {
+    backgroundColor: '#FFFFFF',
+    borderColor: '#FF7A00',
+  },
+  cleanBadgeEmoji: {
+    fontSize: 32,
+  },
+  cleanBadgeHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  cleanBadgeName: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  cleanBadgeLevelPill: {
+    backgroundColor: '#F1F5F9',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
     paddingHorizontal: 8,
     paddingVertical: 2.5,
     borderRadius: 8,
   },
-  badgeLevelMiniText: {
-    fontSize: 10,
+  cleanBadgeLevelText: {
+    fontSize: 10.5,
     fontWeight: '800',
+    color: '#475569',
   },
-  badgeGridName: {
-    fontSize: 13,
-    fontWeight: '800',
-    color: colors.coffeeDark,
+  cleanBadgeDesc: {
+    fontSize: 12,
+    color: '#64748B',
+    lineHeight: 17,
   },
-  badgeGridSub: {
-    fontSize: 11,
-    color: colors.textSecondary,
-    marginTop: 2,
-    lineHeight: 15,
-  },
-  /* View 4: Completed 7-Day Celebration & Summary Post */
+  /* Completed Celebration View */
   celebrationHeroCard: {
-    backgroundColor: colors.white,
-    borderRadius: 24,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
     padding: 20,
     alignItems: 'center',
-    borderWidth: 2,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
     marginBottom: 16,
   },
-  unlockedBadgeCircle: {
-    width: 86,
-    height: 86,
-    borderRadius: 43,
-    borderWidth: 2.5,
-    alignItems: 'center',
-    justifyContent: 'center',
+  unlockedEmojiBig: {
+    fontSize: 52,
     marginBottom: 10,
   },
   levelPillBadge: {
+    backgroundColor: '#FFF7ED',
+    borderWidth: 1,
+    borderColor: '#FDBA74',
     paddingHorizontal: 12,
     paddingVertical: 4,
-    borderRadius: 12,
-    marginBottom: 6,
+    borderRadius: 10,
+    marginBottom: 8,
   },
   levelPillBadgeText: {
-    color: '#FFFFFF',
+    color: '#FF7A00',
     fontSize: 10.5,
-    fontWeight: '900',
-    letterSpacing: 0.5,
+    fontWeight: '800',
+    letterSpacing: 0.4,
   },
   celebrationTitle: {
     fontSize: 20,
     fontWeight: '900',
-    color: colors.coffeeDark,
+    color: '#0F172A',
     textAlign: 'center',
   },
   celebrationSubtitle: {
-    fontSize: 12.5,
-    color: colors.textSecondary,
+    fontSize: 13,
+    color: '#64748B',
     textAlign: 'center',
     marginTop: 4,
-    lineHeight: 18,
-    marginBottom: 14,
+    lineHeight: 19,
+    marginBottom: 16,
   },
   celebrationQuoteBox: {
     width: '100%',
-    backgroundColor: '#FFF7ED',
-    borderRadius: 16,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 14,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#FDBA74',
+    borderColor: '#E2E8F0',
   },
   celebrationQuoteHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
-    gap: 8,
+    gap: 12,
   },
   celebrationQuoteAnimaLabel: {
-    flex: 1,
     fontSize: 11.5,
     fontWeight: '800',
-    color: '#EA580C',
-  },
-  nextQuoteMiniBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 10,
-    gap: 4,
-  },
-  nextQuoteMiniBtnText: {
-    fontSize: 10.5,
-    fontWeight: '700',
-    color: '#FF7A00',
+    color: '#0F172A',
+    marginBottom: 2,
   },
   celebrationQuoteText: {
-    fontSize: 13.5,
-    fontWeight: '600',
-    color: colors.coffeeDark,
+    fontSize: 12.5,
+    color: '#475569',
     fontStyle: 'italic',
-    lineHeight: 20,
+    lineHeight: 18,
   },
-  publishSummaryCard: {
-    backgroundColor: colors.white,
-    borderRadius: 22,
-    padding: 18,
-    borderWidth: 1.5,
-    borderColor: '#FDBA74',
-    marginBottom: 16,
+  nextQuoteMiniBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   publishSummaryHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 6,
-  },
-  publishSummaryTitle: {
-    fontSize: 15,
-    fontWeight: '900',
-    color: colors.coffeeDark,
-  },
-  publishSummarySub: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    lineHeight: 17,
-    marginBottom: 12,
+    marginBottom: 4,
   },
   summaryPhotosStrip: {
     gap: 8,
-    paddingBottom: 12,
+    paddingVertical: 12,
   },
   summaryThumbItem: {
     width: 78,
@@ -2092,7 +1865,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: 'hidden',
     position: 'relative',
-    backgroundColor: colors.surfaceSoft,
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   summaryThumbImg: {
     width: '100%',
@@ -2119,75 +1894,18 @@ const styles = StyleSheet.create({
     fontSize: 9.5,
     fontWeight: '800',
   },
-  summaryMessageInput: {
-    backgroundColor: '#F8FAFC',
+  secondaryOutlineBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 14,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: colors.borderLight,
-    padding: 12,
-    fontSize: 13,
-    color: colors.textPrimary,
-    minHeight: 74,
-    textAlignVertical: 'top',
-    marginBottom: 12,
+    borderColor: '#E2E8F0',
   },
-  publishSummaryBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FF7A00',
-    paddingVertical: 14,
-    paddingHorizontal: 14,
-    borderRadius: 16,
-  },
-  publishSummaryBtnText: {
-    color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: '900',
-    textAlign: 'center',
-  },
-  completedTimelineItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
-    gap: 10,
-  },
-  completedTimelineCheck: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#10B981',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  completedTimelineTitle: {
-    fontSize: 12.5,
-    fontWeight: '700',
-    color: colors.coffeeDark,
-  },
-  completedTimelineNote: {
-    fontSize: 11.5,
-    color: colors.textSecondary,
-    fontStyle: 'italic',
-    marginTop: 1,
-  },
-  completedTimelineThumb: {
-    width: 42,
-    height: 42,
-    borderRadius: 8,
-  },
-  startNextStreakBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.coffeePrimary,
-    paddingVertical: 14,
-    borderRadius: 16,
-  },
-  startNextStreakBtnText: {
-    color: '#FFFFFF',
+  secondaryOutlineBtnText: {
+    color: '#0F172A',
     fontSize: 13.5,
     fontWeight: '800',
   },

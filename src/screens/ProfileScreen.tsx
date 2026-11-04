@@ -510,6 +510,115 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             </View>
           </View>
 
+          {/* TOP OF PROFILE: GRID DE 4 INSIGNIAS (Blanco, Gris Claro y toque Naranja) */}
+          <View
+            style={{
+              marginHorizontal: 16,
+              marginTop: 6,
+              marginBottom: 14,
+              backgroundColor: '#FFFFFF',
+              borderRadius: 18,
+              padding: 14,
+              borderWidth: 1,
+              borderColor: '#E2E8F0',
+            }}
+          >
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: 12,
+              }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Ionicons name="ribbon-outline" size={16} color="#FF7A00" style={{ marginRight: 6 }} />
+                <Text style={{ fontSize: 13, fontWeight: '800', color: '#0F172A' }}>
+                  Mis Insignias
+                </Text>
+              </View>
+              <View
+                style={{
+                  backgroundColor: '#F8FAFC',
+                  paddingHorizontal: 9,
+                  paddingVertical: 3,
+                  borderRadius: 8,
+                  borderWidth: 1,
+                  borderColor: '#E2E8F0',
+                }}
+              >
+                <Text style={{ fontSize: 10.5, fontWeight: '800', color: '#64748B' }}>
+                  {(latestTestResult?.unlockedBadges?.length || 0)} / 4
+                </Text>
+              </View>
+            </View>
+
+            {/* Grid de 4 columnas */}
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              {OFFICIAL_STREAK_BADGES.map((badge) => {
+                const isUnlocked = Boolean(latestTestResult?.unlockedBadges?.includes(badge.id));
+                const isTarget = latestTestResult?.streakState?.targetBadgeId === badge.id;
+                return (
+                  <View
+                    key={badge.id}
+                    style={{
+                      flex: 1,
+                      backgroundColor: isUnlocked ? '#FFFFFF' : '#F8FAFC',
+                      borderRadius: 14,
+                      paddingVertical: 12,
+                      paddingHorizontal: 6,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderWidth: isUnlocked || isTarget ? 1.5 : 1,
+                      borderColor: isUnlocked || isTarget ? '#FF7A00' : '#E2E8F0',
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 28,
+                        marginBottom: 6,
+                        opacity: isUnlocked || isTarget ? 1 : 0.4,
+                      }}
+                    >
+                      {badge.emoji}
+                    </Text>
+                    <View
+                      style={{
+                        backgroundColor: isUnlocked ? '#FF7A00' : isTarget ? '#FFF7ED' : '#F1F5F9',
+                        paddingHorizontal: 6,
+                        paddingVertical: 2,
+                        borderRadius: 6,
+                        marginBottom: 5,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontSize: 9,
+                          fontWeight: '800',
+                          color: isUnlocked ? '#FFFFFF' : isTarget ? '#FF7A00' : '#64748B',
+                        }}
+                      >
+                        Nivel {badge.level}
+                      </Text>
+                    </View>
+                    <Text
+                      style={{
+                        fontSize: 10.5,
+                        fontWeight: '800',
+                        color: '#0F172A',
+                        textAlign: 'center',
+                        lineHeight: 13,
+                      }}
+                      numberOfLines={2}
+                    >
+                      {badge.name}
+                    </Text>
+                  </View>
+                );
+              })}
+            </View>
+          </View>
+
           {/* 3. The 3 Sections Tabs separated by thin vertical dividers */}
           <View style={styles.tabsSection}>
             <View style={styles.tabsRow}>
@@ -584,157 +693,287 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           {/* Tab Content Rendering */}
           {selectedTab === null ? (
             <>
-              {/* 1. VITRINA DE MIS 4 INSIGNIAS Y NIVEL */}
-              <View style={styles.profileTestCard}>
-                <View style={styles.profileTestHeader}>
-                  <View style={styles.profileTestTitleRow}>
-                    <Ionicons name="ribbon" size={18} color="#FF7A00" style={{ marginRight: 6 }} />
-                    <Text style={styles.profileTestMainTitle}>Mis Insignias y Nivel</Text>
-                  </View>
-                  <View style={{ backgroundColor: '#FFF7ED', paddingHorizontal: 9, paddingVertical: 3, borderRadius: 10, borderWidth: 1, borderColor: '#FDBA74' }}>
-                    <Text style={{ fontSize: 11, fontWeight: '800', color: '#EA580C' }}>
-                      {(latestTestResult?.unlockedBadges?.length || 0)} / 4 Desbloqueadas
-                    </Text>
-                  </View>
-                </View>
-
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
-                  {OFFICIAL_STREAK_BADGES.map((badge) => {
-                    const isUnlocked = Boolean(latestTestResult?.unlockedBadges?.includes(badge.id));
-                    const isTarget = latestTestResult?.streakState?.targetBadgeId === badge.id;
-                    return (
-                      <View
-                        key={badge.id}
-                        style={{
-                          width: '48.2%',
-                          backgroundColor: isUnlocked ? badge.softBg : '#F8FAFC',
-                          borderRadius: 14,
-                          padding: 10,
-                          borderWidth: isUnlocked || isTarget ? 1.5 : 1,
-                          borderColor: isUnlocked
-                            ? badge.borderColor
-                            : isTarget
-                            ? '#FF7A00'
-                            : colors.borderLight,
-                        }}
-                      >
-                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                          <Text style={{ fontSize: 22, opacity: isUnlocked || isTarget ? 1 : 0.4 }}>
-                            {badge.emoji}
-                          </Text>
-                          <View
-                            style={{
-                              backgroundColor: isUnlocked ? badge.color : isTarget ? '#FF7A00' : '#E2E8F0',
-                              paddingHorizontal: 7,
-                              paddingVertical: 2,
-                              borderRadius: 7,
-                            }}
-                          >
-                            <Text style={{ fontSize: 9.5, fontWeight: '800', color: isUnlocked || isTarget ? '#FFFFFF' : '#64748B' }}>
-                              Nivel {badge.level}
-                            </Text>
-                          </View>
-                        </View>
-                        <Text style={{ fontSize: 12.5, fontWeight: '800', color: colors.coffeeDark }} numberOfLines={1}>
-                          {badge.name}
+              {/* TARJETA DE RUTA DE 7 DÍAS Y MIS AVANCES (Blanco, Gris Claro y toque Naranja) */}
+              {latestTestResult ? (
+                <View
+                  style={[
+                    styles.profileTestCard,
+                    {
+                      backgroundColor: '#FFFFFF',
+                      borderColor: '#E2E8F0',
+                      borderWidth: 1,
+                      padding: 16,
+                    },
+                  ]}
+                >
+                  {/* Encabezado limpio */}
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      marginBottom: 12,
+                    }}
+                  >
+                    <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                      <Text style={{ fontSize: 22, marginRight: 8 }}>🔥</Text>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontSize: 15, fontWeight: '900', color: '#0F172A' }}>
+                          {latestTestResult.streakState?. status === 'completed'
+                            ? 'Ruta de 7 Días Completada'
+                            : `Mi Ruta de 7 Días (${latestTestResult.streakState?.completedDaysCount || 0}/7)`}
                         </Text>
-                        <Text style={{ fontSize: 10.5, color: isUnlocked ? badge.color : colors.textSecondary, fontWeight: isUnlocked ? '700' : '500', marginTop: 2 }} numberOfLines={2}>
-                          {isUnlocked
-                            ? '✓ Insignia conseguida'
-                            : isTarget
-                            ? '🔥 Meta de tu racha actual'
-                            : badge.subtitle}
+                        <Text style={{ fontSize: 12, fontWeight: '600', color: '#64748B', marginTop: 2 }}>
+                          {latestTestResult.levelTitle}
                         </Text>
                       </View>
-                    );
-                  })}
-                </View>
-              </View>
-
-              {/* 2. TARJETA DE MI RACHA DE 7 DÍAS Y RUTA EMOCIONAL */}
-              {latestTestResult ? (
-                <View style={[styles.profileTestCard, { borderColor: latestTestResult.streakState?.isActive ? '#FF7A00' : colors.borderLight, borderWidth: latestTestResult.streakState?.isActive ? 1.5 : 1 }]}>
-                  <View style={styles.profileTestHeader}>
-                    <View style={styles.profileTestTitleRow}>
-                      <Text style={{ fontSize: 18, marginRight: 6 }}>
-                        {latestTestResult.streakState?.status === 'completed' ? '🏆' : '🔥'}
-                      </Text>
-                      <Text style={styles.profileTestMainTitle}>
-                        {latestTestResult.streakState?.isActive
-                          ? `Mi Racha de 7 Días (${latestTestResult.streakState.completedDaysCount}/7)`
-                          : 'Tu Ruta Emocional con ANIMA'}
-                      </Text>
                     </View>
-                    <View style={{ backgroundColor: latestTestResult.streakState?.isActive ? '#FF7A00' : '#F1F5F9', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 9 }}>
-                      <Text style={{ fontSize: 10, fontWeight: '900', color: latestTestResult.streakState?.isActive ? '#FFFFFF' : colors.textSecondary }}>
-                        {latestTestResult.streakState?.status === 'completed'
-                          ? 'COMPLETADA'
-                          : latestTestResult.streakState?.isActive
-                          ? 'ACTIVA'
-                          : 'POR ACTIVAR'}
+                    <View
+                      style={{
+                        backgroundColor: '#FFF7ED',
+                        paddingHorizontal: 9,
+                        paddingVertical: 4,
+                        borderRadius: 8,
+                        borderWidth: 1,
+                        borderColor: '#FFEDD5',
+                      }}
+                    >
+                      <Text style={{ fontSize: 10, fontWeight: '800', color: '#FF7A00' }}>
+                        {latestTestResult.streakState?.status === 'completed' ? 'LOGRO 7/7' : 'EN CURSO'}
                       </Text>
                     </View>
                   </View>
 
-                  <View style={[styles.profileTestBadge, { backgroundColor: latestTestResult.badgeColor + '18' }]}>
-                    <Text style={[styles.profileTestBadgeText, { color: latestTestResult.badgeColor }]}>
-                      {latestTestResult.levelTitle}
-                    </Text>
-                  </View>
-
-                  {/* 7-Day Visual Progress Strip inside Profile */}
+                  {/* Barra de Ruta de 7 Días (Blanco, Gris Claro y Naranja) */}
                   {latestTestResult.streakState && (
-                    <View style={{ flexDirection: 'row', gap: 5, marginVertical: 10 }}>
-                      {latestTestResult.streakState.days.map((d) => {
-                        const isDone = d.status === 'completed';
-                        const isCurr =
-                          d.dayNumber === latestTestResult.streakState?.currentDayNumber &&
-                          latestTestResult.streakState?.status !== 'completed';
+                    <View
+                      style={{
+                        backgroundColor: '#F8FAFC',
+                        borderRadius: 14,
+                        padding: 10,
+                        borderWidth: 1,
+                        borderColor: '#E2E8F0',
+                        marginBottom: 14,
+                      }}
+                    >
+                      <View style={{ flexDirection: 'row', gap: 6 }}>
+                        {latestTestResult.streakState.days.map((d) => {
+                          const isDone = d.status === 'completed';
+                          const isCurr =
+                            d.dayNumber === latestTestResult.streakState?.currentDayNumber &&
+                            latestTestResult.streakState?.status !== 'completed';
+                          return (
+                            <TouchableOpacity
+                              key={d.dayNumber}
+                              activeOpacity={0.8}
+                              onPress={() => {
+                                setTestModalMode('result');
+                                setIsTestModalOpen(true);
+                              }}
+                              style={{
+                                flex: 1,
+                                paddingVertical: 8,
+                                borderRadius: 10,
+                                backgroundColor: isDone ? '#FF7A00' : '#FFFFFF',
+                                borderWidth: isCurr ? 1.5 : 1,
+                                borderColor: isDone || isCurr ? '#FF7A00' : '#E2E8F0',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                              }}
+                            >
+                              <Text
+                                style={{
+                                  fontSize: 10,
+                                  fontWeight: '800',
+                                  color: isDone ? '#FFFFFF' : isCurr ? '#FF7A00' : '#64748B',
+                                }}
+                              >
+                                D{d.dayNumber}
+                              </Text>
+                              <Text
+                                style={{
+                                  fontSize: 10,
+                                  marginTop: 2,
+                                  color: isDone ? '#FFFFFF' : isCurr ? '#FF7A00' : '#94A3B8',
+                                  fontWeight: '800',
+                                }}
+                              >
+                                {isDone ? '✓' : isCurr ? '•' : '○'}
+                              </Text>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </View>
+                    </View>
+                  )}
+
+                  {/* Tarjeta del Día Actual (Diseño limpio Blanco/Gris/Naranja) */}
+                  {latestTestResult.streakState && (
+                    <View
+                      style={{
+                        backgroundColor: '#F8FAFC',
+                        borderRadius: 14,
+                        padding: 14,
+                        borderWidth: 1,
+                        borderColor: '#E2E8F0',
+                        marginBottom: 14,
+                      }}
+                    >
+                      {(() => {
+                        const curr =
+                          latestTestResult.streakState.days.find(
+                            (x) => x.dayNumber === latestTestResult.streakState?.currentDayNumber
+                          ) || latestTestResult.streakState.days[0];
                         return (
-                          <View
-                            key={d.dayNumber}
-                            style={{
-                              flex: 1,
-                              paddingVertical: 6,
-                              borderRadius: 10,
-                              backgroundColor: isDone ? '#10B981' : isCurr ? '#FF7A00' : '#F1F5F9',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                            }}
-                          >
-                            <Text style={{ fontSize: 10.5, fontWeight: '800', color: isDone || isCurr ? '#FFFFFF' : '#64748B' }}>
-                              D{d.dayNumber}
+                          <>
+                            <View
+                              style={{
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                marginBottom: 8,
+                              }}
+                            >
+                              <Text
+                                style={{
+                                  fontSize: 10.5,
+                                  fontWeight: '800',
+                                  color: '#FF7A00',
+                                  letterSpacing: 0.4,
+                                }}
+                              >
+                                {latestTestResult.streakState?.status === 'completed'
+                                  ? 'RUTA FINALIZADA CON ÉXITO'
+                                  : `DÍA ${curr.dayNumber} • ACTIVIDAD DE HOY`}
+                              </Text>
+                              <Text style={{ fontSize: 11, color: '#64748B', fontWeight: '600' }}>
+                                {curr.dayName}
+                              </Text>
+                            </View>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
+                              <Text style={{ fontSize: 28, marginRight: 10 }}>{curr.task.emoji}</Text>
+                              <Text
+                                style={{
+                                  fontSize: 15,
+                                  fontWeight: '800',
+                                  color: '#0F172A',
+                                  flex: 1,
+                                }}
+                              >
+                                {curr.task.title}
+                              </Text>
+                            </View>
+                            <Text
+                              style={{
+                                fontSize: 12.5,
+                                color: '#475569',
+                                lineHeight: 18,
+                              }}
+                            >
+                              {curr.task.description}
                             </Text>
-                            <Text style={{ fontSize: 10, marginTop: 1 }}>
-                              {isDone ? '✓' : isCurr ? '🔥' : '•'}
-                            </Text>
-                          </View>
+                          </>
                         );
-                      })}
+                      })()}
                     </View>
                   )}
 
-                  {/* Current Day Task Box */}
+                  {/* SECCIÓN: MIS AVANCES (GRID DE 7 FOTOS) */}
                   {latestTestResult.streakState && (
-                    <View style={{ backgroundColor: '#FFF7ED', borderRadius: 12, padding: 10, borderWidth: 1, borderColor: '#FFEDD5', marginBottom: 12 }}>
-                      <Text style={{ fontSize: 10.5, fontWeight: '800', color: '#EA580C', marginBottom: 2 }}>
-                        {latestTestResult.streakState.status === 'completed'
-                          ? '🎉 ¡Completaste tus 7 días!'
-                          : `RETO DEL DÍA ${latestTestResult.streakState.currentDayNumber}:`}
-                      </Text>
-                      <Text style={{ fontSize: 12.5, fontWeight: '700', color: colors.coffeeDark }}>
-                        {(() => {
-                          const curr =
-                            latestTestResult.streakState.days.find(
-                              (x) => x.dayNumber === latestTestResult.streakState?.currentDayNumber
-                            ) || latestTestResult.streakState.days[0];
-                          return `${curr.task.emoji} ${curr.task.title}`;
-                        })()}
-                      </Text>
+                    <View style={{ marginBottom: 16 }}>
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          marginBottom: 10,
+                        }}
+                      >
+                        <Text style={{ fontSize: 13, fontWeight: '800', color: '#0F172A' }}>
+                          Mis Avances (7 Días)
+                        </Text>
+                        <Text style={{ fontSize: 11, fontWeight: '700', color: '#64748B' }}>
+                          {latestTestResult.streakState.days.filter((d) => Boolean(d.evidenceImageUrl)).length} / 7 fotos
+                        </Text>
+                      </View>
+
+                      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                        {latestTestResult.streakState.days.map((d) => {
+                          const hasPhoto = Boolean(d.evidenceImageUrl);
+                          const isCurr =
+                            d.dayNumber === latestTestResult.streakState?.currentDayNumber &&
+                            latestTestResult.streakState?.status !== 'completed';
+                          return (
+                            <TouchableOpacity
+                              key={d.dayNumber}
+                              activeOpacity={0.85}
+                              onPress={() => {
+                                setTestModalMode('result');
+                                setIsTestModalOpen(true);
+                              }}
+                              style={{
+                                width: '23%',
+                                aspectRatio: 1,
+                                borderRadius: 12,
+                                backgroundColor: '#F8FAFC',
+                                borderWidth: isCurr ? 1.5 : 1,
+                                borderColor: hasPhoto || isCurr ? '#FF7A00' : '#E2E8F0',
+                                overflow: 'hidden',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                position: 'relative',
+                              }}
+                            >
+                              {hasPhoto && d.evidenceImageUrl ? (
+                                <>
+                                  <Image
+                                    source={{ uri: d.evidenceImageUrl }}
+                                    style={{ width: '100%', height: '100%' }}
+                                    resizeMode="cover"
+                                  />
+                                  <View
+                                    style={{
+                                      position: 'absolute',
+                                      bottom: 4,
+                                      left: 4,
+                                      backgroundColor: 'rgba(15,23,42,0.75)',
+                                      paddingHorizontal: 5,
+                                      paddingVertical: 1.5,
+                                      borderRadius: 5,
+                                    }}
+                                  >
+                                    <Text style={{ fontSize: 9, fontWeight: '800', color: '#FFFFFF' }}>
+                                      Día {d.dayNumber}
+                                    </Text>
+                                  </View>
+                                </>
+                              ) : (
+                                <View style={{ alignItems: 'center', justifyContent: 'center', padding: 4 }}>
+                                  <Ionicons
+                                    name={isCurr ? 'camera-outline' : 'image-outline'}
+                                    size={18}
+                                    color={isCurr ? '#FF7A00' : '#94A3B8'}
+                                  />
+                                  <Text
+                                    style={{
+                                      fontSize: 9.5,
+                                      fontWeight: '800',
+                                      color: isCurr ? '#FF7A00' : '#64748B',
+                                      marginTop: 3,
+                                    }}
+                                  >
+                                    Día {d.dayNumber}
+                                  </Text>
+                                </View>
+                              )}
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </View>
                     </View>
                   )}
 
-                  {/* 2 Separated Distinct Buttons */}
+                  {/* Botones de Acción (Blanco, Gris Claro y Naranja) */}
                   <View style={styles.profileTestActionsRow}>
                     <TouchableOpacity
                       style={[styles.profileViewResultBtn, { backgroundColor: '#FF7A00' }]}
@@ -744,35 +983,41 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                         setIsTestModalOpen(true);
                       }}
                     >
-                      <Ionicons name="flame" size={15} color={colors.white} style={{ marginRight: 5 }} />
+                      <Ionicons name="camera-outline" size={16} color={colors.white} style={{ marginRight: 6 }} />
                       <Text style={styles.profileViewResultBtnText}>
-                        {latestTestResult.streakState?.isActive
-                          ? 'Abrir mi Racha y Subir Foto'
-                          : 'Activar mi Racha de 7 Días'}
+                        Subir Foto y Publicar Avance
                       </Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
-                      style={styles.profileRetakeBtn}
+                      style={[
+                        styles.profileRetakeBtn,
+                        { backgroundColor: '#F8FAFC', borderColor: '#E2E8F0' },
+                      ]}
                       activeOpacity={0.85}
                       onPress={() => {
                         setTestModalMode('questionnaire');
                         setIsTestModalOpen(true);
                       }}
                     >
-                      <Ionicons name="refresh-outline" size={14} color={colors.coffeeDark} style={{ marginRight: 5 }} />
-                      <Text style={styles.profileRetakeBtnText}>Nuevo test</Text>
+                      <Ionicons name="refresh-outline" size={14} color="#475569" style={{ marginRight: 5 }} />
+                      <Text style={[styles.profileRetakeBtnText, { color: '#475569' }]}>Nuevo test</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
               ) : (
-                <View style={styles.profileNoTestContainer}>
-                  <View style={[styles.profileNoTestIconCircle, { backgroundColor: '#FFF7ED' }]}>
-                    <Text style={{ fontSize: 30 }}>🔥</Text>
-                  </View>
-                  <Text style={styles.profileNoTestTitle}>Inicia tu Racha de 7 Días con ANIMA</Text>
-                  <Text style={styles.profileNoTestSubtitle}>
-                    Responde unas breves preguntas para que ANIMA te acompañe con retos diarios sencillos, fotos de avance y desbloquees tus insignias.
+                <View
+                  style={[
+                    styles.profileNoTestContainer,
+                    { backgroundColor: '#FFFFFF', borderColor: '#E2E8F0', borderWidth: 1 },
+                  ]}
+                >
+                  <Text style={{ fontSize: 36, marginBottom: 8 }}>🔥</Text>
+                  <Text style={[styles.profileNoTestTitle, { color: '#0F172A' }]}>
+                    Comienza tu Ruta de 7 Días con ANIMA
+                  </Text>
+                  <Text style={[styles.profileNoTestSubtitle, { color: '#64748B' }]}>
+                    Responde el test interactivo para recibir tu plan personalizado de 7 días, registrar tus avances en fotos y desbloquear tus 4 insignias.
                   </Text>
                   <TouchableOpacity
                     style={[styles.profileStartTestBtn, { backgroundColor: '#FF7A00' }]}
@@ -783,7 +1028,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                     }}
                   >
                     <Ionicons name="flame" size={17} color={colors.white} style={{ marginRight: 6 }} />
-                    <Text style={styles.profileStartTestBtnText}>Comenzar Test y Racha de 7 Días</Text>
+                    <Text style={styles.profileStartTestBtnText}>Comenzar Test y Ruta de 7 Días</Text>
                   </TouchableOpacity>
                 </View>
               )}
@@ -930,6 +1175,10 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           initialResult={latestTestResult}
           startMode={testModalMode}
           onClose={() => setIsTestModalOpen(false)}
+          onNavigateToProfile={() => {
+            setSelectedTab(null);
+            setIsTestModalOpen(false);
+          }}
           onOpenPsychologists={() => {
             onClose();
             if (onOpenPsychologists) onOpenPsychologists();

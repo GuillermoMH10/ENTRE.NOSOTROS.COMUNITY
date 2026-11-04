@@ -238,9 +238,9 @@ export const acceptEmotionalStreak = async (
   const saved = await saveLatestTestResult(updatedResult, userId);
 
   showAnimaToast({
-    title: '¡Racha de 7 Días Activada! 🔥',
+    title: '¡Ruta de 7 Días Activada! 🔥',
     message:
-      '¡Qué alegría acompañarte! Tu racha ya brilla en tu Perfil, Principal y en tu barra de navegación. ¡Vamos por el Día 1!',
+      'Tu racha de 7 días ya está lista en tu Perfil y en tu barra de navegación. ¡Comencemos con el Día 1!',
     emoji: '🔥',
     accentColor: '#FF7A00',
   });
@@ -542,8 +542,8 @@ export const startNextSevenDayStreak = async (
   const saved = await saveLatestTestResult(updatedResult, userId);
 
   showAnimaToast({
-    title: '¡Nueva Racha de 7 Días en marcha! 🔥',
-    message: 'Se sortearon 7 nuevos retos sencillos para ti. ¡Vamos por tu siguiente insignia!',
+    title: '¡Nueva Ruta de 7 Días en marcha! 🔥',
+    message: 'Se prepararon 7 nuevos desafíos interactivos para ti. ¡Vamos por tu siguiente insignia!',
     emoji: '🔥',
     accentColor: '#FF7A00',
   });
