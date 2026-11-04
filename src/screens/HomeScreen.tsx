@@ -532,10 +532,6 @@ export const HomeScreen: React.FC = () => {
           initialResult={homeTestResult}
           startMode={homeTestResult ? 'result' : 'questionnaire'}
           onClose={() => setIsStreakModalOpen(false)}
-          onNavigateToProfile={() => {
-            setIsStreakModalOpen(false);
-            setIsProfileOpen(true);
-          }}
           onOpenPsychologists={() => {
             setIsStreakModalOpen(false);
             handleOpenPsychologists();

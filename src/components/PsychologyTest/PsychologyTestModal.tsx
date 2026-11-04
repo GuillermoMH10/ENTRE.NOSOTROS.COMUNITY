@@ -177,16 +177,14 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
       // Single clean ANIMA Toast
       showAnimaToast({
         title: '¡Ruta de 7 Días Activada!',
-        message: 'Tu racha e insignias ya están listas en tu Perfil. ¡Comencemos con el Día 1!',
+        message: 'Bienvenido a tu pantalla de Racha. ¡Comencemos con tu actividad del Día 1!',
         emoji: '🔥',
         accentColor: '#FF7A00',
       });
 
-      // Navigate directly to Profile where the streak & badges are showcased
+      // Stay on / navigate directly to the Racha screen
       if (onNavigateToProfile) {
         onNavigateToProfile();
-      } else {
-        onClose();
       }
     }, 450);
   };
@@ -785,35 +783,31 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
             <View
               style={[
                 styles.cleanWhiteCard,
-                { paddingVertical: 13, paddingHorizontal: 14, marginBottom: 14 },
+                { paddingVertical: 14, paddingHorizontal: 15, marginBottom: 14 },
               ]}
             >
-              {/* Compact Top Header + Title in one sleek block */}
+              {/* Top Row: Day Pill Badge well separated from the Title below */}
               <View
                 style={{
                   flexDirection: 'row',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  marginBottom: 8,
+                  marginBottom: 12,
                 }}
               >
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
-                  <Text style={{ fontSize: 24 }}>{activeDayObj.task.emoji}</Text>
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 10.5, fontWeight: '800', color: '#FF7A00' }}>
-                      {activeDayObj.dayName}
-                    </Text>
-                    <Text
-                      style={{
-                        fontSize: 14.5,
-                        fontWeight: '800',
-                        color: '#0F172A',
-                        lineHeight: 19,
-                      }}
-                    >
-                      {activeDayObj.task.title}
-                    </Text>
-                  </View>
+                <View
+                  style={{
+                    backgroundColor: '#FFF7ED',
+                    paddingHorizontal: 10,
+                    paddingVertical: 4,
+                    borderRadius: 8,
+                    borderWidth: 1,
+                    borderColor: '#FFEDD5',
+                  }}
+                >
+                  <Text style={{ fontSize: 11, fontWeight: '800', color: '#FF7A00' }}>
+                    {activeDayObj.dayName}
+                  </Text>
                 </View>
 
                 {activeDayObj.status === 'completed' ? (
@@ -827,6 +821,29 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
                     <Text style={styles.completedGrayTagText}>Recorrido</Text>
                   </View>
                 ) : null}
+              </View>
+
+              {/* Separated Activity Title Row */}
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 10,
+                  marginBottom: 10,
+                }}
+              >
+                <Text style={{ fontSize: 26 }}>{activeDayObj.task.emoji}</Text>
+                <Text
+                  style={{
+                    flex: 1,
+                    fontSize: 15.5,
+                    fontWeight: '800',
+                    color: '#0F172A',
+                    lineHeight: 21,
+                  }}
+                >
+                  {activeDayObj.task.title}
+                </Text>
               </View>
 
               {/* Compact Description */}
@@ -974,17 +991,16 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
                     />
                   </View>
 
-                  {/* Compact Action Row: Primary Publish Button + Subtle Postpone Button */}
-                  <View style={{ flexDirection: 'row', gap: 8 }}>
+                  {/* Stacked Action Buttons: Primary Publish on top + Warm Postpone Button below */}
+                  <View style={{ gap: 8 }}>
                     <TouchableOpacity
                       style={{
-                        flex: 1,
                         flexDirection: 'row',
                         alignItems: 'center',
                         justifyContent: 'center',
                         backgroundColor: '#FF7A00',
-                        paddingVertical: 10,
-                        paddingHorizontal: 12,
+                        paddingVertical: 11,
+                        paddingHorizontal: 14,
                         borderRadius: 11,
                       }}
                       onPress={handleCompleteDay}
@@ -995,8 +1011,8 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
                         <ActivityIndicator size="small" color="#FFFFFF" />
                       ) : (
                         <>
-                          <Ionicons name="checkmark-circle" size={15} color="#FFFFFF" style={{ marginRight: 6 }} />
-                          <Text style={{ color: '#FFFFFF', fontSize: 12.5, fontWeight: '800' }}>
+                          <Ionicons name="checkmark-circle" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
+                          <Text style={{ color: '#FFFFFF', fontSize: 13, fontWeight: '800' }}>
                             Publicar Día {activeDayObj.dayNumber}
                           </Text>
                         </>
@@ -1010,7 +1026,7 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
                         justifyContent: 'center',
                         backgroundColor: '#F8FAFC',
                         paddingVertical: 10,
-                        paddingHorizontal: 11,
+                        paddingHorizontal: 12,
                         borderRadius: 11,
                         borderWidth: 1,
                         borderColor: '#E2E8F0',
@@ -1018,9 +1034,9 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
                       onPress={handlePostponeDay}
                       activeOpacity={0.75}
                     >
-                      <Ionicons name="time-outline" size={14} color="#64748B" style={{ marginRight: 4 }} />
-                      <Text style={{ fontSize: 11.5, fontWeight: '700', color: '#475569' }}>
-                        Recorrer día
+                      <Ionicons name="heart-outline" size={14} color="#FF7A00" style={{ marginRight: 6 }} />
+                      <Text style={{ fontSize: 11.5, fontWeight: '700', color: '#475569', textAlign: 'center' }}>
+                        Hoy no me sentí bien para hacerlo • Recorrer día y recibir ánimo
                       </Text>
                     </TouchableOpacity>
                   </View>

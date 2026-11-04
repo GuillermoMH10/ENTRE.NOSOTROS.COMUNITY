@@ -54,6 +54,7 @@ interface ProfileScreenProps {
   onRequireAuth?: () => void;
   onOpenPsychologists?: () => void;
   onOpenCreatePost?: () => void;
+  onOpenRacha?: () => void;
   embedded?: boolean;
 }
 
@@ -67,6 +68,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   onRequireAuth,
   onOpenPsychologists,
   onOpenCreatePost,
+  onOpenRacha,
   embedded = false,
 }) => {
   const { user, logout, updateUserProfile } = useAuth();
@@ -842,12 +844,20 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                               style={{
                                 flexDirection: 'row',
                                 alignItems: 'center',
-                                gap: 8,
-                                marginBottom: 4,
+                                justifyContent: 'space-between',
+                                marginBottom: 8,
                               }}
                             >
-                              <Text style={{ fontSize: 22 }}>{curr.task.emoji}</Text>
-                              <View style={{ flex: 1 }}>
+                              <View
+                                style={{
+                                  backgroundColor: '#FFF7ED',
+                                  paddingHorizontal: 9,
+                                  paddingVertical: 3.5,
+                                  borderRadius: 7,
+                                  borderWidth: 1,
+                                  borderColor: '#FFEDD5',
+                                }}
+                              >
                                 <Text
                                   style={{
                                     fontSize: 10,
@@ -857,22 +867,12 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                                 >
                                   {curr.dayName}
                                 </Text>
-                                <Text
-                                  style={{
-                                    fontSize: 13.5,
-                                    fontWeight: '800',
-                                    color: '#0F172A',
-                                  }}
-                                  numberOfLines={1}
-                                >
-                                  {curr.task.title}
-                                </Text>
                               </View>
                               <View
                                 style={{
                                   backgroundColor: '#FF7A00',
                                   paddingHorizontal: 9,
-                                  paddingVertical: 5,
+                                  paddingVertical: 4,
                                   borderRadius: 8,
                                 }}
                               >
@@ -880,6 +880,27 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                                   Registrar
                                 </Text>
                               </View>
+                            </View>
+                            <View
+                              style={{
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                gap: 8,
+                                marginBottom: 6,
+                              }}
+                            >
+                              <Text style={{ fontSize: 22 }}>{curr.task.emoji}</Text>
+                              <Text
+                                style={{
+                                  flex: 1,
+                                  fontSize: 14,
+                                  fontWeight: '800',
+                                  color: '#0F172A',
+                                }}
+                                numberOfLines={1}
+                              >
+                                {curr.task.title}
+                              </Text>
                             </View>
                             <Text
                               style={{
@@ -1209,8 +1230,10 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           startMode={testModalMode}
           onClose={() => setIsTestModalOpen(false)}
           onNavigateToProfile={() => {
-            setSelectedTab(null);
-            setIsTestModalOpen(false);
+            if (onOpenRacha) {
+              setIsTestModalOpen(false);
+              onOpenRacha();
+            }
           }}
           onOpenPsychologists={() => {
             onClose();

@@ -569,7 +569,7 @@ export const DesktopWebLayout: React.FC<DesktopWebLayoutProps> = ({
                   initialResult={userTestResult}
                   startMode={userTestResult ? 'result' : 'questionnaire'}
                   onClose={() => setActiveSection('principal')}
-                  onNavigateToProfile={() => setActiveSection('perfil')}
+                  onNavigateToProfile={() => setActiveSection('racha')}
                   onOpenPsychologists={() => setActiveSection('psicologos')}
                   onOpenCreatePost={onOpenCreatePost}
                   onRequireAuth={onRequireAuth}
@@ -633,6 +633,7 @@ export const DesktopWebLayout: React.FC<DesktopWebLayoutProps> = ({
                   onRequireAuth={onRequireAuth}
                   onOpenPsychologists={() => setActiveSection('psicologos')}
                   onOpenCreatePost={onOpenCreatePost}
+                  onOpenRacha={() => setActiveSection('racha')}
                   embedded={true}
                 />
               )}
