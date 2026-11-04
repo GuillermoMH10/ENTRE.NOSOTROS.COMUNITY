@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { doc, setDoc, getDoc, onSnapshot } from 'firebase/firestore';
+import { doc, setDoc, getDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
 import { db } from './firebase';
 import { TestResult, EmotionalStreakState } from '../types/psychologyTest';
 import {
@@ -76,14 +76,36 @@ export const normalizeTestResultWithStreak = (
 };
 
 /**
- * Saves test result strictly in the user's isolated local key and their Firestore profile
+ * Actively purges any legacy local storage keys so NOTHING is ever stored or read locally.
+ * All test and streak state lives 100% in Firestore collection: `streaks/{userId}`
+ */
+const purgeAllLocalTestKeys = async (userId?: string | null) => {
+  try {
+    const keysToRemove = [
+      LEGACY_STORAGE_KEY,
+      '@entre_nosotros_test_result_guest_session',
+    ];
+    if (userId && userId !== 'anonymous') {
+      keysToRemove.push(`@entre_nosotros_test_result_user_${userId.trim()}`);
+    }
+    await AsyncStorage.multiRemove(keysToRemove).catch(() => {});
+  } catch (e) {}
+};
+
+// Purge legacy keys on load
+purgeAllLocalTestKeys().catch(() => {});
+
+/**
+ * Saves test & streak result EXCLUSIVELY in Firestore top-level collection `streaks/{userId}`
+ * (No local AsyncStorage persistence).
  */
 export const saveLatestTestResult = async (
   result: TestResult,
   userId?: string
 ): Promise<TestResult> => {
   const cleanUserId = userId && userId !== 'anonymous' ? userId.trim() : undefined;
-  const storageKey = getUserStorageKey(cleanUserId);
+  await purgeAllLocalTestKeys(cleanUserId);
+
   const enrichedResult = normalizeTestResultWithStreak(
     {
       ...result,
@@ -93,86 +115,65 @@ export const saveLatestTestResult = async (
   );
 
   try {
-    await AsyncStorage.setItem(storageKey, JSON.stringify(enrichedResult));
-    await AsyncStorage.removeItem(LEGACY_STORAGE_KEY).catch(() => {});
-
     notifyResultListeners(enrichedResult);
 
     if (cleanUserId) {
-      const userTestRef = doc(db, 'users', cleanUserId, 'psychologyData', 'latestTest');
-      await setDoc(
-        userTestRef,
-        {
-          ...enrichedResult,
-          syncedAt: new Date().toISOString(),
-        },
-        { merge: true }
-      );
+      // Save in top-level collection `streaks/{userId}` so it is immediately visible in Firebase Console
+      const streakRef = doc(db, 'streaks', cleanUserId);
+      await setDoc(streakRef, {
+        ...enrichedResult,
+        syncedAt: new Date().toISOString(),
+      });
+
+      // Also clean up old hidden subcollection if it existed previously
+      const legacySubRef = doc(db, 'users', cleanUserId, 'psychologyData', 'latestTest');
+      await deleteDoc(legacySubRef).catch(() => {});
     }
   } catch (error) {
-    console.warn('Error saving latest test result:', error);
+    console.warn('Error saving latest test result to Firestore:', error);
   }
 
   return enrichedResult;
 };
 
 /**
- * Retrieves the latest test result ensuring 100% strict user session isolation.
+ * Retrieves the latest test & streak result EXCLUSIVELY from Firestore `streaks/{userId}`.
+ * Never reads from local AsyncStorage.
  */
 export const getLatestTestResult = async (userId?: string): Promise<TestResult | null> => {
   try {
     const cleanUserId = userId && userId !== 'anonymous' ? userId.trim() : undefined;
+    await purgeAllLocalTestKeys(cleanUserId);
 
-    if (cleanUserId) {
-      const userStorageKey = getUserStorageKey(cleanUserId);
-
-      try {
-        const userTestRef = doc(db, 'users', cleanUserId, 'psychologyData', 'latestTest');
-        const snap = await getDoc(userTestRef);
-        if (snap.exists()) {
-          const data = snap.data() as TestResult;
-          if (!data.userId || data.userId === cleanUserId) {
-            const validResult = normalizeTestResultWithStreak(
-              { ...data, userId: cleanUserId },
-              cleanUserId
-            );
-            await AsyncStorage.setItem(userStorageKey, JSON.stringify(validResult));
-            return validResult;
-          }
-        }
-      } catch (firestoreErr) {
-        console.warn('Error fetching user test from Firestore, checking local cache:', firestoreErr);
-      }
-
-      const userLocalData = await AsyncStorage.getItem(userStorageKey);
-      if (userLocalData) {
-        const parsed = JSON.parse(userLocalData) as TestResult;
-        if (!parsed.userId || parsed.userId === cleanUserId) {
-          return normalizeTestResultWithStreak({ ...parsed, userId: cleanUserId }, cleanUserId);
-        }
-      }
-
+    if (!cleanUserId) {
       return null;
     }
 
-    const guestStorageKey = getUserStorageKey(null);
-    const guestData = await AsyncStorage.getItem(guestStorageKey);
-    if (guestData) {
-      const parsed = JSON.parse(guestData) as TestResult;
-      if (!parsed.userId || parsed.userId === 'anonymous') {
-        return normalizeTestResultWithStreak(parsed);
-      }
+    // 1. Primary top-level Firestore collection: `streaks/{userId}`
+    const streakRef = doc(db, 'streaks', cleanUserId);
+    const snap = await getDoc(streakRef);
+    if (snap.exists()) {
+      const data = snap.data() as TestResult;
+      return normalizeTestResultWithStreak(
+        { ...data, userId: cleanUserId },
+        cleanUserId
+      );
     }
+
+    // 2. One-time migration cleanup: if an older subcollection doc exists at `users/{userId}/psychologyData/latestTest`, delete it so resetting in Firestore is 100% clean
+    const legacySubRef = doc(db, 'users', cleanUserId, 'psychologyData', 'latestTest');
+    await deleteDoc(legacySubRef).catch(() => {});
 
     return null;
   } catch (error) {
-    console.warn('Error retrieving latest test result:', error);
+    console.warn('Error retrieving latest test result from Firestore:', error);
     return null;
   }
 };
 
 /**
- * Real-time subscription to the user's test result and active streak
+ * Real-time subscription to Firestore `streaks/{userId}`.
+ * If the document is deleted in Firestore Console, `snap.exists()` is false and the app resets to null immediately!
  */
 export const subscribeToUserTestAndStreak = (
   userId: string | undefined,
@@ -183,38 +184,67 @@ export const subscribeToUserTestAndStreak = (
   };
   resultListeners.add(localHandler);
 
-  // Initial load
-  getLatestTestResult(userId).then((res) => callback(res));
-
   const cleanUserId = userId && userId !== 'anonymous' ? userId.trim() : undefined;
+  purgeAllLocalTestKeys(cleanUserId).catch(() => {});
+
+  if (!cleanUserId) {
+    callback(null);
+    return () => {
+      resultListeners.delete(localHandler);
+    };
+  }
+
+  // Delete legacy hidden subcollection if present
+  const legacySubRef = doc(db, 'users', cleanUserId, 'psychologyData', 'latestTest');
+  deleteDoc(legacySubRef).catch(() => {});
+
   let unsubscribeFirestore: (() => void) | null = null;
 
-  if (cleanUserId) {
-    try {
-      const userTestRef = doc(db, 'users', cleanUserId, 'psychologyData', 'latestTest');
-      unsubscribeFirestore = onSnapshot(
-        userTestRef,
-        (snap) => {
-          if (snap.exists()) {
-            const data = snap.data() as TestResult;
-            if (!data.userId || data.userId === cleanUserId) {
-              const normalized = normalizeTestResultWithStreak(
-                { ...data, userId: cleanUserId },
-                cleanUserId
-              );
-              callback(normalized);
-            }
-          }
-        },
-        () => {}
-      );
-    } catch (e) {}
+  try {
+    const streakRef = doc(db, 'streaks', cleanUserId);
+    unsubscribeFirestore = onSnapshot(
+      streakRef,
+      (snap) => {
+        if (snap.exists()) {
+          const data = snap.data() as TestResult;
+          const normalized = normalizeTestResultWithStreak(
+            { ...data, userId: cleanUserId },
+            cleanUserId
+          );
+          callback(normalized);
+        } else {
+          // Document was deleted in Firestore or doesn't exist -> reset UI immediately
+          callback(null);
+        }
+      },
+      () => {
+        callback(null);
+      }
+    );
+  } catch (e) {
+    callback(null);
   }
 
   return () => {
     resultListeners.delete(localHandler);
     if (unsubscribeFirestore) unsubscribeFirestore();
   };
+};
+
+/**
+ * Deletes the user's streak and test document directly from Firestore (`streaks/{userId}`)
+ */
+export const resetUserStreakInDatabase = async (userId?: string): Promise<void> => {
+  const cleanUserId = userId && userId !== 'anonymous' ? userId.trim() : undefined;
+  await purgeAllLocalTestKeys(cleanUserId);
+  notifyResultListeners(null);
+
+  if (cleanUserId) {
+    const streakRef = doc(db, 'streaks', cleanUserId);
+    await deleteDoc(streakRef).catch(() => {});
+    const legacySubRef = doc(db, 'users', cleanUserId, 'psychologyData', 'latestTest');
+    await deleteDoc(legacySubRef).catch(() => {});
+  }
 };
 
 /**
