@@ -48,6 +48,9 @@ export const PostMediaView: React.FC<PostMediaViewProps> = ({
 
   // Track dynamic aspect ratio for single image
   const [singleAspectRatio, setSingleAspectRatio] = useState<number>(4 / 3);
+  const [containerWidth, setContainerWidth] = useState<number>(
+    Math.min(SCREEN_WIDTH - 32, 620)
+  );
 
   // Single video playback states
   const [isPlaying, setIsPlaying] = useState(false);
@@ -155,35 +158,71 @@ export const PostMediaView: React.FC<PostMediaViewProps> = ({
       );
     }
 
-    // Single Image
+    // Single Image:
+    // - Horizontal / Square (aspectRatio >= 1): full width at real aspect ratio
+    // - Vertical / Portrait (aspectRatio < 1): compact grid-column size adjusted to its exact real aspect ratio
+    const isVertical = singleAspectRatio < 0.98;
+    let verticalBoxStyle: { width: number; height: number } | null = null;
+
+    if (isVertical && containerWidth > 0) {
+      const maxGridColWidth = Math.min(containerWidth * 0.49, 275);
+      const maxGridColHeight = 340;
+      let w = maxGridColWidth;
+      let h = w / singleAspectRatio;
+      if (h > maxGridColHeight) {
+        h = maxGridColHeight;
+        w = h * singleAspectRatio;
+      }
+      verticalBoxStyle = {
+        width: Math.round(w),
+        height: Math.round(h),
+      };
+    }
+
     return (
-      <TouchableOpacity
-        style={[
-          styles.singleContainer,
-          {
-            aspectRatio: singleAspectRatio,
-            minHeight: MIN_SINGLE_MEDIA_HEIGHT,
-          },
-        ]}
-        activeOpacity={0.92}
-        onPress={() => onMediaPress(0)}
+      <View
+        style={styles.singleMediaRowWrapper}
+        onLayout={(e) => {
+          const w = e.nativeEvent.layout.width;
+          if (w > 0 && Math.abs(w - containerWidth) > 2) {
+            setContainerWidth(w);
+          }
+        }}
       >
-        <Image
-          source={{ uri: url }}
-          style={styles.mediaFill}
-          resizeMode="cover"
-          onLoad={(e) => {
-            const src = e?.nativeEvent?.source;
-            const target = (e?.nativeEvent as any)?.target;
-            const w = src?.width || target?.naturalWidth;
-            const h = src?.height || target?.naturalHeight;
-            if (w && h && w > 0 && h > 0) {
-              const ratio = w / h;
-              setSingleAspectRatio(Math.max(0.55, Math.min(ratio, 2.4)));
-            }
-          }}
-        />
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={[
+            styles.singleContainer,
+            isVertical && verticalBoxStyle
+              ? {
+                  width: verticalBoxStyle.width,
+                  height: verticalBoxStyle.height,
+                }
+              : {
+                  width: '100%',
+                  aspectRatio: singleAspectRatio,
+                  minHeight: MIN_SINGLE_MEDIA_HEIGHT,
+                },
+          ]}
+          activeOpacity={0.92}
+          onPress={() => onMediaPress(0)}
+        >
+          <Image
+            source={{ uri: url }}
+            style={styles.mediaFill}
+            resizeMode="cover"
+            onLoad={(e) => {
+              const src = e?.nativeEvent?.source;
+              const target = (e?.nativeEvent as any)?.target;
+              const w = src?.width || target?.naturalWidth;
+              const h = src?.height || target?.naturalHeight;
+              if (w && h && w > 0 && h > 0) {
+                const ratio = w / h;
+                setSingleAspectRatio(Math.max(0.45, Math.min(ratio, 2.4)));
+              }
+            }}
+          />
+        </TouchableOpacity>
+      </View>
     );
   }
 
@@ -300,36 +339,41 @@ export const PostMediaView: React.FC<PostMediaViewProps> = ({
 };
 
 const styles = StyleSheet.create({
+  singleMediaRowWrapper: {
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+  },
   singleContainer: {
     width: '100%',
     borderRadius: 14,
     overflow: 'hidden',
-    backgroundColor: '#000000',
+    backgroundColor: colors.surface,
     marginTop: 8,
     marginBottom: 4,
   },
   twoMediaContainer: {
     flexDirection: 'row',
     width: '100%',
-    aspectRatio: 1.5,
-    minHeight: 240,
+    height: 260,
     borderRadius: 14,
     overflow: 'hidden',
     marginTop: 8,
     marginBottom: 4,
-    gap: 4,
+    gap: 6,
   },
   halfMediaWrapper: {
     flex: 1,
     height: '100%',
-    backgroundColor: '#1E1E1E',
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: colors.surface,
     position: 'relative',
   },
   threeMediaContainer: {
     flexDirection: 'row',
     width: '100%',
-    aspectRatio: 1.35,
-    minHeight: 280,
+    height: 280,
     borderRadius: 14,
     overflow: 'hidden',
     marginTop: 8,

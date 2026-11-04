@@ -20,6 +20,7 @@ export const MonthAwarenessPostCard: React.FC<MonthAwarenessPostCardProps> = ({
   const currentMonthIndex = new Date().getMonth();
   const currentMonth: MonthTheme = MONTHS_DATA[currentMonthIndex] || MONTHS_DATA[0];
   const [imageAspectRatio, setImageAspectRatio] = useState<number>(1.5);
+  const [containerWidth, setContainerWidth] = useState<number>(560);
 
   useEffect(() => {
     if (currentMonth.imageUrl) {
@@ -40,6 +41,23 @@ export const MonthAwarenessPostCard: React.FC<MonthAwarenessPostCardProps> = ({
       onOpenMonthDetail(currentMonthIndex);
     }
   };
+
+  const isVertical = imageAspectRatio < 0.98;
+  let verticalBoxStyle: { width: number; height: number } | null = null;
+  if (isVertical && containerWidth > 0) {
+    const maxGridColWidth = Math.min(containerWidth * 0.49, 275);
+    const maxGridColHeight = 340;
+    let w = maxGridColWidth;
+    let h = w / imageAspectRatio;
+    if (h > maxGridColHeight) {
+      h = maxGridColHeight;
+      w = h * imageAspectRatio;
+    }
+    verticalBoxStyle = {
+      width: Math.round(w),
+      height: Math.round(h),
+    };
+  }
 
   return (
     <View style={styles.outerContainer}>
@@ -95,26 +113,41 @@ export const MonthAwarenessPostCard: React.FC<MonthAwarenessPostCardProps> = ({
 
         {/* Commemoration Image */}
         {currentMonth.imageUrl ? (
-          <TouchableOpacity
-            activeOpacity={0.92}
-            onPress={handlePress}
-            style={[styles.imageWrapper, { aspectRatio: imageAspectRatio }]}
+          <View
+            style={{ width: '100%', flexDirection: 'row', justifyContent: 'flex-start' }}
+            onLayout={(e) => {
+              const w = e.nativeEvent.layout.width;
+              if (w > 0 && Math.abs(w - containerWidth) > 2) {
+                setContainerWidth(w);
+              }
+            }}
           >
-            <Image
-              source={{ uri: currentMonth.imageUrl }}
-              style={styles.postImage}
-              resizeMode="cover"
-              onLoad={(e) => {
-                const src = e?.nativeEvent?.source;
-                const target = (e?.nativeEvent as any)?.target;
-                const w = src?.width || target?.naturalWidth;
-                const h = src?.height || target?.naturalHeight;
-                if (w && h && w > 0 && h > 0) {
-                  setImageAspectRatio(w / h);
-                }
-              }}
-            />
-          </TouchableOpacity>
+            <TouchableOpacity
+              activeOpacity={0.92}
+              onPress={handlePress}
+              style={[
+                styles.imageWrapper,
+                isVertical && verticalBoxStyle
+                  ? { width: verticalBoxStyle.width, height: verticalBoxStyle.height }
+                  : { width: '100%', aspectRatio: imageAspectRatio },
+              ]}
+            >
+              <Image
+                source={{ uri: currentMonth.imageUrl }}
+                style={styles.postImage}
+                resizeMode="cover"
+                onLoad={(e) => {
+                  const src = e?.nativeEvent?.source;
+                  const target = (e?.nativeEvent as any)?.target;
+                  const w = src?.width || target?.naturalWidth;
+                  const h = src?.height || target?.naturalHeight;
+                  if (w && h && w > 0 && h > 0) {
+                    setImageAspectRatio(w / h);
+                  }
+                }}
+              />
+            </TouchableOpacity>
+          </View>
         ) : null}
 
         {/* Discreet Small Link: Conoce más sobre los meses */}
