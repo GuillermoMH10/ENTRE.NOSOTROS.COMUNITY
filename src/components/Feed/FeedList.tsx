@@ -14,6 +14,7 @@ import { PostCard } from './PostCard';
 import { DailyQuoteCard } from './DailyQuoteCard';
 import { MonthAwarenessPostCard } from './MonthAwarenessPostCard';
 import { DailyMoodCard } from './DailyMoodCard';
+import { ActiveStreakBannerCard } from './ActiveStreakBannerCard';
 import { WeeklyMoodTracker } from '../Profile/WeeklyMoodTracker';
 import { useAuth } from '../../context/AuthContext';
 import { subscribeToPosts, subscribeToUserFollowing } from '../../services/postsService';
@@ -28,6 +29,7 @@ interface FeedListProps {
   onUserPress?: (userId: string, username: string, avatarUrl: string) => void;
   onScrollDirectionChange?: (direction: 'up' | 'down') => void;
   onOpenMonthDetail?: (monthIndex: number) => void;
+  onOpenStreakModal?: () => void;
   contentPaddingTop?: number;
   contentPaddingBottom?: number;
 }
@@ -47,6 +49,7 @@ export const FeedList: React.FC<FeedListProps> = ({
   onUserPress,
   onScrollDirectionChange,
   onOpenMonthDetail,
+  onOpenStreakModal,
   contentPaddingTop = 56,
   contentPaddingBottom = 64,
 }) => {
@@ -209,7 +212,12 @@ export const FeedList: React.FC<FeedListProps> = ({
           />
         );
       }}
-      ListHeaderComponent={<DailyMoodCard />}
+      ListHeaderComponent={
+        <View>
+          <ActiveStreakBannerCard onOpenStreakModal={onOpenStreakModal} />
+          <DailyMoodCard />
+        </View>
+      }
       contentContainerStyle={[
         styles.listContent,
         { paddingTop: contentPaddingTop, paddingBottom: contentPaddingBottom },

@@ -1,11 +1,21 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
-
 import { AnimaMascot } from '../Anima/AnimaMascot';
+import { useAuth } from '../../context/AuthContext';
+import { subscribeToUserTestAndStreak } from '../../services/psychologyTestService';
+import { TestResult } from '../../types/psychologyTest';
 
-export type TabId = 'principal' | 'blog' | 'anima' | 'buscar' | 'crear' | 'ayuda' | 'mas';
+export type TabId =
+  | 'principal'
+  | 'blog'
+  | 'anima'
+  | 'racha'
+  | 'buscar'
+  | 'crear'
+  | 'ayuda'
+  | 'mas';
 
 interface TabItem {
   id: TabId;
@@ -13,17 +23,34 @@ interface TabItem {
   icon?: keyof typeof Ionicons.glyphMap;
   activeIcon?: keyof typeof Ionicons.glyphMap;
   isMascot?: boolean;
+  isStreak?: boolean;
 }
 
 interface BottomTabBarProps {
   activeTab?: TabId;
   onTabPress?: (tabId: TabId) => void;
+  onOpenStreakModal?: () => void;
 }
 
 export const BottomTabBar: React.FC<BottomTabBarProps> = ({
   activeTab = 'principal',
   onTabPress,
+  onOpenStreakModal,
 }) => {
+  const { user } = useAuth();
+  const [testResult, setTestResult] = useState<TestResult | null>(null);
+  const [streakPressedHighlight, setStreakPressedHighlight] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = subscribeToUserTestAndStreak(user?.id, (res) => {
+      setTestResult(res);
+    });
+    return () => unsubscribe();
+  }, [user?.id]);
+
+  const hasActiveStreak = Boolean(testResult?.streakState?.isActive);
+  const completedDays = testResult?.streakState?.completedDaysCount || 0;
+
   const tabs: TabItem[] = [
     {
       id: 'principal',
@@ -42,6 +69,17 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({
       label: 'Anima',
       isMascot: true,
     },
+    ...(hasActiveStreak
+      ? [
+          {
+            id: 'racha' as TabId,
+            label: `Racha ${completedDays}/7`,
+            icon: 'flame-outline' as const,
+            activeIcon: 'flame' as const,
+            isStreak: true,
+          },
+        ]
+      : []),
     {
       id: 'buscar',
       label: 'Buscar',
@@ -60,18 +98,48 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({
     <View style={styles.container}>
       <View style={styles.tabRow}>
         {tabs.map((tab) => {
-          const isCurrentActive = activeTab === tab.id;
+          const isCurrentActive = activeTab === tab.id || (tab.isStreak && streakPressedHighlight);
           return (
             <TouchableOpacity
               key={tab.id}
               style={styles.tabButton}
-              activeOpacity={0.7}
-              onPress={() => onTabPress && onTabPress(tab.id)}
+              activeOpacity={0.75}
+              onPress={() => {
+                if (tab.isStreak) {
+                  setStreakPressedHighlight(true);
+                  setTimeout(() => setStreakPressedHighlight(false), 900);
+                  if (onOpenStreakModal) {
+                    onOpenStreakModal();
+                  }
+                  return;
+                }
+                if (onTabPress) {
+                  onTabPress(tab.id);
+                }
+              }}
             >
               <View style={styles.iconContainer}>
                 {tab.isMascot ? (
-                  <View style={[styles.mascotTabWrapper, isCurrentActive && styles.mascotTabWrapperActive]}>
+                  <View
+                    style={[
+                      styles.mascotTabWrapper,
+                      isCurrentActive && styles.mascotTabWrapperActive,
+                    ]}
+                  >
                     <AnimaMascot size="sm" variant="profile" animated={false} />
+                  </View>
+                ) : tab.isStreak ? (
+                  <View
+                    style={[
+                      styles.streakTabPill,
+                      isCurrentActive && styles.streakTabPillActive,
+                    ]}
+                  >
+                    <Ionicons
+                      name="flame"
+                      size={18}
+                      color={isCurrentActive ? '#FFFFFF' : '#FF7A00'}
+                    />
                   </View>
                 ) : (
                   <Ionicons
@@ -85,7 +153,12 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({
                 style={[
                   styles.tabLabel,
                   isCurrentActive ? styles.tabLabelActive : styles.tabLabelInactive,
-                  tab.isMascot && isCurrentActive && { color: colors.coffeePrimary, fontWeight: '800' },
+                  tab.isMascot &&
+                    isCurrentActive && { color: colors.coffeePrimary, fontWeight: '800' },
+                  tab.isStreak && {
+                    color: '#FF7A00',
+                    fontWeight: '800',
+                  },
                 ]}
               >
                 {tab.label}
@@ -150,5 +223,24 @@ const styles = StyleSheet.create({
   },
   mascotTabWrapperActive: {
     backgroundColor: '#E1EAEF',
+  },
+  streakTabPill: {
+    width: 32,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#FFF7ED',
+    borderWidth: 1.5,
+    borderColor: '#FF7A00',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  streakTabPillActive: {
+    backgroundColor: '#FF7A00',
+    borderColor: '#EA580C',
+    shadowColor: '#FF7A00',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.35,
+    shadowRadius: 5,
+    elevation: 4,
   },
 });

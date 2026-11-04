@@ -35,7 +35,11 @@ import {
   subscribeToSavedPosts,
   subscribeToReactedPosts,
 } from '../services/postsService';
-import { getLatestTestResult } from '../services/psychologyTestService';
+import {
+  getLatestTestResult,
+  subscribeToUserTestAndStreak,
+} from '../services/psychologyTestService';
+import { OFFICIAL_STREAK_BADGES } from '../data/streakChallengesData';
 import { TestResult } from '../types/psychologyTest';
 import { PsychologyTestModal } from '../components/PsychologyTest/PsychologyTestModal';
 import { WeeklyMoodTracker } from '../components/Profile/WeeklyMoodTracker';
@@ -124,13 +128,13 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     return () => unsubscribe();
   }, [visible, user?.id]);
 
-  // Fetch latest psychology test result strictly for this user
+  // Subscribe to latest psychology test & streak state strictly for this user
   useEffect(() => {
     if (visible && user?.id) {
-      setLatestTestResult(null);
-      getLatestTestResult(user.id).then((res) => {
+      const unsubscribe = subscribeToUserTestAndStreak(user.id, (res) => {
         setLatestTestResult(res || null);
       });
+      return () => unsubscribe();
     } else {
       setLatestTestResult(null);
     }
@@ -580,16 +584,96 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           {/* Tab Content Rendering */}
           {selectedTab === null ? (
             <>
+              {/* 1. VITRINA DE MIS 4 INSIGNIAS Y NIVEL */}
+              <View style={styles.profileTestCard}>
+                <View style={styles.profileTestHeader}>
+                  <View style={styles.profileTestTitleRow}>
+                    <Ionicons name="ribbon" size={18} color="#FF7A00" style={{ marginRight: 6 }} />
+                    <Text style={styles.profileTestMainTitle}>Mis Insignias y Nivel</Text>
+                  </View>
+                  <View style={{ backgroundColor: '#FFF7ED', paddingHorizontal: 9, paddingVertical: 3, borderRadius: 10, borderWidth: 1, borderColor: '#FDBA74' }}>
+                    <Text style={{ fontSize: 11, fontWeight: '800', color: '#EA580C' }}>
+                      {(latestTestResult?.unlockedBadges?.length || 0)} / 4 Desbloqueadas
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
+                  {OFFICIAL_STREAK_BADGES.map((badge) => {
+                    const isUnlocked = Boolean(latestTestResult?.unlockedBadges?.includes(badge.id));
+                    const isTarget = latestTestResult?.streakState?.targetBadgeId === badge.id;
+                    return (
+                      <View
+                        key={badge.id}
+                        style={{
+                          width: '48.2%',
+                          backgroundColor: isUnlocked ? badge.softBg : '#F8FAFC',
+                          borderRadius: 14,
+                          padding: 10,
+                          borderWidth: isUnlocked || isTarget ? 1.5 : 1,
+                          borderColor: isUnlocked
+                            ? badge.borderColor
+                            : isTarget
+                            ? '#FF7A00'
+                            : colors.borderLight,
+                        }}
+                      >
+                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                          <Text style={{ fontSize: 22, opacity: isUnlocked || isTarget ? 1 : 0.4 }}>
+                            {badge.emoji}
+                          </Text>
+                          <View
+                            style={{
+                              backgroundColor: isUnlocked ? badge.color : isTarget ? '#FF7A00' : '#E2E8F0',
+                              paddingHorizontal: 7,
+                              paddingVertical: 2,
+                              borderRadius: 7,
+                            }}
+                          >
+                            <Text style={{ fontSize: 9.5, fontWeight: '800', color: isUnlocked || isTarget ? '#FFFFFF' : '#64748B' }}>
+                              Nivel {badge.level}
+                            </Text>
+                          </View>
+                        </View>
+                        <Text style={{ fontSize: 12.5, fontWeight: '800', color: colors.coffeeDark }} numberOfLines={1}>
+                          {badge.name}
+                        </Text>
+                        <Text style={{ fontSize: 10.5, color: isUnlocked ? badge.color : colors.textSecondary, fontWeight: isUnlocked ? '700' : '500', marginTop: 2 }} numberOfLines={2}>
+                          {isUnlocked
+                            ? '✓ Insignia conseguida'
+                            : isTarget
+                            ? '🔥 Meta de tu racha actual'
+                            : badge.subtitle}
+                        </Text>
+                      </View>
+                    );
+                  })}
+                </View>
+              </View>
+
+              {/* 2. TARJETA DE MI RACHA DE 7 DÍAS Y RUTA EMOCIONAL */}
               {latestTestResult ? (
-                <View style={styles.profileTestCard}>
+                <View style={[styles.profileTestCard, { borderColor: latestTestResult.streakState?.isActive ? '#FF7A00' : colors.borderLight, borderWidth: latestTestResult.streakState?.isActive ? 1.5 : 1 }]}>
                   <View style={styles.profileTestHeader}>
                     <View style={styles.profileTestTitleRow}>
-                      <Ionicons name="pulse" size={17} color={latestTestResult.badgeColor} style={{ marginRight: 6 }} />
-                      <Text style={styles.profileTestMainTitle}>Tu Bienestar Emocional</Text>
+                      <Text style={{ fontSize: 18, marginRight: 6 }}>
+                        {latestTestResult.streakState?.status === 'completed' ? '🏆' : '🔥'}
+                      </Text>
+                      <Text style={styles.profileTestMainTitle}>
+                        {latestTestResult.streakState?.isActive
+                          ? `Mi Racha de 7 Días (${latestTestResult.streakState.completedDaysCount}/7)`
+                          : 'Tu Ruta Emocional con ANIMA'}
+                      </Text>
                     </View>
-                    <Text style={styles.profileTestDate}>
-                      {new Date(latestTestResult.createdAt).toLocaleDateString()}
-                    </Text>
+                    <View style={{ backgroundColor: latestTestResult.streakState?.isActive ? '#FF7A00' : '#F1F5F9', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 9 }}>
+                      <Text style={{ fontSize: 10, fontWeight: '900', color: latestTestResult.streakState?.isActive ? '#FFFFFF' : colors.textSecondary }}>
+                        {latestTestResult.streakState?.status === 'completed'
+                          ? 'COMPLETADA'
+                          : latestTestResult.streakState?.isActive
+                          ? 'ACTIVA'
+                          : 'POR ACTIVAR'}
+                      </Text>
+                    </View>
                   </View>
 
                   <View style={[styles.profileTestBadge, { backgroundColor: latestTestResult.badgeColor + '18' }]}>
@@ -598,50 +682,74 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                     </Text>
                   </View>
 
-                  <Text style={styles.profileTestSummaryText} numberOfLines={3}>
-                    {latestTestResult.summary}
-                  </Text>
+                  {/* 7-Day Visual Progress Strip inside Profile */}
+                  {latestTestResult.streakState && (
+                    <View style={{ flexDirection: 'row', gap: 5, marginVertical: 10 }}>
+                      {latestTestResult.streakState.days.map((d) => {
+                        const isDone = d.status === 'completed';
+                        const isCurr =
+                          d.dayNumber === latestTestResult.streakState?.currentDayNumber &&
+                          latestTestResult.streakState?.status !== 'completed';
+                        return (
+                          <View
+                            key={d.dayNumber}
+                            style={{
+                              flex: 1,
+                              paddingVertical: 6,
+                              borderRadius: 10,
+                              backgroundColor: isDone ? '#10B981' : isCurr ? '#FF7A00' : '#F1F5F9',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
+                          >
+                            <Text style={{ fontSize: 10.5, fontWeight: '800', color: isDone || isCurr ? '#FFFFFF' : '#64748B' }}>
+                              D{d.dayNumber}
+                            </Text>
+                            <Text style={{ fontSize: 10, marginTop: 1 }}>
+                              {isDone ? '✓' : isCurr ? '🔥' : '•'}
+                            </Text>
+                          </View>
+                        );
+                      })}
+                    </View>
+                  )}
 
-                  {/* 3 Main Dimensions preview */}
-                  <View style={styles.profileDimList}>
-                    {latestTestResult.dimensions.slice(0, 3).map((dim) => {
-                      const color =
-                        dim.level === 'bajo'
-                          ? '#10B981'
-                          : dim.level === 'moderado'
-                          ? '#F59E0B'
-                          : '#EF4444';
-                      return (
-                        <View key={dim.key} style={styles.profileDimItem}>
-                          <View style={styles.profileDimHeader}>
-                            <Text style={styles.profileDimLabel}>{dim.label}</Text>
-                            <Text style={[styles.profileDimLevel, { color }]}>{dim.level.toUpperCase()}</Text>
-                          </View>
-                          <View style={styles.profileDimBarTrack}>
-                            <View
-                              style={[
-                                styles.profileDimBarFill,
-                                { width: `${dim.percentage}%`, backgroundColor: color },
-                              ]}
-                            />
-                          </View>
-                        </View>
-                      );
-                    })}
-                  </View>
+                  {/* Current Day Task Box */}
+                  {latestTestResult.streakState && (
+                    <View style={{ backgroundColor: '#FFF7ED', borderRadius: 12, padding: 10, borderWidth: 1, borderColor: '#FFEDD5', marginBottom: 12 }}>
+                      <Text style={{ fontSize: 10.5, fontWeight: '800', color: '#EA580C', marginBottom: 2 }}>
+                        {latestTestResult.streakState.status === 'completed'
+                          ? '🎉 ¡Completaste tus 7 días!'
+                          : `RETO DEL DÍA ${latestTestResult.streakState.currentDayNumber}:`}
+                      </Text>
+                      <Text style={{ fontSize: 12.5, fontWeight: '700', color: colors.coffeeDark }}>
+                        {(() => {
+                          const curr =
+                            latestTestResult.streakState.days.find(
+                              (x) => x.dayNumber === latestTestResult.streakState?.currentDayNumber
+                            ) || latestTestResult.streakState.days[0];
+                          return `${curr.task.emoji} ${curr.task.title}`;
+                        })()}
+                      </Text>
+                    </View>
+                  )}
 
                   {/* 2 Separated Distinct Buttons */}
                   <View style={styles.profileTestActionsRow}>
                     <TouchableOpacity
-                      style={styles.profileViewResultBtn}
+                      style={[styles.profileViewResultBtn, { backgroundColor: '#FF7A00' }]}
                       activeOpacity={0.85}
                       onPress={() => {
                         setTestModalMode('result');
                         setIsTestModalOpen(true);
                       }}
                     >
-                      <Ionicons name="eye-outline" size={14} color={colors.white} style={{ marginRight: 5 }} />
-                      <Text style={styles.profileViewResultBtnText}>Ver evaluación</Text>
+                      <Ionicons name="flame" size={15} color={colors.white} style={{ marginRight: 5 }} />
+                      <Text style={styles.profileViewResultBtnText}>
+                        {latestTestResult.streakState?.isActive
+                          ? 'Abrir mi Racha y Subir Foto'
+                          : 'Activar mi Racha de 7 Días'}
+                      </Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
@@ -653,29 +761,29 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                       }}
                     >
                       <Ionicons name="refresh-outline" size={14} color={colors.coffeeDark} style={{ marginRight: 5 }} />
-                      <Text style={styles.profileRetakeBtnText}>Repetir test</Text>
+                      <Text style={styles.profileRetakeBtnText}>Nuevo test</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
               ) : (
                 <View style={styles.profileNoTestContainer}>
-                  <View style={styles.profileNoTestIconCircle}>
-                    <Ionicons name="heart-circle-outline" size={32} color={colors.coffeePrimary} />
+                  <View style={[styles.profileNoTestIconCircle, { backgroundColor: '#FFF7ED' }]}>
+                    <Text style={{ fontSize: 30 }}>🔥</Text>
                   </View>
-                  <Text style={styles.profileNoTestTitle}>Conoce tu estado de bienestar</Text>
+                  <Text style={styles.profileNoTestTitle}>Inicia tu Racha de 7 Días con ANIMA</Text>
                   <Text style={styles.profileNoTestSubtitle}>
-                    Realiza nuestro test emocional interactivo para evaluar tus niveles de ánimo, ansiedad, estrés y descanso.
+                    Responde unas breves preguntas para que ANIMA te acompañe con retos diarios sencillos, fotos de avance y desbloquees tus insignias.
                   </Text>
                   <TouchableOpacity
-                    style={styles.profileStartTestBtn}
+                    style={[styles.profileStartTestBtn, { backgroundColor: '#FF7A00' }]}
                     activeOpacity={0.85}
                     onPress={() => {
                       setTestModalMode('questionnaire');
                       setIsTestModalOpen(true);
                     }}
                   >
-                    <Ionicons name="clipboard-outline" size={16} color={colors.white} style={{ marginRight: 6 }} />
-                    <Text style={styles.profileStartTestBtnText}>Realizar test emocional</Text>
+                    <Ionicons name="flame" size={17} color={colors.white} style={{ marginRight: 6 }} />
+                    <Text style={styles.profileStartTestBtnText}>Comenzar Test y Racha de 7 Días</Text>
                   </TouchableOpacity>
                 </View>
               )}

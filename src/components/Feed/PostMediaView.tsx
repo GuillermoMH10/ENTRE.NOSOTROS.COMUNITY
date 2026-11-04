@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
+  Text,
   Image,
   StyleSheet,
   TouchableOpacity,
@@ -268,67 +269,116 @@ export const PostMediaView: React.FC<PostMediaViewProps> = ({
   }
 
   // 3 MEDIA (1 large left + 2 stacked right)
-  return (
-    <View style={styles.threeMediaContainer}>
-      <TouchableOpacity
-        style={styles.threeLeftCol}
-        activeOpacity={0.92}
-        onPress={() => onMediaPress(0)}
-      >
-        {isVideoUrl(mediaUrls[0]) ? (
-          <View style={styles.videoWrapper}>
-            <Video
+  if (count === 3) {
+    return (
+      <View style={styles.threeMediaContainer}>
+        <TouchableOpacity
+          style={styles.threeLeftCol}
+          activeOpacity={0.92}
+          onPress={() => onMediaPress(0)}
+        >
+          {isVideoUrl(mediaUrls[0]) ? (
+            <View style={styles.videoWrapper}>
+              <Video
+                source={{ uri: mediaUrls[0] }}
+                style={styles.mediaFill}
+                resizeMode={ResizeMode.COVER}
+                useNativeControls={false}
+                isLooping
+                shouldPlay={false}
+              />
+              <View style={styles.playButtonMini}>
+                <Ionicons name="play" size={22} color={colors.white} style={{ marginLeft: 2 }} />
+              </View>
+            </View>
+          ) : (
+            <Image
               source={{ uri: mediaUrls[0] }}
               style={styles.mediaFill}
-              resizeMode={ResizeMode.COVER}
-              useNativeControls={false}
-              isLooping
-              shouldPlay={false}
+              resizeMode="cover"
             />
-            <View style={styles.playButtonMini}>
-              <Ionicons name="play" size={22} color={colors.white} style={{ marginLeft: 2 }} />
+          )}
+        </TouchableOpacity>
+        <View style={styles.colGap} />
+        <View style={styles.threeRightCol}>
+          {mediaUrls.slice(1, 3).map((url, i) => {
+            const idx = i + 1;
+            const isVideo = isVideoUrl(url);
+            return (
+              <TouchableOpacity
+                key={idx}
+                style={styles.threeStackedItem}
+                activeOpacity={0.92}
+                onPress={() => onMediaPress(idx)}
+              >
+                {isVideo ? (
+                  <View style={styles.videoWrapper}>
+                    <Video
+                      source={{ uri: url }}
+                      style={styles.mediaFill}
+                      resizeMode={ResizeMode.COVER}
+                      useNativeControls={false}
+                      isLooping
+                      shouldPlay={false}
+                    />
+                    <View style={styles.playButtonMini}>
+                      <Ionicons name="play" size={16} color={colors.white} style={{ marginLeft: 2 }} />
+                    </View>
+                  </View>
+                ) : (
+                  <Image
+                    source={{ uri: url }}
+                    style={styles.mediaFill}
+                    resizeMode="cover"
+                  />
+                )}
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      </View>
+    );
+  }
+
+  // 4+ MEDIA (2x2 Grid Collage with "+N" badge on the 4th item for 5-7 day streak albums)
+  const extraCount = count - 4;
+  return (
+    <View style={styles.fourGridContainer}>
+      <View style={styles.fourGridRow}>
+        {mediaUrls.slice(0, 2).map((url, idx) => (
+          <TouchableOpacity
+            key={idx}
+            style={styles.fourGridCell}
+            activeOpacity={0.9}
+            onPress={() => onMediaPress(idx)}
+          >
+            <Image source={{ uri: url }} style={styles.mediaFill} resizeMode="cover" />
+            <View style={styles.dayMiniTag}>
+              <Text style={styles.dayMiniTagText}>Día {idx + 1}</Text>
             </View>
-          </View>
-        ) : (
-          <Image
-            source={{ uri: mediaUrls[0] }}
-            style={styles.mediaFill}
-            resizeMode="cover"
-          />
-        )}
-      </TouchableOpacity>
-      <View style={styles.colGap} />
-      <View style={styles.threeRightCol}>
-        {mediaUrls.slice(1, 3).map((url, i) => {
-          const idx = i + 1;
-          const isVideo = isVideoUrl(url);
+          </TouchableOpacity>
+        ))}
+      </View>
+      <View style={styles.fourGridRow}>
+        {mediaUrls.slice(2, 4).map((url, i) => {
+          const idx = i + 2;
+          const isLastCellWithMore = i === 1 && extraCount > 0;
           return (
             <TouchableOpacity
               key={idx}
-              style={styles.threeStackedItem}
-              activeOpacity={0.92}
+              style={styles.fourGridCell}
+              activeOpacity={0.9}
               onPress={() => onMediaPress(idx)}
             >
-              {isVideo ? (
-                <View style={styles.videoWrapper}>
-                  <Video
-                    source={{ uri: url }}
-                    style={styles.mediaFill}
-                    resizeMode={ResizeMode.COVER}
-                    useNativeControls={false}
-                    isLooping
-                    shouldPlay={false}
-                  />
-                  <View style={styles.playButtonMini}>
-                    <Ionicons name="play" size={16} color={colors.white} style={{ marginLeft: 2 }} />
-                  </View>
+              <Image source={{ uri: url }} style={styles.mediaFill} resizeMode="cover" />
+              <View style={styles.dayMiniTag}>
+                <Text style={styles.dayMiniTagText}>Día {idx + 1}</Text>
+              </View>
+              {isLastCellWithMore && (
+                <View style={styles.morePhotosOverlay}>
+                  <Text style={styles.morePhotosCountText}>+{extraCount}</Text>
+                  <Text style={styles.morePhotosSubText}>evidencias</Text>
                 </View>
-              ) : (
-                <Image
-                  source={{ uri: url }}
-                  style={styles.mediaFill}
-                  resizeMode="cover"
-                />
               )}
             </TouchableOpacity>
           );
@@ -452,5 +502,58 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  fourGridContainer: {
+    width: '100%',
+    height: 310,
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginTop: 8,
+    marginBottom: 4,
+    gap: 6,
+  },
+  fourGridRow: {
+    flex: 1,
+    flexDirection: 'row',
+    gap: 6,
+  },
+  fourGridCell: {
+    flex: 1,
+    height: '100%',
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: colors.surface,
+    position: 'relative',
+  },
+  dayMiniTag: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    backgroundColor: 'rgba(15, 23, 42, 0.68)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  dayMiniTagText: {
+    color: '#FFFFFF',
+    fontSize: 10.5,
+    fontWeight: '800',
+  },
+  morePhotosOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(15, 23, 42, 0.58)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  morePhotosCountText: {
+    color: '#FFFFFF',
+    fontSize: 24,
+    fontWeight: '900',
+  },
+  morePhotosSubText: {
+    color: '#F8FAFC',
+    fontSize: 11.5,
+    fontWeight: '700',
+    marginTop: 2,
   },
 });

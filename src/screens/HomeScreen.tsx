@@ -29,6 +29,10 @@ import { SupportScreen } from './SupportScreen';
 import { AnimaScreen } from './AnimaScreen';
 import { UserProfileScreen } from './UserProfileScreen';
 import { MonthDetailModal } from '../components/Blog/MonthDetailModal';
+import { PsychologyTestModal } from '../components/PsychologyTest/PsychologyTestModal';
+import { subscribeToUserTestAndStreak } from '../services/psychologyTestService';
+import { TestResult } from '../types/psychologyTest';
+import { AnimaToastHost } from '../components/Anima/AnimaToast';
 import { Post } from '../types/post';
 import { useAuth } from '../context/AuthContext';
 import { deletePost } from '../services/postsService';
@@ -52,6 +56,15 @@ export const HomeScreen: React.FC = () => {
   const [isRulesOpen, setIsRulesOpen] = useState(false);
   const [isMonthModalOpen, setIsMonthModalOpen] = useState(false);
   const [selectedMonthIndex, setSelectedMonthIndex] = useState<number>(new Date().getMonth());
+  const [isStreakModalOpen, setIsStreakModalOpen] = useState(false);
+  const [homeTestResult, setHomeTestResult] = useState<TestResult | null>(null);
+
+  useEffect(() => {
+    const unsub = subscribeToUserTestAndStreak(user?.id, (res) => {
+      setHomeTestResult(res);
+    });
+    return () => unsub();
+  }, [user?.id]);
   const [selectedPostForComments, setSelectedPostForComments] = useState<Post | null>(null);
   const [selectedPostForOptions, setSelectedPostForOptions] = useState<Post | null>(null);
   const [selectedPostForEdit, setSelectedPostForEdit] = useState<Post | null>(null);
@@ -291,6 +304,8 @@ export const HomeScreen: React.FC = () => {
         backgroundColor={colors.white}
       />
       <View style={styles.container}>
+        <AnimaToastHost topOffset={14} />
+
         {/* Animated Top Header (Collapses up on scroll down) - Only in Principal tab */}
         {activeTab === 'principal' && !isRulesOpen && !isPsychologistsOpen && (
           <Animated.View
@@ -390,6 +405,7 @@ export const HomeScreen: React.FC = () => {
               setSelectedMonthIndex(monthIdx);
               setIsMonthModalOpen(true);
             }}
+            onOpenStreakModal={() => setIsStreakModalOpen(true)}
             contentPaddingTop={HEADER_HEIGHT + (Platform.OS === 'android' ? 4 : 2)}
             contentPaddingBottom={TABBAR_HEIGHT + (Platform.OS === 'ios' ? 14 : 4)}
           />
@@ -406,6 +422,7 @@ export const HomeScreen: React.FC = () => {
             <BottomTabBar
               activeTab={activeTab}
               onTabPress={handleTabPress}
+              onOpenStreakModal={() => setIsStreakModalOpen(true)}
             />
           </Animated.View>
         )}
@@ -506,6 +523,32 @@ export const HomeScreen: React.FC = () => {
           visible={isMonthModalOpen}
           initialMonthIndex={selectedMonthIndex}
           onClose={() => setIsMonthModalOpen(false)}
+        />
+
+        {/* 7-Day Emotional Streak & Test Modal */}
+        <PsychologyTestModal
+          visible={isStreakModalOpen}
+          userId={user?.id}
+          initialResult={homeTestResult}
+          startMode={homeTestResult ? 'result' : 'questionnaire'}
+          onClose={() => setIsStreakModalOpen(false)}
+          onOpenPsychologists={() => {
+            setIsStreakModalOpen(false);
+            handleOpenPsychologists();
+          }}
+          onOpenCreatePost={() => {
+            setIsStreakModalOpen(false);
+            if (!user) {
+              setIsAuthOpen(true);
+            } else {
+              setIsCreateOpen(true);
+            }
+          }}
+          onRequireAuth={() => {
+            setIsStreakModalOpen(false);
+            handleOpenAuth();
+          }}
+          onTestCompleted={(res) => setHomeTestResult(res)}
         />
       </View>
     </SafeAreaView>

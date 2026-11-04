@@ -27,6 +27,10 @@ import { AnimaScreen } from '../../screens/AnimaScreen';
 import { ProfileScreen } from '../../screens/ProfileScreen';
 import { UserProfileScreen } from '../../screens/UserProfileScreen';
 import { FollowListModal, FollowTabType } from '../Profile/FollowListModal';
+import { PsychologyTestModal } from '../PsychologyTest/PsychologyTestModal';
+import { subscribeToUserTestAndStreak } from '../../services/psychologyTestService';
+import { TestResult } from '../../types/psychologyTest';
+import { AnimaToastHost } from '../Anima/AnimaToast';
 import { AnimaMascot } from '../Anima/AnimaMascot';
 import {
   MOOD_OPTIONS,
@@ -44,6 +48,7 @@ export type DesktopNavId =
   | 'principal'
   | 'blog'
   | 'anima'
+  | 'racha'
   | 'buscar'
   | 'psicologos'
   | 'reglas'
@@ -123,6 +128,14 @@ export const DesktopWebLayout: React.FC<DesktopWebLayoutProps> = ({
   // Follow Modal State (Seguidores / Seguidos)
   const [followModalVisible, setFollowModalVisible] = useState(false);
   const [followModalTab, setFollowModalTab] = useState<FollowTabType>('following');
+  const [userTestResult, setUserTestResult] = useState<TestResult | null>(null);
+
+  useEffect(() => {
+    const unsub = subscribeToUserTestAndStreak(user?.id, (res) => {
+      setUserTestResult(res);
+    });
+    return () => unsub();
+  }, [user?.id]);
 
   // Daily Mood State (¿Cómo te sientes hoy?)
   const [selectedMoodId, setSelectedMoodId] = useState<string | null>(null);
@@ -207,10 +220,25 @@ export const DesktopWebLayout: React.FC<DesktopWebLayoutProps> = ({
     setFollowModalVisible(true);
   };
 
-  const NAV_ITEMS: { id: DesktopNavId; label: string; icon: string; iconActive: string; badge?: string }[] = [
+  const hasActiveStreak = Boolean(userTestResult?.streakState?.isActive);
+  const streakDaysDone = userTestResult?.streakState?.completedDaysCount || 0;
+
+  const NAV_ITEMS: { id: DesktopNavId; label: string; icon: string; iconActive: string; badge?: string; isStreakOrange?: boolean }[] = [
     { id: 'principal', label: 'Principal', icon: 'home-outline', iconActive: 'home' },
     { id: 'blog', label: 'Blog y Calendario', icon: 'book-outline', iconActive: 'book' },
     { id: 'anima', label: 'ANIMA', icon: 'heart-circle-outline', iconActive: 'heart-circle' },
+    ...(hasActiveStreak
+      ? [
+          {
+            id: 'racha' as DesktopNavId,
+            label: 'Mi Racha',
+            icon: 'flame-outline',
+            iconActive: 'flame',
+            badge: `🔥 ${streakDaysDone}/7`,
+            isStreakOrange: true,
+          },
+        ]
+      : []),
     { id: 'buscar', label: 'Buscar', icon: 'search-outline', iconActive: 'search' },
     { id: 'psicologos', label: 'Psicólogos', icon: 'medkit-outline', iconActive: 'medkit' },
     { id: 'reglas', label: 'Reglas de Comunidad', icon: 'shield-checkmark-outline', iconActive: 'shield-checkmark' },
@@ -219,6 +247,7 @@ export const DesktopWebLayout: React.FC<DesktopWebLayoutProps> = ({
 
   return (
     <View style={styles.desktopRoot}>
+      <AnimaToastHost topOffset={16} />
       {Platform.OS === 'web' && (
         <style
           dangerouslySetInnerHTML={{
@@ -296,10 +325,19 @@ export const DesktopWebLayout: React.FC<DesktopWebLayoutProps> = ({
             <View style={styles.navList}>
               {NAV_ITEMS.map((item) => {
                 const isActive = activeSection === item.id;
+                const isOrangeStreak = Boolean(item.isStreakOrange);
                 return (
                   <TouchableOpacity
                     key={item.id}
-                    style={[styles.navItem, isActive && styles.navItemActive]}
+                    style={[
+                      styles.navItem,
+                      isActive && styles.navItemActive,
+                      isOrangeStreak && {
+                        backgroundColor: isActive ? '#FF7A00' : '#FFF7ED',
+                        borderWidth: 1,
+                        borderColor: '#FB923C',
+                      },
+                    ]}
                     activeOpacity={0.7}
                     onPress={() => {
                       if (isCreatePostOpen && onCloseCreatePost) {
@@ -317,15 +355,49 @@ export const DesktopWebLayout: React.FC<DesktopWebLayoutProps> = ({
                     <Ionicons
                       name={(isActive ? item.iconActive : item.icon) as any}
                       size={20}
-                      color={isActive ? colors.coffeePrimary : '#4B6779'}
+                      color={
+                        isOrangeStreak
+                          ? isActive
+                            ? '#FFFFFF'
+                            : '#FF7A00'
+                          : isActive
+                          ? colors.coffeePrimary
+                          : '#4B6779'
+                      }
                       style={{ marginRight: 12 }}
                     />
-                    <Text style={[styles.navItemText, isActive && styles.navItemTextActive]}>
+                    <Text
+                      style={[
+                        styles.navItemText,
+                        isActive && styles.navItemTextActive,
+                        isOrangeStreak && {
+                          color: isActive ? '#FFFFFF' : '#EA580C',
+                          fontWeight: '800',
+                        },
+                      ]}
+                    >
                       {item.label}
                     </Text>
                     {item.badge && (
-                      <View style={styles.navItemBadge}>
-                        <Text style={styles.navItemBadgeText}>{item.badge}</Text>
+                      <View
+                        style={[
+                          styles.navItemBadge,
+                          isOrangeStreak && {
+                            backgroundColor: isActive ? '#FFFFFF' : '#FF7A00',
+                          },
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.navItemBadgeText,
+                            isOrangeStreak && {
+                              color: isActive ? '#EA580C' : '#FFFFFF',
+                              fontWeight: '900',
+                            },
+                          ]}
+                        >
+                          {item.badge}
+                        </Text>
                       </View>
                     )}
                   </TouchableOpacity>
@@ -483,10 +555,26 @@ export const DesktopWebLayout: React.FC<DesktopWebLayoutProps> = ({
                     onDeletePress={onDeletePress}
                     onUserPress={onUserPress}
                     onOpenMonthDetail={onOpenMonthDetail}
+                    onOpenStreakModal={() => setActiveSection('racha')}
                     contentPaddingTop={6}
                     contentPaddingBottom={40}
                   />
                 </View>
+              )}
+
+              {activeSection === 'racha' && (
+                <PsychologyTestModal
+                  visible={true}
+                  userId={user?.id}
+                  initialResult={userTestResult}
+                  startMode={userTestResult ? 'result' : 'questionnaire'}
+                  onClose={() => setActiveSection('principal')}
+                  onOpenPsychologists={() => setActiveSection('psicologos')}
+                  onOpenCreatePost={onOpenCreatePost}
+                  onRequireAuth={onRequireAuth}
+                  onTestCompleted={(res) => setUserTestResult(res)}
+                  embedded={true}
+                />
               )}
 
               {activeSection === 'psicologos' && (

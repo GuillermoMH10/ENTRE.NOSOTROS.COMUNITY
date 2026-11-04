@@ -1,174 +1,223 @@
-import { TestQuestion, TestOption, TestResult, DimensionScore, TestDimensionKey } from '../types/psychologyTest';
+import {
+  TestQuestion,
+  TestOption,
+  TestResult,
+  DimensionScore,
+  TestDimensionKey,
+  EmotionalFocusCategory,
+  EmotionalStreakState,
+} from '../types/psychologyTest';
+import {
+  FOCUS_CATEGORY_META,
+  OFFICIAL_STREAK_BADGES,
+  generateSevenDayTasksForUser,
+} from './streakChallengesData';
 
 export const TEST_OPTIONS: TestOption[] = [
   {
     value: 0,
     emoji: '😊',
-    label: 'Nunca',
-    sublabel: 'Nada en absoluto',
+    label: 'Casi nunca',
+    sublabel: 'Me siento tranquilo/a en esto',
   },
   {
     value: 1,
     emoji: '🙂',
-    label: 'Pocas veces',
-    sublabel: 'Rara vez / Leve',
+    label: 'A veces',
+    sublabel: 'Me pasa en algunos momentos',
   },
   {
     value: 2,
     emoji: '😐',
-    label: 'Frecuentemente',
-    sublabel: 'Varios días / Notable',
+    label: 'Seguido',
+    sublabel: 'Lo he sentido varios días',
   },
   {
     value: 3,
     emoji: '😔',
-    label: 'Casi siempre',
-    sublabel: 'A diario / Muy intenso',
+    label: 'Mucho hoy',
+    sublabel: 'Es lo que más siento ahora',
   },
 ];
 
 export const TEST_QUESTIONS: TestQuestion[] = [
-  // --- Dimensión 1: Estado de Ánimo & Depresión ---
+  // --- 1. Tristeza y Estado de Ánimo ---
   {
     id: 1,
     dimension: 'animo_depresion',
-    dimensionLabel: 'Estado de Ánimo',
+    focusCategory: 'tristeza',
+    dimensionLabel: 'Ánimo y Alegría',
     dimensionIcon: 'heart-outline',
-    question: '¿Has sentido tristeza, vacío o desánimo la mayor parte del día?',
-    subtitle: 'Sensación de pesadumbre o falta de ganas para realizar tus actividades habituales.',
+    question: '¿Últimamente has sentido tristeza, ganas de llorar o un bajón de ánimo?',
+    subtitle: 'Queremos saber si tu corazón necesita hoy un abrazo extra de calidez.',
   },
   {
     id: 2,
     dimension: 'animo_depresion',
-    dimensionLabel: 'Estado de Ánimo',
+    focusCategory: 'tristeza',
+    dimensionLabel: 'Ánimo y Alegría',
     dimensionIcon: 'heart-outline',
-    question: '¿Has perdido el interés o el placer por las cosas que antes disfrutabas?',
-    subtitle: 'Dificultad para conectar con momentos de alegría o entusiasmo.',
+    question: '¿Sientes que te cuesta disfrutar las cosas que antes te hacían ilusión?',
+    subtitle: 'Como si los días se sintieran un poquito más grises o lentos de lo normal.',
   },
   {
     id: 3,
     dimension: 'animo_depresion',
-    dimensionLabel: 'Estado de Ánimo',
+    focusCategory: 'tristeza',
+    dimensionLabel: 'Ánimo y Alegría',
     dimensionIcon: 'heart-outline',
-    question: '¿Sientes falta de esperanza o dudas sobre el futuro?',
-    subtitle: 'Pensamientos de que las situaciones difíciles nunca mejorarán.',
+    question: '¿Te has sentido solo/a aunque estés rodeado/a de más personas?',
+    subtitle: 'Sensación de necesitar que alguien te escuche y acompañe de verdad.',
   },
 
-  // --- Dimensión 2: Ansiedad & Sobrepensamiento ---
+  // --- 2. Ansiedad y Sobrepensamiento ---
   {
     id: 4,
     dimension: 'ansiedad_sobrepensamiento',
-    dimensionLabel: 'Ansiedad & Calma',
+    focusCategory: 'ansiedad',
+    dimensionLabel: 'Calma Mental',
     dimensionIcon: 'pulse-outline',
-    question: '¿Experimentas nerviosismo, inquietud o dificultad para relajarte?',
-    subtitle: 'Sensación de aceleración interna o tensión constante en el cuerpo.',
+    question: '¿Tu mente da muchas vueltas pensando en el futuro o en cosas que te preocupan?',
+    subtitle: 'Cuando los pensamientos no paran y te cuesta apagar la cabeza un ratito.',
   },
   {
     id: 5,
     dimension: 'ansiedad_sobrepensamiento',
-    dimensionLabel: 'Ansiedad & Calma',
+    focusCategory: 'ansiedad',
+    dimensionLabel: 'Calma Mental',
     dimensionIcon: 'pulse-outline',
-    question: '¿Te descubres sobrepensando situaciones o imaginando los peores escenarios?',
-    subtitle: 'Rumiación mental continua sobre cosas pasadas o futuras que te generan angustia.',
-  },
-  {
-    id: 6,
-    dimension: 'ansiedad_sobrepensamiento',
-    dimensionLabel: 'Ansiedad & Calma',
-    dimensionIcon: 'pulse-outline',
-    question: '¿Has sentido síntomas físicos de alerta como taquicardia, opresión o respiración rápida?',
-    subtitle: 'Respuestas físicas de sobresalto o agobio sin causa médica aparente.',
+    question: '¿Sientes inquietud, nervios o dificultad para quedarte tranquilo/a en el presente?',
+    subtitle: 'Sensación de alerta o aceleración dentro del pecho.',
   },
 
-  // --- Dimensión 3: Estrés & Sobrecarga Emocional ---
+  // --- 3. Enojo, Frustración e Irritabilidad ---
+  {
+    id: 6,
+    dimension: 'estres_agotamiento',
+    focusCategory: 'enojo',
+    dimensionLabel: 'Liberación Emocional',
+    dimensionIcon: 'flame-outline',
+    question: '¿Te has sentido con enojo guardado, frustración o ganas de explotar por pequeñas cosas?',
+    subtitle: 'Cuando sientes tensión acumulada y necesitas soltar presión.',
+  },
   {
     id: 7,
     dimension: 'estres_agotamiento',
-    dimensionLabel: 'Estrés & Sobrecarga',
-    dimensionIcon: 'flash-outline',
-    question: '¿Sientes que las exigencias del día a día sobrepasan tu capacidad de respuesta?',
-    subtitle: 'Sensación de estar abrumado/a por responsabilidades, trabajo o problemas personales.',
+    focusCategory: 'enojo',
+    dimensionLabel: 'Liberación Emocional',
+    dimensionIcon: 'flame-outline',
+    question: '¿Sientes impaciencia o molestia cuando las cosas no salen como esperabas?',
+    subtitle: 'Esa incomodidad interna que te quita la paz durante el día.',
   },
+
+  // --- 4. Estrés, Cansancio y Sueño ---
   {
     id: 8,
-    dimension: 'estres_agotamiento',
-    dimensionLabel: 'Estrés & Sobrecarga',
-    dimensionIcon: 'flash-outline',
-    question: '¿Te sientes más irritable, impaciente o sensible ante pequeños inconvenientes?',
-    subtitle: 'Reacciones emocionales más intensas de lo habitual frente a situaciones cotidianas.',
+    dimension: 'energia_sueno',
+    focusCategory: 'estres',
+    dimensionLabel: 'Energía y Descanso',
+    dimensionIcon: 'moon-outline',
+    question: '¿Sientes que los pendientes del día te agotan y no te queda tiempo para ti?',
+    subtitle: 'Sensación de llevar demasiadas cosas sobre tus hombros.',
   },
   {
     id: 9,
-    dimension: 'estres_agotamiento',
-    dimensionLabel: 'Estrés & Sobrecarga',
-    dimensionIcon: 'flash-outline',
-    question: '¿Sientes que no tienes tiempo para desconectar la mente ni un solo momento?',
-    subtitle: 'Dificultad para hacer pausas de descanso mental genuino.',
+    dimension: 'energia_sueno',
+    focusCategory: 'estres',
+    dimensionLabel: 'Energía y Descanso',
+    dimensionIcon: 'moon-outline',
+    question: '¿Despiertas con cansancio o te cuesta desconectarte para dormir en paz?',
+    subtitle: 'Cuando tu cuerpo y tu mente piden a gritos una pausa reparadora.',
   },
 
-  // --- Dimensión 4: Calidad del Sueño & Energía ---
+  // --- 5. Inseguridad y Autoestima ---
   {
     id: 10,
-    dimension: 'energia_sueno',
-    dimensionLabel: 'Sueño & Vitalidad',
-    dimensionIcon: 'moon-outline',
-    question: '¿Tienes dificultades para conciliar el sueño, te despiertas en la noche o madrugas con angustia?',
-    subtitle: 'Alteraciones en tu ritmo de descanso o sueño intranquilo y fragmentado.',
+    dimension: 'autoestima_social',
+    focusCategory: 'inseguridad',
+    dimensionLabel: 'Amor Propio y Confianza',
+    dimensionIcon: 'sparkles-outline',
+    question: '¿Has dudado de ti mismo/a, te comparas con otros o te juzgas con dureza?',
+    subtitle: 'Pensamientos de inseguridad que no te dejan ver todo lo valioso/a que eres.',
   },
   {
     id: 11,
-    dimension: 'energia_sueno',
-    dimensionLabel: 'Sueño & Vitalidad',
-    dimensionIcon: 'moon-outline',
-    question: '¿Te levantas por las mañanas sintiéndote con fatiga física o agotamiento mental?',
-    subtitle: 'Sensación de falta de energía y pesadez incluso después de haber dormido.',
+    dimension: 'autoestima_social',
+    focusCategory: 'inseguridad',
+    dimensionLabel: 'Amor Propio y Confianza',
+    dimensionIcon: 'sparkles-outline',
+    question: '¿Te cuesta reconocer tus logros o sentir orgullo por lo que haces cada día?',
+    subtitle: 'Olvidar aplaudirte por todo lo que ya has superado.',
   },
   {
     id: 12,
-    dimension: 'energia_sueno',
-    dimensionLabel: 'Sueño & Vitalidad',
-    dimensionIcon: 'moon-outline',
-    question: '¿Te cuesta trabajo concentrarte o tomar decisiones sencillas debido al cansancio?',
-    subtitle: 'Dificultad de enfoque o mente nublada durante el transcurso del día.',
-  },
-
-  // --- Dimensión 5: Autoestima & Vínculos Sociales ---
-  {
-    id: 13,
     dimension: 'autoestima_social',
-    dimensionLabel: 'Autoestima & Vínculos',
-    dimensionIcon: 'people-outline',
-    question: '¿Te sientes juzgado/a por ti mismo/a o tienes pensamientos de autocrítica severa?',
-    subtitle: 'Sentimientos de insuficiencia, culpa excesiva o dudar continuamente de tu valor.',
-  },
-  {
-    id: 14,
-    dimension: 'autoestima_social',
-    dimensionLabel: 'Autoestima & Vínculos',
-    dimensionIcon: 'people-outline',
-    question: '¿Tiendes a aislarte o evitar convivir con personas queridas porque te cuesta fingir que estás bien?',
-    subtitle: 'Preferencia por estar a solas para no tener que explicar cómo te sientes.',
-  },
-  {
-    id: 15,
-    dimension: 'autoestima_social',
-    dimensionLabel: 'Autoestima & Vínculos',
-    dimensionIcon: 'people-outline',
-    question: '¿Sientes que no cuentas con un espacio seguro donde puedas expresarte con total libertad?',
-    subtitle: 'Sensación de tener que cargar tus emociones en soledad.',
+    focusCategory: 'inseguridad',
+    dimensionLabel: 'Amor Propio y Confianza',
+    dimensionIcon: 'sparkles-outline',
+    question: '¿Te gustaría fortalecer tu seguridad personal y hablarte con más cariño esta semana?',
+    subtitle: 'Dar pasos diarios para confiar más en ti y en tu camino.',
   },
 ];
 
-export const calculateTestResult = (answers: Record<number, number>, userId?: string): TestResult => {
-  let totalScore = 0;
-  const maxPossibleScore = TEST_QUESTIONS.length * 3; // 15 * 3 = 45
+export const buildInitialStreakState = (
+  focusCategory: EmotionalFocusCategory,
+  userId?: string,
+  existingUnlockedBadges: string[] = []
+): EmotionalStreakState => {
+  const meta = FOCUS_CATEGORY_META[focusCategory];
+  const nextBadge =
+    OFFICIAL_STREAK_BADGES.find((b) => !existingUnlockedBadges.includes(b.id)) ||
+    OFFICIAL_STREAK_BADGES[OFFICIAL_STREAK_BADGES.length - 1];
 
-  const dimensionTotals: Record<TestDimensionKey, { score: number; count: number; label: string; icon: string }> = {
-    animo_depresion: { score: 0, count: 0, label: 'Estado de Ánimo & Vitalidad', icon: 'heart' },
-    ansiedad_sobrepensamiento: { score: 0, count: 0, label: 'Ansiedad & Control Mental', icon: 'pulse' },
-    estres_agotamiento: { score: 0, count: 0, label: 'Estrés & Sobrecarga', icon: 'flash' },
-    energia_sueno: { score: 0, count: 0, label: 'Calidad de Sueño & Descanso', icon: 'moon' },
-    autoestima_social: { score: 0, count: 0, label: 'Autoestima & Apoyo Social', icon: 'people' },
+  return {
+    id: `streak_${Date.now()}`,
+    userId: userId || 'anonymous',
+    isActive: false,
+    status: 'invited',
+    focusCategory,
+    focusTitle: meta.title,
+    focusSubtitle: meta.subtitle,
+    focusColor: meta.color,
+    focusEmoji: meta.emoji,
+    startedAt: new Date().toISOString(),
+    currentDayNumber: 1,
+    completedDaysCount: 0,
+    postponedDaysCount: 0,
+    days: generateSevenDayTasksForUser(focusCategory, userId),
+    targetBadgeId: nextBadge.id,
+    summaryPublished: false,
+    lastUpdatedAt: new Date().toISOString(),
+  };
+};
+
+export const calculateTestResult = (
+  answers: Record<number, number>,
+  userId?: string,
+  existingUnlockedBadges: string[] = [],
+  totalCompletedStreaks: number = 0
+): TestResult => {
+  let totalScore = 0;
+  const maxPossibleScore = TEST_QUESTIONS.length * 3; // 12 * 3 = 36
+
+  const dimensionTotals: Record<
+    TestDimensionKey,
+    { score: number; count: number; label: string; icon: string }
+  > = {
+    animo_depresion: { score: 0, count: 0, label: 'Ánimo y Calidez Interior', icon: 'heart' },
+    ansiedad_sobrepensamiento: { score: 0, count: 0, label: 'Calma y Paz Mental', icon: 'pulse' },
+    estres_agotamiento: { score: 0, count: 0, label: 'Liberación de Tensión y Enojo', icon: 'flame' },
+    energia_sueno: { score: 0, count: 0, label: 'Descanso y Energía Vital', icon: 'moon' },
+    autoestima_social: { score: 0, count: 0, label: 'Confianza y Amor Propio', icon: 'sparkles' },
+  };
+
+  const categoryTotals: Record<EmotionalFocusCategory, { score: number; count: number }> = {
+    tristeza: { score: 0, count: 0 },
+    ansiedad: { score: 0, count: 0 },
+    enojo: { score: 0, count: 0 },
+    inseguridad: { score: 0, count: 0 },
+    estres: { score: 0, count: 0 },
+    felicidad: { score: 0, count: 0 },
   };
 
   TEST_QUESTIONS.forEach((q) => {
@@ -176,15 +225,38 @@ export const calculateTestResult = (answers: Record<number, number>, userId?: st
     totalScore += val;
     dimensionTotals[q.dimension].score += val;
     dimensionTotals[q.dimension].count += 1;
+
+    categoryTotals[q.focusCategory].score += val;
+    categoryTotals[q.focusCategory].count += 1;
   });
 
   const overallPercentage = Math.round((totalScore / maxPossibleScore) * 100);
+
+  // Determine the dominant emotional category to personalize the 7-day streak
+  let dominantCategory: EmotionalFocusCategory = 'felicidad';
+  if (totalScore <= 6) {
+    dominantCategory = 'felicidad';
+  } else {
+    let highestAvg = -1;
+    (['tristeza', 'ansiedad', 'enojo', 'inseguridad', 'estres'] as EmotionalFocusCategory[]).forEach(
+      (cat) => {
+        const cData = categoryTotals[cat];
+        const avg = cData.count > 0 ? cData.score / cData.count : 0;
+        if (avg > highestAvg) {
+          highestAvg = avg;
+          dominantCategory = cat;
+        }
+      }
+    );
+  }
+
+  const focusMeta = FOCUS_CATEGORY_META[dominantCategory];
 
   // Compute Dimension Scores
   const dimensions: DimensionScore[] = Object.keys(dimensionTotals).map((key) => {
     const dKey = key as TestDimensionKey;
     const dData = dimensionTotals[dKey];
-    const maxDimScore = dData.count * 3;
+    const maxDimScore = Math.max(1, dData.count * 3);
     const pct = Math.round((dData.score / maxDimScore) * 100);
 
     let level: 'bajo' | 'moderado' | 'elevado' = 'bajo';
@@ -192,13 +264,13 @@ export const calculateTestResult = (answers: Record<number, number>, userId?: st
 
     if (pct < 35) {
       level = 'bajo';
-      insight = 'Nivel favorable. Mantienes una buena regulación en esta área.';
+      insight = 'Área en buen equilibrio hoy. Sigue cuidando tus hábitos.';
     } else if (pct < 68) {
       level = 'moderado';
-      insight = 'Nivel intermedio. Muestras signos de tensión que requieren atención preventiva.';
+      insight = 'Oportunidad para fortalecer esta área con pequeños retos diarios.';
     } else {
       level = 'elevado';
-      insight = 'Nivel elevado. Esta dimensión requiere cuidado prioritario y apoyo profesional.';
+      insight = 'Prioridad en tu racha de 7 días: vamos a trabajar juntos aquí.';
     }
 
     return {
@@ -213,77 +285,18 @@ export const calculateTestResult = (answers: Record<number, number>, userId?: st
     };
   });
 
-  // Evaluate Overall Profile
-  let levelTitle = '';
   let levelTag: TestResult['levelTag'] = 'equilibrio';
-  let badgeColor = '#10B981';
-  let badgeTextColor = '#FFFFFF';
-  let summary = '';
-  let detailedAnalysis = '';
-  let suggestedSpecialty = 'Psicología General y Bienestar';
-  const recommendations: string[] = [];
+  if (totalScore <= 7) levelTag = 'equilibrio';
+  else if (totalScore <= 15) levelTag = 'estres_leve';
+  else if (totalScore <= 23) levelTag = 'ansiedad_moderada';
+  else if (totalScore <= 30) levelTag = 'depresion_significativa';
+  else levelTag = 'alerta_alta';
 
-  if (totalScore <= 10) {
-    levelTitle = 'Equilibrio y Bienestar Emocional Saludable';
-    levelTag = 'equilibrio';
-    badgeColor = '#10B981';
-    summary = 'Tus respuestas reflejan una sólida estabilidad emocional y una buena capacidad para gestionar los retos del día a día.';
-    detailedAnalysis = 'Muestras un balance positivo en tu estado de ánimo, descanso y niveles de estrés. Esto no significa ausencia de problemas, sino que cuentas con recursos internos efectivos para afrontarlos.';
-    recommendations.push(
-      'Continúa fomentando tus hábitos de descanso y actividades que te llenen de energía.',
-      'Mantén tu red de comunicación abierta con tus seres queridos.',
-      'Sigue practicando la gratitud y la atención a tus emociones cotidianas.'
-    );
-    suggestedSpecialty = 'Desarrollo Personal y Mindfulness';
-  } else if (totalScore <= 20) {
-    levelTitle = 'Tensión Emocional y Estrés Leve';
-    levelTag = 'estres_leve';
-    badgeColor = '#3B82F6';
-    summary = 'Se identifican indicios de cansancio acumulado o estrés situacional. Estás manejando la situación, pero tu mente te pide pausas.';
-    detailedAnalysis = 'Algunas áreas como el descanso o la tensión cotidiana presentan pequeñas alertas. Es un momento ideal para hacer ajustes preventivos antes de que la carga aumente.';
-    recommendations.push(
-      'Establece límites claros entre tus horarios de trabajo o estudio y tus momentos de descanso.',
-      'Dedica al menos 15 minutos al día a respiración consciente o caminatas sin pantallas.',
-      'Usa el espacio de la comunidad para compartir lo que sientes cuando el día fue pesado.'
-    );
-    suggestedSpecialty = 'Manejo del Estrés y Ansiedad Leve';
-  } else if (totalScore <= 31) {
-    levelTitle = 'Sobrecarga Emocional y Ansiedad Moderada';
-    levelTag = 'ansiedad_moderada';
-    badgeColor = '#F59E0B';
-    summary = 'Muestras niveles significativos de inquietud, sobrepensamiento o fatiga emocional que están interfiriendo con tu tranquilidad.';
-    detailedAnalysis = 'Tus respuestas indican que el sobrepensar y la tensión física o anímica te están consumiendo energía importante. No tienes que acostumbrarte a vivir con esta sobrecarga.';
-    recommendations.push(
-      'Practica técnicas de grounding (anclaje sensorial) cuando sientas pensamientos en bucle.',
-      'Conversa con un psicólogo para adquirir herramientas prácticas contra la rumiación mental.',
-      'Evita aislarte; compartir cómo te sientes en un entorno seguro aligera el peso emocional.'
-    );
-    suggestedSpecialty = 'Psicoterapia Cognitivo-Conductual y Ansiedad';
-  } else if (totalScore <= 40) {
-    levelTitle = 'Sintomatología Depresiva y Desánimo Significativo';
-    levelTag = 'depresion_significativa';
-    badgeColor = '#EC4899';
-    summary = 'Estás atravesando una etapa emocional compleja marcada por desánimo, tristeza persistente o falta de energía.';
-    detailedAnalysis = 'Tus emociones y tu cuerpo están pidiendo auxilio y comprensión. Es completamente natural sentirse así ante momentos difíciles, pero mereces un acompañamiento compasivo y profesional.';
-    recommendations.push(
-      'Te recomendamos fuertemente agendar una consulta con un psicólogo especializado.',
-      'Sé compasivo contigo mismo/a: no te exijas rendir al 100% mientras sanas.',
-      'Da pasos muy pequeños hoy: un vaso de agua, una ducha tibia, una frase compartida.'
-    );
-    suggestedSpecialty = 'Depresión, Duelo y Acompañamiento Emocional';
-  } else {
-    levelTitle = 'Alerta Emocional Alta / Necesidad de Acompañamiento';
-    levelTag = 'alerta_alta';
-    badgeColor = '#EF4444';
-    summary = 'Estás cargando con un malestar emocional muy intenso y agotador. Recuerda que no tienes que enfrentar esto en soledad.';
-    detailedAnalysis = 'Tus niveles de desánimo, ansiedad y desgaste han llegado a un punto donde el apoyo profesional es indispensable para devolverte la calma y la claridad que mereces.';
-    recommendations.push(
-      'Conéctate de inmediato con alguno de nuestros especialistas en psicología verificados.',
-      'Háblale a una persona cercana de confianza y dile con honestidad: "Necesito apoyo hoy".',
-      'Si sientes una crisis abrumadora, comunícate con líneas de apoyo emocional gratuitas 24/7.'
-    );
-    suggestedSpecialty = 'Atención en Crisis y Psicoterapia Clínica Especializada';
-  }
+  const streakState = buildInitialStreakState(
+    dominantCategory,
+    userId,
+    existingUnlockedBadges
+  );
 
   return {
     id: `test_${Date.now()}`,
@@ -292,14 +305,19 @@ export const calculateTestResult = (answers: Record<number, number>, userId?: st
     totalScore,
     maxPossibleScore,
     overallPercentage,
-    levelTitle,
+    levelTitle: focusMeta.title,
     levelTag,
-    badgeColor,
-    badgeTextColor,
-    summary,
-    detailedAnalysis,
+    badgeColor: focusMeta.color,
+    badgeTextColor: '#FFFFFF',
+    summary: focusMeta.animaPrompt,
+    detailedAnalysis: focusMeta.subtitle,
     dimensions,
-    recommendations,
-    suggestedSpecialty,
+    recommendations: streakState.days.slice(0, 3).map((d) => `${d.task.emoji} ${d.task.title}: ${d.task.description}`),
+    suggestedSpecialty: 'Acompañamiento Emocional y Bienestar',
+    focusCategory: dominantCategory,
+    animaInvitationMessage: focusMeta.animaPrompt,
+    streakState,
+    unlockedBadges: existingUnlockedBadges,
+    totalCompletedStreaks,
   };
 };
