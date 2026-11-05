@@ -382,6 +382,7 @@ export const HomeScreen: React.FC = () => {
             onJoinPress={handleOpenAuth}
             onProfilePress={handleOpenProfile}
             onOpenPsychologists={handleOpenPsychologists}
+            onOpenRacha={() => setIsStreakModalOpen(true)}
             onOpenCreatePost={() => {
               if (!user) {
                 setIsAuthOpen(true);

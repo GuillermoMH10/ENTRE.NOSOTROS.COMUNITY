@@ -658,6 +658,7 @@ export const DesktopWebLayout: React.FC<DesktopWebLayoutProps> = ({
                   onProfilePress={onOpenProfile}
                   onOpenPsychologists={() => setActiveSection('psicologos')}
                   onOpenCreatePost={onOpenCreatePost}
+                  onOpenRacha={() => setActiveSection('racha')}
                   hideAppHeader={true}
                   contentPaddingTop={12}
                   contentPaddingBottom={40}

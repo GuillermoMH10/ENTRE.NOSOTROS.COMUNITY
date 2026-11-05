@@ -1059,12 +1059,9 @@ export const resolveFreshTaskItem = (
 };
 
 export const generateSevenDayTasksForUser = (
-  category: EmotionalFocusCategory,
+  _category?: EmotionalFocusCategory,
   userId?: string
 ): StreakDayProgress[] => {
-  const primaryPool = ALL_STREAK_TASKS.filter((t) => t.category === category);
-  const secondaryPool = ALL_STREAK_TASKS.filter((t) => t.category !== category);
-
   const userEntropy = (userId || '')
     .split('')
     .reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
@@ -1080,15 +1077,7 @@ export const generateSevenDayTasksForUser = (
     return copy;
   };
 
-  const shuffledPrimary = shuffle(primaryPool);
-  const shuffledSecondary = shuffle(secondaryPool);
-
-  const selectedTasks: StreakTaskItem[] = [
-    ...shuffledPrimary.slice(0, 5),
-    ...shuffledSecondary.slice(0, 2),
-  ];
-
-  const finalSeven = shuffle(selectedTasks).slice(0, 7);
+  const finalSeven = shuffle(ALL_STREAK_TASKS).slice(0, 7);
 
   return finalSeven.map((task, idx) => ({
     dayNumber: idx + 1,

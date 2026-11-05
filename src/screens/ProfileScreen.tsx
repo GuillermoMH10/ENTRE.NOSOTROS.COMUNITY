@@ -39,6 +39,7 @@ import {
 import {
   getLatestTestResult,
   subscribeToUserTestAndStreak,
+  resetUserStreakInDatabase,
 } from '../services/psychologyTestService';
 import {
   OFFICIAL_STREAK_BADGES,
@@ -82,6 +83,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const [latestTestResult, setLatestTestResult] = useState<TestResult | null>(null);
   const [isTestModalOpen, setIsTestModalOpen] = useState(false);
   const [testModalMode, setTestModalMode] = useState<'questionnaire' | 'result'>('questionnaire');
+  const [isResetStreakConfirmOpen, setIsResetStreakConfirmOpen] = useState(false);
+  const [isResettingStreak, setIsResettingStreak] = useState(false);
 
   // Feed lists for each tab
   const [userPosts, setUserPosts] = useState<Post[]>([]);
@@ -728,28 +731,25 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                       </View>
                     </View>
 
-                    {/* Botón pequeño y discreto de Nuevo Test */}
+                    {/* Botón pequeño y discreto de Reiniciar Reto */}
                     <TouchableOpacity
                       style={{
                         flexDirection: 'row',
                         alignItems: 'center',
-                        backgroundColor: '#F8FAFC',
+                        backgroundColor: '#FFFFFF',
                         paddingHorizontal: 10,
                         paddingVertical: 5,
                         borderRadius: 9,
-                        borderWidth: 1,
-                        borderColor: '#E2E8F0',
+                        borderWidth: 1.5,
+                        borderColor: '#FF7A00',
                         gap: 4,
                       }}
                       activeOpacity={0.8}
-                      onPress={() => {
-                        setTestModalMode('questionnaire');
-                        setIsTestModalOpen(true);
-                      }}
+                      onPress={() => setIsResetStreakConfirmOpen(true)}
                     >
-                      <Ionicons name="refresh-outline" size={12} color="#475569" />
-                      <Text style={{ fontSize: 11, fontWeight: '700', color: '#475569' }}>
-                        Nuevo test
+                      <Ionicons name="refresh-outline" size={12} color="#FF7A00" />
+                      <Text style={{ fontSize: 11, fontWeight: '800', color: '#FF7A00' }}>
+                        Reiniciar reto
                       </Text>
                     </TouchableOpacity>
                   </View>
@@ -871,10 +871,10 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 >
                   <Text style={{ fontSize: 36, marginBottom: 8 }}>🔥</Text>
                   <Text style={[styles.profileNoTestTitle, { color: '#0F172A' }]}>
-                    Comienza tu Ruta de 7 Días con ANIMA
+                    Únete al Reto de Mejora de 7 Días
                   </Text>
                   <Text style={[styles.profileNoTestSubtitle, { color: '#64748B' }]}>
-                    Responde el test interactivo para recibir tu plan personalizado de 7 días, registrar tus avances en fotos y desbloquear tus 4 insignias.
+                    Realiza una actividad diaria acompañada por ANIMA, registra tus avances en fotos y desbloquea tus 4 insignias oficiales.
                   </Text>
                   <TouchableOpacity
                     style={[styles.profileStartTestBtn, { backgroundColor: '#FF7A00' }]}
@@ -885,7 +885,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                     }}
                   >
                     <Ionicons name="flame" size={17} color={colors.white} style={{ marginRight: 6 }} />
-                    <Text style={styles.profileStartTestBtnText}>Comenzar Test y Ruta de 7 Días</Text>
+                    <Text style={styles.profileStartTestBtnText}>Comenzar Reto de 7 Días</Text>
                   </TouchableOpacity>
                 </View>
               )}
@@ -1025,7 +1025,92 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           onClose={() => setSelectedPostForEdit(null)}
         />
 
-        {/* Psychology Test Modal */}
+        {/* Reset 7-Day Challenge Confirmation Modal */}
+        {isResetStreakConfirmOpen && (
+          <Modal
+            transparent
+            visible={isResetStreakConfirmOpen}
+            animationType="fade"
+            onRequestClose={() => setIsResetStreakConfirmOpen(false)}
+          >
+            <View style={styles.editModalBackdrop}>
+              <View
+                style={[
+                  styles.logoutModalCard,
+                  { maxWidth: 410, borderWidth: 1.5, borderColor: '#FFEDD5' },
+                ]}
+              >
+                <Image
+                  source={require('../../assets/perfilANIMA.png')}
+                  style={{
+                    width: 64,
+                    height: 64,
+                    borderRadius: 32,
+                    borderWidth: 2,
+                    borderColor: '#FF7A00',
+                    marginBottom: 10,
+                  }}
+                  resizeMode="cover"
+                />
+                <Text style={styles.logoutModalTitle}>¿Reiniciar tu Reto de 7 Días?</Text>
+                <Text style={styles.logoutModalMessage}>
+                  Al reiniciar todo, se borrará tu progreso actual y se eliminarán de Principal las publicaciones de evidencia que hayas subido durante este reto.
+                </Text>
+                <View style={{ width: '100%', gap: 8, marginTop: 4 }}>
+                  <TouchableOpacity
+                    style={{
+                      backgroundColor: '#FF7A00',
+                      paddingVertical: 11,
+                      borderRadius: 11,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                    disabled={isResettingStreak}
+                    onPress={async () => {
+                      setIsResettingStreak(true);
+                      try {
+                        await resetUserStreakInDatabase(user?.id, latestTestResult);
+                        setLatestTestResult(null);
+                        setIsResetStreakConfirmOpen(false);
+                      } finally {
+                        setIsResettingStreak(false);
+                      }
+                    }}
+                    activeOpacity={0.85}
+                  >
+                    {isResettingStreak ? (
+                      <ActivityIndicator size="small" color="#FFFFFF" />
+                    ) : (
+                      <Text style={{ color: '#FFFFFF', fontSize: 12.5, fontWeight: '800' }}>
+                        Sí, reiniciar todo y borrar publicaciones
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={{
+                      backgroundColor: '#F8FAFC',
+                      paddingVertical: 9,
+                      borderRadius: 11,
+                      borderWidth: 1,
+                      borderColor: '#E2E8F0',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                    disabled={isResettingStreak}
+                    onPress={() => setIsResetStreakConfirmOpen(false)}
+                    activeOpacity={0.75}
+                  >
+                    <Text style={{ color: '#64748B', fontSize: 12, fontWeight: '700' }}>
+                      Cancelar
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </Modal>
+        )}
+
+        {/* Psychology Test / Challenge Modal */}
         <PsychologyTestModal
           visible={isTestModalOpen}
           userId={user?.id}
@@ -1046,7 +1131,14 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             onClose();
             if (onOpenCreatePost) onOpenCreatePost();
           }}
-          onTestCompleted={(res) => setLatestTestResult(res)}
+          onTestCompleted={(res) => {
+            setLatestTestResult(res);
+            if (onOpenRacha) {
+              setIsTestModalOpen(false);
+              onOpenRacha();
+            }
+          }}
+          embedded={false}
         />
 
         {/* Follow List Modal (Seguidos / Seguidores) */}

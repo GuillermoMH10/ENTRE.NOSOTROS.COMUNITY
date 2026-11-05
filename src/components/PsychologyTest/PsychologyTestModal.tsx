@@ -17,18 +17,14 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import {
-  TEST_QUESTIONS,
-  TEST_OPTIONS,
-  calculateTestResult,
-} from '../../data/psychologyTestQuestions';
-import {
   OFFICIAL_STREAK_BADGES,
   FOCUS_CATEGORY_META,
   getRandomStreakMotivationalQuote,
 } from '../../data/streakChallengesData';
 import { TestResult } from '../../types/psychologyTest';
 import {
-  saveLatestTestResult,
+  startSevenDayImprovementChallenge,
+  resetUserStreakInDatabase,
   completeStreakDayWithEvidence,
   postponeStreakDayWithEncouragement,
   publishFullStreakSummaryToFeed,
@@ -70,10 +66,10 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
   const isDesktop = Platform.OS === 'web' && windowWidth >= 1024;
   const isEmbeddedMode = embedded || isDesktop;
 
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<number, number>>({});
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [result, setResult] = useState<TestResult | null>(null);
+  const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
+  const [isResettingAll, setIsResettingAll] = useState(false);
 
   // Active Day selection in 7-Day Streak view (1..7)
   const [selectedDayNum, setSelectedDayNum] = useState<number>(1);
@@ -109,7 +105,8 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
         initialResult.userId === (activeUid || 'anonymous') ||
         (activeUid && initialResult.userId === activeUid);
 
-      if (startMode === 'result' && initialResult && isMatchingUser) {
+      // While the user has an active 7-day challenge, always show their active challenge (cannot start a duplicate one)
+      if (initialResult && isMatchingUser && initialResult.streakState?.isActive) {
         const normalized = normalizeTestResultWithStreak(initialResult, activeUid);
         setResult((prev) => {
           const prevCompleted = prev?.streakState?.completedDaysCount || 0;
@@ -122,88 +119,56 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
           }
           return normalized;
         });
-      } else if (startMode === 'questionnaire') {
+      } else {
         setResult(null);
-        setCurrentIndex(0);
-        setAnswers({});
         setEvidencePhotoUri(null);
         setEvidenceNote('');
         setPostponedEncouragementQuote(null);
       }
+      setIsResetConfirmOpen(false);
     }
   }, [visible, startMode, initialResult, userId, user?.id]);
 
   if (!visible) return null;
 
-  const currentQuestion = TEST_QUESTIONS[currentIndex];
-  const totalQuestions = TEST_QUESTIONS.length;
-  const progressPercentage = ((currentIndex + 1) / totalQuestions) * 100;
-  const currentAnswer = answers[currentQuestion?.id];
-
-  const handleSelectOption = (value: number) => {
-    const updated = { ...answers, [currentQuestion.id]: value };
-    setAnswers(updated);
-
-    setTimeout(() => {
-      if (currentIndex < totalQuestions - 1) {
-        setCurrentIndex(currentIndex + 1);
-      } else {
-        handleFinishTest(updated);
+  const handleJoinChallenge = async () => {
+    if (!user && !userId) {
+      if (onRequireAuth) {
+        onRequireAuth();
+        return;
       }
-    }, 240);
-  };
-
-  const handlePrevious = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1);
     }
-  };
-
-  const handleFinishTest = async (finalAnswers: Record<number, number>) => {
     setIsEvaluating(true);
     const activeUid = user?.id || userId;
-    const prevBadges = initialResult?.unlockedBadges || result?.unlockedBadges || [];
-    const prevCount = initialResult?.totalCompletedStreaks || result?.totalCompletedStreaks || 0;
-
-    const computedResult = calculateTestResult(
-      finalAnswers,
-      activeUid,
-      prevBadges,
-      prevCount
-    );
-
-    const saved = await saveLatestTestResult(computedResult, activeUid);
-
-    setTimeout(() => {
+    try {
+      const saved = await startSevenDayImprovementChallenge(activeUid, result || initialResult);
       setIsEvaluating(false);
       setResult(saved);
-      setSelectedDayNum(1);
+      setSelectedDayNum(saved.streakState?.currentDayNumber || 1);
       if (onTestCompleted) {
         onTestCompleted(saved);
       }
-
-      // Single clean ANIMA Bottom Toast
-      showAnimaToast({
-        title: '¡Ruta de 7 Días Activada!',
-        message: 'Al subir la fotografía de tu actividad del día, tu avance se publicará en Principal para inspirar a la comunidad.',
-        emoji: '🔥',
-        accentColor: '#FF7A00',
-      });
-
-      // Stay on / navigate directly to the Racha screen
       if (onNavigateToProfile) {
         onNavigateToProfile();
       }
-    }, 450);
+    } catch (e) {
+      setIsEvaluating(false);
+    }
   };
 
-  const handleRestartQuestionnaire = () => {
-    setAnswers({});
-    setCurrentIndex(0);
-    setResult(null);
-    setEvidencePhotoUri(null);
-    setEvidenceNote('');
-    setPostponedEncouragementQuote(null);
+  const handleConfirmResetChallenge = async () => {
+    const activeUid = user?.id || userId;
+    setIsResettingAll(true);
+    try {
+      await resetUserStreakInDatabase(activeUid, result || initialResult);
+      setIsResetConfirmOpen(false);
+      setResult(null);
+      setEvidencePhotoUri(null);
+      setEvidenceNote('');
+      setPostponedEncouragementQuote(null);
+    } finally {
+      setIsResettingAll(false);
+    }
   };
 
   // Pick evidence image from gallery
@@ -374,35 +339,128 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
     setViewerVisible(true);
   };
 
-  const renderOptionCard = (option: typeof TEST_OPTIONS[0]) => {
-    const isSelected = currentAnswer === option.value;
-    return (
-      <TouchableOpacity
-        key={option.value}
-        style={[
-          styles.gridOptionCard,
-          isSelected && styles.gridOptionCardSelected,
-        ]}
-        onPress={() => handleSelectOption(option.value)}
-        activeOpacity={0.82}
-      >
-        {/* Large Emoji WITHOUT any background circle */}
-        <Text style={styles.gridEmojiLarge}>{option.emoji}</Text>
-
-        <Text style={[styles.gridOptionLabel, isSelected && styles.gridOptionLabelSelected]}>
-          {option.label}
-        </Text>
-        <Text style={[styles.gridOptionSublabel, isSelected && styles.gridOptionSublabelSelected]}>
-          {option.sublabel}
-        </Text>
-        {isSelected && (
-          <View style={styles.gridCheckmark}>
-            <Ionicons name="checkmark-circle" size={18} color="#FF7A00" />
+  // Compact & eye-catching invitation modal when user has not joined the 7-day challenge yet
+  if (!result || !streak?.isActive) {
+    const invitationCard = (
+      <View style={styles.compactModalOverlay}>
+        <View style={styles.compactInvitationCard}>
+          {/* Top Bar: Subtle Orange Badge + Close Button */}
+          <View style={styles.compactTopBar}>
+            <View style={styles.compactOrangePill}>
+              <Ionicons name="flame" size={13} color="#FF7A00" />
+              <Text style={styles.compactOrangePillText}>RETO DE 7 DÍAS CON ANIMA</Text>
+            </View>
+            <TouchableOpacity onPress={onClose} style={styles.compactCloseBtn} activeOpacity={0.7}>
+              <Ionicons name="close" size={18} color="#475569" />
+            </TouchableOpacity>
           </View>
-        )}
-      </TouchableOpacity>
+
+          {/* ANIMA Companion Header */}
+          <View style={styles.compactAnimaHeader}>
+            <Image
+              source={require('../../../assets/perfilANIMA.png')}
+              style={styles.compactAnimaAvatar}
+              resizeMode="cover"
+            />
+            <Text style={styles.compactMainTitle}>Reto de Mejora Personal</Text>
+            <Text style={styles.compactSubtitle}>
+              Un camino práctico de 7 días para reconectar contigo, crear hábitos positivos e inspirar a la comunidad.
+            </Text>
+          </View>
+
+          {/* Explanation Box: What the Challenge Consists Of */}
+          <View style={styles.compactStepsBox}>
+            <Text style={styles.compactStepsHeader}>
+              Este reto consiste en lo siguiente:
+            </Text>
+
+            <View style={styles.compactStepRow}>
+              <View style={styles.compactStepDot}>
+                <Ionicons name="sparkles-outline" size={14} color="#FF7A00" />
+              </View>
+              <Text style={styles.compactStepText}>
+                <Text style={styles.compactStepBold}>7 actividades diarias variadas: </Text>
+                Cada día desbloquearás una misión sencilla y positiva para tu bienestar (sin cuestionarios ni diagnósticos).
+              </Text>
+            </View>
+
+            <View style={styles.compactStepRow}>
+              <View style={styles.compactStepDot}>
+                <Ionicons name="camera-outline" size={14} color="#FF7A00" />
+              </View>
+              <Text style={styles.compactStepText}>
+                <Text style={styles.compactStepBold}>Comparte tu evidencia: </Text>
+                Sube una foto realizando tu actividad del día; se publicará en Principal para motivar a otros miembros.
+              </Text>
+            </View>
+
+            <View style={styles.compactStepRow}>
+              <View style={styles.compactStepDot}>
+                <Ionicons name="heart-outline" size={14} color="#FF7A00" />
+              </View>
+              <Text style={styles.compactStepText}>
+                <Text style={styles.compactStepBold}>Acompañamiento a tu ritmo: </Text>
+                Si un día no te sientes bien para hacerlo, puedes recorrerlo y recibir ánimo de ANIMA.
+              </Text>
+            </View>
+
+            <View style={[styles.compactStepRow, { marginBottom: 0 }]}>
+              <View style={styles.compactStepDot}>
+                <Ionicons name="ribbon-outline" size={14} color="#FF7A00" />
+              </View>
+              <Text style={styles.compactStepText}>
+                <Text style={styles.compactStepBold}>Desbloquea 4 insignias: </Text>
+                Al completar los 7 días ganarás tu insignia en tu Perfil. Mientras tengas una semana activa avanzarás en ella, o podrás reiniciar todo desde cero cuando quieras.
+              </Text>
+            </View>
+          </View>
+
+          {/* Primary Confirm & Secondary Close Buttons */}
+          <TouchableOpacity
+            style={styles.compactPrimaryJoinBtn}
+            onPress={handleJoinChallenge}
+            disabled={isEvaluating}
+            activeOpacity={0.88}
+          >
+            {isEvaluating ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <>
+                <Ionicons name="flame" size={17} color="#FFFFFF" style={{ marginRight: 7 }} />
+                <Text style={styles.compactPrimaryJoinBtnText}>
+                  ¡Quiero unirme al Reto!
+                </Text>
+              </>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.compactSecondaryCancelBtn}
+            onPress={onClose}
+            activeOpacity={0.75}
+          >
+            <Text style={styles.compactSecondaryCancelBtnText}>Ahora no</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
     );
-  };
+
+    if (isEmbeddedMode) {
+      return invitationCard;
+    }
+
+    return (
+      <Modal
+        visible={visible}
+        transparent
+        animationType="fade"
+        onRequestClose={onClose}
+        statusBarTranslucent
+      >
+        {invitationCard}
+      </Modal>
+    );
+  }
 
   const modalContent = (
     <SafeAreaView style={[styles.safeArea, isDesktop && styles.desktopSafeArea]}>
@@ -414,6 +472,69 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
         inlineOverlay={!isEmbeddedMode}
       />
 
+      {/* Compact Reset Confirmation Modal (Deletes Streak + Published Posts) */}
+      {isResetConfirmOpen && (
+        <View
+          style={[
+            styles.compactModalOverlay,
+            StyleSheet.absoluteFillObject,
+            { zIndex: 99998, elevation: 99998 },
+          ]}
+        >
+          <View style={styles.compactInvitationCard}>
+            <View style={styles.compactAnimaHeader}>
+              <Image
+                source={require('../../../assets/perfilANIMA.png')}
+                style={styles.compactAnimaAvatar}
+                resizeMode="cover"
+              />
+              <Text style={styles.compactMainTitle}>¿Reiniciar tu Reto de 7 Días?</Text>
+              <Text style={styles.compactSubtitle}>
+                Mientras tengas una semana activa para conseguir tu insignia no puedes iniciar otra a la vez, pero puedes reiniciar tu reto desde cero.
+              </Text>
+            </View>
+
+            <View
+              style={[
+                styles.compactStepsBox,
+                { backgroundColor: '#FFF7ED', borderColor: '#FFEDD5' },
+              ]}
+            >
+              <Text style={{ fontSize: 12, color: '#334155', lineHeight: 17.5, textAlign: 'center' }}>
+                Al reiniciar todo, <Text style={{ fontWeight: '800', color: '#EA580C' }}>se borrará tu progreso actual y se eliminarán las publicaciones de evidencia</Text> que hayas subido durante este reto en Principal.
+              </Text>
+            </View>
+
+            <TouchableOpacity
+              style={styles.compactPrimaryJoinBtn}
+              onPress={handleConfirmResetChallenge}
+              disabled={isResettingAll}
+              activeOpacity={0.88}
+            >
+              {isResettingAll ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <>
+                  <Ionicons name="trash-outline" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
+                  <Text style={styles.compactPrimaryJoinBtnText}>
+                    Sí, reiniciar todo y borrar publicaciones
+                  </Text>
+                </>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.compactSecondaryCancelBtn}
+              onPress={() => setIsResetConfirmOpen(false)}
+              disabled={isResettingAll}
+              activeOpacity={0.75}
+            >
+              <Text style={styles.compactSecondaryCancelBtnText}>Cancelar y seguir en mi racha</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
       {/* Top Clean White Header */}
       <View style={styles.topHeader}>
         <TouchableOpacity onPress={onClose} style={styles.closeBtn} activeOpacity={0.7}>
@@ -422,123 +543,27 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
 
         <View style={styles.headerTitleContainer}>
           <Text style={styles.headerMainTitle}>
-            {!result
-              ? 'Ruta Emocional de 7 Días'
-              : streak?.status === 'completed'
-              ? '¡Camino de 7 Días Logrado!'
-              : 'Mi Racha de 7 Días'}
+            {streak?.status === 'completed'
+              ? '¡Reto de 7 Días Logrado!'
+              : 'Mi Reto de 7 Días'}
           </Text>
           <Text style={styles.headerSubTitle}>
-            {!result
-              ? `Pregunta ${currentIndex + 1} de ${totalQuestions}`
-              : `${streak?.completedDaysCount || 0} de 7 días completados`}
+            {`${streak?.completedDaysCount || 0} de 7 días completados`}
           </Text>
         </View>
 
         <TouchableOpacity
-          onPress={handleRestartQuestionnaire}
-          style={styles.headerActionBtn}
+          onPress={() => setIsResetConfirmOpen(true)}
+          style={styles.resetPillHeaderBtn}
           activeOpacity={0.7}
-          accessibilityLabel="Nuevo test"
+          accessibilityLabel="Reiniciar reto"
         >
-          <Ionicons name="refresh-outline" size={18} color="#475569" />
+          <Ionicons name="refresh-outline" size={13} color="#FF7A00" />
+          <Text style={styles.resetPillHeaderBtnText}>Reiniciar</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Progress Bar during questionnaire */}
-      {!result && (
-        <View style={styles.progressBarTrack}>
-          <View style={[styles.progressBarFill, { width: `${progressPercentage}%` }]} />
-        </View>
-      )}
-
-      {isEvaluating ? (
-        <View style={styles.evaluatingContainer}>
-          <Image
-            source={require('../../../assets/perfilANIMA.png')}
-            style={styles.evaluatingAnimaImg}
-            resizeMode="cover"
-          />
-          <ActivityIndicator size="large" color="#FF7A00" style={{ marginVertical: 16 }} />
-          <Text style={styles.evaluatingTitle}>Preparando tu Ruta de 7 Días...</Text>
-          <Text style={styles.evaluatingDesc}>
-            Seleccionando tus desafíos personalizados y activando tu racha en tu Perfil.
-          </Text>
-        </View>
-      ) : !result ? (
-        /* =================== VIEW 1: CLEAN QUESTIONNAIRE (BIG EMOJIS + BIG ANIMA PHOTO) =================== */
-        <View style={styles.questionContainer}>
-          {/* ANIMA Companion Header with Larger Avatar */}
-          <View style={styles.questionAnimaBanner}>
-            <Image
-              source={require('../../../assets/perfilANIMA.png')}
-              style={styles.questionAnimaAvatarLarge}
-              resizeMode="cover"
-            />
-            <View style={{ flex: 1 }}>
-              <Text style={styles.questionAnimaTitle}>Personaliza tu Ruta con ANIMA</Text>
-              <Text style={styles.questionAnimaSub}>
-                Tus respuestas diseñarán tu plan interactivo de 7 días y tus insignias en tu perfil.
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.dimensionPill}>
-            <Ionicons
-              name={currentQuestion.dimensionIcon as any}
-              size={14}
-              color="#FF7A00"
-              style={{ marginRight: 6 }}
-            />
-            <Text style={styles.dimensionPillText}>{currentQuestion.dimensionLabel}</Text>
-          </View>
-
-          <View style={styles.questionBox}>
-            <Text style={styles.questionTitleText}>{currentQuestion.question}</Text>
-            <Text style={styles.questionSubtitleText}>{currentQuestion.subtitle}</Text>
-          </View>
-
-          <View style={styles.optionsGridContainer}>
-            <View style={styles.optionsGridRow}>
-              {renderOptionCard(TEST_OPTIONS[0])}
-              {renderOptionCard(TEST_OPTIONS[1])}
-            </View>
-            <View style={styles.optionsGridRow}>
-              {renderOptionCard(TEST_OPTIONS[2])}
-              {renderOptionCard(TEST_OPTIONS[3])}
-            </View>
-          </View>
-
-          <View style={styles.bottomNavRow}>
-            <TouchableOpacity
-              style={[styles.navControlBtn, currentIndex === 0 && styles.navControlBtnDisabled]}
-              onPress={handlePrevious}
-              disabled={currentIndex === 0}
-              activeOpacity={0.7}
-            >
-              <Ionicons
-                name="chevron-back"
-                size={16}
-                color={currentIndex === 0 ? '#94A3B8' : '#0F172A'}
-              />
-              <Text
-                style={[
-                  styles.navControlText,
-                  currentIndex === 0 && { color: '#94A3B8' },
-                ]}
-              >
-                Anterior
-              </Text>
-            </TouchableOpacity>
-
-            <Text style={styles.stepIndicatorText}>
-              {currentIndex + 1} / {totalQuestions}
-            </Text>
-
-            <View style={{ width: 82 }} />
-          </View>
-        </View>
-      ) : streak && streak.status === 'completed' ? (
+      {streak && streak.status === 'completed' ? (
         /* =================== VIEW 2: COMPLETED 7-DAY CELEBRATION & FULL SUMMARY POST =================== */
         <ScrollView
           style={styles.scrollBody}
@@ -1349,6 +1374,175 @@ const styles = StyleSheet.create({
     backgroundColor: '#F1F5F9',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  resetPillHeaderBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#FF7A00',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 10,
+  },
+  resetPillHeaderBtnText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#FF7A00',
+  },
+  /* Compact Centered Invitation & Reset Modal Styles */
+  compactModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.55)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 20,
+  },
+  compactInvitationCard: {
+    width: '100%',
+    maxWidth: 430,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 22,
+    paddingHorizontal: 20,
+    paddingVertical: 18,
+    borderWidth: 1.5,
+    borderColor: '#FFEDD5',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.14,
+    shadowRadius: 18,
+    elevation: 8,
+  },
+  compactTopBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  compactOrangePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: '#FFF7ED',
+    borderWidth: 1,
+    borderColor: '#FDBA74',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
+  compactOrangePillText: {
+    fontSize: 10,
+    fontWeight: '900',
+    color: '#FF7A00',
+    letterSpacing: 0.4,
+  },
+  compactCloseBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  compactAnimaHeader: {
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  compactAnimaAvatar: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    borderWidth: 2,
+    borderColor: '#FF7A00',
+    marginBottom: 8,
+  },
+  compactMainTitle: {
+    fontSize: 17.5,
+    fontWeight: '900',
+    color: '#0F172A',
+    textAlign: 'center',
+  },
+  compactSubtitle: {
+    fontSize: 12,
+    color: '#64748B',
+    textAlign: 'center',
+    lineHeight: 17,
+    marginTop: 4,
+    paddingHorizontal: 4,
+  },
+  compactStepsBox: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 14,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    marginBottom: 14,
+  },
+  compactStepsHeader: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#0F172A',
+    marginBottom: 8,
+  },
+  compactStepRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    marginBottom: 8,
+  },
+  compactStepDot: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#FFF7ED',
+    borderWidth: 1,
+    borderColor: '#FFEDD5',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 1,
+  },
+  compactStepText: {
+    flex: 1,
+    fontSize: 11.5,
+    color: '#475569',
+    lineHeight: 16.5,
+  },
+  compactStepBold: {
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  compactPrimaryJoinBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FF7A00',
+    paddingVertical: 11,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    marginBottom: 8,
+  },
+  compactPrimaryJoinBtnText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  compactSecondaryCancelBtn: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    borderRadius: 10,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  compactSecondaryCancelBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#64748B',
   },
   progressBarTrack: {
     width: '100%',

@@ -1,5 +1,15 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { doc, setDoc, getDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
+import {
+  collection,
+  doc,
+  setDoc,
+  getDoc,
+  getDocs,
+  deleteDoc,
+  onSnapshot,
+  query,
+  where,
+} from 'firebase/firestore';
 import { db } from './firebase';
 import { TestResult, EmotionalStreakState } from '../types/psychologyTest';
 import {
@@ -9,7 +19,7 @@ import {
   resolveFreshTaskItem,
 } from '../data/streakChallengesData';
 import { buildInitialStreakState } from '../data/psychologyTestQuestions';
-import { createPost, uploadMediaToStorage } from './postsService';
+import { createPost, deletePost, uploadMediaToStorage } from './postsService';
 import { showAnimaToast } from '../components/Anima/AnimaToast';
 
 const LEGACY_STORAGE_KEY = '@entre_nosotros_latest_test_result';
@@ -242,19 +252,160 @@ export const subscribeToUserTestAndStreak = (
 };
 
 /**
- * Deletes the user's streak and test document directly from Firestore (`streaks/{userId}`)
+ * Starts the 7-Day Personal Improvement Challenge directly (without any questionnaire or emotional diagnostic).
+ * If the user ALREADY has an active 7-day week in progress, it returns that active challenge without overwriting it.
  */
-export const resetUserStreakInDatabase = async (userId?: string): Promise<void> => {
+export const startSevenDayImprovementChallenge = async (
+  userId?: string,
+  existingResult?: TestResult | null
+): Promise<TestResult> => {
+  const cleanUserId = userId && userId !== 'anonymous' ? userId.trim() : undefined;
+
+  if (
+    existingResult?.streakState?.isActive &&
+    existingResult.streakState.status === 'active'
+  ) {
+    return normalizeTestResultWithStreak(existingResult, cleanUserId);
+  }
+
+  const prevBadges = existingResult?.unlockedBadges || [];
+  const prevCount = existingResult?.totalCompletedStreaks || 0;
+
+  const baseStreak = buildInitialStreakState('felicidad', cleanUserId, prevBadges);
+  const streakState: EmotionalStreakState = {
+    ...baseStreak,
+    isActive: true,
+    status: 'active',
+    focusTitle: 'Reto de Mejora Personal • 7 Días',
+    focusSubtitle: 'Actividades diarias para reconectar contigo y desbloquear insignias',
+    focusColor: '#FF7A00',
+    focusEmoji: '🔥',
+    publishedPostIds: [],
+  };
+
+  const challengeResult: TestResult = {
+    id: `challenge_${Date.now()}`,
+    userId: cleanUserId || 'anonymous',
+    createdAt: new Date().toISOString(),
+    totalScore: 0,
+    maxPossibleScore: 0,
+    overallPercentage: 100,
+    levelTitle: 'Reto de Mejora Personal • 7 Días',
+    levelTag: 'equilibrio',
+    badgeColor: '#FF7A00',
+    badgeTextColor: '#FFFFFF',
+    summary:
+      'Reto semanal activo de 7 días con actividades prácticas para tu bienestar e insignias en tu perfil.',
+    detailedAnalysis: '',
+    dimensions: [],
+    recommendations: [],
+    suggestedSpecialty: 'Bienestar Integral',
+    focusCategory: 'felicidad',
+    streakState,
+    unlockedBadges: prevBadges,
+    totalCompletedStreaks: prevCount,
+  };
+
+  const saved = await saveLatestTestResult(challengeResult, cleanUserId);
+
+  showAnimaToast({
+    title: '¡Reto de 7 Días Activado! 🔥',
+    message:
+      'Tu racha ya está disponible en tu barra de navegación y en tu Perfil. ¡Comencemos con la actividad del Día 1!',
+    emoji: '🔥',
+    accentColor: '#FF7A00',
+  });
+
+  return saved;
+};
+
+/**
+ * Deletes the user's streak document from Firestore (`streaks/{userId}`)
+ * AND deletes all community posts published during the user's streak challenge.
+ */
+export const resetUserStreakInDatabase = async (
+  userId?: string,
+  currentResult?: TestResult | null
+): Promise<void> => {
   const cleanUserId = userId && userId !== 'anonymous' ? userId.trim() : undefined;
   await purgeAllLocalTestKeys(cleanUserId);
-  notifyResultListeners(null);
+
+  const postIdsToDelete = new Set<string>();
+
+  const collectPostIdsFromResult = (res?: TestResult | null) => {
+    if (!res?.streakState) return;
+    if (Array.isArray(res.streakState.publishedPostIds)) {
+      res.streakState.publishedPostIds.forEach((id) => {
+        if (id) postIdsToDelete.add(id);
+      });
+    }
+    if (res.streakState.summaryPostId) {
+      postIdsToDelete.add(res.streakState.summaryPostId);
+    }
+    if (Array.isArray(res.streakState.days)) {
+      res.streakState.days.forEach((d) => {
+        if (d.postId) postIdsToDelete.add(d.postId);
+      });
+    }
+  };
+
+  collectPostIdsFromResult(currentResult);
 
   if (cleanUserId) {
-    const streakRef = doc(db, 'streaks', cleanUserId);
-    await deleteDoc(streakRef).catch(() => {});
-    const legacySubRef = doc(db, 'users', cleanUserId, 'psychologyData', 'latestTest');
-    await deleteDoc(legacySubRef).catch(() => {});
+    try {
+      const streakRef = doc(db, 'streaks', cleanUserId);
+      const snap = await getDoc(streakRef);
+      if (snap.exists()) {
+        collectPostIdsFromResult(snap.data() as TestResult);
+      }
+
+      // Also find any streak-related posts authored by this user in Firestore `posts`
+      const userPostsQuery = query(
+        collection(db, 'posts'),
+        where('authorId', '==', cleanUserId)
+      );
+      const postsSnap = await getDocs(userPostsQuery);
+      postsSnap.forEach((docSnap) => {
+        const pData = docSnap.data();
+        const content: string = pData?.content || '';
+        const tags: string[] = Array.isArray(pData?.hashtags) ? pData.hashtags : [];
+        const isStreakPost =
+          postIdsToDelete.has(docSnap.id) ||
+          tags.includes('#MiRachaEntreNosotros') ||
+          tags.includes('#Racha7Dias') ||
+          tags.includes('#LoLogre') ||
+          content.startsWith('🔥 Racha Día') ||
+          content.startsWith('🔥 Reto Día') ||
+          content.startsWith('🏆 ¡LO LOGRÉ!');
+
+        if (isStreakPost) {
+          postIdsToDelete.add(docSnap.id);
+        }
+      });
+
+      // Delete all collected streak posts from Firestore
+      await Promise.all(
+        Array.from(postIdsToDelete).map((pid) => deletePost(pid).catch(() => {}))
+      );
+
+      // Delete the user's streak document in Firestore
+      await deleteDoc(streakRef).catch(() => {});
+      const legacySubRef = doc(db, 'users', cleanUserId, 'psychologyData', 'latestTest');
+      await deleteDoc(legacySubRef).catch(() => {});
+    } catch (e) {
+      console.warn('Error resetting streak and deleting posts:', e);
+    }
   }
+
+  notifyResultListeners(null);
+
+  showAnimaToast({
+    title: 'Reto reiniciado por completo',
+    message:
+      'Se reinició tu progreso y se eliminaron tus publicaciones del reto. Puedes comenzar de nuevo cuando tú quieras.',
+    emoji: '🌱',
+    accentColor: '#FF7A00',
+  });
 };
 
 /**
@@ -339,13 +490,13 @@ export const completeStreakDayWithEvidence = async (params: {
 
   // 3. Build inspiring community post content (without any ANIMA quote line)
   const cleanNote = userNote.trim();
-  const postHeader = `🔥 Racha Día ${dayNumber}/7 • ${focusMeta.postTagText}`;
+  const postHeader = `🔥 Reto Día ${dayNumber}/7 • Superando mi Reto de 7 Días`;
   const taskLine = `Actividad de hoy: "${targetDay.task.title}"`;
   const postBody = cleanNote
     ? `${postHeader}\n${taskLine}\n\n"${cleanNote}"`
-    : `${postHeader}\n${taskLine}\n\nHoy di un paso más en mi camino de 7 días ${focusMeta.shortProblemLabel}.`;
+    : `${postHeader}\n${taskLine}\n\nHoy completé mi actividad del Día ${dayNumber} en el Reto de 7 Días de Entre Nosotros.`;
 
-  await createPost(
+  const postCreated = await createPost(
     authorId,
     authorUsername,
     authorAvatarUrl,
@@ -364,6 +515,7 @@ export const completeStreakDayWithEvidence = async (params: {
         evidenceImageUrl: publicEvidenceUrl,
         evidenceNote: cleanNote || `Logré el reto: ${d.task.title}`,
         motivationalQuoteUsed: quoteForDay,
+        ...(postCreated.postId ? { postId: postCreated.postId } : {}),
       };
     }
     if (d.dayNumber === dayNumber + 1 && d.status === 'locked') {
@@ -398,6 +550,13 @@ export const completeStreakDayWithEvidence = async (params: {
 
   const nextUnlockedDay = updatedDays.find((d) => d.status !== 'completed');
 
+  const existingPublishedIds = Array.isArray(streak.publishedPostIds)
+    ? [...streak.publishedPostIds]
+    : [];
+  if (postCreated.postId && !existingPublishedIds.includes(postCreated.postId)) {
+    existingPublishedIds.push(postCreated.postId);
+  }
+
   const updatedStreak: EmotionalStreakState = {
     ...streak,
     isActive: true,
@@ -410,6 +569,7 @@ export const completeStreakDayWithEvidence = async (params: {
     currentDayNumber: nextUnlockedDay ? nextUnlockedDay.dayNumber : 7,
     completedDaysCount: completedCount,
     days: updatedDays,
+    publishedPostIds: existingPublishedIds,
     lastUpdatedAt: new Date().toISOString(),
   };
 
@@ -540,7 +700,7 @@ export const publishFullStreakSummaryToFeed = async (params: {
     ...streak.days.map((d) => `• Día ${d.dayNumber}: ${d.task.title}`),
   ].join('\n');
 
-  await createPost(
+  const summaryPostRes = await createPost(
     authorId,
     authorUsername,
     authorAvatarUrl,
@@ -549,11 +709,20 @@ export const publishFullStreakSummaryToFeed = async (params: {
     ['#LoLogre', '#Racha7Dias', `#${badgeObj.name.replace(/\s+/g, '')}`, '#EntreNosotros']
   );
 
+  const updatedPublishedIds = Array.isArray(streak.publishedPostIds)
+    ? [...streak.publishedPostIds]
+    : [];
+  if (summaryPostRes.postId && !updatedPublishedIds.includes(summaryPostRes.postId)) {
+    updatedPublishedIds.push(summaryPostRes.postId);
+  }
+
   const updatedResult: TestResult = {
     ...normalized,
     streakState: {
       ...streak,
       summaryPublished: true,
+      ...(summaryPostRes.postId ? { summaryPostId: summaryPostRes.postId } : {}),
+      publishedPostIds: updatedPublishedIds,
       lastUpdatedAt: new Date().toISOString(),
     },
   };

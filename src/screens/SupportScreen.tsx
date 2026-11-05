@@ -16,7 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { AppHeader } from '../components/Header/AppHeader';
 import { SUPPORT_MESSAGES, SupportMessage, getRandomSupportMessage } from '../data/supportMessages';
 import { PsychologyTestModal } from '../components/PsychologyTest/PsychologyTestModal';
-import { getLatestTestResult } from '../services/psychologyTestService';
+import { subscribeToUserTestAndStreak } from '../services/psychologyTestService';
 import { TestResult } from '../types/psychologyTest';
 import { useAuth } from '../context/AuthContext';
 import { colors } from '../theme/colors';
@@ -27,6 +27,7 @@ interface SupportScreenProps {
   onProfilePress: () => void;
   onOpenPsychologists: () => void;
   onOpenCreatePost: () => void;
+  onOpenRacha?: () => void;
   contentPaddingTop?: number;
   contentPaddingBottom?: number;
   hideAppHeader?: boolean;
@@ -40,6 +41,7 @@ export const SupportScreen: React.FC<SupportScreenProps> = ({
   onProfilePress,
   onOpenPsychologists,
   onOpenCreatePost,
+  onOpenRacha,
   contentPaddingTop = 0,
   contentPaddingBottom = 80,
   hideAppHeader = false,
@@ -58,11 +60,14 @@ export const SupportScreen: React.FC<SupportScreenProps> = ({
   const [testModalMode, setTestModalMode] = useState<'questionnaire' | 'result'>('questionnaire');
 
   useEffect(() => {
-    setLatestResult(null);
-    getLatestTestResult(user?.id).then((res) => {
+    const unsub = subscribeToUserTestAndStreak(user?.id, (res) => {
       setLatestResult(res || null);
     });
+    return () => unsub();
   }, [user?.id]);
+
+  const hasActiveChallenge = Boolean(latestResult?.streakState?.isActive);
+  const completedChallengeDays = latestResult?.streakState?.completedDaysCount || 0;
 
   const handleNextMessage = () => {
     let nextMsg = getRandomSupportMessage();
@@ -94,18 +99,32 @@ export const SupportScreen: React.FC<SupportScreenProps> = ({
     }
   };
 
+  const handleOpenOrJoinChallenge = () => {
+    if (hasActiveChallenge) {
+      if (onOpenRacha) {
+        onOpenRacha();
+        return;
+      }
+      setTestModalMode('result');
+      setIsTestModalOpen(true);
+      return;
+    }
+    setTestModalMode('questionnaire');
+    setIsTestModalOpen(true);
+  };
+
   const carouselCards = [
     {
-      id: 'test',
-      title: 'REALIZAR TEST',
-      description: 'Autodiagnóstico orientativo para evaluar tu estado de ánimo, niveles de ansiedad, estrés y calidad de descanso.',
+      id: 'reto',
+      title: 'RETO DE MEJORA',
+      description:
+        'Únete al reto semanal de 7 días con ANIMA: realiza actividades diarias para tu bienestar, sube tu foto de evidencia y desbloquea insignias.',
       image: 'https://i.pinimg.com/1200x/8f/f4/ba/8ff4ba8f214a91d8e34718a2c69b3563.jpg',
-      onPress: () => {
-        setTestModalMode('questionnaire');
-        setIsTestModalOpen(true);
-      },
-      buttonText: 'Comenzar test',
-      icon: 'clipboard-outline' as const,
+      onPress: handleOpenOrJoinChallenge,
+      buttonText: hasActiveChallenge
+        ? `Ver mi racha (${completedChallengeDays}/7)`
+        : 'Comenzar reto',
+      icon: 'flame-outline' as const,
     },
     {
       id: 'psicologos',
@@ -127,17 +146,22 @@ export const SupportScreen: React.FC<SupportScreenProps> = ({
     },
   ];
 
-  if (isDesktop && isTestModalOpen) {
+  if (isDesktop && isTestModalOpen && hasActiveChallenge) {
     return (
       <View style={styles.container}>
         <PsychologyTestModal
           visible={true}
           userId={user?.id}
           initialResult={latestResult}
-          startMode={testModalMode}
+          startMode="result"
           onClose={() => setIsTestModalOpen(false)}
+          onNavigateToProfile={() => {
+            setIsTestModalOpen(false);
+            if (onOpenRacha) onOpenRacha();
+          }}
           onOpenPsychologists={onOpenPsychologists}
           onOpenCreatePost={onOpenCreatePost}
+          onRequireAuth={onJoinPress}
           onTestCompleted={handleTestCompleted}
           embedded={true}
         />
@@ -302,69 +326,65 @@ export const SupportScreen: React.FC<SupportScreenProps> = ({
           </View>
         )}
 
-        {/* 3. LATEST TEST EVALUATION SUMMARY (Clean & Aesthetic) */}
-        {latestResult && (
+        {/* 3. ACTIVE 7-DAY CHALLENGE STATUS CARD */}
+        {hasActiveChallenge && latestResult && (
           <View style={[styles.latestTestCard, isDesktop && { maxWidth: 880, width: '100%', alignSelf: 'center' }]}>
             <View style={styles.latestTestHeader}>
               <View style={styles.latestTestTitleRow}>
-                <Ionicons name="pulse" size={17} color={latestResult.badgeColor} style={{ marginRight: 6 }} />
-                <Text style={styles.latestTestMainTitle}>Tu última autoevaluación</Text>
+                <Ionicons name="flame" size={17} color="#FF7A00" style={{ marginRight: 6 }} />
+                <Text style={styles.latestTestMainTitle}>Tu Reto de 7 Días en curso</Text>
               </View>
               <Text style={styles.latestTestDate}>{formatDate(latestResult.createdAt)}</Text>
             </View>
 
-            <View style={[styles.resultTagBox, { backgroundColor: latestResult.badgeColor + '15' }]}>
-              <Text style={[styles.resultTagText, { color: latestResult.badgeColor }]}>
-                {latestResult.levelTitle}
+            <View style={[styles.resultTagBox, { backgroundColor: '#FFF7ED' }]}>
+              <Text style={[styles.resultTagText, { color: '#FF7A00' }]}>
+                {completedChallengeDays} de 7 días completados
               </Text>
             </View>
 
             <Text style={styles.latestTestSummary} numberOfLines={3}>
-              {latestResult.summary}
+              Tienes una semana activa para conseguir tu insignia. Avanza en tu actividad del día o reinicia tu reto desde la pantalla de Mi Racha si deseas empezar desde cero.
             </Text>
 
-            {/* 2 Separated Distinct Buttons */}
             <View style={styles.testCardActionsRow}>
-              {/* Button 1: Ver evaluación */}
               <TouchableOpacity
                 style={styles.viewResultBtn}
                 activeOpacity={0.85}
-                onPress={() => {
-                  setTestModalMode('result');
-                  setIsTestModalOpen(true);
-                }}
+                onPress={handleOpenOrJoinChallenge}
               >
-                <Ionicons name="eye-outline" size={15} color={colors.white} style={{ marginRight: 6 }} />
-                <Text style={styles.viewResultBtnText}>Ver evaluación</Text>
-              </TouchableOpacity>
-
-              {/* Button 2: Repetir test */}
-              <TouchableOpacity
-                style={styles.retakeTestBtn}
-                activeOpacity={0.85}
-                onPress={() => {
-                  setTestModalMode('questionnaire');
-                  setIsTestModalOpen(true);
-                }}
-              >
-                <Ionicons name="refresh-outline" size={15} color={colors.coffeeDark} style={{ marginRight: 6 }} />
-                <Text style={styles.retakeTestBtnText}>Repetir test</Text>
+                <Ionicons name="flame-outline" size={15} color={colors.white} style={{ marginRight: 6 }} />
+                <Text style={styles.viewResultBtnText}>Ir a Mi Racha de 7 Días</Text>
               </TouchableOpacity>
             </View>
           </View>
         )}
       </ScrollView>
 
-      {/* Psychology Test Modal */}
+      {/* Compact Challenge Invitation / Racha Modal */}
       <PsychologyTestModal
         visible={isTestModalOpen}
         userId={user?.id}
         initialResult={latestResult}
         startMode={testModalMode}
         onClose={() => setIsTestModalOpen(false)}
+        onNavigateToProfile={() => {
+          if (onOpenRacha) {
+            setIsTestModalOpen(false);
+            onOpenRacha();
+          }
+        }}
         onOpenPsychologists={onOpenPsychologists}
         onOpenCreatePost={onOpenCreatePost}
-        onTestCompleted={handleTestCompleted}
+        onRequireAuth={onJoinPress}
+        onTestCompleted={(res) => {
+          handleTestCompleted(res);
+          if (onOpenRacha) {
+            setIsTestModalOpen(false);
+            onOpenRacha();
+          }
+        }}
+        embedded={false}
       />
     </View>
   );

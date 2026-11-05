@@ -95,6 +95,8 @@ export interface EmotionalStreakState {
   days: StreakDayProgress[];
   targetBadgeId: string;
   summaryPublished?: boolean;
+  summaryPostId?: string;
+  publishedPostIds?: string[];
   lastUpdatedAt: string;
 }
 

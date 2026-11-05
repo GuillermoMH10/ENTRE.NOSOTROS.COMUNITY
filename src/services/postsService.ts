@@ -63,7 +63,7 @@ export async function createPost(
   content: string,
   mediaSources: string[],
   rawHashtags: string[]
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; postId?: string; error?: string }> {
   try {
     const postId = 'post_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
     const timestamp = Date.now();
@@ -150,7 +150,7 @@ export async function createPost(
       })
     );
 
-    return { success: true };
+    return { success: true, postId };
   } catch (error: any) {
     console.error('Error al crear post:', error);
     return { success: false, error: error.message || 'Error al conectar con la base de datos' };
