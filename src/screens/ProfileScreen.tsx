@@ -779,7 +779,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                           }}
                           style={{
                             flex: 1,
-                            aspectRatio: 1,
+                            height: isDesktopGrid ? 84 : 78,
                             borderRadius: 13,
                             backgroundColor: hasPhoto ? '#FFFFFF' : '#F8FAFC',
                             borderWidth: hasPhoto || isCurr ? 1.5 : 1,

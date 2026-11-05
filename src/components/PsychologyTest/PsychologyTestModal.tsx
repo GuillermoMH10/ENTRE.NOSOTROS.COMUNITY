@@ -411,6 +411,7 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
         images={viewerImages}
         initialIndex={viewerIndex}
         onClose={() => setViewerVisible(false)}
+        inlineOverlay={!isEmbeddedMode}
       />
 
       {/* Top Clean White Header */}
@@ -671,39 +672,34 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
           contentContainerStyle={styles.resultScrollContent}
           showsVerticalScrollIndicator={Platform.OS === 'web'}
         >
-          {/* 1. Header Card: Centered Counter + ANIMA Mascot on Side with 100 Random Phrases + 7-Day Selector */}
-          <View style={styles.cleanStreakHeaderCard}>
-            {/* Centered 1 / 7 Días Counter */}
-            <View style={{ alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <Text style={{ fontSize: 22 }}>🔥</Text>
-                <Text style={{ fontSize: 21, fontWeight: '900', color: '#0F172A', letterSpacing: -0.3 }}>
-                  {streak?.completedDaysCount || 0} / 7 Días
-                </Text>
-              </View>
-            </View>
-
-            {/* ANIMA Mascot on the Side + 1 of 100 Random Inspiring Phrases */}
+          {/* 1. Compact Header Card: ANIMA Mascot + Random Phrase + Counter Pill + 7-Day Selector */}
+          <View
+            style={[
+              styles.cleanStreakHeaderCard,
+              { padding: 12, marginBottom: 10, borderRadius: 16 },
+            ]}
+          >
+            {/* ANIMA Mascot + Random Quote + Compact Counter Pill */}
             <View
               style={{
                 flexDirection: 'row',
                 alignItems: 'center',
                 backgroundColor: '#F8FAFC',
-                borderRadius: 14,
-                paddingVertical: 10,
-                paddingHorizontal: 12,
+                borderRadius: 12,
+                paddingVertical: 8,
+                paddingHorizontal: 10,
                 borderWidth: 1,
                 borderColor: '#E2E8F0',
-                marginBottom: 12,
-                gap: 12,
+                marginBottom: 10,
+                gap: 9,
               }}
             >
               <Image
                 source={require('../../../assets/perfilANIMA.png')}
                 style={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: 24,
+                  width: 38,
+                  height: 38,
+                  borderRadius: 19,
                   borderWidth: 1.5,
                   borderColor: '#FF7A00',
                 }}
@@ -712,23 +708,42 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
               <View style={{ flex: 1 }}>
                 <Text
                   style={{
-                    fontSize: 12.5,
+                    fontSize: 11.5,
                     fontWeight: '600',
                     color: '#334155',
-                    lineHeight: 17.5,
+                    lineHeight: 15.5,
                     fontStyle: 'italic',
                   }}
+                  numberOfLines={2}
                 >
                   "{headerQuote}"
+                </Text>
+              </View>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  backgroundColor: '#FFF7ED',
+                  borderWidth: 1,
+                  borderColor: '#FFEDD5',
+                  paddingHorizontal: 7,
+                  paddingVertical: 3.5,
+                  borderRadius: 9,
+                  gap: 3,
+                }}
+              >
+                <Text style={{ fontSize: 11 }}>🔥</Text>
+                <Text style={{ fontSize: 11, fontWeight: '900', color: '#FF7A00' }}>
+                  {streak?.completedDaysCount || 0}/7
                 </Text>
               </View>
               <TouchableOpacity
                 onPress={() => setHeaderQuote(getRandomStreakMotivationalQuote())}
                 activeOpacity={0.7}
                 style={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: 14,
+                  width: 26,
+                  height: 26,
+                  borderRadius: 13,
                   backgroundColor: '#FFFFFF',
                   borderWidth: 1,
                   borderColor: '#E2E8F0',
@@ -736,7 +751,7 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
                   justifyContent: 'center',
                 }}
               >
-                <Ionicons name="reload" size={13} color="#FF7A00" />
+                <Ionicons name="reload" size={12} color="#FF7A00" />
               </TouchableOpacity>
             </View>
 
@@ -752,6 +767,7 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
                     key={d.dayNumber}
                     style={[
                       styles.cleanDayPill,
+                      { paddingVertical: 6, borderRadius: 10 },
                       isDone && styles.cleanDayPillDone,
                       isCurrent && !isDone && styles.cleanDayPillCurrent,
                       isSelected && styles.cleanDayPillSelected,
@@ -787,12 +803,12 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
             </View>
           </View>
 
-          {/* 2. COMPACT Active Day Challenge & Register Card */}
+          {/* 2. COMPACT Active Day Challenge & Sleek Unified Register Card */}
           {activeDayObj && (
             <View
               style={[
                 styles.cleanWhiteCard,
-                { paddingVertical: 14, paddingHorizontal: 15, marginBottom: 14 },
+                { paddingVertical: 12, paddingHorizontal: 14, marginBottom: 10, borderRadius: 16 },
               ]}
             >
               {/* Top Row: Day Pill Badge well separated from the Title below */}
@@ -801,20 +817,20 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
                   flexDirection: 'row',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  marginBottom: 12,
+                  marginBottom: 8,
                 }}
               >
                 <View
                   style={{
                     backgroundColor: '#FFF7ED',
-                    paddingHorizontal: 10,
-                    paddingVertical: 4,
-                    borderRadius: 8,
+                    paddingHorizontal: 9,
+                    paddingVertical: 3,
+                    borderRadius: 7,
                     borderWidth: 1,
                     borderColor: '#FFEDD5',
                   }}
                 >
-                  <Text style={{ fontSize: 11, fontWeight: '800', color: '#FF7A00' }}>
+                  <Text style={{ fontSize: 10.5, fontWeight: '800', color: '#FF7A00' }}>
                     {activeDayObj.dayName}
                   </Text>
                 </View>
@@ -832,36 +848,24 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
                 ) : null}
               </View>
 
-              {/* Separated Activity Title Row (Clean Typography without Emoji) */}
-              <View
-                style={{
-                  marginBottom: 10,
-                }}
-              >
-                <Text
-                  style={{
-                    fontSize: 15.5,
-                    fontWeight: '800',
-                    color: '#0F172A',
-                    lineHeight: 21,
-                  }}
-                >
-                  {activeDayObj.task.title}
-                </Text>
-              </View>
-
-              {/* Compact Description */}
+              {/* Separated Activity Title + Clean Description (without heavy box) */}
               <Text
                 style={{
-                  fontSize: 12.5,
-                  color: '#475569',
-                  lineHeight: 17.5,
-                  backgroundColor: '#F8FAFC',
-                  paddingVertical: 8,
-                  paddingHorizontal: 10,
-                  borderRadius: 10,
-                  borderWidth: 1,
-                  borderColor: '#E2E8F0',
+                  fontSize: 14.5,
+                  fontWeight: '800',
+                  color: '#0F172A',
+                  lineHeight: 19,
+                  marginBottom: 4,
+                }}
+              >
+                {activeDayObj.task.title}
+              </Text>
+
+              <Text
+                style={{
+                  fontSize: 12,
+                  color: '#64748B',
+                  lineHeight: 16.5,
                   marginBottom: 10,
                 }}
               >
@@ -876,122 +880,145 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
                     alignItems: 'center',
                     backgroundColor: '#F8FAFC',
                     borderRadius: 10,
-                    padding: 8,
+                    padding: 7,
                     borderWidth: 1,
                     borderColor: '#E2E8F0',
-                    marginBottom: 10,
+                    marginBottom: 8,
                     gap: 8,
                   }}
                 >
                   <Image
                     source={require('../../../assets/perfilANIMA.png')}
-                    style={{ width: 32, height: 32, borderRadius: 16, borderWidth: 1, borderColor: '#FF7A00' }}
+                    style={{ width: 28, height: 28, borderRadius: 14, borderWidth: 1, borderColor: '#FF7A00' }}
                     resizeMode="cover"
                   />
-                  <Text style={{ flex: 1, fontSize: 11.5, color: '#475569', fontStyle: 'italic' }}>
+                  <Text style={{ flex: 1, fontSize: 11, color: '#475569', fontStyle: 'italic' }}>
                     "{postponedEncouragementQuote}"
                   </Text>
                 </View>
               )}
 
               {activeDayObj.status === 'completed' ? (
-                <View style={styles.completedDayPreviewBox}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    backgroundColor: '#F8FAFC',
+                    borderRadius: 12,
+                    padding: 8,
+                    borderWidth: 1,
+                    borderColor: '#E2E8F0',
+                    gap: 10,
+                  }}
+                >
                   {activeDayObj.evidenceImageUrl ? (
                     <TouchableOpacity
-                      activeOpacity={0.9}
+                      activeOpacity={0.85}
                       onPress={() => handleOpenGalleryPhoto(activeDayObj.evidenceImageUrl!)}
                     >
                       <Image
                         source={{ uri: activeDayObj.evidenceImageUrl }}
-                        style={{ width: '100%', height: 150, borderRadius: 10, marginBottom: 8 }}
+                        style={{
+                          width: 56,
+                          height: 56,
+                          borderRadius: 10,
+                          borderWidth: 1,
+                          borderColor: '#FF7A00',
+                        }}
                         resizeMode="cover"
                       />
                     </TouchableOpacity>
                   ) : null}
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <Ionicons name="checkmark-circle" size={16} color="#FF7A00" />
-                    <Text style={{ fontSize: 12.5, fontWeight: '800', color: '#0F172A' }}>
-                      Actividad del Día {activeDayObj.dayNumber} registrada y publicada
-                    </Text>
+                  <View style={{ flex: 1 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                      <Ionicons name="checkmark-circle" size={14} color="#FF7A00" />
+                      <Text style={{ fontSize: 12, fontWeight: '800', color: '#0F172A' }}>
+                        Día {activeDayObj.dayNumber} completado
+                      </Text>
+                    </View>
+                    {activeDayObj.evidenceNote ? (
+                      <Text
+                        style={{ fontSize: 11, color: '#64748B', fontStyle: 'italic', marginTop: 2 }}
+                        numberOfLines={2}
+                      >
+                        "{activeDayObj.evidenceNote}"
+                      </Text>
+                    ) : (
+                      <Text style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>
+                        Toca la foto para verla en pantalla completa
+                      </Text>
+                    )}
                   </View>
-                  {activeDayObj.evidenceNote ? (
-                    <Text style={styles.completedDayPreviewNote}>
-                      "{activeDayObj.evidenceNote}"
-                    </Text>
-                  ) : null}
 
                   {activeDayObj.dayNumber < 7 && (
                     <TouchableOpacity
                       style={{
-                        marginTop: 10,
                         backgroundColor: '#FF7A00',
-                        borderRadius: 10,
-                        paddingVertical: 9,
-                        paddingHorizontal: 12,
+                        borderRadius: 9,
+                        paddingVertical: 7,
+                        paddingHorizontal: 10,
                         flexDirection: 'row',
                         alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 6,
+                        gap: 4,
                       }}
                       activeOpacity={0.85}
                       onPress={() => setSelectedDayNum(activeDayObj.dayNumber + 1)}
                     >
-                      <Text style={{ color: '#FFFFFF', fontSize: 12, fontWeight: '800' }}>
-                        Ver actividad del Día {activeDayObj.dayNumber + 1}
+                      <Text style={{ color: '#FFFFFF', fontSize: 11, fontWeight: '800' }}>
+                        Día {activeDayObj.dayNumber + 1}
                       </Text>
-                      <Ionicons name="arrow-forward" size={14} color="#FFFFFF" />
+                      <Ionicons name="arrow-forward" size={12} color="#FFFFFF" />
                     </TouchableOpacity>
                   )}
                 </View>
               ) : (
-                /* COMPACT Evidence Upload & Publish Form */
+                /* SLEEK UNIFIED Evidence Bar + Compact Action Buttons */
                 <View>
-                  <Text
+                  {/* Unified 44px Bar: Compact Photo Pill/Thumbnail on Left + 1-Line Comment Input on Right */}
+                  <View
                     style={{
-                      fontSize: 11.5,
-                      fontWeight: '800',
-                      color: '#334155',
-                      marginBottom: 6,
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      backgroundColor: '#F8FAFC',
+                      borderRadius: 11,
+                      borderWidth: 1,
+                      borderColor: evidencePhotoUri ? '#FDBA74' : '#E2E8F0',
+                      paddingHorizontal: 6,
+                      paddingVertical: 4,
+                      gap: 8,
+                      marginBottom: 8,
                     }}
                   >
-                    Registrar y publicar mi Día {activeDayObj.dayNumber}
-                  </Text>
-
-                  {/* Horizontal Compact Row: Photo Picker Box + Note Input */}
-                  <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
                     <TouchableOpacity
                       onPress={handlePickEvidencePhoto}
                       activeOpacity={0.85}
                       style={{
-                        width: 74,
-                        height: 66,
-                        borderRadius: 12,
-                        backgroundColor: '#F8FAFC',
-                        borderWidth: 1.5,
-                        borderColor: evidencePhotoUri ? '#FF7A00' : '#CBD5E1',
-                        borderStyle: evidencePhotoUri ? 'solid' : 'dashed',
-                        overflow: 'hidden',
+                        flexDirection: 'row',
                         alignItems: 'center',
-                        justifyContent: 'center',
+                        backgroundColor: evidencePhotoUri ? '#FFFFFF' : '#FFF7ED',
+                        borderWidth: 1,
+                        borderColor: evidencePhotoUri ? '#FF7A00' : '#FFEDD5',
+                        borderRadius: 8,
+                        paddingHorizontal: evidencePhotoUri ? 6 : 10,
+                        paddingVertical: evidencePhotoUri ? 3 : 6,
+                        gap: 5,
                       }}
                     >
                       {evidencePhotoUri ? (
-                        <Image
-                          source={{ uri: evidencePhotoUri }}
-                          style={{ width: '100%', height: '100%' }}
-                          resizeMode="cover"
-                        />
+                        <>
+                          <Image
+                            source={{ uri: evidencePhotoUri }}
+                            style={{ width: 26, height: 26, borderRadius: 6 }}
+                            resizeMode="cover"
+                          />
+                          <Text style={{ fontSize: 10.5, fontWeight: '800', color: '#FF7A00' }}>
+                            Cambiar
+                          </Text>
+                        </>
                       ) : (
                         <>
-                          <Ionicons name="camera-outline" size={20} color="#FF7A00" />
-                          <Text
-                            style={{
-                              fontSize: 9.5,
-                              fontWeight: '800',
-                              color: '#475569',
-                              marginTop: 2,
-                            }}
-                          >
+                          <Ionicons name="camera-outline" size={15} color="#FF7A00" />
+                          <Text style={{ fontSize: 11, fontWeight: '800', color: '#FF7A00' }}>
                             Subir foto
                           </Text>
                         </>
@@ -1001,37 +1028,31 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
                     <TextInput
                       style={{
                         flex: 1,
-                        height: 66,
-                        backgroundColor: '#F8FAFC',
-                        borderRadius: 12,
-                        borderWidth: 1,
-                        borderColor: '#E2E8F0',
-                        paddingHorizontal: 10,
-                        paddingVertical: 8,
+                        height: 34,
                         fontSize: 12,
                         color: '#0F172A',
-                        textAlignVertical: 'top',
+                        paddingHorizontal: 4,
+                        paddingVertical: 0,
                       }}
-                      placeholder="Comentario de tu experiencia hoy... (opcional)"
+                      placeholder="Comentario de tu experiencia (opcional)..."
                       placeholderTextColor="#94A3B8"
                       value={evidenceNote}
                       onChangeText={setEvidenceNote}
-                      multiline
                       maxLength={240}
                     />
                   </View>
 
-                  {/* Stacked Action Buttons: Primary Publish on top + Warm Postpone Button below */}
-                  <View style={{ gap: 8 }}>
+                  {/* Compact Stacked Action Buttons */}
+                  <View style={{ gap: 6 }}>
                     <TouchableOpacity
                       style={{
                         flexDirection: 'row',
                         alignItems: 'center',
                         justifyContent: 'center',
                         backgroundColor: '#FF7A00',
-                        paddingVertical: 11,
+                        paddingVertical: 9.5,
                         paddingHorizontal: 14,
-                        borderRadius: 11,
+                        borderRadius: 10,
                       }}
                       onPress={handleCompleteDay}
                       disabled={isSubmittingDay}
@@ -1041,8 +1062,8 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
                         <ActivityIndicator size="small" color="#FFFFFF" />
                       ) : (
                         <>
-                          <Ionicons name="checkmark-circle" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
-                          <Text style={{ color: '#FFFFFF', fontSize: 13, fontWeight: '800' }}>
+                          <Ionicons name="checkmark-circle" size={15} color="#FFFFFF" style={{ marginRight: 5 }} />
+                          <Text style={{ color: '#FFFFFF', fontSize: 12.5, fontWeight: '800' }}>
                             Publicar Día {activeDayObj.dayNumber}
                           </Text>
                         </>
@@ -1055,18 +1076,21 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
                         alignItems: 'center',
                         justifyContent: 'center',
                         backgroundColor: '#F8FAFC',
-                        paddingVertical: 10,
-                        paddingHorizontal: 12,
-                        borderRadius: 11,
+                        paddingVertical: 7.5,
+                        paddingHorizontal: 10,
+                        borderRadius: 9,
                         borderWidth: 1,
                         borderColor: '#E2E8F0',
                       }}
                       onPress={handlePostponeDay}
                       activeOpacity={0.75}
                     >
-                      <Ionicons name="heart-outline" size={14} color="#FF7A00" style={{ marginRight: 6 }} />
-                      <Text style={{ fontSize: 11.5, fontWeight: '700', color: '#475569', textAlign: 'center' }}>
-                        Hoy no me sentí bien para hacerlo • Recorrer día y recibir ánimo
+                      <Ionicons name="heart-outline" size={13} color="#FF7A00" style={{ marginRight: 5 }} />
+                      <Text
+                        style={{ fontSize: 11, fontWeight: '700', color: '#64748B', textAlign: 'center' }}
+                        numberOfLines={1}
+                      >
+                        Hoy no me sentí bien • Recorrer día y recibir ánimo
                       </Text>
                     </TouchableOpacity>
                   </View>
@@ -1075,10 +1099,15 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
             </View>
           )}
 
-          {/* 3. MIS AVANCES (GRID DE 7 EN UNA SOLA FILA EN WEB/LAPTOP, SIN EMOJIS) */}
-          <View style={[styles.cleanWhiteCard, { paddingVertical: 14, paddingHorizontal: 14, marginBottom: 14 }]}>
-            <View style={[styles.sectionHeaderRow, { marginBottom: 10 }]}>
-              <Text style={{ fontSize: 13.5, fontWeight: '800', color: '#0F172A' }}>
+          {/* 3. MIS AVANCES (GRID DE 7 EN UNA SOLA FILA EN WEB/LAPTOP, Y 4+3 CON ALTURA FIJA EN MÓVIL) */}
+          <View
+            style={[
+              styles.cleanWhiteCard,
+              { paddingVertical: 12, paddingHorizontal: 14, marginBottom: 10, borderRadius: 16 },
+            ]}
+          >
+            <View style={[styles.sectionHeaderRow, { marginBottom: 8 }]}>
+              <Text style={{ fontSize: 13, fontWeight: '800', color: '#0F172A' }}>
                 Mis Avances (7 Días)
               </Text>
               <View style={styles.countGrayBadge}>
@@ -1100,11 +1129,11 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
                     key={d.dayNumber}
                     style={{
                       flex: 1,
-                      aspectRatio: 1,
-                      borderRadius: 12,
+                      height: isDesktopGrid ? 80 : 72,
+                      borderRadius: 11,
                       overflow: 'hidden',
                       backgroundColor: '#F8FAFC',
-                      borderWidth: isSelected ? 1.5 : 1,
+                      borderWidth: isSelected || hasPhoto ? 1.5 : 1,
                       borderColor: hasPhoto || isSelected ? '#FF7A00' : '#E2E8F0',
                       position: 'relative',
                     }}
@@ -1121,7 +1150,7 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
                       <>
                         <Image
                           source={{ uri: d.evidenceImageUrl }}
-                          style={styles.advanceGridImg}
+                          style={{ width: '100%', height: '100%' }}
                           resizeMode="cover"
                         />
                         <View style={styles.advanceDayOverlayPill}>
@@ -1132,7 +1161,7 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
                       <View style={styles.advanceEmptySlot}>
                         <Text
                           style={{
-                            fontSize: 11,
+                            fontSize: 10.5,
                             fontWeight: '800',
                             color: isSelected ? '#FF7A00' : '#475569',
                           }}
@@ -1141,7 +1170,7 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
                         </Text>
                         <Text
                           style={{
-                            fontSize: 9,
+                            fontSize: 8.5,
                             color: '#94A3B8',
                             fontWeight: '600',
                             marginTop: 2,
@@ -1514,7 +1543,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   resultScrollContent: {
-    padding: 16,
+    padding: 12,
   },
   /* Clean White Streak Header Card */
   cleanStreakHeaderCard: {

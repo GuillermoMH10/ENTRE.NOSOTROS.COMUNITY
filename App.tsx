@@ -1,5 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Platform } from 'react-native';
+import { StyleSheet, View, Platform, LogBox } from 'react-native';
+
+// Suppress internal react-native-web TouchableOpacity findDOMNode deprecation warning
+if (Platform.OS === 'web' && typeof console !== 'undefined') {
+  const origError = console.error;
+  const origWarn = console.warn;
+  console.error = (...args: any[]) => {
+    if (typeof args[0] === 'string' && args[0].includes('findDOMNode is deprecated')) return;
+    origError.apply(console, args);
+  };
+  console.warn = (...args: any[]) => {
+    if (typeof args[0] === 'string' && args[0].includes('findDOMNode is deprecated')) return;
+    origWarn.apply(console, args);
+  };
+} else {
+  LogBox.ignoreLogs(['findDOMNode is deprecated']);
+}
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';

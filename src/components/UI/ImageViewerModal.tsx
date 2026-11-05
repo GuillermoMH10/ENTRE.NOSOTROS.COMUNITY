@@ -7,6 +7,7 @@ import {
   Image,
   TouchableOpacity,
   Dimensions,
+  useWindowDimensions,
   FlatList,
   SafeAreaView,
   Platform,
@@ -22,6 +23,7 @@ interface ImageViewerModalProps {
   images: string[];
   initialIndex?: number;
   onClose: () => void;
+  inlineOverlay?: boolean;
 }
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -31,7 +33,11 @@ export const ImageViewerModal: React.FC<ImageViewerModalProps> = ({
   images,
   initialIndex = 0,
   onClose,
+  inlineOverlay = false,
 }) => {
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+  const activeWidth = screenWidth || SCREEN_WIDTH;
+  const activeHeight = screenHeight || SCREEN_HEIGHT;
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const flatListRef = useRef<FlatList>(null);
 
@@ -78,6 +84,128 @@ export const ImageViewerModal: React.FC<ImageViewerModalProps> = ({
 
   if (!visible || !images || images.length === 0) return null;
 
+  const viewerContent = (
+    <View
+      style={[
+        styles.backdrop,
+        inlineOverlay && [
+          StyleSheet.absoluteFillObject,
+          { zIndex: 99999, elevation: 99999 },
+        ],
+      ]}
+    >
+      <StatusBar barStyle="light-content" backgroundColor="#000000" />
+      <SafeAreaView style={styles.safeArea}>
+        {/* Header Bar with Counter & Close Button */}
+        <View style={styles.topBar}>
+          {images.length > 1 ? (
+            <View style={styles.counterBadge}>
+              <Text style={styles.counterText}>
+                {currentIndex + 1} / {images.length}
+              </Text>
+            </View>
+          ) : (
+            <View style={{ width: 40 }} />
+          )}
+
+          <TouchableOpacity
+            style={styles.closeBtn}
+            onPress={onClose}
+            activeOpacity={0.7}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Ionicons name="close" size={26} color={colors.white} />
+          </TouchableOpacity>
+        </View>
+
+        {/* Full Screen Horizontal Swipe Carousel */}
+        <View style={styles.carouselContainer}>
+          <FlatList
+            ref={flatListRef}
+            data={images}
+            keyExtractor={(_, index) => index.toString()}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            onViewableItemsChanged={onViewableItemsChanged}
+            viewabilityConfig={{ itemVisiblePercentThreshold: 50 }}
+            getItemLayout={(_, index) => ({
+              length: activeWidth,
+              offset: activeWidth * index,
+              index,
+            })}
+            renderItem={({ item, index }) => {
+              const isVideo = isVideoUrl(item);
+              return (
+                <View style={[styles.imageSlide, { width: activeWidth }]}>
+                  {isVideo ? (
+                    <Video
+                      source={{ uri: item }}
+                      style={[styles.fullVideo, { width: activeWidth, height: activeHeight * 0.78 }]}
+                      resizeMode={ResizeMode.CONTAIN}
+                      useNativeControls
+                      shouldPlay={currentIndex === index}
+                      isLooping
+                      volume={1.0}
+                      isMuted={false}
+                    />
+                  ) : (
+                    <Image
+                      source={{ uri: item }}
+                      style={[styles.fullImage, { width: activeWidth, height: activeHeight * 0.78 }]}
+                      resizeMode="contain"
+                    />
+                  )}
+                </View>
+              );
+            }}
+          />
+
+          {/* Left navigation arrow button (if multiple images) */}
+          {images.length > 1 && currentIndex > 0 && (
+            <TouchableOpacity
+              style={[styles.navArrowBtn, styles.navArrowLeft]}
+              onPress={handlePrev}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="chevron-back" size={24} color={colors.white} />
+            </TouchableOpacity>
+          )}
+
+          {/* Right navigation arrow button (if multiple images) */}
+          {images.length > 1 && currentIndex < images.length - 1 && (
+            <TouchableOpacity
+              style={[styles.navArrowBtn, styles.navArrowRight]}
+              onPress={handleNext}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="chevron-forward" size={24} color={colors.white} />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* Bottom Indicators Dots (for 2 or 3 images) */}
+        {images.length > 1 && (
+          <View style={styles.dotsRow}>
+            {images.map((_, idx) => (
+              <View
+                key={idx}
+                style={[
+                  styles.dot,
+                  currentIndex === idx ? styles.dotActive : styles.dotInactive,
+                ]}
+              />
+            ))}
+          </View>
+        )}
+      </SafeAreaView>
+    </View>
+  );
+
+  if (inlineOverlay) {
+    return viewerContent;
+  }
+
   return (
     <Modal
       visible={visible}
@@ -86,113 +214,7 @@ export const ImageViewerModal: React.FC<ImageViewerModalProps> = ({
       onRequestClose={onClose}
       statusBarTranslucent
     >
-      <View style={styles.backdrop}>
-        <StatusBar barStyle="light-content" backgroundColor="#000000" />
-        <SafeAreaView style={styles.safeArea}>
-          {/* Header Bar with Counter & Close Button */}
-          <View style={styles.topBar}>
-            {images.length > 1 ? (
-              <View style={styles.counterBadge}>
-                <Text style={styles.counterText}>
-                  {currentIndex + 1} / {images.length}
-                </Text>
-              </View>
-            ) : (
-              <View style={{ width: 40 }} />
-            )}
-
-            <TouchableOpacity
-              style={styles.closeBtn}
-              onPress={onClose}
-              activeOpacity={0.7}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            >
-              <Ionicons name="close" size={26} color={colors.white} />
-            </TouchableOpacity>
-          </View>
-
-          {/* Full Screen Horizontal Swipe Carousel */}
-          <View style={styles.carouselContainer}>
-            <FlatList
-              ref={flatListRef}
-              data={images}
-              keyExtractor={(_, index) => index.toString()}
-              horizontal
-              pagingEnabled
-              showsHorizontalScrollIndicator={false}
-              onViewableItemsChanged={onViewableItemsChanged}
-              viewabilityConfig={{ itemVisiblePercentThreshold: 50 }}
-              getItemLayout={(_, index) => ({
-                length: SCREEN_WIDTH,
-                offset: SCREEN_WIDTH * index,
-                index,
-              })}
-              renderItem={({ item, index }) => {
-                const isVideo = isVideoUrl(item);
-                return (
-                  <View style={styles.imageSlide}>
-                    {isVideo ? (
-                      <Video
-                        source={{ uri: item }}
-                        style={styles.fullVideo}
-                        resizeMode={ResizeMode.CONTAIN}
-                        useNativeControls
-                        shouldPlay={currentIndex === index}
-                        isLooping
-                        volume={1.0}
-                        isMuted={false}
-                      />
-                    ) : (
-                      <Image
-                        source={{ uri: item }}
-                        style={styles.fullImage}
-                        resizeMode="contain"
-                      />
-                    )}
-                  </View>
-                );
-              }}
-            />
-
-            {/* Left navigation arrow button (if multiple images) */}
-            {images.length > 1 && currentIndex > 0 && (
-              <TouchableOpacity
-                style={[styles.navArrowBtn, styles.navArrowLeft]}
-                onPress={handlePrev}
-                activeOpacity={0.7}
-              >
-                <Ionicons name="chevron-back" size={24} color={colors.white} />
-              </TouchableOpacity>
-            )}
-
-            {/* Right navigation arrow button (if multiple images) */}
-            {images.length > 1 && currentIndex < images.length - 1 && (
-              <TouchableOpacity
-                style={[styles.navArrowBtn, styles.navArrowRight]}
-                onPress={handleNext}
-                activeOpacity={0.7}
-              >
-                <Ionicons name="chevron-forward" size={24} color={colors.white} />
-              </TouchableOpacity>
-            )}
-          </View>
-
-          {/* Bottom Indicators Dots (for 2 or 3 images) */}
-          {images.length > 1 && (
-            <View style={styles.dotsRow}>
-              {images.map((_, idx) => (
-                <View
-                  key={idx}
-                  style={[
-                    styles.dot,
-                    currentIndex === idx ? styles.dotActive : styles.dotInactive,
-                  ]}
-                />
-              ))}
-            </View>
-          )}
-        </SafeAreaView>
-      </View>
+      {viewerContent}
     </Modal>
   );
 };
