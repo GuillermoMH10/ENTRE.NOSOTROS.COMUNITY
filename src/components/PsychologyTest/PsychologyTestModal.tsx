@@ -64,7 +64,7 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
   const { user } = useAuth();
   const { width: windowWidth } = useWindowDimensions();
   const isDesktop = Platform.OS === 'web' && windowWidth >= 1024;
-  const isEmbeddedMode = embedded || isDesktop;
+  const isEmbeddedMode = Boolean(embedded);
 
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [result, setResult] = useState<TestResult | null>(null);
@@ -341,114 +341,6 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
 
   // Compact & eye-catching invitation modal when user has not joined the 7-day challenge yet
   if (!result || !streak?.isActive) {
-    const invitationCard = (
-      <View style={styles.compactModalOverlay}>
-        <View style={styles.compactInvitationCard}>
-          {/* Top Bar: Subtle Orange Badge + Close Button */}
-          <View style={styles.compactTopBar}>
-            <View style={styles.compactOrangePill}>
-              <Ionicons name="flame" size={13} color="#FF7A00" />
-              <Text style={styles.compactOrangePillText}>RETO DE 7 DÍAS CON ANIMA</Text>
-            </View>
-            <TouchableOpacity onPress={onClose} style={styles.compactCloseBtn} activeOpacity={0.7}>
-              <Ionicons name="close" size={18} color="#475569" />
-            </TouchableOpacity>
-          </View>
-
-          {/* ANIMA Companion Header */}
-          <View style={styles.compactAnimaHeader}>
-            <Image
-              source={require('../../../assets/perfilANIMA.png')}
-              style={styles.compactAnimaAvatar}
-              resizeMode="cover"
-            />
-            <Text style={styles.compactMainTitle}>Reto de Mejora Personal</Text>
-            <Text style={styles.compactSubtitle}>
-              Un camino práctico de 7 días para reconectar contigo, crear hábitos positivos e inspirar a la comunidad.
-            </Text>
-          </View>
-
-          {/* Explanation Box: What the Challenge Consists Of */}
-          <View style={styles.compactStepsBox}>
-            <Text style={styles.compactStepsHeader}>
-              Este reto consiste en lo siguiente:
-            </Text>
-
-            <View style={styles.compactStepRow}>
-              <View style={styles.compactStepDot}>
-                <Ionicons name="sparkles-outline" size={14} color="#FF7A00" />
-              </View>
-              <Text style={styles.compactStepText}>
-                <Text style={styles.compactStepBold}>7 actividades diarias variadas: </Text>
-                Cada día desbloquearás una misión sencilla y positiva para tu bienestar (sin cuestionarios ni diagnósticos).
-              </Text>
-            </View>
-
-            <View style={styles.compactStepRow}>
-              <View style={styles.compactStepDot}>
-                <Ionicons name="camera-outline" size={14} color="#FF7A00" />
-              </View>
-              <Text style={styles.compactStepText}>
-                <Text style={styles.compactStepBold}>Comparte tu evidencia: </Text>
-                Sube una foto realizando tu actividad del día; se publicará en Principal para motivar a otros miembros.
-              </Text>
-            </View>
-
-            <View style={styles.compactStepRow}>
-              <View style={styles.compactStepDot}>
-                <Ionicons name="heart-outline" size={14} color="#FF7A00" />
-              </View>
-              <Text style={styles.compactStepText}>
-                <Text style={styles.compactStepBold}>Acompañamiento a tu ritmo: </Text>
-                Si un día no te sientes bien para hacerlo, puedes recorrerlo y recibir ánimo de ANIMA.
-              </Text>
-            </View>
-
-            <View style={[styles.compactStepRow, { marginBottom: 0 }]}>
-              <View style={styles.compactStepDot}>
-                <Ionicons name="ribbon-outline" size={14} color="#FF7A00" />
-              </View>
-              <Text style={styles.compactStepText}>
-                <Text style={styles.compactStepBold}>Desbloquea 4 insignias: </Text>
-                Al completar los 7 días ganarás tu insignia en tu Perfil. Mientras tengas una semana activa avanzarás en ella, o podrás reiniciar todo desde cero cuando quieras.
-              </Text>
-            </View>
-          </View>
-
-          {/* Primary Confirm & Secondary Close Buttons */}
-          <TouchableOpacity
-            style={styles.compactPrimaryJoinBtn}
-            onPress={handleJoinChallenge}
-            disabled={isEvaluating}
-            activeOpacity={0.88}
-          >
-            {isEvaluating ? (
-              <ActivityIndicator size="small" color="#FFFFFF" />
-            ) : (
-              <>
-                <Ionicons name="flame" size={17} color="#FFFFFF" style={{ marginRight: 7 }} />
-                <Text style={styles.compactPrimaryJoinBtnText}>
-                  ¡Quiero unirme al Reto!
-                </Text>
-              </>
-            )}
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.compactSecondaryCancelBtn}
-            onPress={onClose}
-            activeOpacity={0.75}
-          >
-            <Text style={styles.compactSecondaryCancelBtnText}>Ahora no</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-
-    if (isEmbeddedMode) {
-      return invitationCard;
-    }
-
     return (
       <Modal
         visible={visible}
@@ -457,7 +349,114 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
         onRequestClose={onClose}
         statusBarTranslucent
       >
-        {invitationCard}
+        <View style={styles.compactModalOverlay}>
+          <View style={styles.compactInvitationCard}>
+            {/* Top Bar: Subtle Orange Badge + Close Button */}
+            <View style={styles.compactTopBar}>
+              <View style={styles.compactOrangePill}>
+                <Ionicons name="flame" size={13} color="#FF7A00" />
+                <Text style={styles.compactOrangePillText}>RETO DE 7 DÍAS CON ANIMA</Text>
+              </View>
+              <TouchableOpacity onPress={onClose} style={styles.compactCloseBtn} activeOpacity={0.7}>
+                <Ionicons name="close" size={18} color="#475569" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView
+              style={{ flexShrink: 1 }}
+              contentContainerStyle={{ paddingBottom: 2 }}
+              showsVerticalScrollIndicator={false}
+              bounces={false}
+            >
+              {/* ANIMA Companion Header */}
+              <View style={styles.compactAnimaHeader}>
+                <Image
+                  source={require('../../../assets/perfilANIMA.png')}
+                  style={styles.compactAnimaAvatar}
+                  resizeMode="cover"
+                />
+                <Text style={styles.compactMainTitle}>Reto de Mejora Personal</Text>
+                <Text style={styles.compactSubtitle}>
+                  Un camino práctico de 7 días para reconectar contigo, crear hábitos positivos e inspirar a la comunidad.
+                </Text>
+              </View>
+
+              {/* Explanation Box: What the Challenge Consists Of */}
+              <View style={styles.compactStepsBox}>
+                <Text style={styles.compactStepsHeader}>
+                  Este reto consiste en lo siguiente:
+                </Text>
+
+                <View style={styles.compactStepRow}>
+                  <View style={styles.compactStepDot}>
+                    <Ionicons name="sparkles-outline" size={13} color="#FF7A00" />
+                  </View>
+                  <Text style={styles.compactStepText}>
+                    <Text style={styles.compactStepBold}>7 actividades diarias variadas: </Text>
+                    Cada día desbloquearás una misión sencilla y positiva para tu bienestar (sin cuestionarios ni diagnósticos).
+                  </Text>
+                </View>
+
+                <View style={styles.compactStepRow}>
+                  <View style={styles.compactStepDot}>
+                    <Ionicons name="camera-outline" size={13} color="#FF7A00" />
+                  </View>
+                  <Text style={styles.compactStepText}>
+                    <Text style={styles.compactStepBold}>Comparte tu evidencia: </Text>
+                    Sube una foto realizando tu actividad del día; se publicará en Principal para motivar a otros miembros.
+                  </Text>
+                </View>
+
+                <View style={styles.compactStepRow}>
+                  <View style={styles.compactStepDot}>
+                    <Ionicons name="heart-outline" size={13} color="#FF7A00" />
+                  </View>
+                  <Text style={styles.compactStepText}>
+                    <Text style={styles.compactStepBold}>Acompañamiento a tu ritmo: </Text>
+                    Si un día no te sientes bien para hacerlo, puedes recorrerlo y recibir ánimo de ANIMA.
+                  </Text>
+                </View>
+
+                <View style={[styles.compactStepRow, { marginBottom: 0 }]}>
+                  <View style={styles.compactStepDot}>
+                    <Ionicons name="ribbon-outline" size={13} color="#FF7A00" />
+                  </View>
+                  <Text style={styles.compactStepText}>
+                    <Text style={styles.compactStepBold}>Desbloquea 4 insignias: </Text>
+                    Al completar los 7 días ganarás tu insignia en tu Perfil. Mientras tengas una semana activa avanzarás en ella, o podrás reiniciar todo desde cero cuando quieras.
+                  </Text>
+                </View>
+              </View>
+            </ScrollView>
+
+            {/* Primary Confirm & Secondary Close Buttons */}
+            <TouchableOpacity
+              style={styles.compactPrimaryJoinBtn}
+              onPress={handleJoinChallenge}
+              disabled={isEvaluating}
+              activeOpacity={0.88}
+            >
+              {isEvaluating ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <>
+                  <Ionicons name="flame" size={16} color="#FFFFFF" style={{ marginRight: 7 }} />
+                  <Text style={styles.compactPrimaryJoinBtnText}>
+                    ¡Quiero unirme al Reto!
+                  </Text>
+                </>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.compactSecondaryCancelBtn}
+              onPress={onClose}
+              activeOpacity={0.75}
+            >
+              <Text style={styles.compactSecondaryCancelBtnText}>Ahora no</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </Modal>
     );
   }
@@ -474,65 +473,67 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
 
       {/* Compact Reset Confirmation Modal (Deletes Streak + Published Posts) */}
       {isResetConfirmOpen && (
-        <View
-          style={[
-            styles.compactModalOverlay,
-            StyleSheet.absoluteFillObject,
-            { zIndex: 99998, elevation: 99998 },
-          ]}
+        <Modal
+          visible={isResetConfirmOpen}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setIsResetConfirmOpen(false)}
+          statusBarTranslucent
         >
-          <View style={styles.compactInvitationCard}>
-            <View style={styles.compactAnimaHeader}>
-              <Image
-                source={require('../../../assets/perfilANIMA.png')}
-                style={styles.compactAnimaAvatar}
-                resizeMode="cover"
-              />
-              <Text style={styles.compactMainTitle}>¿Reiniciar tu Reto de 7 Días?</Text>
-              <Text style={styles.compactSubtitle}>
-                Mientras tengas una semana activa para conseguir tu insignia no puedes iniciar otra a la vez, pero puedes reiniciar tu reto desde cero.
-              </Text>
+          <View style={styles.compactModalOverlay}>
+            <View style={styles.compactInvitationCard}>
+              <View style={styles.compactAnimaHeader}>
+                <Image
+                  source={require('../../../assets/perfilANIMA.png')}
+                  style={styles.compactAnimaAvatar}
+                  resizeMode="cover"
+                />
+                <Text style={styles.compactMainTitle}>¿Reiniciar tu Reto de 7 Días?</Text>
+                <Text style={styles.compactSubtitle}>
+                  Mientras tengas una semana activa para conseguir tu insignia no puedes iniciar otra a la vez, pero puedes reiniciar tu reto desde cero.
+                </Text>
+              </View>
+
+              <View
+                style={[
+                  styles.compactStepsBox,
+                  { backgroundColor: '#FFF7ED', borderColor: '#FFEDD5' },
+                ]}
+              >
+                <Text style={{ fontSize: 12, color: '#334155', lineHeight: 17.5, textAlign: 'center' }}>
+                  Al reiniciar todo, <Text style={{ fontWeight: '800', color: '#EA580C' }}>se borrará tu progreso actual y se eliminarán las publicaciones de evidencia</Text> que hayas subido durante este reto en Principal.
+                </Text>
+              </View>
+
+              <TouchableOpacity
+                style={styles.compactPrimaryJoinBtn}
+                onPress={handleConfirmResetChallenge}
+                disabled={isResettingAll}
+                activeOpacity={0.88}
+              >
+                {isResettingAll ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <>
+                    <Ionicons name="trash-outline" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
+                    <Text style={styles.compactPrimaryJoinBtnText}>
+                      Sí, reiniciar todo y borrar publicaciones
+                    </Text>
+                  </>
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.compactSecondaryCancelBtn}
+                onPress={() => setIsResetConfirmOpen(false)}
+                disabled={isResettingAll}
+                activeOpacity={0.75}
+              >
+                <Text style={styles.compactSecondaryCancelBtnText}>Cancelar y seguir en mi racha</Text>
+              </TouchableOpacity>
             </View>
-
-            <View
-              style={[
-                styles.compactStepsBox,
-                { backgroundColor: '#FFF7ED', borderColor: '#FFEDD5' },
-              ]}
-            >
-              <Text style={{ fontSize: 12, color: '#334155', lineHeight: 17.5, textAlign: 'center' }}>
-                Al reiniciar todo, <Text style={{ fontWeight: '800', color: '#EA580C' }}>se borrará tu progreso actual y se eliminarán las publicaciones de evidencia</Text> que hayas subido durante este reto en Principal.
-              </Text>
-            </View>
-
-            <TouchableOpacity
-              style={styles.compactPrimaryJoinBtn}
-              onPress={handleConfirmResetChallenge}
-              disabled={isResettingAll}
-              activeOpacity={0.88}
-            >
-              {isResettingAll ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
-              ) : (
-                <>
-                  <Ionicons name="trash-outline" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
-                  <Text style={styles.compactPrimaryJoinBtnText}>
-                    Sí, reiniciar todo y borrar publicaciones
-                  </Text>
-                </>
-              )}
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.compactSecondaryCancelBtn}
-              onPress={() => setIsResetConfirmOpen(false)}
-              disabled={isResettingAll}
-              activeOpacity={0.75}
-            >
-              <Text style={styles.compactSecondaryCancelBtnText}>Cancelar y seguir en mi racha</Text>
-            </TouchableOpacity>
           </View>
-        </View>
+        </Modal>
       )}
 
       {/* Top Clean White Header */}
@@ -1398,15 +1399,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 20,
+    paddingVertical: 14,
   },
   compactInvitationCard: {
     width: '100%',
-    maxWidth: 430,
+    maxWidth: 420,
+    maxHeight: '92%',
     backgroundColor: '#FFFFFF',
-    borderRadius: 22,
-    paddingHorizontal: 20,
-    paddingVertical: 18,
+    borderRadius: 20,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
     borderWidth: 1.5,
     borderColor: '#FFEDD5',
     shadowColor: '#0F172A',
@@ -1419,7 +1421,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 10,
+    marginBottom: 8,
   },
   compactOrangePill: {
     flexDirection: 'row',
@@ -1429,7 +1431,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#FDBA74',
     paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingVertical: 3.5,
     borderRadius: 10,
   },
   compactOrangePillText: {
@@ -1439,9 +1441,9 @@ const styles = StyleSheet.create({
     letterSpacing: 0.4,
   },
   compactCloseBtn: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     backgroundColor: '#F8FAFC',
     borderWidth: 1,
     borderColor: '#E2E8F0',
@@ -1450,54 +1452,54 @@ const styles = StyleSheet.create({
   },
   compactAnimaHeader: {
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   compactAnimaAvatar: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
+    width: 58,
+    height: 58,
+    borderRadius: 29,
     borderWidth: 2,
     borderColor: '#FF7A00',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   compactMainTitle: {
-    fontSize: 17.5,
+    fontSize: 16.5,
     fontWeight: '900',
     color: '#0F172A',
     textAlign: 'center',
   },
   compactSubtitle: {
-    fontSize: 12,
+    fontSize: 11.5,
     color: '#64748B',
     textAlign: 'center',
-    lineHeight: 17,
-    marginTop: 4,
+    lineHeight: 16,
+    marginTop: 3,
     paddingHorizontal: 4,
   },
   compactStepsBox: {
     backgroundColor: '#F8FAFC',
     borderRadius: 14,
-    padding: 12,
+    padding: 11,
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    marginBottom: 14,
+    marginBottom: 11,
   },
   compactStepsHeader: {
-    fontSize: 12,
+    fontSize: 11.5,
     fontWeight: '800',
     color: '#0F172A',
-    marginBottom: 8,
+    marginBottom: 7,
   },
   compactStepRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 8,
-    marginBottom: 8,
+    marginBottom: 6.5,
   },
   compactStepDot: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
     backgroundColor: '#FFF7ED',
     borderWidth: 1,
     borderColor: '#FFEDD5',
@@ -1507,9 +1509,9 @@ const styles = StyleSheet.create({
   },
   compactStepText: {
     flex: 1,
-    fontSize: 11.5,
+    fontSize: 11.2,
     color: '#475569',
-    lineHeight: 16.5,
+    lineHeight: 15.8,
   },
   compactStepBold: {
     fontWeight: '800',
@@ -1520,20 +1522,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#FF7A00',
-    paddingVertical: 11,
+    paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: 12,
-    marginBottom: 8,
+    marginBottom: 7,
   },
   compactPrimaryJoinBtnText: {
     color: '#FFFFFF',
-    fontSize: 13,
+    fontSize: 12.8,
     fontWeight: '800',
   },
   compactSecondaryCancelBtn: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 8,
+    paddingVertical: 7.5,
     borderRadius: 10,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
