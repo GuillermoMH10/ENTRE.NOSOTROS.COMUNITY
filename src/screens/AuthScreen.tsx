@@ -19,6 +19,7 @@ import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 import { useAuth } from '../context/AuthContext';
 import { ForgotPasswordModal } from '../components/Auth/ForgotPasswordModal';
+import { TermsAndConditionsModal } from '../components/Auth/TermsAndConditionsModal';
 
 interface AuthScreenProps {
   visible: boolean;
@@ -33,6 +34,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ visible, onClose }) => {
   // Mode: 'login' | 'register'
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
+  const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
 
   // Form Fields
   const [email, setEmail] = useState('');
@@ -429,26 +431,40 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ visible, onClose }) => {
                   </View>
                 </View>
 
-                {/* Terms and Conditions Checkbox */}
-                <TouchableOpacity
-                  style={styles.compactTermsContainer}
-                  onPress={() => setTermsAccepted(!termsAccepted)}
-                  activeOpacity={0.8}
-                >
-                  <View
-                    style={[
-                      styles.checkbox,
-                      termsAccepted && styles.checkboxActive,
-                    ]}
+                {/* Terms and Conditions Checkbox + Clickable Document Link */}
+                <View style={styles.compactTermsContainer}>
+                  <TouchableOpacity
+                    onPress={() => setTermsAccepted(!termsAccepted)}
+                    activeOpacity={0.8}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   >
-                    {termsAccepted && (
-                      <Ionicons name="checkmark" size={13} color={colors.white} />
-                    )}
-                  </View>
+                    <View
+                      style={[
+                        styles.checkbox,
+                        termsAccepted && styles.checkboxActive,
+                      ]}
+                    >
+                      {termsAccepted && (
+                        <Ionicons name="checkmark" size={13} color={colors.white} />
+                      )}
+                    </View>
+                  </TouchableOpacity>
+
                   <Text style={styles.compactTermsText}>
-                    Acepto los términos y condiciones de Entre Nosotros
+                    Acepto los{' '}
+                    <Text
+                      onPress={() => setIsTermsModalOpen(true)}
+                      style={{
+                        textDecorationLine: 'underline',
+                        fontWeight: '800',
+                        color: colors.coffeeDark,
+                      }}
+                    >
+                      términos y condiciones
+                    </Text>{' '}
+                    de Entre Nosotros
                   </Text>
-                </TouchableOpacity>
+                </View>
 
                 {/* Register Button */}
                 <TouchableOpacity
@@ -479,6 +495,13 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ visible, onClose }) => {
           setIsForgotPasswordOpen(false);
           setMode('login');
         }}
+      />
+
+      {/* Formal Black & White Terms and Conditions Document Modal */}
+      <TermsAndConditionsModal
+        visible={isTermsModalOpen}
+        onClose={() => setIsTermsModalOpen(false)}
+        onAccept={() => setTermsAccepted(true)}
       />
     </Modal>
   );
