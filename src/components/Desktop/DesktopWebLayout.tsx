@@ -333,9 +333,9 @@ export const DesktopWebLayout: React.FC<DesktopWebLayoutProps> = ({
                       styles.navItem,
                       isActive && styles.navItemActive,
                       isOrangeStreak && {
-                        backgroundColor: isActive ? '#FF7A00' : '#FFF7ED',
-                        borderWidth: 1,
-                        borderColor: '#FB923C',
+                        backgroundColor: '#FFFFFF',
+                        borderWidth: 1.5,
+                        borderColor: '#FF7A00',
                       },
                     ]}
                     activeOpacity={0.7}
@@ -357,9 +357,7 @@ export const DesktopWebLayout: React.FC<DesktopWebLayoutProps> = ({
                       size={20}
                       color={
                         isOrangeStreak
-                          ? isActive
-                            ? '#FFFFFF'
-                            : '#FF7A00'
+                          ? '#FF7A00'
                           : isActive
                           ? colors.coffeePrimary
                           : '#4B6779'
@@ -371,7 +369,7 @@ export const DesktopWebLayout: React.FC<DesktopWebLayoutProps> = ({
                         styles.navItemText,
                         isActive && styles.navItemTextActive,
                         isOrangeStreak && {
-                          color: isActive ? '#FFFFFF' : '#EA580C',
+                          color: '#0F172A',
                           fontWeight: '800',
                         },
                       ]}
@@ -383,7 +381,9 @@ export const DesktopWebLayout: React.FC<DesktopWebLayoutProps> = ({
                         style={[
                           styles.navItemBadge,
                           isOrangeStreak && {
-                            backgroundColor: isActive ? '#FFFFFF' : '#FF7A00',
+                            backgroundColor: 'transparent',
+                            paddingHorizontal: 2,
+                            paddingVertical: 0,
                           },
                         ]}
                       >
@@ -391,8 +391,9 @@ export const DesktopWebLayout: React.FC<DesktopWebLayoutProps> = ({
                           style={[
                             styles.navItemBadgeText,
                             isOrangeStreak && {
-                              color: isActive ? '#EA580C' : '#FFFFFF',
+                              color: '#FF7A00',
                               fontWeight: '900',
+                              fontSize: 11.5,
                             },
                           ]}
                         >

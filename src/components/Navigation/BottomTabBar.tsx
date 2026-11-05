@@ -102,7 +102,10 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({
           return (
             <TouchableOpacity
               key={tab.id}
-              style={styles.tabButton}
+              style={[
+                styles.tabButton,
+                tab.isStreak && styles.streakTabButtonOutline,
+              ]}
               activeOpacity={0.75}
               onPress={() => {
                 if (tab.isStreak) {
@@ -129,16 +132,11 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({
                     <AnimaMascot size="sm" variant="profile" animated={false} />
                   </View>
                 ) : tab.isStreak ? (
-                  <View
-                    style={[
-                      styles.streakTabPill,
-                      isCurrentActive && styles.streakTabPillActive,
-                    ]}
-                  >
+                  <View style={styles.streakFireIconClean}>
                     <Ionicons
                       name="flame"
-                      size={18}
-                      color={isCurrentActive ? '#FFFFFF' : '#FF7A00'}
+                      size={21}
+                      color="#FF7A00"
                     />
                   </View>
                 ) : (
@@ -156,7 +154,7 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({
                   tab.isMascot &&
                     isCurrentActive && { color: colors.coffeePrimary, fontWeight: '800' },
                   tab.isStreak && {
-                    color: '#FF7A00',
+                    color: '#0F172A',
                     fontWeight: '800',
                   },
                 ]}
@@ -224,23 +222,17 @@ const styles = StyleSheet.create({
   mascotTabWrapperActive: {
     backgroundColor: '#E1EAEF',
   },
-  streakTabPill: {
-    width: 32,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#FFF7ED',
+  streakTabButtonOutline: {
+    backgroundColor: '#FFFFFF',
     borderWidth: 1.5,
     borderColor: '#FF7A00',
+    borderRadius: 12,
+    marginHorizontal: 3,
+    paddingVertical: 3,
+  },
+  streakFireIconClean: {
+    backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  streakTabPillActive: {
-    backgroundColor: '#FF7A00',
-    borderColor: '#EA580C',
-    shadowColor: '#FF7A00',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.35,
-    shadowRadius: 5,
-    elevation: 4,
   },
 });
