@@ -13,7 +13,6 @@ import { Post } from '../../types/post';
 import { PostCard } from './PostCard';
 import { DailyQuoteCard } from './DailyQuoteCard';
 import { MonthAwarenessPostCard } from './MonthAwarenessPostCard';
-import { DailyMoodCard } from './DailyMoodCard';
 import { ActiveStreakBannerCard } from './ActiveStreakBannerCard';
 import { WeeklyMoodTracker } from '../Profile/WeeklyMoodTracker';
 import { useAuth } from '../../context/AuthContext';
@@ -60,9 +59,10 @@ export const FeedList: React.FC<FeedListProps> = ({
   const [refreshing, setRefreshing] = useState(false);
   const lastOffsetY = useRef(0);
 
-  // Random positions for quote & month awareness
+  // Random positions for quote, month awareness & single weekly mood card while scrolling
   const initialQuoteSlot = useRef(Math.floor(Math.random() * 4)).current; // 0..3
   const initialMonthSlot = useRef(Math.floor(Math.random() * 3) + 1).current; // 1..3
+  const initialWeeklyMoodSlot = useRef(Math.floor(Math.random() * 5) + 2).current; // 2..6
 
   useEffect(() => {
     const unsubscribePosts = subscribeToPosts((livePosts) => {
@@ -116,6 +116,7 @@ export const FeedList: React.FC<FeedListProps> = ({
     const items: FeedListItem[] = [];
     const firstPos = Math.min(posts.length, initialQuoteSlot); // 0..3
     const monthPos = Math.min(posts.length, initialMonthSlot === firstPos ? firstPos + 1 : initialMonthSlot);
+    const weeklyMoodPos = Math.min(posts.length, initialWeeklyMoodSlot);
     let quoteCount = 0;
     let monthInserted = false;
     let weeklyMoodInserted = false;
@@ -127,24 +128,21 @@ export const FeedList: React.FC<FeedListProps> = ({
         monthInserted = true;
       }
 
+      // Single Weekly Mood card at random slot while scrolling down
+      if (i === weeklyMoodPos && !weeklyMoodInserted) {
+        items.push({ type: 'weekly-mood', id: 'weekly-mood-slot-single' });
+        weeklyMoodInserted = true;
+      }
+
       // 1st quote at firstPos (0..3)
       if (i === firstPos && quoteCount < 3) {
         items.push({ type: 'quote', offset: quoteCount, id: `quote-slot-${quoteCount}` });
         quoteCount++;
       }
-      // Weekly Mood card (~3 posts later)
-      else if (i === firstPos + 3 && !weeklyMoodInserted) {
-        items.push({ type: 'weekly-mood', id: 'weekly-mood-slot-0' });
-        weeklyMoodInserted = true;
-      }
-      // 2nd quote ~5 posts later
+      // 2nd quote ~6 posts later
       else if (i === firstPos + 6 && quoteCount < 3) {
         items.push({ type: 'quote', offset: quoteCount, id: `quote-slot-${quoteCount}` });
         quoteCount++;
-      }
-      // 2nd Weekly Mood card (~8 posts later)
-      else if (i === firstPos + 9) {
-        items.push({ type: 'weekly-mood', id: `weekly-mood-slot-${i}` });
       }
       // 3rd quote
       else if (i === firstPos + 12 && quoteCount < 3) {
@@ -160,9 +158,9 @@ export const FeedList: React.FC<FeedListProps> = ({
       items.splice(1, 0, { type: 'month-awareness', id: 'month-awareness-card' });
     }
 
-    // Ensure weekly mood card is placed if not yet inserted
+    // Ensure single weekly mood card is placed if not yet inserted
     if (!weeklyMoodInserted) {
-      items.splice(2, 0, { type: 'weekly-mood', id: 'weekly-mood-slot-main' });
+      items.splice(Math.min(items.length, 2), 0, { type: 'weekly-mood', id: 'weekly-mood-slot-single' });
     }
 
     // If there were very few posts and firstPos wasn't reached
@@ -171,7 +169,7 @@ export const FeedList: React.FC<FeedListProps> = ({
     }
 
     return items;
-  }, [posts, initialQuoteSlot, initialMonthSlot]);
+  }, [posts, initialQuoteSlot, initialMonthSlot, initialWeeklyMoodSlot]);
 
   if (isLoading) {
     return (
@@ -215,7 +213,6 @@ export const FeedList: React.FC<FeedListProps> = ({
       ListHeaderComponent={
         <View>
           <ActiveStreakBannerCard onOpenStreakModal={onOpenStreakModal} />
-          <DailyMoodCard />
         </View>
       }
       contentContainerStyle={[

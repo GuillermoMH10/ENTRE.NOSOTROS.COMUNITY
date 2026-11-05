@@ -88,6 +88,8 @@ export const WeeklyMoodTracker: React.FC<WeeklyMoodTrackerProps> = ({
     saveDailyMoodRecord(option.id, userId, targetDateKey);
   };
 
+  const [isChangingToday, setIsChangingToday] = useState(false);
+
   // Selected Day info
   const selectedDayInfo = weekDays.find((d) => d.dateKey === selectedDateKey) || weekDays[0];
   const selectedRecord = selectedDateKey ? records[selectedDateKey] : null;
@@ -105,15 +107,20 @@ export const WeeklyMoodTracker: React.FC<WeeklyMoodTrackerProps> = ({
 
   const content = (
     <View style={isFeedCard ? styles.feedCardInner : styles.cardInner}>
-      {/* 1. Clean Header with title only */}
+      {/* 1. Clean Header with Subtitle & ANIMA touch */}
       <View style={styles.headerRow}>
         <View style={styles.sparkleIcon}>
-          <Ionicons name="calendar" size={15} color={colors.coffeePrimary} />
+          <Ionicons name="sparkles" size={16} color="#FF7A00" />
         </View>
-        <Text style={styles.headerTitle}>¿Cómo te has sentido esta semana?</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.headerTitle}>¿Cómo te has sentido esta semana?</Text>
+          <Text style={styles.headerSubtitle}>
+            Toca un día o elige tu emoción de hoy para registrar tu bienestar
+          </Text>
+        </View>
       </View>
 
-      {/* 2. Mini Weekly Chart / Days Columns */}
+      {/* 2. Mini Weekly Chart / Days Columns (Large Emojis WITHOUT background) */}
       <View style={styles.chartContainer}>
         <View style={styles.daysRow}>
           {weekDays.map((day) => {
@@ -130,7 +137,10 @@ export const WeeklyMoodTracker: React.FC<WeeklyMoodTrackerProps> = ({
                   day.isToday && !isSelected && styles.dayColumnToday,
                 ]}
                 activeOpacity={0.75}
-                onPress={() => handleSelectDay(day)}
+                onPress={() => {
+                  setIsChangingToday(false);
+                  handleSelectDay(day);
+                }}
               >
                 {/* Day Name */}
                 <Text
@@ -154,25 +164,29 @@ export const WeeklyMoodTracker: React.FC<WeeklyMoodTrackerProps> = ({
                   {day.dayNumber}
                 </Text>
 
-                {/* Pill / Capsule Chart Bar */}
+                {/* Emoji Slot: NO background behind the emoji face, large emoji */}
                 <View
                   style={[
                     styles.moodPill,
                     moodOpt
-                      ? {
-                          backgroundColor: moodOpt.lightBg,
-                          borderColor: moodOpt.color + '40',
-                        }
+                      ? styles.moodPillWithEmoji
                       : day.isToday
                       ? styles.moodPillTodayEmpty
                       : styles.moodPillEmpty,
-                    isSelected && styles.moodPillSelected,
+                    isSelected && !moodOpt && styles.moodPillSelected,
                   ]}
                 >
                   {moodOpt ? (
-                    <Text style={styles.moodEmoji}>{moodOpt.emoji}</Text>
+                    <Text
+                      style={[
+                        styles.moodEmojiLarge,
+                        isSelected && { transform: [{ scale: 1.14 }] },
+                      ]}
+                    >
+                      {moodOpt.emoji}
+                    </Text>
                   ) : day.isToday ? (
-                    <Ionicons name="add" size={15} color={colors.coffeePrimary} />
+                    <Ionicons name="add" size={16} color="#FF7A00" />
                   ) : (
                     <View
                       style={[
@@ -197,50 +211,53 @@ export const WeeklyMoodTracker: React.FC<WeeklyMoodTrackerProps> = ({
         </View>
       </View>
 
-      {/* 3. Single Clean Dynamic Message Section ("Mensaje para tu corazón") */}
+      {/* 3. Single Clean Dynamic Message Section */}
       <Animated.View style={[styles.detailBox, { opacity: fadeAnim }]}>
         {/* Selected Day Header */}
         <View style={styles.detailHeader}>
           <View style={styles.detailDayInfo}>
             <Ionicons
-              name="time-outline"
+              name="calendar-clear-outline"
               size={13}
               color={colors.textSecondary}
-              style={{ marginRight: 4 }}
+              style={{ marginRight: 5 }}
             />
             <Text style={styles.detailDayName}>
               {selectedDayInfo
                 ? `${selectedDayInfo.dayNameFull} ${selectedDayInfo.dayNumber} de ${selectedDayInfo.monthName}`
                 : 'Día seleccionado'}
-              {selectedDayInfo?.isToday ? ' (Hoy)' : ''}
+              {selectedDayInfo?.isToday ? ' • Hoy' : ''}
             </Text>
           </View>
 
-          {selectedMoodOption ? (
-            <View
-              style={[
-                styles.moodStatusBadge,
-                {
-                  backgroundColor: selectedMoodOption.lightBg,
-                  borderColor: selectedMoodOption.color + '50',
-                },
-              ]}
-            >
-              <Text style={styles.moodStatusEmoji}>{selectedMoodOption.emoji}</Text>
-              <Text
-                style={[
-                  styles.moodStatusText,
-                  { color: selectedMoodOption.color },
-                ]}
-              >
-                {selectedMoodOption.label}
-              </Text>
+          {selectedMoodOption && !isChangingToday ? (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <View style={styles.moodStatusClean}>
+                <Text style={styles.moodStatusEmojiClean}>{selectedMoodOption.emoji}</Text>
+                <Text
+                  style={[
+                    styles.moodStatusText,
+                    { color: selectedMoodOption.color },
+                  ]}
+                >
+                  {selectedMoodOption.label}
+                </Text>
+              </View>
+              {selectedDayInfo?.isToday && (
+                <TouchableOpacity
+                  onPress={() => setIsChangingToday(true)}
+                  activeOpacity={0.7}
+                  style={styles.changeMoodTinyBtn}
+                >
+                  <Text style={styles.changeMoodTinyBtnText}>Cambiar</Text>
+                </TouchableOpacity>
+              )}
             </View>
           ) : (
             <View style={styles.noRecordBadge}>
               <Text style={styles.noRecordBadgeText}>
                 {selectedDayInfo?.isToday
-                  ? 'Sin registrar'
+                  ? 'Elige tu emoción'
                   : selectedDayInfo?.isFuture
                   ? 'Próximamente'
                   : 'Sin registro'}
@@ -249,29 +266,34 @@ export const WeeklyMoodTracker: React.FC<WeeklyMoodTrackerProps> = ({
           )}
         </View>
 
-        {/* Dynamic Empathic Phrase or Quick 1-Tap Selector */}
-        {selectedRecord && selectedMoodOption ? (
+        {/* Dynamic Empathic Phrase or Quick 1-Tap Selector with HUGE Emojis & NO background */}
+        {selectedRecord && selectedMoodOption && !isChangingToday ? (
           <View
             style={[
               styles.quoteCard,
               {
-                backgroundColor: selectedMoodOption.lightBg + '55',
+                backgroundColor: '#F8FAFC',
                 borderLeftColor: selectedMoodOption.color,
               },
             ]}
           >
-            <View style={styles.quoteIconRow}>
-              <Ionicons
-                name="chatbubble-ellipses"
-                size={15}
-                color={selectedMoodOption.color}
-                style={{ marginRight: 6 }}
-              />
-              <Text style={[styles.quoteTitle, { color: selectedMoodOption.color }]}>
-                Mensaje para tu corazón
-              </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <Text style={styles.quoteBigFloatingEmoji}>{selectedMoodOption.emoji}</Text>
+              <View style={{ flex: 1 }}>
+                <View style={styles.quoteIconRow}>
+                  <Ionicons
+                    name="heart"
+                    size={13}
+                    color={selectedMoodOption.color}
+                    style={{ marginRight: 5 }}
+                  />
+                  <Text style={[styles.quoteTitle, { color: selectedMoodOption.color }]}>
+                    Mensaje para tu corazón
+                  </Text>
+                </View>
+                <Text style={styles.quoteBody}>"{selectedRecord.quote}"</Text>
+              </View>
             </View>
-            <Text style={styles.quoteBody}>"{selectedRecord.quote}"</Text>
           </View>
         ) : selectedDayInfo?.isToday ? (
           <View style={styles.todayPromptCard}>
@@ -279,22 +301,35 @@ export const WeeklyMoodTracker: React.FC<WeeklyMoodTrackerProps> = ({
               ¿Cómo te sientes hoy?
             </Text>
             <View style={styles.quickMoodsRow}>
-              {MOOD_OPTIONS.map((opt) => (
-                <TouchableOpacity
-                  key={opt.id}
-                  style={[
-                    styles.quickMoodBtn,
-                    { backgroundColor: opt.lightBg },
-                  ]}
-                  activeOpacity={0.7}
-                  onPress={() => handleQuickRegisterMood(opt)}
-                >
-                  <Text style={styles.quickMoodEmoji}>{opt.emoji}</Text>
-                  <Text style={[styles.quickMoodLabel, { color: opt.color }]}>
-                    {opt.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+              {MOOD_OPTIONS.map((opt) => {
+                const isCurr = selectedRecord?.mood === opt.id;
+                return (
+                  <TouchableOpacity
+                    key={opt.id}
+                    style={[
+                      styles.quickMoodBtn,
+                      isCurr && styles.quickMoodBtnSelected,
+                    ]}
+                    activeOpacity={0.65}
+                    onPress={() => {
+                      setIsChangingToday(false);
+                      handleQuickRegisterMood(opt);
+                    }}
+                  >
+                    <Text style={styles.quickMoodEmoji}>{opt.emoji}</Text>
+                    <Text
+                      style={[
+                        styles.quickMoodLabel,
+                        { color: isCurr ? opt.color : '#475569' },
+                        isCurr && { fontWeight: '800' },
+                      ]}
+                      numberOfLines={1}
+                    >
+                      {opt.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           </View>
         ) : selectedDayInfo?.isFuture ? (
@@ -392,29 +427,35 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   sparkleIcon: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: colors.surface,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#FFF7ED',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 8,
+    marginRight: 10,
     borderWidth: 1,
-    borderColor: colors.borderLight,
+    borderColor: '#FFEDD5',
   },
   headerTitle: {
-    fontSize: 14.5,
+    fontSize: 15,
     fontWeight: '800',
-    color: colors.coffeeDark,
+    color: '#0F172A',
     letterSpacing: -0.2,
   },
+  headerSubtitle: {
+    fontSize: 11.5,
+    color: '#64748B',
+    fontWeight: '500',
+    marginTop: 1,
+  },
   chartContainer: {
-    backgroundColor: colors.surfaceSoft,
+    backgroundColor: '#F8FAFC',
     borderRadius: 16,
     paddingVertical: 10,
     paddingHorizontal: 6,
     borderWidth: 1,
-    borderColor: colors.borderLight,
+    borderColor: '#E2E8F0',
     marginBottom: 10,
   },
   daysRow: {
@@ -425,47 +466,50 @@ const styles = StyleSheet.create({
   dayColumn: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: 3,
-    borderRadius: 12,
+    paddingVertical: 4,
+    borderRadius: 13,
   },
   dayColumnSelected: {
-    backgroundColor: colors.white,
-    shadowColor: colors.coffeeDeep,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.05,
     shadowRadius: 4,
-    elevation: 2,
+    elevation: 1,
   },
   dayColumnToday: {},
   dayNameText: {
     fontSize: 10,
     fontWeight: '600',
-    color: colors.textSecondary,
+    color: '#64748B',
     marginBottom: 2,
   },
   dayNameTextSelected: {
-    color: colors.coffeeDark,
+    color: '#0F172A',
     fontWeight: '800',
   },
   dayNameTextToday: {
-    color: colors.coffeePrimary,
-    fontWeight: '700',
+    color: '#FF7A00',
+    fontWeight: '800',
   },
   dayNumberText: {
     fontSize: 12,
     fontWeight: '700',
-    color: colors.coffeeDeep,
-    marginBottom: 5,
+    color: '#334155',
+    marginBottom: 4,
   },
   dayNumberTextSelected: {
-    color: colors.coffeeDark,
+    color: '#0F172A',
     fontWeight: '900',
   },
   dayNumberTextToday: {
-    color: colors.coffeePrimary,
+    color: '#FF7A00',
+    fontWeight: '900',
   },
   moodPill: {
-    width: 33,
+    width: 36,
     height: 40,
     borderRadius: 13,
     alignItems: 'center',
@@ -473,58 +517,62 @@ const styles = StyleSheet.create({
     borderWidth: 1.2,
     borderColor: 'transparent',
   },
+  moodPillWithEmoji: {
+    backgroundColor: 'transparent',
+    borderColor: 'transparent',
+    borderWidth: 0,
+  },
   moodPillSelected: {
-    borderWidth: 2,
-    borderColor: colors.coffeePrimary,
-    transform: [{ scale: 1.05 }],
+    borderWidth: 1.5,
+    borderColor: '#FF7A00',
   },
   moodPillTodayEmpty: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'transparent',
     borderStyle: 'dashed',
-    borderColor: colors.coffeePrimary,
-    borderWidth: 1.3,
+    borderColor: '#FDBA74',
+    borderWidth: 1.4,
   },
   moodPillEmpty: {
-    backgroundColor: colors.surface,
-    borderColor: colors.borderLight,
+    backgroundColor: 'transparent',
+    borderColor: 'transparent',
   },
-  moodEmoji: {
-    fontSize: 18,
+  moodEmojiLarge: {
+    fontSize: 28,
   },
   emptyDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: colors.coffeeMedium,
+    backgroundColor: '#CBD5E1',
   },
   emptyDotFuture: {
-    backgroundColor: colors.borderLight,
+    backgroundColor: '#E2E8F0',
   },
   activeDotIndicator: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: colors.coffeePrimary,
-    marginTop: 5,
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+    backgroundColor: '#FF7A00',
+    marginTop: 4,
   },
   todayTinyLabel: {
     fontSize: 9,
     fontWeight: '800',
-    color: colors.coffeePrimary,
+    color: '#FF7A00',
     marginTop: 3,
   },
   detailBox: {
-    backgroundColor: colors.white,
-    borderRadius: 14,
-    padding: 10,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 15,
+    padding: 12,
     borderWidth: 1,
-    borderColor: colors.borderLight,
+    borderColor: '#E2E8F0',
   },
   detailHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    marginBottom: 10,
   },
   detailDayInfo: {
     flexDirection: 'row',
@@ -534,39 +582,58 @@ const styles = StyleSheet.create({
   detailDayName: {
     fontSize: 11.5,
     fontWeight: '700',
-    color: colors.coffeeDark,
+    color: '#334155',
   },
-  moodStatusBadge: {
+  moodStatusClean: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 7,
-    paddingVertical: 2.5,
-    borderRadius: 9,
-    borderWidth: 1,
+    backgroundColor: 'transparent',
   },
-  moodStatusEmoji: {
-    fontSize: 11.5,
-    marginRight: 3,
+  moodStatusEmojiClean: {
+    fontSize: 20,
+    marginRight: 5,
   },
   moodStatusText: {
-    fontSize: 10.5,
+    fontSize: 11.5,
+    fontWeight: '800',
+  },
+  changeMoodTinyBtn: {
+    backgroundColor: '#F8FAFC',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  changeMoodTinyBtnText: {
+    fontSize: 10,
     fontWeight: '700',
+    color: '#64748B',
   },
   noRecordBadge: {
-    backgroundColor: colors.surfaceSoft,
-    paddingHorizontal: 6,
-    paddingVertical: 2.5,
-    borderRadius: 7,
+    backgroundColor: '#F8FAFC',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   noRecordBadgeText: {
     fontSize: 10,
-    fontWeight: '600',
-    color: colors.textSecondary,
+    fontWeight: '700',
+    color: '#64748B',
   },
   quoteCard: {
-    padding: 10,
-    borderRadius: 11,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 13,
     borderLeftWidth: 3.5,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  quoteBigFloatingEmoji: {
+    fontSize: 38,
+    backgroundColor: 'transparent',
   },
   quoteIconRow: {
     flexDirection: 'row',
@@ -575,29 +642,30 @@ const styles = StyleSheet.create({
   },
   quoteTitle: {
     fontSize: 10.5,
-    fontWeight: '700',
+    fontWeight: '800',
     textTransform: 'uppercase',
     letterSpacing: 0.3,
   },
   quoteBody: {
     fontSize: 12,
     lineHeight: 17.5,
-    color: colors.textPrimary,
+    color: '#334155',
     fontStyle: 'italic',
     fontWeight: '500',
   },
   todayPromptCard: {
-    padding: 10,
-    backgroundColor: colors.surfaceSoft,
+    paddingVertical: 10,
+    paddingHorizontal: 6,
+    backgroundColor: '#F8FAFC',
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: colors.borderLight,
+    borderColor: '#E2E8F0',
   },
   todayPromptTitle: {
-    fontSize: 13,
+    fontSize: 13.5,
     fontWeight: '800',
-    color: colors.coffeeDark,
-    marginBottom: 8,
+    color: '#0F172A',
+    marginBottom: 10,
     textAlign: 'center',
   },
   quickMoodsRow: {
@@ -606,19 +674,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   quickMoodBtn: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 4,
-    paddingHorizontal: 4,
+    paddingHorizontal: 2,
     backgroundColor: 'transparent',
   },
+  quickMoodBtnSelected: {
+    transform: [{ scale: 1.12 }],
+  },
   quickMoodEmoji: {
-    fontSize: 26,
-    marginBottom: 3,
+    fontSize: 38,
+    marginBottom: 5,
+    backgroundColor: 'transparent',
   },
   quickMoodLabel: {
-    fontSize: 9.5,
+    fontSize: 10.5,
     fontWeight: '700',
+    textAlign: 'center',
   },
   emptyDayNotice: {
     alignItems: 'center',
@@ -628,7 +702,7 @@ const styles = StyleSheet.create({
   },
   emptyDayNoticeText: {
     fontSize: 11,
-    color: colors.textSecondary,
+    color: '#64748B',
     textAlign: 'center',
     lineHeight: 15,
     fontStyle: 'italic',

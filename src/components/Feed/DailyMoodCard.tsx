@@ -302,16 +302,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   answeredEmojiCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 10,
-    backgroundColor: colors.surfaceSoft,
+    marginRight: 12,
+    backgroundColor: 'transparent',
   },
   answeredEmojiText: {
-    fontSize: 28,
+    fontSize: 38,
+    backgroundColor: 'transparent',
   },
   answeredTitleCol: {
     flex: 1,
