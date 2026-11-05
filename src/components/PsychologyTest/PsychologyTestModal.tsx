@@ -339,8 +339,9 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
     setViewerVisible(true);
   };
 
-  // Compact & eye-catching invitation modal when user has not joined the 7-day challenge yet
+  // Spacious & eye-catching invitation modal when user has not joined the 7-day challenge yet
   if (!result || !streak?.isActive) {
+    const isWideModal = windowWidth >= 640;
     return (
       <Modal
         visible={visible}
@@ -350,21 +351,26 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
         statusBarTranslucent
       >
         <View style={styles.compactModalOverlay}>
-          <View style={styles.compactInvitationCard}>
+          <View
+            style={[
+              styles.compactInvitationCard,
+              isWideModal && styles.compactInvitationCardDesktop,
+            ]}
+          >
             {/* Top Bar: Subtle Orange Badge + Close Button */}
             <View style={styles.compactTopBar}>
               <View style={styles.compactOrangePill}>
-                <Ionicons name="flame" size={13} color="#FF7A00" />
+                <Ionicons name="flame" size={14} color="#FF7A00" />
                 <Text style={styles.compactOrangePillText}>RETO DE 7 DÍAS CON ANIMA</Text>
               </View>
               <TouchableOpacity onPress={onClose} style={styles.compactCloseBtn} activeOpacity={0.7}>
-                <Ionicons name="close" size={18} color="#475569" />
+                <Ionicons name="close" size={19} color="#475569" />
               </TouchableOpacity>
             </View>
 
             <ScrollView
               style={{ flexShrink: 1 }}
-              contentContainerStyle={{ paddingBottom: 2 }}
+              contentContainerStyle={{ paddingBottom: 4 }}
               showsVerticalScrollIndicator={false}
               bounces={false}
             >
@@ -387,74 +393,92 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
                   Este reto consiste en lo siguiente:
                 </Text>
 
-                <View style={styles.compactStepRow}>
-                  <View style={styles.compactStepDot}>
-                    <Ionicons name="sparkles-outline" size={13} color="#FF7A00" />
+                <View style={isWideModal ? styles.compactStepsGridDesktop : styles.compactStepsListMobile}>
+                  <View style={[styles.compactStepCard, isWideModal && styles.compactStepCardDesktop]}>
+                    <View style={styles.compactStepCardHeader}>
+                      <View style={styles.compactStepDot}>
+                        <Ionicons name="sparkles-outline" size={16} color="#FF7A00" />
+                      </View>
+                      <Text style={styles.compactStepBold}>7 actividades diarias</Text>
+                    </View>
+                    <Text style={styles.compactStepText}>
+                      Cada día desbloquearás una misión sencilla y positiva para tu bienestar (sin cuestionarios ni diagnósticos).
+                    </Text>
                   </View>
-                  <Text style={styles.compactStepText}>
-                    <Text style={styles.compactStepBold}>7 actividades diarias variadas: </Text>
-                    Cada día desbloquearás una misión sencilla y positiva para tu bienestar (sin cuestionarios ni diagnósticos).
-                  </Text>
-                </View>
 
-                <View style={styles.compactStepRow}>
-                  <View style={styles.compactStepDot}>
-                    <Ionicons name="camera-outline" size={13} color="#FF7A00" />
+                  <View style={[styles.compactStepCard, isWideModal && styles.compactStepCardDesktop]}>
+                    <View style={styles.compactStepCardHeader}>
+                      <View style={styles.compactStepDot}>
+                        <Ionicons name="camera-outline" size={16} color="#FF7A00" />
+                      </View>
+                      <Text style={styles.compactStepBold}>Comparte tu evidencia</Text>
+                    </View>
+                    <Text style={styles.compactStepText}>
+                      Sube una foto realizando tu actividad del día; se publicará en Principal para motivar a la comunidad.
+                    </Text>
                   </View>
-                  <Text style={styles.compactStepText}>
-                    <Text style={styles.compactStepBold}>Comparte tu evidencia: </Text>
-                    Sube una foto realizando tu actividad del día; se publicará en Principal para motivar a otros miembros.
-                  </Text>
-                </View>
 
-                <View style={styles.compactStepRow}>
-                  <View style={styles.compactStepDot}>
-                    <Ionicons name="heart-outline" size={13} color="#FF7A00" />
+                  <View style={[styles.compactStepCard, isWideModal && styles.compactStepCardDesktop]}>
+                    <View style={styles.compactStepCardHeader}>
+                      <View style={styles.compactStepDot}>
+                        <Ionicons name="heart-outline" size={16} color="#FF7A00" />
+                      </View>
+                      <Text style={styles.compactStepBold}>A tu propio ritmo</Text>
+                    </View>
+                    <Text style={styles.compactStepText}>
+                      Si un día no te sientes con ánimos para hacerlo, puedes recorrer el día y recibir palabras de apoyo de ANIMA.
+                    </Text>
                   </View>
-                  <Text style={styles.compactStepText}>
-                    <Text style={styles.compactStepBold}>Acompañamiento a tu ritmo: </Text>
-                    Si un día no te sientes bien para hacerlo, puedes recorrerlo y recibir ánimo de ANIMA.
-                  </Text>
-                </View>
 
-                <View style={[styles.compactStepRow, { marginBottom: 0 }]}>
-                  <View style={styles.compactStepDot}>
-                    <Ionicons name="ribbon-outline" size={13} color="#FF7A00" />
+                  <View style={[styles.compactStepCard, isWideModal && styles.compactStepCardDesktop]}>
+                    <View style={styles.compactStepCardHeader}>
+                      <View style={styles.compactStepDot}>
+                        <Ionicons name="ribbon-outline" size={16} color="#FF7A00" />
+                      </View>
+                      <Text style={styles.compactStepBold}>Insignias y reinicio libre</Text>
+                    </View>
+                    <Text style={styles.compactStepText}>
+                      Al completar los 7 días ganarás tu insignia. Puedes tener una semana activa a la vez o reiniciar todo desde cero cuando quieras.
+                    </Text>
                   </View>
-                  <Text style={styles.compactStepText}>
-                    <Text style={styles.compactStepBold}>Desbloquea 4 insignias: </Text>
-                    Al completar los 7 días ganarás tu insignia en tu Perfil. Mientras tengas una semana activa avanzarás en ella, o podrás reiniciar todo desde cero cuando quieras.
-                  </Text>
                 </View>
               </View>
             </ScrollView>
 
             {/* Primary Confirm & Secondary Close Buttons */}
-            <TouchableOpacity
-              style={styles.compactPrimaryJoinBtn}
-              onPress={handleJoinChallenge}
-              disabled={isEvaluating}
-              activeOpacity={0.88}
-            >
-              {isEvaluating ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
-              ) : (
-                <>
-                  <Ionicons name="flame" size={16} color="#FFFFFF" style={{ marginRight: 7 }} />
-                  <Text style={styles.compactPrimaryJoinBtnText}>
-                    ¡Quiero unirme al Reto!
-                  </Text>
-                </>
-              )}
-            </TouchableOpacity>
+            <View style={isWideModal ? styles.compactButtonsRowDesktop : styles.compactButtonsColMobile}>
+              <TouchableOpacity
+                style={[
+                  styles.compactSecondaryCancelBtn,
+                  isWideModal && styles.compactSecondaryCancelBtnDesktop,
+                ]}
+                onPress={onClose}
+                activeOpacity={0.75}
+              >
+                <Text style={styles.compactSecondaryCancelBtnText}>Ahora no</Text>
+              </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.compactSecondaryCancelBtn}
-              onPress={onClose}
-              activeOpacity={0.75}
-            >
-              <Text style={styles.compactSecondaryCancelBtnText}>Ahora no</Text>
-            </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.compactPrimaryJoinBtn,
+                  isWideModal && styles.compactPrimaryJoinBtnDesktop,
+                ]}
+                onPress={handleJoinChallenge}
+                disabled={isEvaluating}
+                activeOpacity={0.88}
+              >
+                {isEvaluating ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <>
+                    <Ionicons name="flame" size={17} color="#FFFFFF" style={{ marginRight: 8 }} />
+                    <Text style={styles.compactPrimaryJoinBtnText}>
+                      ¡Quiero unirme al Reto!
+                    </Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -505,32 +529,34 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
                 </Text>
               </View>
 
-              <TouchableOpacity
-                style={styles.compactPrimaryJoinBtn}
-                onPress={handleConfirmResetChallenge}
-                disabled={isResettingAll}
-                activeOpacity={0.88}
-              >
-                {isResettingAll ? (
-                  <ActivityIndicator size="small" color="#FFFFFF" />
-                ) : (
-                  <>
-                    <Ionicons name="trash-outline" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
-                    <Text style={styles.compactPrimaryJoinBtnText}>
-                      Sí, reiniciar todo y borrar publicaciones
-                    </Text>
-                  </>
-                )}
-              </TouchableOpacity>
+              <View style={{ gap: 10 }}>
+                <TouchableOpacity
+                  style={styles.compactPrimaryJoinBtn}
+                  onPress={handleConfirmResetChallenge}
+                  disabled={isResettingAll}
+                  activeOpacity={0.88}
+                >
+                  {isResettingAll ? (
+                    <ActivityIndicator size="small" color="#FFFFFF" />
+                  ) : (
+                    <>
+                      <Ionicons name="trash-outline" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
+                      <Text style={styles.compactPrimaryJoinBtnText}>
+                        Sí, reiniciar todo y borrar publicaciones
+                      </Text>
+                    </>
+                  )}
+                </TouchableOpacity>
 
-              <TouchableOpacity
-                style={styles.compactSecondaryCancelBtn}
-                onPress={() => setIsResetConfirmOpen(false)}
-                disabled={isResettingAll}
-                activeOpacity={0.75}
-              >
-                <Text style={styles.compactSecondaryCancelBtnText}>Cancelar y seguir en mi racha</Text>
-              </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.compactSecondaryCancelBtn}
+                  onPress={() => setIsResetConfirmOpen(false)}
+                  disabled={isResettingAll}
+                  activeOpacity={0.75}
+                >
+                  <Text style={styles.compactSecondaryCancelBtnText}>Cancelar y seguir en mi racha</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         </Modal>
@@ -1392,58 +1418,63 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#FF7A00',
   },
-  /* Compact Centered Invitation & Reset Modal Styles */
+  /* Spacious Centered Invitation & Reset Modal Styles */
   compactModalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(15, 23, 42, 0.55)',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingHorizontal: 18,
+    paddingVertical: 20,
   },
   compactInvitationCard: {
     width: '100%',
-    maxWidth: 420,
+    maxWidth: 500,
     maxHeight: '92%',
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    paddingHorizontal: 18,
-    paddingVertical: 14,
+    borderRadius: 24,
+    paddingHorizontal: 22,
+    paddingVertical: 20,
     borderWidth: 1.5,
     borderColor: '#FFEDD5',
     shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.14,
-    shadowRadius: 18,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.16,
+    shadowRadius: 22,
+    elevation: 10,
+  },
+  compactInvitationCardDesktop: {
+    maxWidth: 660,
+    paddingHorizontal: 32,
+    paddingVertical: 26,
   },
   compactTopBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    marginBottom: 12,
   },
   compactOrangePill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
+    gap: 6,
     backgroundColor: '#FFF7ED',
     borderWidth: 1,
     borderColor: '#FDBA74',
-    paddingHorizontal: 10,
-    paddingVertical: 3.5,
-    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 12,
   },
   compactOrangePillText: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '900',
     color: '#FF7A00',
-    letterSpacing: 0.4,
+    letterSpacing: 0.5,
   },
   compactCloseBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     backgroundColor: '#F8FAFC',
     borderWidth: 1,
     borderColor: '#E2E8F0',
@@ -1452,97 +1483,139 @@ const styles = StyleSheet.create({
   },
   compactAnimaHeader: {
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 18,
   },
   compactAnimaAvatar: {
-    width: 58,
-    height: 58,
-    borderRadius: 29,
-    borderWidth: 2,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    borderWidth: 2.5,
     borderColor: '#FF7A00',
-    marginBottom: 6,
+    marginBottom: 10,
   },
   compactMainTitle: {
-    fontSize: 16.5,
+    fontSize: 20,
     fontWeight: '900',
     color: '#0F172A',
     textAlign: 'center',
   },
   compactSubtitle: {
-    fontSize: 11.5,
+    fontSize: 13.5,
     color: '#64748B',
     textAlign: 'center',
-    lineHeight: 16,
-    marginTop: 3,
-    paddingHorizontal: 4,
+    lineHeight: 19.5,
+    marginTop: 6,
+    paddingHorizontal: 10,
+    maxWidth: 520,
   },
   compactStepsBox: {
     backgroundColor: '#F8FAFC',
-    borderRadius: 14,
-    padding: 11,
+    borderRadius: 18,
+    padding: 16,
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    marginBottom: 11,
+    marginBottom: 18,
   },
   compactStepsHeader: {
-    fontSize: 11.5,
+    fontSize: 13.5,
     fontWeight: '800',
     color: '#0F172A',
-    marginBottom: 7,
+    marginBottom: 12,
+  },
+  compactStepsGridDesktop: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  compactStepsListMobile: {
+    gap: 10,
+  },
+  compactStepCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  compactStepCardDesktop: {
+    width: '48.2%',
+    flexGrow: 1,
+  },
+  compactStepCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 9,
+    marginBottom: 6,
   },
   compactStepRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 8,
-    marginBottom: 6.5,
+    gap: 10,
+    marginBottom: 10,
   },
   compactStepDot: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     backgroundColor: '#FFF7ED',
     borderWidth: 1,
     borderColor: '#FFEDD5',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 1,
   },
   compactStepText: {
-    flex: 1,
-    fontSize: 11.2,
+    fontSize: 12.5,
     color: '#475569',
-    lineHeight: 15.8,
+    lineHeight: 18,
   },
   compactStepBold: {
+    fontSize: 13.2,
     fontWeight: '800',
     color: '#0F172A',
+    flex: 1,
+  },
+  compactButtonsRowDesktop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginTop: 4,
+  },
+  compactButtonsColMobile: {
+    flexDirection: 'column-reverse',
+    gap: 8,
   },
   compactPrimaryJoinBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#FF7A00',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    marginBottom: 7,
+    paddingVertical: 13,
+    paddingHorizontal: 20,
+    borderRadius: 14,
+  },
+  compactPrimaryJoinBtnDesktop: {
+    flex: 1.6,
   },
   compactPrimaryJoinBtnText: {
     color: '#FFFFFF',
-    fontSize: 12.8,
+    fontSize: 14,
     fontWeight: '800',
   },
   compactSecondaryCancelBtn: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 7.5,
-    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 18,
+    borderRadius: 14,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#E2E8F0',
   },
+  compactSecondaryCancelBtnDesktop: {
+    flex: 1,
+  },
   compactSecondaryCancelBtnText: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '700',
     color: '#64748B',
   },
