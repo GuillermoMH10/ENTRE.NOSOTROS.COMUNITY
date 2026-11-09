@@ -13,7 +13,6 @@ import { Post } from '../../types/post';
 import { PostCard } from './PostCard';
 import { DailyQuoteCard } from './DailyQuoteCard';
 import { MonthAwarenessPostCard } from './MonthAwarenessPostCard';
-import { ChallengeFlyerPostCard } from './ChallengeFlyerPostCard';
 import { ActiveStreakBannerCard } from './ActiveStreakBannerCard';
 import { WeeklyMoodTracker } from '../Profile/WeeklyMoodTracker';
 import { useAuth } from '../../context/AuthContext';
@@ -38,7 +37,6 @@ type FeedListItem =
   | { type: 'post'; data: Post }
   | { type: 'quote'; offset: number; id: string }
   | { type: 'month-awareness'; id: string }
-  | { type: 'challenge-flyer'; id: string }
   | { type: 'weekly-mood'; id: string };
 
 export const FeedList: React.FC<FeedListProps> = ({
@@ -61,10 +59,9 @@ export const FeedList: React.FC<FeedListProps> = ({
   const [refreshing, setRefreshing] = useState(false);
   const lastOffsetY = useRef(0);
 
-  // Random positions for quote, month awareness, challenge flyer & single weekly mood card while scrolling
+  // Random positions for quote, month awareness & single weekly mood card while scrolling
   const initialQuoteSlot = useRef(Math.floor(Math.random() * 4)).current; // 0..3
   const initialMonthSlot = useRef(Math.floor(Math.random() * 3) + 1).current; // 1..3
-  const initialChallengeFlyerSlot = useRef(Math.floor(Math.random() * 4) + 1).current; // 1..4
   const initialWeeklyMoodSlot = useRef(Math.floor(Math.random() * 5) + 2).current; // 2..6
 
   useEffect(() => {
@@ -106,11 +103,10 @@ export const FeedList: React.FC<FeedListProps> = ({
     lastOffsetY.current = currentOffsetY;
   };
 
-  // Combine regular user posts with quote publications, month awareness, challenge flyer, and weekly mood tracker
+  // Combine regular user posts with quote publications, month awareness, and weekly mood tracker
   const feedItems = useMemo<FeedListItem[]>(() => {
     if (posts.length === 0) {
       return [
-        { type: 'challenge-flyer', id: 'challenge-flyer-top' },
         { type: 'month-awareness', id: 'month-card-top' },
         { type: 'weekly-mood', id: 'weekly-mood-top' },
         { type: 'quote', offset: 0, id: 'quote-top-0' },
@@ -120,20 +116,12 @@ export const FeedList: React.FC<FeedListProps> = ({
     const items: FeedListItem[] = [];
     const firstPos = Math.min(posts.length, initialQuoteSlot); // 0..3
     const monthPos = Math.min(posts.length, initialMonthSlot === firstPos ? firstPos + 1 : initialMonthSlot);
-    const flyerPos = Math.min(posts.length, initialChallengeFlyerSlot);
     const weeklyMoodPos = Math.min(posts.length, initialWeeklyMoodSlot);
     let quoteCount = 0;
     let monthInserted = false;
-    let flyerInserted = false;
     let weeklyMoodInserted = false;
 
     for (let i = 0; i < posts.length; i++) {
-      // Challenge Flyer card at random slot
-      if (i === flyerPos && !flyerInserted) {
-        items.push({ type: 'challenge-flyer', id: 'challenge-flyer-card' });
-        flyerInserted = true;
-      }
-
       // Month awareness card
       if (i === monthPos && !monthInserted) {
         items.push({ type: 'month-awareness', id: 'month-awareness-card' });
@@ -165,11 +153,6 @@ export const FeedList: React.FC<FeedListProps> = ({
       items.push({ type: 'post', data: posts[i] });
     }
 
-    // Ensure challenge flyer is placed if not yet inserted
-    if (!flyerInserted) {
-      items.splice(Math.min(items.length, 1), 0, { type: 'challenge-flyer', id: 'challenge-flyer-card' });
-    }
-
     // Ensure month card is placed if not yet inserted
     if (!monthInserted) {
       items.splice(Math.min(items.length, 2), 0, { type: 'month-awareness', id: 'month-awareness-card' });
@@ -186,7 +169,7 @@ export const FeedList: React.FC<FeedListProps> = ({
     }
 
     return items;
-  }, [posts, initialQuoteSlot, initialMonthSlot, initialChallengeFlyerSlot, initialWeeklyMoodSlot]);
+  }, [posts, initialQuoteSlot, initialMonthSlot, initialWeeklyMoodSlot]);
 
   if (isLoading) {
     return (
@@ -201,14 +184,6 @@ export const FeedList: React.FC<FeedListProps> = ({
       data={feedItems}
       keyExtractor={(item) => (item.type === 'post' ? item.data.id : item.id)}
       renderItem={({ item }) => {
-        if (item.type === 'challenge-flyer') {
-          return (
-            <ChallengeFlyerPostCard
-              onOpenStreakModal={onOpenStreakModal}
-              onRequireAuth={onRequireAuth}
-            />
-          );
-        }
         if (item.type === 'month-awareness') {
           return (
             <MonthAwarenessPostCard
