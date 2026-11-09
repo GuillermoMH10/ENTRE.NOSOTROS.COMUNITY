@@ -1056,6 +1056,7 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
                     styles.topicPillHeaderText,
                     { color: activeTopic.accentColor },
                   ]}
+                  numberOfLines={1}
                 >
                   Trabajando con {activeTopic.name}
                 </Text>
@@ -1907,13 +1908,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
     backgroundColor: '#FFFFFF',
-    borderWidth: 1.5,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 10,
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 4.5,
+    borderRadius: 9,
+    flexShrink: 0,
   },
   resetTopicHeaderBtnText: {
-    fontSize: 11,
+    fontSize: 10.5,
     fontWeight: '800',
   },
   /* Full-Screen Onboarding Step 1 (2x2 Grid) & Step 2 (ANIMA Explanation) */
@@ -2325,26 +2327,27 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 10,
-    flexWrap: 'wrap',
-    gap: 8,
+    marginBottom: 9,
+    flexWrap: 'nowrap',
+    gap: 6,
   },
   topicPillHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 7,
-    paddingHorizontal: 11,
-    paddingVertical: 5,
-    borderRadius: 12,
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 4.5,
+    borderRadius: 10,
     borderWidth: 1,
+    flexShrink: 1,
   },
   topicDotIndicator: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
   },
   topicPillHeaderText: {
-    fontSize: 12,
+    fontSize: 11.5,
     fontWeight: '800',
   },
   mobileInlineCloseBtn: {
@@ -2358,12 +2361,16 @@ const styles = StyleSheet.create({
   mobileSingleDayRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
   },
   mobileSingleDayBadge: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
     gap: 6,
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
     paddingVertical: 6.5,
     borderRadius: 10,
     borderWidth: 1,
@@ -2372,6 +2379,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 11.5,
     fontWeight: '800',
+    textAlign: 'center',
   },
   completedCountSoftPill: {
     flexDirection: 'row',

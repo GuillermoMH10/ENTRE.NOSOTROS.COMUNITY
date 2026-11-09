@@ -52,39 +52,42 @@ export const ActiveStreakBannerCard: React.FC<ActiveStreakBannerCardProps> = ({
         activeOpacity={0.9}
         onPress={onOpenStreakModal}
       >
-        {/* Top Row: Topic Emoji + Title + Medal Preview */}
+        {/* Top Row: Clean Single-Line Header */}
         <View style={styles.topRow}>
-          <Text style={{ fontSize: 22 }}>{isCompletedAll ? '🏅' : topic.emoji}</Text>
-
-          <View style={{ flex: 1, marginLeft: 10 }}>
-            <View style={styles.titleLine}>
-              <Text style={styles.streakTitle}>
-                {isCompletedAll
-                  ? `¡Tema Superado: ${topic.name}!`
-                  : `Actividades de Mejora • ${topic.name}`}
-              </Text>
-              <View
-                style={[
-                  styles.statusChip,
-                  {
-                    backgroundColor: topic.softBg,
-                    borderColor: topic.borderColor,
-                  },
-                ]}
-              >
-                <Text style={[styles.statusChipText, { color: topic.accentColor }]}>
-                  A TU RITMO
-                </Text>
-              </View>
-            </View>
-            <Text style={styles.subtitleText} numberOfLines={1}>
-              {topic.shortSubtitle}
+          <View
+            style={[
+              styles.topicPill,
+              {
+                backgroundColor: topic.softBg,
+                borderColor: topic.borderColor,
+              },
+            ]}
+          >
+            <View
+              style={[
+                styles.topicDot,
+                { backgroundColor: topic.accentColor },
+              ]}
+            />
+            <Text
+              style={[styles.topicPillText, { color: topic.accentColor }]}
+              numberOfLines={1}
+            >
+              {isCompletedAll
+                ? `Tema superado: ${topic.name}`
+                : `Actividades • ${topic.name}`}
             </Text>
           </View>
 
           <View style={styles.targetBadgeChip}>
-            <Text style={{ fontSize: 15 }}>{targetBadge.emoji}</Text>
-            <Text style={styles.targetBadgeChipText}>Medalla</Text>
+            <Ionicons
+              name="medal-outline"
+              size={12}
+              color={topic.accentColor}
+            />
+            <Text style={styles.targetBadgeChipText}>
+              {isCompletedAll ? 'Medalla obtenida' : `Día ${streak.currentDayNumber}`}
+            </Text>
           </View>
         </View>
 
@@ -95,14 +98,12 @@ export const ActiveStreakBannerCard: React.FC<ActiveStreakBannerCardProps> = ({
             style={[styles.animaMiniImg, { borderColor: topic.accentColor }]}
             resizeMode="cover"
           />
-          <View style={{ flex: 1 }}>
+          <View style={styles.taskTextCol}>
             <Text style={styles.taskLabel}>
-              {isCompletedAll ? 'Medalla obtenida:' : 'Actividad sugerida:'}
+              {isCompletedAll ? 'Logro desbloqueado' : 'Actividad de hoy'}
             </Text>
-            <Text style={styles.taskTitle} numberOfLines={1}>
-              {isCompletedAll
-                ? `${targetBadge.emoji} ${targetBadge.name}`
-                : currentDay.task.title}
+            <Text style={styles.taskTitle} numberOfLines={2}>
+              {isCompletedAll ? targetBadge.name : currentDay.task.title}
             </Text>
           </View>
           <View
@@ -112,9 +113,9 @@ export const ActiveStreakBannerCard: React.FC<ActiveStreakBannerCardProps> = ({
             ]}
           >
             <Text style={styles.actionCtaText}>
-              {isCompletedAll ? 'Ver medalla' : 'Ver actividad'}
+              {isCompletedAll ? 'Ver' : 'Ir'}
             </Text>
-            <Ionicons name="chevron-forward" size={13} color="#FFFFFF" />
+            <Ionicons name="chevron-forward" size={12} color="#FFFFFF" />
           </View>
         </View>
       </TouchableOpacity>
@@ -124,15 +125,16 @@ export const ActiveStreakBannerCard: React.FC<ActiveStreakBannerCardProps> = ({
 
 const styles = StyleSheet.create({
   outerWrap: {
-    paddingHorizontal: 14,
+    paddingHorizontal: 12,
     paddingTop: 6,
     paddingBottom: 6,
     backgroundColor: colors.white,
   },
   bannerCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    padding: 14,
+    borderRadius: 16,
+    paddingVertical: 11,
+    paddingHorizontal: 12,
     borderWidth: 1,
     borderColor: '#E2E8F0',
     shadowColor: '#0F172A',
@@ -144,60 +146,56 @@ const styles = StyleSheet.create({
   topRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
+    justifyContent: 'space-between',
+    marginBottom: 8,
+    gap: 8,
   },
-  titleLine: {
+  topicPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    flexWrap: 'wrap',
-  },
-  streakTitle: {
-    fontSize: 13.5,
-    fontWeight: '900',
-    color: '#0F172A',
-  },
-  statusChip: {
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
     borderWidth: 1,
+    flexShrink: 1,
   },
-  statusChipText: {
-    fontSize: 9.5,
-    fontWeight: '800',
+  topicDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
   },
-  subtitleText: {
+  topicPillText: {
     fontSize: 11.5,
-    color: '#64748B',
-    fontWeight: '600',
-    marginTop: 1,
+    fontWeight: '800',
   },
   targetBadgeChip: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#F8FAFC',
-    paddingHorizontal: 8,
+    paddingHorizontal: 9,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: '#E2E8F0',
     gap: 4,
+    flexShrink: 0,
   },
   targetBadgeChipText: {
     fontSize: 10.5,
-    fontWeight: '800',
-    color: '#334155',
+    fontWeight: '700',
+    color: '#475569',
   },
   taskRow: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#F8FAFC',
-    padding: 10,
+    paddingVertical: 9,
+    paddingHorizontal: 10,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    gap: 10,
+    gap: 9,
   },
   animaMiniImg: {
     width: 34,
@@ -205,24 +203,31 @@ const styles = StyleSheet.create({
     borderRadius: 17,
     borderWidth: 1.5,
   },
+  taskTextCol: {
+    flex: 1,
+    justifyContent: 'center',
+  },
   taskLabel: {
-    fontSize: 10.5,
+    fontSize: 10,
     fontWeight: '700',
     color: '#64748B',
   },
   taskTitle: {
-    fontSize: 12.5,
+    fontSize: 12,
     fontWeight: '800',
     color: '#0F172A',
+    lineHeight: 16,
     marginTop: 1,
   },
   actionCtaPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    justifyContent: 'center',
+    paddingHorizontal: 11,
+    paddingVertical: 6.5,
     borderRadius: 10,
     gap: 3,
+    flexShrink: 0,
   },
   actionCtaText: {
     color: '#FFFFFF',
