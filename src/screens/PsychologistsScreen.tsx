@@ -43,8 +43,7 @@ export const PsychologistsScreen: React.FC<PsychologistsScreenProps> = ({
 }) => {
   const { width: windowWidth } = useWindowDimensions();
   const isDesktop = Platform.OS === 'web' && windowWidth >= 1024;
-  const centerColWidth = windowWidth - 630;
-  const numColumns = isDesktop && centerColWidth >= 700 ? 2 : 1;
+  const numColumns = isDesktop ? 4 : 2;
   const [psychologists, setPsychologists] = useState<Psychologist[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -172,121 +171,133 @@ export const PsychologistsScreen: React.FC<PsychologistsScreenProps> = ({
     searchQuery.trim().length > 0 || modalidadFilter !== 'todos' || selectedTopic !== null;
 
   const renderItem = ({ item }: { item: Psychologist }) => {
-    const topicsToShow = (item.temas || []).slice(0, 3);
-    const remainingTopicsCount = (item.temas || []).length - 3;
+    const topicsToShow = (item.temas || []).slice(0, 2);
+    const remainingTopicsCount = Math.max(0, (item.temas || []).length - 2);
 
     return (
-      <View style={[styles.cardContainer, isDesktop && { flex: 1, minWidth: 260 }]}>
-        <View style={styles.cardTopContent}>
-          {/* Left Column: Circular Avatar with verified badge */}
-          <TouchableOpacity
-            style={styles.avatarLeftCol}
-            activeOpacity={0.88}
-            onPress={() => setSelectedPsico(item)}
-          >
-            <View style={styles.avatarWrapper}>
-              <Image source={{ uri: item.imagen }} style={styles.avatarImage} resizeMode="cover" />
-              <View style={styles.avatarVerifiedBadge}>
-                <Ionicons name="checkmark" size={12} color={colors.white} />
-              </View>
+      <View
+        style={[
+          styles.cardContainer,
+          isDesktop ? styles.cardContainerDesktop4 : styles.cardContainerMobile2,
+        ]}
+      >
+        <TouchableOpacity
+          style={styles.cardBodyClickable}
+          activeOpacity={0.88}
+          onPress={() => setSelectedPsico(item)}
+        >
+          {/* Top Centered Avatar + Verified Badge */}
+          <View style={styles.avatarWrapper}>
+            <Image
+              source={{ uri: item.imagen }}
+              style={styles.avatarImage}
+              resizeMode="cover"
+            />
+            <View style={styles.avatarVerifiedBadge}>
+              <Ionicons name="checkmark" size={10} color={colors.white} />
             </View>
+          </View>
 
-            {/* Modalidad Badge under avatar */}
-            <View style={styles.modalidadPill}>
+          {/* Modalidad Pill */}
+          <View style={styles.modalidadPill}>
+            <Ionicons
+              name={
+                item.modalidad?.includes('línea') || item.modalidad?.includes('Línea')
+                  ? 'videocam-outline'
+                  : 'business-outline'
+              }
+              size={10}
+              color={colors.coffeePrimary}
+            />
+            <Text style={styles.modalidadPillText} numberOfLines={1}>
+              {item.modalidad || 'Presencial/Línea'}
+            </Text>
+          </View>
+
+          {/* Name with Verified Checkmark */}
+          <View style={styles.nameRow}>
+            <Text style={styles.nameText} numberOfLines={1}>
+              {item.nombre}
+            </Text>
+            <Ionicons
+              name="checkmark-circle"
+              size={13}
+              color="#2563EB"
+              style={{ marginLeft: 3 }}
+            />
+          </View>
+
+          {/* Ciudad */}
+          {item.ciudad ? (
+            <View style={styles.cityRow}>
               <Ionicons
-                name={
-                  item.modalidad?.includes('línea') || item.modalidad?.includes('Línea')
-                    ? 'videocam-outline'
-                    : 'business-outline'
-                }
+                name="location-sharp"
                 size={10}
                 color={colors.coffeePrimary}
+                style={{ marginRight: 2 }}
               />
-              <Text style={styles.modalidadPillText} numberOfLines={1}>
-                {item.modalidad || 'Presencial/Línea'}
+              <Text style={styles.cityText} numberOfLines={1}>
+                {item.ciudad}
               </Text>
             </View>
-          </TouchableOpacity>
+          ) : null}
 
-          {/* Right Column: Name, City, Specialty, Topics */}
-          <TouchableOpacity
-            style={styles.infoRightCol}
-            activeOpacity={0.88}
-            onPress={() => setSelectedPsico(item)}
-          >
-            {/* Name with Verified Checkmark */}
-            <View style={styles.nameRow}>
-              <Text style={styles.nameText} numberOfLines={2}>
-                {item.nombre}
-              </Text>
-              <Ionicons name="checkmark-circle" size={16} color="#2563EB" style={{ marginLeft: 4 }} />
+          {/* Specialty */}
+          <Text style={styles.specialtyText} numberOfLines={2}>
+            {item.especialidad}
+          </Text>
+
+          {/* Topics (Max 2 + Counter) */}
+          {topicsToShow.length > 0 ? (
+            <View style={styles.topicsRow}>
+              {topicsToShow.map((tema, idx) => (
+                <View key={idx} style={styles.topicChip}>
+                  <Text style={styles.topicChipText} numberOfLines={1}>
+                    {tema}
+                  </Text>
+                </View>
+              ))}
+              {remainingTopicsCount > 0 && (
+                <View style={styles.remainingTopicChip}>
+                  <Text style={styles.remainingTopicText}>
+                    +{remainingTopicsCount}
+                  </Text>
+                </View>
+              )}
             </View>
-
-            {/* Ciudad (City in very small font right below the name) */}
-            {item.ciudad ? (
-              <View style={styles.cityRow}>
-                <Ionicons name="location-sharp" size={11} color={colors.coffeePrimary} style={{ marginRight: 3 }} />
-                <Text style={styles.cityText} numberOfLines={1}>
-                  {item.ciudad}
-                </Text>
-              </View>
-            ) : null}
-
-            {/* Specialty */}
-            <Text style={styles.specialtyText} numberOfLines={2}>
-              {item.especialidad}
-            </Text>
-
-            {/* Topics (Max 3 + Counter) */}
-            {topicsToShow.length > 0 ? (
-              <View style={styles.topicsRow}>
-                {topicsToShow.map((tema, idx) => (
-                  <View key={idx} style={styles.topicChip}>
-                    <Text style={styles.topicChipText} numberOfLines={1}>
-                      {tema}
-                    </Text>
-                  </View>
-                ))}
-                {remainingTopicsCount > 0 && (
-                  <View style={styles.remainingTopicChip}>
-                    <Text style={styles.remainingTopicText}>+{remainingTopicsCount}</Text>
-                  </View>
-                )}
-              </View>
-            ) : null}
-          </TouchableOpacity>
-        </View>
+          ) : null}
+        </TouchableOpacity>
 
         {/* Bottom Actions Row: WhatsApp, Email, Ver Perfil */}
         <View style={styles.cardActionsRow}>
-          {/* WhatsApp Button */}
           <TouchableOpacity
-            style={styles.whatsappBtn}
+            style={styles.whatsappIconBtn}
             activeOpacity={0.85}
-            onPress={() => handleOpenWhatsApp(item.whatsapp || item.telefono, item.nombre)}
+            onPress={() =>
+              handleOpenWhatsApp(item.whatsapp || item.telefono, item.nombre)
+            }
+            accessibilityLabel="Contactar por WhatsApp"
           >
-            <Ionicons name="logo-whatsapp" size={16} color={colors.white} />
-            <Text style={styles.whatsappBtnText}>WhatsApp</Text>
+            <Ionicons name="logo-whatsapp" size={14} color={colors.white} />
           </TouchableOpacity>
 
-          {/* Email Button */}
           <TouchableOpacity
-            style={styles.emailBtn}
+            style={styles.emailIconBtn}
             activeOpacity={0.85}
             onPress={() => handleOpenEmail(item.correo, item.nombre)}
+            accessibilityLabel="Contactar por Correo"
           >
-            <Ionicons name="mail" size={15} color="#EA4335" />
-            <Text style={styles.emailBtnText}>Correo</Text>
+            <Ionicons name="mail" size={13} color="#D92D20" />
           </TouchableOpacity>
 
-          {/* View Profile Button */}
           <TouchableOpacity
             style={styles.viewProfileBtn}
             activeOpacity={0.85}
             onPress={() => setSelectedPsico(item)}
           >
-            <Text style={styles.viewProfileBtnText} numberOfLines={1}>Ver perfil</Text>
-            <Ionicons name="arrow-forward" size={13} color={colors.white} />
+            <Text style={styles.viewProfileBtnText} numberOfLines={1}>
+              Ver perfil
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -499,15 +510,15 @@ export const PsychologistsScreen: React.FC<PsychologistsScreenProps> = ({
         </View>
       ) : (
         <FlatList
-          key={isDesktop ? `desktop-grid-${numColumns}` : 'mobile-list-1'}
+          key={`grid-${numColumns}`}
           data={filteredPsychologists}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
           numColumns={numColumns}
-          columnWrapperStyle={numColumns > 1 ? styles.desktopColumnWrapper : undefined}
+          columnWrapperStyle={styles.gridColumnWrapper}
           contentContainerStyle={[
             styles.listContent,
-            isDesktop && { maxWidth: 960, width: '100%', alignSelf: 'center' },
+            isDesktop && { width: '100%', alignSelf: 'center' },
             {
               paddingTop: 6,
               paddingBottom: contentPaddingBottom + 20,
@@ -708,41 +719,52 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.coffeePrimary,
   },
-  desktopColumnWrapper: {
-    gap: 12,
+  gridColumnWrapper: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    gap: 10,
   },
-  /* Card Container */
+  /* Card Container (Bounded to its exact Grid Slot: 1/4 on Web, 1/2 on Mobile) */
   cardContainer: {
     backgroundColor: colors.white,
-    borderRadius: 22,
-    borderWidth: 1.2,
+    borderRadius: 18,
+    borderWidth: 1,
     borderColor: colors.borderLight,
-    padding: 16,
-    marginBottom: 14,
+    padding: 12,
+    marginBottom: 12,
+    overflow: 'hidden',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
     shadowColor: colors.coffeeDeep,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
-    elevation: 2.5,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  cardTopContent: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 14,
+  cardContainerDesktop4: {
+    width: '23.8%',
+    maxWidth: '23.8%',
+    flexGrow: 0,
+    flexShrink: 0,
   },
-  /* Left Column */
-  avatarLeftCol: {
+  cardContainerMobile2: {
+    width: '48.2%',
+    maxWidth: '48.2%',
+    flexGrow: 0,
+    flexShrink: 0,
+  },
+  cardBodyClickable: {
+    width: '100%',
     alignItems: 'center',
-    width: 78,
   },
   avatarWrapper: {
     position: 'relative',
     marginBottom: 6,
   },
   avatarImage: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     borderWidth: 2,
     borderColor: colors.coffeePrimary,
     backgroundColor: colors.surface,
@@ -752,94 +774,103 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     right: 0,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
     backgroundColor: '#2563EB',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
+    borderWidth: 1.5,
     borderColor: colors.white,
   },
   modalidadPill: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: colors.surface,
-    paddingHorizontal: 5,
+    paddingHorizontal: 7,
     paddingVertical: 2.5,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: colors.borderLight,
-    gap: 2,
-    maxWidth: 92,
+    gap: 3,
+    marginBottom: 6,
+    maxWidth: '100%',
   },
   modalidadPillText: {
     fontSize: 9,
     fontWeight: '700',
     color: colors.coffeePrimary,
   },
-  /* Right Column */
-  infoRightCol: {
-    flex: 1,
-  },
   nameRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 2,
+    width: '100%',
   },
   nameText: {
-    fontSize: 14.5,
+    fontSize: 13,
     fontWeight: '800',
     color: colors.coffeeDark,
-    lineHeight: 18,
+    lineHeight: 16,
+    textAlign: 'center',
     flexShrink: 1,
   },
   cityRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 3,
+    width: '100%',
   },
   cityText: {
-    fontSize: 10.5,
+    fontSize: 10,
     fontWeight: '600',
     color: colors.textSecondary,
+    textAlign: 'center',
     flexShrink: 1,
   },
   specialtyText: {
-    fontSize: 12.5,
+    fontSize: 11,
     color: colors.coffeePrimary,
     fontWeight: '600',
-    lineHeight: 17,
-    marginBottom: 8,
+    lineHeight: 14.5,
+    textAlign: 'center',
+    marginBottom: 6,
+    width: '100%',
   },
   topicsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 5,
+    justifyContent: 'center',
+    gap: 4,
+    width: '100%',
   },
   topicChip: {
     backgroundColor: colors.surfaceSoft,
-    paddingHorizontal: 8,
-    paddingVertical: 3.5,
-    borderRadius: 8,
+    paddingHorizontal: 6,
+    paddingVertical: 2.5,
+    borderRadius: 6,
     borderWidth: 0.8,
     borderColor: colors.borderLight,
+    maxWidth: '100%',
   },
   topicChipText: {
-    fontSize: 10.5,
+    fontSize: 9.5,
     fontWeight: '600',
     color: colors.coffeeDark,
   },
   remainingTopicChip: {
     backgroundColor: colors.surface,
-    paddingHorizontal: 6,
-    paddingVertical: 3.5,
-    borderRadius: 8,
+    paddingHorizontal: 5,
+    paddingVertical: 2.5,
+    borderRadius: 6,
     borderWidth: 0.8,
     borderColor: colors.borderLight,
   },
   remainingTopicText: {
-    fontSize: 10.5,
+    fontSize: 9.5,
     fontWeight: '700',
     color: colors.textSecondary,
   },
@@ -847,48 +878,32 @@ const styles = StyleSheet.create({
   cardActionsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    marginTop: 14,
-    paddingTop: 12,
+    gap: 5,
+    marginTop: 10,
+    paddingTop: 9,
     borderTopWidth: 1,
     borderTopColor: colors.borderLight,
+    width: '100%',
   },
-  whatsappBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+  whatsappIconBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 9,
     backgroundColor: '#25D366',
-    paddingHorizontal: 9,
-    paddingVertical: 7.5,
-    borderRadius: 12,
-    gap: 4,
-    shadowColor: '#25D366',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-  whatsappBtnText: {
-    color: colors.white,
-    fontSize: 11.5,
-    fontWeight: '700',
-  },
-  emailBtn: {
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
+  },
+  emailIconBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 9,
     backgroundColor: '#FFF5F5',
     borderWidth: 1,
     borderColor: '#FECDCA',
-    paddingHorizontal: 8,
-    paddingVertical: 7.5,
-    borderRadius: 12,
-    gap: 3,
-  },
-  emailBtnText: {
-    color: '#D92D20',
-    fontSize: 11.5,
-    fontWeight: '700',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
   },
   viewProfileBtn: {
     flex: 1,
@@ -896,19 +911,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.coffeePrimary,
-    paddingVertical: 7.5,
-    paddingHorizontal: 8,
-    borderRadius: 12,
-    gap: 4,
-    shadowColor: colors.coffeeDeep,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 4,
-    elevation: 2,
+    height: 30,
+    paddingHorizontal: 6,
+    borderRadius: 9,
   },
   viewProfileBtnText: {
     color: colors.white,
-    fontSize: 11.5,
+    fontSize: 10.5,
     fontWeight: '700',
   },
   /* Empty State */
