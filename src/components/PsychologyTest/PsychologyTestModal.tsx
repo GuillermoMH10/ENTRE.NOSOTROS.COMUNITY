@@ -450,13 +450,19 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
                 Selecciona uno de los 4 temas principales para comenzar:
               </Text>
 
-              {/* Centered 2x2 Grid with Square Images & Topic Name */}
-              <View style={styles.topicsTwoByTwoGrid}>
+              {/* Centered Grid of 4 Topics with Square Images & Topic Name */}
+              <View
+                style={[
+                  styles.topicsTwoByTwoGrid,
+                  isWideScreen && styles.topicsFourInRowGrid,
+                ]}
+              >
                 {MAIN_SUPPORT_TOPICS.map((topic) => (
                   <TouchableOpacity
                     key={topic.key}
                     style={[
                       styles.topicGridCard,
+                      isWideScreen && styles.topicGridCardFourInRow,
                       { borderColor: topic.borderColor },
                     ]}
                     activeOpacity={0.88}
@@ -1711,11 +1717,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 28,
+    paddingVertical: 18,
   },
   onboardingCenterContainer: {
     width: '100%',
-    maxWidth: 640,
+    maxWidth: 780,
     alignItems: 'center',
     justifyContent: 'center',
     alignSelf: 'center',
@@ -1859,6 +1865,12 @@ const styles = StyleSheet.create({
     gap: 14,
     alignSelf: 'center',
   },
+  topicsFourInRowGrid: {
+    maxWidth: 760,
+    flexWrap: 'nowrap',
+    justifyContent: 'space-between',
+    gap: 14,
+  },
   topicGridCard: {
     width: '47%',
     backgroundColor: '#FFFFFF',
@@ -1871,6 +1883,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 10,
     elevation: 3,
+  },
+  topicGridCardFourInRow: {
+    flex: 1,
+    width: '23%',
   },
   topicSquareImageWrap: {
     width: '100%',
