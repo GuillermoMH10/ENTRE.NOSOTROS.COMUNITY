@@ -331,11 +331,6 @@ export const DesktopWebLayout: React.FC<DesktopWebLayoutProps> = ({
                     style={[
                       styles.navItem,
                       isActive && styles.navItemActive,
-                      isOrangeStreak && {
-                        backgroundColor: isActive ? '#EFF6FF' : '#FFFFFF',
-                        borderWidth: 1.5,
-                        borderColor: '#3B82F6',
-                      },
                     ]}
                     activeOpacity={0.7}
                     onPress={() => {
@@ -354,23 +349,13 @@ export const DesktopWebLayout: React.FC<DesktopWebLayoutProps> = ({
                     <Ionicons
                       name={(isActive ? item.iconActive : item.icon) as any}
                       size={20}
-                      color={
-                        isOrangeStreak
-                          ? '#3B82F6'
-                          : isActive
-                          ? colors.coffeePrimary
-                          : '#4B6779'
-                      }
+                      color={isActive ? colors.coffeePrimary : '#4B6779'}
                       style={{ marginRight: 12 }}
                     />
                     <Text
                       style={[
                         styles.navItemText,
                         isActive && styles.navItemTextActive,
-                        isOrangeStreak && {
-                          color: '#0F172A',
-                          fontWeight: '800',
-                        },
                       ]}
                     >
                       {item.label}

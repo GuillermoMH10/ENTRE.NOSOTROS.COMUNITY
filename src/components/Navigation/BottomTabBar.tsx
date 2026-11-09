@@ -102,10 +102,7 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({
           return (
             <TouchableOpacity
               key={tab.id}
-              style={[
-                styles.tabButton,
-                tab.isStreak && styles.streakTabButtonOutline,
-              ]}
+              style={styles.tabButton}
               activeOpacity={0.75}
               onPress={() => {
                 if (tab.isStreak) {
@@ -131,14 +128,6 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({
                   >
                     <AnimaMascot size="sm" variant="profile" animated={false} />
                   </View>
-                ) : tab.isStreak ? (
-                  <View style={styles.streakFireIconClean}>
-                    <Ionicons
-                      name={isCurrentActive ? 'sparkles' : 'sparkles-outline'}
-                      size={20}
-                      color="#3B82F6"
-                    />
-                  </View>
                 ) : (
                   <Ionicons
                     name={isCurrentActive ? tab.activeIcon! : tab.icon!}
@@ -153,10 +142,6 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({
                   isCurrentActive ? styles.tabLabelActive : styles.tabLabelInactive,
                   tab.isMascot &&
                     isCurrentActive && { color: colors.coffeePrimary, fontWeight: '800' },
-                  tab.isStreak && {
-                    color: '#0F172A',
-                    fontWeight: '800',
-                  },
                 ]}
               >
                 {tab.label}

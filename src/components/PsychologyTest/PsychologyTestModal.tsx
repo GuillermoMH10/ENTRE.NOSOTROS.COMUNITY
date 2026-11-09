@@ -1677,22 +1677,33 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
             )}
           </View>
 
-          {/* 4. USER DECIDES WHEN TO STOP & CLAIM MEDAL (MOVED BELOW MIS ACTIVIDADES REALIZADAS, NO EMOJIS) */}
+          {/* 4. USER DECIDES WHEN TO STOP & CLAIM MEDAL (COMPACT, SMALLER ON MOBILE, NO EMOJIS) */}
           <View
             style={[
               styles.cleanWhiteCard,
+              !isDesktop && styles.concludeCompactCardMobile,
               {
                 borderColor: activeTopic.borderColor,
                 backgroundColor: '#FFFFFF',
               },
             ]}
           >
-            <View style={{ marginBottom: 12 }}>
-              <Text style={styles.concludeCardTitle}>
+            <View style={{ marginBottom: isDesktop ? 10 : 7 }}>
+              <Text
+                style={[
+                  styles.concludeCardTitle,
+                  !isDesktop && { fontSize: 12.5 },
+                ]}
+              >
                 Tú decides hasta dónde parar
               </Text>
-              <Text style={styles.concludeCardSub}>
-                Cuando sientas que estas actividades ya te ayudaron a superar o sentirte mejor respecto a {activeTopic.name}, concluye el tema para recibir tu{' '}
+              <Text
+                style={[
+                  styles.concludeCardSub,
+                  !isDesktop && { fontSize: 11, lineHeight: 15.5, marginTop: 2 },
+                ]}
+              >
+                Cuando te sientas mejor en {activeTopic.name}, concluye el tema para recibir tu{' '}
                 <Text style={{ fontWeight: '800', color: activeTopic.accentColor }}>
                   {targetBadge.name}
                 </Text>
@@ -1703,6 +1714,7 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
             <TouchableOpacity
               style={[
                 styles.concludeMedalBtn,
+                !isDesktop && styles.concludeMedalBtnMobile,
                 {
                   borderColor: activeTopic.accentColor,
                   backgroundColor: activeTopic.softBg,
@@ -1718,17 +1730,19 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
                 <>
                   <Ionicons
                     name="medal-outline"
-                    size={16}
+                    size={isDesktop ? 15 : 13}
                     color={activeTopic.accentColor}
-                    style={{ marginRight: 7 }}
+                    style={{ marginRight: 6 }}
                   />
                   <Text
                     style={[
                       styles.concludeMedalBtnText,
+                      !isDesktop && { fontSize: 11.5 },
                       { color: activeTopic.accentColor },
                     ]}
+                    numberOfLines={1}
                   >
-                    Concluir tema y recibir mi {targetBadge.name}
+                    Concluir tema y recibir medalla
                   </Text>
                 </>
               )}
@@ -2289,7 +2303,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   resultScrollContent: {
-    padding: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
     width: '100%',
   },
   resultScrollContentDesktop: {
@@ -2300,9 +2315,9 @@ const styles = StyleSheet.create({
   cleanHeaderCard: {
     width: '100%',
     backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    padding: 14,
-    marginBottom: 12,
+    borderRadius: 15,
+    padding: 11,
+    marginBottom: 9,
     borderWidth: 1,
     borderColor: '#E2E8F0',
   },
@@ -2447,11 +2462,16 @@ const styles = StyleSheet.create({
   cleanWhiteCard: {
     width: '100%',
     backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    padding: 16,
-    marginBottom: 12,
+    borderRadius: 15,
+    padding: 12,
+    marginBottom: 9,
     borderWidth: 1,
     borderColor: '#E2E8F0',
+  },
+  concludeCompactCardMobile: {
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 13,
   },
   activityCardTopRow: {
     flexDirection: 'row',
@@ -2698,13 +2718,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 11.5,
+    paddingVertical: 10,
     paddingHorizontal: 14,
-    borderRadius: 12,
-    borderWidth: 1.5,
+    borderRadius: 11,
+    borderWidth: 1,
+  },
+  concludeMedalBtnMobile: {
+    paddingVertical: 7.5,
+    paddingHorizontal: 10,
+    borderRadius: 9,
   },
   concludeMedalBtnText: {
-    fontSize: 12.5,
+    fontSize: 12,
     fontWeight: '800',
   },
   /* Completed Activities Strip */
