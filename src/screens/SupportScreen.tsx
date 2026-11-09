@@ -146,23 +146,32 @@ export const SupportScreen: React.FC<SupportScreenProps> = ({
     },
   ];
 
-  if (isDesktop && isTestModalOpen && hasActiveChallenge) {
+  if (isDesktop && isTestModalOpen) {
     return (
       <View style={styles.container}>
         <PsychologyTestModal
           visible={true}
           userId={user?.id}
           initialResult={latestResult}
-          startMode="result"
+          startMode={testModalMode}
           onClose={() => setIsTestModalOpen(false)}
           onNavigateToProfile={() => {
             setIsTestModalOpen(false);
             if (onOpenRacha) onOpenRacha();
           }}
-          onOpenPsychologists={onOpenPsychologists}
+          onOpenPsychologists={() => {
+            setIsTestModalOpen(false);
+            onOpenPsychologists();
+          }}
           onOpenCreatePost={onOpenCreatePost}
           onRequireAuth={onJoinPress}
-          onTestCompleted={handleTestCompleted}
+          onTestCompleted={(res) => {
+            handleTestCompleted(res);
+            if (onOpenRacha) {
+              setIsTestModalOpen(false);
+              onOpenRacha();
+            }
+          }}
           embedded={true}
         />
       </View>
@@ -374,7 +383,10 @@ export const SupportScreen: React.FC<SupportScreenProps> = ({
             onOpenRacha();
           }
         }}
-        onOpenPsychologists={onOpenPsychologists}
+        onOpenPsychologists={() => {
+          setIsTestModalOpen(false);
+          onOpenPsychologists();
+        }}
         onOpenCreatePost={onOpenCreatePost}
         onRequireAuth={onJoinPress}
         onTestCompleted={(res) => {

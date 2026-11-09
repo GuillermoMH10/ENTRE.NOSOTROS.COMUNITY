@@ -59,6 +59,7 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
   startMode = 'questionnaire',
   onClose,
   onNavigateToProfile,
+  onOpenPsychologists,
   onTestCompleted,
   onRequireAuth,
   embedded = false,
@@ -360,232 +361,328 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
   };
 
   // ============================================================================
-  // ONBOARDING MODAL: STEP 1 (2x2 GRID OF 4 TOPICS) & STEP 2 (ANIMA EXPLANATION)
+  // FULL-SCREEN ONBOARDING: STEP 1 (2x2 GRID OF 4 TOPICS) & STEP 2 (ANIMA EXPLANATION)
   // ============================================================================
   if (!result || !streak?.isActive) {
-    const isWideModal = windowWidth >= 640;
+    const isWideScreen = windowWidth >= 640;
 
-    return (
-      <Modal
-        visible={visible}
-        transparent
-        animationType="fade"
-        onRequestClose={onClose}
-        statusBarTranslucent
+    const fullScreenOnboardingContent = (
+      <SafeAreaView
+        style={[
+          styles.onboardingFullSafeArea,
+          isDesktop && styles.onboardingDesktopSafeArea,
+        ]}
       >
-        <View style={styles.onboardingOverlay}>
-          <View
-            style={[
-              styles.onboardingCard,
-              isWideModal && styles.onboardingCardDesktop,
-            ]}
+        {/* Clean Full-Screen Top Navigation Header */}
+        <View style={styles.onboardingFullTopHeader}>
+          <TouchableOpacity
+            onPress={() => {
+              if (selectedTopicForIntro) {
+                setSelectedTopicForIntro(null);
+              } else {
+                onClose();
+              }
+            }}
+            style={styles.onboardingBackNavBtn}
+            activeOpacity={0.75}
           >
-            {/* Top Bar */}
-            <View style={styles.onboardingTopBar}>
-              <View style={styles.calmPillBadge}>
-                <Ionicons name="sparkles" size={13} color="#3B82F6" />
-                <Text style={styles.calmPillBadgeText}>
-                  {selectedTopicForIntro
-                    ? `TEMA SELECCIONADO • ${selectedTopicForIntro.name.toUpperCase()}`
-                    : 'ESPACIO DE APOYO Y BIENESTAR'}
-                </Text>
-              </View>
-              <TouchableOpacity
-                onPress={onClose}
-                style={styles.onboardingCloseBtn}
-                activeOpacity={0.7}
-              >
-                <Ionicons name="close" size={19} color="#475569" />
-              </TouchableOpacity>
-            </View>
+            <Ionicons name="arrow-back" size={18} color="#0F172A" />
+            <Text style={styles.onboardingBackNavBtnText}>
+              {selectedTopicForIntro ? 'Temas' : 'Regresar'}
+            </Text>
+          </TouchableOpacity>
 
-            {!selectedTopicForIntro ? (
-              /* ----------------- STEP 1: ANIMA INVITES USER TO SELECT 1 OF THE 4 TOPICS (2x2 GRID) ----------------- */
-              <ScrollView
-                style={{ flexShrink: 1 }}
-                contentContainerStyle={{ paddingBottom: 4 }}
-                showsVerticalScrollIndicator={false}
-                bounces={false}
-              >
-                <View style={styles.animaIntroRow}>
+          <View style={styles.calmPillBadge}>
+            <Ionicons name="sparkles" size={13} color="#3B82F6" />
+            <Text style={styles.calmPillBadgeText}>
+              {selectedTopicForIntro
+                ? `TEMA • ${selectedTopicForIntro.name.toUpperCase()}`
+                : 'ESPACIO DE APOYO Y BIENESTAR'}
+            </Text>
+          </View>
+
+          <TouchableOpacity
+            onPress={onClose}
+            style={styles.onboardingCloseBtn}
+            activeOpacity={0.7}
+            accessibilityLabel="Cerrar"
+          >
+            <Ionicons name="close" size={19} color="#475569" />
+          </TouchableOpacity>
+        </View>
+
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={styles.onboardingFullScrollContent}
+          showsVerticalScrollIndicator={Platform.OS === 'web'}
+          bounces={false}
+        >
+          {!selectedTopicForIntro ? (
+            /* ----------------- STEP 1: CENTERED ANIMA INTRO + 2x2 GRID OF 4 TOPICS ----------------- */
+            <View style={styles.onboardingCenterContainer}>
+              {/* Centered ANIMA Header */}
+              <View style={styles.animaHeroCenteredSection}>
+                <View style={styles.animaAvatarRing}>
                   <Image
                     source={require('../../../assets/perfilANIMA.png')}
                     style={styles.animaAvatarOnboarding}
                     resizeMode="cover"
                   />
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.onboardingTitle}>
-                      Hola, estoy aquí para acompañarte a sentirte mejor 💙
-                    </Text>
-                    <Text style={styles.onboardingDescription}>
-                      Esta dinámica consiste en actividades agradables e interactivas que podrás hacer a tu propio ritmo cada vez que lo necesites, sin límite de días y eligiendo si deseas compartirlas o guardarlas en privado.
-                    </Text>
-                  </View>
                 </View>
 
-                <Text style={styles.selectPromptText}>
-                  Selecciona uno de los 4 temas principales para comenzar:
+                <View style={styles.animaTagMiniPill}>
+                  <Ionicons name="sparkles" size={11} color="#2563EB" />
+                  <Text style={styles.animaTagMiniPillText}>
+                    Acompañamiento con ANIMA
+                  </Text>
+                </View>
+
+                <Text style={styles.onboardingTitle}>
+                  Hola, estoy aquí para acompañarte a sentirte mejor 💙
                 </Text>
 
-                {/* 2x2 Grid with Square Images & Topic Name */}
-                <View style={styles.topicsTwoByTwoGrid}>
-                  {MAIN_SUPPORT_TOPICS.map((topic) => (
-                    <TouchableOpacity
-                      key={topic.key}
-                      style={styles.topicGridCard}
-                      activeOpacity={0.88}
-                      onPress={() => setSelectedTopicForIntro(topic)}
-                    >
-                      <View style={styles.topicSquareImageWrap}>
-                        <Image
-                          source={{ uri: topic.squareImageUrl }}
-                          style={styles.topicSquareImage}
-                          resizeMode="cover"
-                        />
-                      </View>
-                      <View style={styles.topicCardFooter}>
-                        <Text style={styles.topicCardName}>{topic.name}</Text>
-                      </View>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </ScrollView>
-            ) : (
-              /* ----------------- STEP 2: ANIMA EXPLAINS HOW ACTIVITIES WORK FOR THE CHOSEN TOPIC ----------------- */
-              <ScrollView
-                style={{ flexShrink: 1 }}
-                contentContainerStyle={{ paddingBottom: 4 }}
-                showsVerticalScrollIndicator={false}
-                bounces={false}
-              >
-                <View style={styles.step2AnimaHeader}>
-                  <Image
-                    source={require('../../../assets/perfilANIMA.png')}
+                <Text style={styles.onboardingDescription}>
+                  Esta dinámica consiste en actividades agradables, interactivas y en movimiento que podrás realizar a tu propio ritmo cada vez que sientas que lo necesitas, sin límite de días y eligiendo si deseas publicarlas o mantenerlas privadas.
+                </Text>
+              </View>
+
+              <Text style={styles.selectPromptText}>
+                Selecciona uno de los 4 temas principales para comenzar:
+              </Text>
+
+              {/* Centered 2x2 Grid with Square Images & Topic Name */}
+              <View style={styles.topicsTwoByTwoGrid}>
+                {MAIN_SUPPORT_TOPICS.map((topic) => (
+                  <TouchableOpacity
+                    key={topic.key}
                     style={[
-                      styles.animaAvatarStep2,
-                      { borderColor: selectedTopicForIntro.accentColor },
+                      styles.topicGridCard,
+                      { borderColor: topic.borderColor },
                     ]}
-                    resizeMode="cover"
-                  />
-                  <View
+                    activeOpacity={0.88}
+                    onPress={() => setSelectedTopicForIntro(topic)}
+                  >
+                    <View style={styles.topicSquareImageWrap}>
+                      <Image
+                        source={{ uri: topic.squareImageUrl }}
+                        style={styles.topicSquareImage}
+                        resizeMode="cover"
+                      />
+                    </View>
+                    <View style={styles.topicCardFooter}>
+                      <Text style={styles.topicCardName}>{topic.name}</Text>
+                      <Text
+                        style={[
+                          styles.topicCardSubLabel,
+                          { color: topic.accentColor },
+                        ]}
+                      >
+                        Elegir tema →
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {/* Small-print Psychologist Recommendation */}
+              <View style={styles.psychologistSmallPrintBox}>
+                <Ionicons
+                  name="medical-outline"
+                  size={13}
+                  color="#64748B"
+                  style={{ marginTop: 1 }}
+                />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.psychologistSmallPrintText}>
+                    Nota: Estas actividades son un apoyo de bienestar diario. Para una mejor ayuda y atención personalizada, te recomendamos visitar a un psicólogo profesional.
+                  </Text>
+                  {onOpenPsychologists && (
+                    <TouchableOpacity
+                      onPress={onOpenPsychologists}
+                      activeOpacity={0.75}
+                      style={styles.psychologistSmallPrintLinkBtn}
+                    >
+                      <Text style={styles.psychologistSmallPrintLinkText}>
+                        Ver directorio de psicólogos especialistas →
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </View>
+            </View>
+          ) : (
+            /* ----------------- STEP 2: CENTERED ANIMA EXPLANATION FOR THE CHOSEN TOPIC ----------------- */
+            <View style={styles.onboardingStep2CenterContainer}>
+              <View style={styles.step2AnimaHeader}>
+                <Image
+                  source={require('../../../assets/perfilANIMA.png')}
+                  style={[
+                    styles.animaAvatarStep2,
+                    { borderColor: selectedTopicForIntro.accentColor },
+                  ]}
+                  resizeMode="cover"
+                />
+                <View
+                  style={[
+                    styles.step2TopicTag,
+                    {
+                      backgroundColor: selectedTopicForIntro.softBg,
+                      borderColor: selectedTopicForIntro.borderColor,
+                    },
+                  ]}
+                >
+                  <Text style={{ fontSize: 13 }}>
+                    {selectedTopicForIntro.emoji}
+                  </Text>
+                  <Text
                     style={[
-                      styles.step2TopicTag,
-                      {
-                        backgroundColor: selectedTopicForIntro.softBg,
-                        borderColor: selectedTopicForIntro.borderColor,
+                      styles.step2TopicTagText,
+                      { color: selectedTopicForIntro.accentColor },
+                    ]}
+                  >
+                    {selectedTopicForIntro.name} • 100 actividades disponibles
+                  </Text>
+                </View>
+
+                <Text style={styles.step2MainTitle}>
+                  {selectedTopicForIntro.animaStep2Title}
+                </Text>
+                <Text style={styles.step2Subtitle}>
+                  {selectedTopicForIntro.animaStep2Intro}
+                </Text>
+              </View>
+
+              <View style={styles.step2ExplanationBox}>
+                {selectedTopicForIntro.animaStep2Bullets.map((bullet, idx) => (
+                  <View
+                    key={idx}
+                    style={[
+                      styles.step2BulletRow,
+                      idx ===
+                        selectedTopicForIntro.animaStep2Bullets.length - 1 && {
+                        marginBottom: 0,
                       },
                     ]}
                   >
-                    <Text style={{ fontSize: 13 }}>{selectedTopicForIntro.emoji}</Text>
-                    <Text
-                      style={[
-                        styles.step2TopicTagText,
-                        { color: selectedTopicForIntro.accentColor },
-                      ]}
-                    >
-                      {selectedTopicForIntro.name} • 100 actividades disponibles
-                    </Text>
-                  </View>
-
-                  <Text style={styles.step2MainTitle}>
-                    {selectedTopicForIntro.animaStep2Title}
-                  </Text>
-                  <Text style={styles.step2Subtitle}>
-                    {selectedTopicForIntro.animaStep2Intro}
-                  </Text>
-                </View>
-
-                <View style={styles.step2ExplanationBox}>
-                  {selectedTopicForIntro.animaStep2Bullets.map((bullet, idx) => (
                     <View
-                      key={idx}
                       style={[
-                        styles.step2BulletRow,
-                        idx === selectedTopicForIntro.animaStep2Bullets.length - 1 && {
-                          marginBottom: 0,
+                        styles.step2BulletIconCircle,
+                        {
+                          backgroundColor: selectedTopicForIntro.softBg,
+                          borderColor: selectedTopicForIntro.borderColor,
                         },
                       ]}
                     >
-                      <View
-                        style={[
-                          styles.step2BulletIconCircle,
-                          {
-                            backgroundColor: selectedTopicForIntro.softBg,
-                            borderColor: selectedTopicForIntro.borderColor,
-                          },
-                        ]}
-                      >
-                        <Ionicons
-                          name={
-                            idx === 0
-                              ? 'walk-outline'
-                              : idx === 1
-                              ? 'lock-open-outline'
-                              : 'medal-outline'
-                          }
-                          size={15}
-                          color={selectedTopicForIntro.accentColor}
-                        />
-                      </View>
-                      <Text style={styles.step2BulletText}>{bullet}</Text>
+                      <Ionicons
+                        name={
+                          idx === 0
+                            ? 'walk-outline'
+                            : idx === 1
+                            ? 'lock-open-outline'
+                            : 'medal-outline'
+                        }
+                        size={16}
+                        color={selectedTopicForIntro.accentColor}
+                      />
                     </View>
-                  ))}
-                </View>
+                    <Text style={styles.step2BulletText}>{bullet}</Text>
+                  </View>
+                ))}
+              </View>
 
-                <View
-                  style={
-                    isWideModal
-                      ? styles.step2ActionsRowDesktop
-                      : styles.step2ActionsColMobile
-                  }
+              <View
+                style={
+                  isWideScreen
+                    ? styles.step2ActionsRowDesktop
+                    : styles.step2ActionsColMobile
+                }
+              >
+                <TouchableOpacity
+                  style={[
+                    styles.secondaryBackTopicBtn,
+                    isWideScreen && { flex: 1 },
+                  ]}
+                  onPress={() => setSelectedTopicForIntro(null)}
+                  disabled={isEvaluating}
+                  activeOpacity={0.75}
                 >
-                  <TouchableOpacity
-                    style={[
-                      styles.secondaryBackTopicBtn,
-                      isWideModal && { flex: 1 },
-                    ]}
-                    onPress={() => setSelectedTopicForIntro(null)}
-                    disabled={isEvaluating}
-                    activeOpacity={0.75}
-                  >
-                    <Text style={styles.secondaryBackTopicBtnText}>
-                      ← Elegir otro tema
-                    </Text>
-                  </TouchableOpacity>
+                  <Text style={styles.secondaryBackTopicBtnText}>
+                    ← Elegir otro tema
+                  </Text>
+                </TouchableOpacity>
 
-                  <TouchableOpacity
-                    style={[
-                      styles.primaryAcceptTopicBtn,
-                      { backgroundColor: selectedTopicForIntro.accentColor },
-                      isWideModal && { flex: 1.6 },
-                    ]}
-                    onPress={() =>
-                      handleConfirmTopicAndStart(selectedTopicForIntro.key)
-                    }
-                    disabled={isEvaluating}
-                    activeOpacity={0.88}
-                  >
-                    {isEvaluating ? (
-                      <ActivityIndicator size="small" color="#FFFFFF" />
-                    ) : (
-                      <>
-                        <Ionicons
-                          name="sparkles"
-                          size={16}
-                          color="#FFFFFF"
-                          style={{ marginRight: 7 }}
-                        />
-                        <Text style={styles.primaryAcceptTopicBtnText}>
-                          Aceptar y comenzar actividades
-                        </Text>
-                      </>
-                    )}
-                  </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.primaryAcceptTopicBtn,
+                    { backgroundColor: selectedTopicForIntro.accentColor },
+                    isWideScreen && { flex: 1.6 },
+                  ]}
+                  onPress={() =>
+                    handleConfirmTopicAndStart(selectedTopicForIntro.key)
+                  }
+                  disabled={isEvaluating}
+                  activeOpacity={0.88}
+                >
+                  {isEvaluating ? (
+                    <ActivityIndicator size="small" color="#FFFFFF" />
+                  ) : (
+                    <>
+                      <Ionicons
+                        name="sparkles"
+                        size={16}
+                        color="#FFFFFF"
+                        style={{ marginRight: 7 }}
+                      />
+                      <Text style={styles.primaryAcceptTopicBtnText}>
+                        Aceptar y comenzar actividades
+                      </Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              </View>
+
+              {/* Small-print Psychologist Recommendation */}
+              <View style={styles.psychologistSmallPrintBox}>
+                <Ionicons
+                  name="medical-outline"
+                  size={13}
+                  color="#64748B"
+                  style={{ marginTop: 1 }}
+                />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.psychologistSmallPrintText}>
+                    Nota: Estas actividades son un apoyo de bienestar diario. Para una mejor ayuda y atención personalizada, te recomendamos visitar a un psicólogo profesional.
+                  </Text>
+                  {onOpenPsychologists && (
+                    <TouchableOpacity
+                      onPress={onOpenPsychologists}
+                      activeOpacity={0.75}
+                      style={styles.psychologistSmallPrintLinkBtn}
+                    >
+                      <Text style={styles.psychologistSmallPrintLinkText}>
+                        Ver directorio de psicólogos especialistas →
+                      </Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
-              </ScrollView>
-            )}
-          </View>
-        </View>
+              </View>
+            </View>
+          )}
+        </ScrollView>
+      </SafeAreaView>
+    );
+
+    if (isEmbeddedMode) {
+      return fullScreenOnboardingContent;
+    }
+
+    return (
+      <Modal
+        visible={visible}
+        animationType="slide"
+        onRequestClose={onClose}
+      >
+        {fullScreenOnboardingContent}
       </Modal>
     );
   }
@@ -1471,6 +1568,32 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
             </View>
           </View>
 
+          {/* Small-print Psychologist Recommendation */}
+          <View style={styles.psychologistSmallPrintBox}>
+            <Ionicons
+              name="medical-outline"
+              size={13}
+              color="#64748B"
+              style={{ marginTop: 1 }}
+            />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.psychologistSmallPrintText}>
+                Nota: Estas actividades son un apoyo de bienestar diario. Para una mejor ayuda y atención personalizada, te recomendamos visitar a un psicólogo profesional.
+              </Text>
+              {onOpenPsychologists && (
+                <TouchableOpacity
+                  onPress={onOpenPsychologists}
+                  activeOpacity={0.75}
+                  style={styles.psychologistSmallPrintLinkBtn}
+                >
+                  <Text style={styles.psychologistSmallPrintLinkText}>
+                    Ver directorio de psicólogos especialistas →
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+
           <View style={{ height: 24 }} />
         </ScrollView>
       )}
@@ -1547,7 +1670,74 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '800',
   },
-  /* Onboarding Step 1 (2x2 Grid) & Step 2 (ANIMA Explanation) */
+  /* Full-Screen Onboarding Step 1 (2x2 Grid) & Step 2 (ANIMA Explanation) */
+  onboardingFullSafeArea: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  onboardingDesktopSafeArea: {
+    width: '100%',
+    alignSelf: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  onboardingFullTopHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  onboardingBackNavBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 12,
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  onboardingBackNavBtnText: {
+    fontSize: 12.5,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  onboardingFullScrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 28,
+  },
+  onboardingCenterContainer: {
+    width: '100%',
+    maxWidth: 640,
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
+  },
+  onboardingStep2CenterContainer: {
+    width: '100%',
+    maxWidth: 560,
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    paddingHorizontal: 24,
+    paddingVertical: 26,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.06,
+    shadowRadius: 18,
+    elevation: 4,
+  },
   onboardingOverlay: {
     flex: 1,
     backgroundColor: 'rgba(15, 23, 42, 0.55)',
@@ -1572,17 +1762,6 @@ const styles = StyleSheet.create({
     shadowRadius: 22,
     elevation: 10,
   },
-  onboardingCardDesktop: {
-    maxWidth: 620,
-    paddingHorizontal: 28,
-    paddingVertical: 22,
-  },
-  onboardingTopBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
   calmPillBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1590,9 +1769,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#EFF6FF',
     borderWidth: 1,
     borderColor: '#BFDBFE',
-    paddingHorizontal: 11,
-    paddingVertical: 4.5,
-    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 14,
   },
   calmPillBadgeText: {
     fontSize: 10.5,
@@ -1601,68 +1780,97 @@ const styles = StyleSheet.create({
     letterSpacing: 0.4,
   },
   onboardingCloseBtn: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     backgroundColor: '#F8FAFC',
     borderWidth: 1,
     borderColor: '#E2E8F0',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  animaIntroRow: {
-    flexDirection: 'row',
+  animaHeroCenteredSection: {
+    width: '100%',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderRadius: 16,
-    padding: 12,
+    marginBottom: 18,
+    paddingHorizontal: 8,
+  },
+  animaAvatarRing: {
+    width: 86,
+    height: 86,
+    borderRadius: 43,
+    backgroundColor: '#EFF6FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    gap: 12,
-    marginBottom: 14,
+    borderColor: '#BFDBFE',
   },
   animaAvatarOnboarding: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    borderWidth: 2,
+    width: 74,
+    height: 74,
+    borderRadius: 37,
+    borderWidth: 2.5,
     borderColor: '#3B82F6',
   },
+  animaTagMiniPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: '#EFF6FF',
+    paddingHorizontal: 10,
+    paddingVertical: 3.5,
+    borderRadius: 10,
+    marginBottom: 8,
+  },
+  animaTagMiniPillText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#2563EB',
+  },
   onboardingTitle: {
-    fontSize: 15,
+    fontSize: 21,
     fontWeight: '900',
     color: '#0F172A',
-    marginBottom: 3,
+    textAlign: 'center',
+    marginBottom: 6,
+    lineHeight: 27,
   },
   onboardingDescription: {
-    fontSize: 12,
+    fontSize: 13.5,
     color: '#475569',
-    lineHeight: 17.5,
+    textAlign: 'center',
+    lineHeight: 20,
+    maxWidth: 530,
   },
   selectPromptText: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '800',
     color: '#0F172A',
-    marginBottom: 10,
+    textAlign: 'center',
+    marginBottom: 14,
   },
   topicsTwoByTwoGrid: {
+    width: '100%',
+    maxWidth: 480,
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    rowGap: 12,
+    justifyContent: 'center',
+    gap: 14,
+    alignSelf: 'center',
   },
   topicGridCard: {
-    width: '48.2%',
+    width: '47%',
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    borderRadius: 18,
     borderWidth: 1.5,
     borderColor: '#E2E8F0',
     overflow: 'hidden',
     shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    elevation: 3,
   },
   topicSquareImageWrap: {
     width: '100%',
@@ -1674,76 +1882,116 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   topicCardFooter: {
-    paddingVertical: 10,
+    paddingVertical: 11,
     paddingHorizontal: 10,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#FFFFFF',
   },
   topicCardName: {
-    fontSize: 14,
-    fontWeight: '800',
+    fontSize: 15,
+    fontWeight: '900',
     color: '#0F172A',
     textAlign: 'center',
   },
+  topicCardSubLabel: {
+    fontSize: 11,
+    fontWeight: '800',
+    marginTop: 2,
+    textAlign: 'center',
+  },
+  psychologistSmallPrintBox: {
+    width: '100%',
+    maxWidth: 520,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+    gap: 7,
+    marginTop: 18,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    alignSelf: 'center',
+  },
+  psychologistSmallPrintText: {
+    fontSize: 11,
+    color: '#64748B',
+    lineHeight: 16,
+    textAlign: 'left',
+  },
+  psychologistSmallPrintLinkBtn: {
+    marginTop: 3,
+    alignSelf: 'flex-start',
+  },
+  psychologistSmallPrintLinkText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#2563EB',
+    textDecorationLine: 'underline',
+  },
   /* Step 2 Styles */
   step2AnimaHeader: {
+    width: '100%',
     alignItems: 'center',
-    marginBottom: 14,
+    marginBottom: 16,
   },
   animaAvatarStep2: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    width: 82,
+    height: 82,
+    borderRadius: 41,
     borderWidth: 2.5,
-    marginBottom: 10,
+    marginBottom: 12,
   },
   step2TopicTag: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
+    paddingHorizontal: 13,
+    paddingVertical: 5,
     borderRadius: 12,
     borderWidth: 1,
-    marginBottom: 8,
+    marginBottom: 10,
   },
   step2TopicTagText: {
-    fontSize: 11.5,
+    fontSize: 12,
     fontWeight: '800',
   },
   step2MainTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '900',
     color: '#0F172A',
     textAlign: 'center',
   },
   step2Subtitle: {
-    fontSize: 13,
+    fontSize: 13.5,
     color: '#475569',
     textAlign: 'center',
-    lineHeight: 19,
-    marginTop: 5,
+    lineHeight: 20,
+    marginTop: 6,
     paddingHorizontal: 6,
   },
   step2ExplanationBox: {
+    width: '100%',
     backgroundColor: '#F8FAFC',
     borderRadius: 16,
-    padding: 14,
+    padding: 16,
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    marginBottom: 16,
+    marginBottom: 18,
   },
   step2BulletRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 10,
-    marginBottom: 11,
+    gap: 11,
+    marginBottom: 12,
   },
   step2BulletIconCircle: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
@@ -1751,36 +1999,38 @@ const styles = StyleSheet.create({
   },
   step2BulletText: {
     flex: 1,
-    fontSize: 12.5,
+    fontSize: 13,
     color: '#334155',
-    lineHeight: 18,
+    lineHeight: 19,
   },
   step2ActionsRowDesktop: {
+    width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
   },
   step2ActionsColMobile: {
+    width: '100%',
     flexDirection: 'column-reverse',
-    gap: 8,
+    gap: 9,
   },
   primaryAcceptTopicBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 13,
+    paddingVertical: 14,
     paddingHorizontal: 18,
     borderRadius: 14,
   },
   primaryAcceptTopicBtnText: {
     color: '#FFFFFF',
-    fontSize: 13.5,
+    fontSize: 14,
     fontWeight: '800',
   },
   secondaryBackTopicBtn: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 12,
+    paddingVertical: 13,
     paddingHorizontal: 16,
     borderRadius: 14,
     backgroundColor: '#FFFFFF',
@@ -1788,7 +2038,7 @@ const styles = StyleSheet.create({
     borderColor: '#E2E8F0',
   },
   secondaryBackTopicBtnText: {
-    fontSize: 12.5,
+    fontSize: 13,
     fontWeight: '700',
     color: '#64748B',
   },
