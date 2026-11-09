@@ -31,6 +31,7 @@ import {
   postponeStreakDayWithEncouragement,
   publishFullStreakSummaryToFeed,
   swapCurrentActivityTask,
+  loadMoreActivitySteps,
   concludeTopicAndClaimMedal,
   normalizeTestResultWithStreak,
 } from '../../services/psychologyTestService';
@@ -84,6 +85,9 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
   const [isSubmittingDay, setIsSubmittingDay] = useState<boolean>(false);
   const [isSwappingTask, setIsSwappingTask] = useState<boolean>(false);
   const [isConcludingTopic, setIsConcludingTopic] = useState<boolean>(false);
+  const [isLoadingMoreSteps, setIsLoadingMoreSteps] = useState<boolean>(false);
+  const [visibleStepsLimit, setVisibleStepsLimit] = useState<number>(12);
+  const [visibleCompletedLimit, setVisibleCompletedLimit] = useState<number>(12);
   const [postponedEncouragementQuote, setPostponedEncouragementQuote] = useState<string | null>(null);
 
   // Fullscreen image viewer
@@ -235,9 +239,12 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
 
     try {
       setIsSubmittingDay(true);
+      const effectiveDayNum = !isDesktop
+        ? result.streakState.currentDayNumber || selectedDayNum
+        : selectedDayNum;
       const { updatedResult } = await completeStreakDayWithEvidence({
         currentResult: result,
-        dayNumber: selectedDayNum,
+        dayNumber: effectiveDayNum,
         mediaSource: evidencePhotoUri,
         userNote: evidenceNote,
         authorId: user.id,
@@ -250,7 +257,7 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
       setEvidencePhotoUri(null);
       setEvidenceNote('');
       setPostponedEncouragementQuote(null);
-      setSelectedDayNum(updatedResult.streakState?.currentDayNumber || selectedDayNum + 1);
+      setSelectedDayNum(updatedResult.streakState?.currentDayNumber || effectiveDayNum + 1);
       setCelebrationQuote(getRandomStreakMotivationalQuote());
 
       if (onTestCompleted) {
@@ -268,13 +275,36 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
     setIsSwappingTask(true);
     try {
       const activeUid = user?.id || userId;
-      const updated = await swapCurrentActivityTask(result, selectedDayNum, activeUid);
+      const effectiveDayNum = !isDesktop
+        ? result.streakState.currentDayNumber || selectedDayNum
+        : selectedDayNum;
+      const updated = await swapCurrentActivityTask(result, effectiveDayNum, activeUid);
       setResult(updated);
       if (onTestCompleted) {
         onTestCompleted(updated);
       }
     } finally {
       setIsSwappingTask(false);
+    }
+  };
+
+  const handleLoadMoreSteps = async () => {
+    if (!result || !result.streakState || isLoadingMoreSteps) return;
+    const nextLimit = visibleStepsLimit + 12;
+    setVisibleStepsLimit(nextLimit);
+    if (result.streakState.days.length < nextLimit && result.streakState.days.length < 100) {
+      setIsLoadingMoreSteps(true);
+      try {
+        const activeUid = user?.id || userId;
+        const countNeeded = Math.min(12, 100 - result.streakState.days.length);
+        const updated = await loadMoreActivitySteps(result, countNeeded, activeUid);
+        setResult(updated);
+        if (onTestCompleted) {
+          onTestCompleted(updated);
+        }
+      } finally {
+        setIsLoadingMoreSteps(false);
+      }
     }
   };
 
@@ -342,8 +372,12 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
     OFFICIAL_STREAK_BADGES.find((b) => b.id === activeTopic.badgeId) ||
     OFFICIAL_STREAK_BADGES[0];
 
+  const effectiveDayNum = !isDesktop
+    ? streak?.currentDayNumber || selectedDayNum
+    : selectedDayNum;
+
   const activeDayObj =
-    streak?.days.find((d) => d.dayNumber === selectedDayNum) || streak?.days[0];
+    streak?.days.find((d) => d.dayNumber === effectiveDayNum) || streak?.days[0];
 
   const completedActivitiesList = (streak?.days || []).filter(
     (d) => d.status === 'completed'
@@ -798,53 +832,72 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
         </Modal>
       )}
 
-      {/* Top Clean White Header */}
-      <View style={styles.topHeader}>
-        <TouchableOpacity onPress={onClose} style={styles.closeBtn} activeOpacity={0.7}>
-          <Ionicons name="close" size={20} color="#0F172A" />
-        </TouchableOpacity>
+      {/* Top Clean White Header (Desktop Only — Hidden on Mobile as requested) */}
+      {isDesktop && (
+        <View style={styles.topHeader}>
+          <TouchableOpacity onPress={onClose} style={styles.closeBtn} activeOpacity={0.7}>
+            <Ionicons name="close" size={20} color="#0F172A" />
+          </TouchableOpacity>
 
-        <View style={styles.headerTitleContainer}>
-          <Text style={styles.headerMainTitle}>
-            {streak?.status === 'completed'
-              ? `¡Tema Superado: ${activeTopic.name}!`
-              : 'Actividades de Mejora'}
-          </Text>
-          <Text style={styles.headerSubTitle}>
-            Tema actual: {activeTopic.name} • A tu propio ritmo
-          </Text>
-        </View>
+          <View style={styles.headerTitleContainer}>
+            <Text style={styles.headerMainTitle}>
+              {streak?.status === 'completed'
+                ? `Tema Superado: ${activeTopic.name}`
+                : 'Actividades de Mejora'}
+            </Text>
+            <Text style={styles.headerSubTitle}>
+              Tema actual: {activeTopic.name} • A tu propio ritmo
+            </Text>
+          </View>
 
-        <TouchableOpacity
-          onPress={() => setIsResetConfirmOpen(true)}
-          style={[
-            styles.resetTopicHeaderBtn,
-            { borderColor: activeTopic.accentColor },
-          ]}
-          activeOpacity={0.7}
-          accessibilityLabel="Cambiar tema"
-        >
-          <Ionicons name="swap-horizontal-outline" size={13} color={activeTopic.accentColor} />
-          <Text
+          <TouchableOpacity
+            onPress={() => setIsResetConfirmOpen(true)}
             style={[
-              styles.resetTopicHeaderBtnText,
-              { color: activeTopic.accentColor },
+              styles.resetTopicHeaderBtn,
+              { borderColor: activeTopic.accentColor },
             ]}
+            activeOpacity={0.7}
+            accessibilityLabel="Cambiar tema"
           >
-            Cambiar tema
-          </Text>
-        </TouchableOpacity>
-      </View>
+            <Ionicons name="swap-horizontal-outline" size={13} color={activeTopic.accentColor} />
+            <Text
+              style={[
+                styles.resetTopicHeaderBtnText,
+                { color: activeTopic.accentColor },
+              ]}
+            >
+              Cambiar tema
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {streak && streak.status === 'completed' ? (
         /* =================== COMPLETED MEDAL CELEBRATION VIEW =================== */
         <ScrollView
           style={styles.scrollBody}
-          contentContainerStyle={styles.resultScrollContent}
+          contentContainerStyle={[
+            styles.resultScrollContent,
+            isDesktop && styles.resultScrollContentDesktop,
+          ]}
           showsVerticalScrollIndicator={Platform.OS === 'web'}
         >
           <View style={styles.celebrationHeroCard}>
-            <Text style={styles.unlockedEmojiBig}>{targetBadge.emoji}</Text>
+            <View
+              style={[
+                styles.medalPreviewCircle,
+                {
+                  width: 64,
+                  height: 64,
+                  borderRadius: 32,
+                  marginBottom: 12,
+                  backgroundColor: activeTopic.softBg,
+                  borderColor: activeTopic.borderColor,
+                },
+              ]}
+            >
+              <Ionicons name="medal-outline" size={30} color={activeTopic.accentColor} />
+            </View>
             <View
               style={[
                 styles.levelPillBadge,
@@ -946,7 +999,7 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
                   />
                   <Text style={styles.primaryActionBtnText}>
                     {streak.summaryPublished
-                      ? 'Logro publicado en Principal ✓'
+                      ? 'Logro publicado en Principal'
                       : 'Publicar mi Medalla en Principal'}
                   </Text>
                 </>
@@ -959,7 +1012,7 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
               activeOpacity={0.8}
             >
               <Ionicons
-                name="sparkles-outline"
+                name="swap-horizontal-outline"
                 size={16}
                 color="#0F172A"
                 style={{ marginRight: 8 }}
@@ -974,10 +1027,13 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
         /* =================== ACTIVE TOPIC ACTIVITIES DASHBOARD =================== */
         <ScrollView
           style={styles.scrollBody}
-          contentContainerStyle={styles.resultScrollContent}
+          contentContainerStyle={[
+            styles.resultScrollContent,
+            isDesktop && styles.resultScrollContentDesktop,
+          ]}
           showsVerticalScrollIndicator={Platform.OS === 'web'}
         >
-          {/* 1. TOPIC & ANIMA SUPPORT HEADER CARD (NO ORANGE, NO FIRE, NO 1/7 COUNTER) */}
+          {/* 1. TOPIC & ANIMA SUPPORT HEADER CARD (NO EMOJIS, CLEAN & FULL WIDTH) */}
           <View style={styles.cleanHeaderCard}>
             <View style={styles.topicBannerRow}>
               <View
@@ -989,30 +1045,72 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
                   },
                 ]}
               >
-                <Text style={{ fontSize: 14 }}>{activeTopic.emoji}</Text>
+                <View
+                  style={[
+                    styles.topicDotIndicator,
+                    { backgroundColor: activeTopic.accentColor },
+                  ]}
+                />
                 <Text
                   style={[
                     styles.topicPillHeaderText,
                     { color: activeTopic.accentColor },
                   ]}
                 >
-                  Trabajando en: {activeTopic.name}
+                  Trabajando con {activeTopic.name}
                 </Text>
               </View>
 
-              <View style={styles.completedCountSoftPill}>
-                <Ionicons
-                  name="checkmark-circle-outline"
-                  size={13}
-                  color="#475569"
-                />
-                <Text style={styles.completedCountSoftPillText}>
-                  {completedActivitiesList.length}{' '}
-                  {completedActivitiesList.length === 1
-                    ? 'actividad realizada'
-                    : 'actividades realizadas'}
-                </Text>
-              </View>
+              {isDesktop ? (
+                <View style={styles.completedCountSoftPill}>
+                  <Ionicons
+                    name="checkmark-circle-outline"
+                    size={13}
+                    color="#475569"
+                  />
+                  <Text style={styles.completedCountSoftPillText}>
+                    {completedActivitiesList.length}{' '}
+                    {completedActivitiesList.length === 1
+                      ? 'actividad realizada'
+                      : 'actividades realizadas'}
+                  </Text>
+                </View>
+              ) : (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <TouchableOpacity
+                    onPress={() => setIsResetConfirmOpen(true)}
+                    style={[
+                      styles.resetTopicHeaderBtn,
+                      { borderColor: activeTopic.borderColor, backgroundColor: '#F8FAFC' },
+                    ]}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons
+                      name="swap-horizontal-outline"
+                      size={12}
+                      color={activeTopic.accentColor}
+                    />
+                    <Text
+                      style={[
+                        styles.resetTopicHeaderBtnText,
+                        { color: activeTopic.accentColor },
+                      ]}
+                    >
+                      Cambiar tema
+                    </Text>
+                  </TouchableOpacity>
+
+                  {!isEmbeddedMode && (
+                    <TouchableOpacity
+                      onPress={onClose}
+                      style={styles.mobileInlineCloseBtn}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name="close" size={17} color="#475569" />
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )}
             </View>
 
             {/* ANIMA Quote Box */}
@@ -1043,68 +1141,121 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
               </TouchableOpacity>
             </View>
 
-            {/* Horizontal Strip of Unlimited Activity Steps */}
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.activitiesStepsStrip}
-            >
-              {streak?.days.map((d) => {
-                const isSelected = d.dayNumber === selectedDayNum;
-                const isDone = d.status === 'completed';
-                const isCurrent = d.dayNumber === streak.currentDayNumber;
-                return (
+            {/* Activity Steps:
+                - On Mobile: ONLY shows the 1 current day to fill ("SOL ME MOSTRARA UN DIA OSEA EL DIA QUE SEA DE LLENAR ACTIVIDAD, LOS DEMAS NO")
+                - On Desktop: Shows up to 12 activities at a time + "Ver más" button */}
+            {!isDesktop ? (
+              <View style={styles.mobileSingleDayRow}>
+                <View
+                  style={[
+                    styles.mobileSingleDayBadge,
+                    {
+                      backgroundColor: activeTopic.accentColor,
+                      borderColor: activeTopic.accentColor,
+                    },
+                  ]}
+                >
+                  <Ionicons name="calendar-outline" size={13} color="#FFFFFF" />
+                  <Text style={styles.mobileSingleDayBadgeText}>
+                    Día {streak?.currentDayNumber || selectedDayNum} • Actividad por realizar
+                  </Text>
+                </View>
+              </View>
+            ) : (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.activitiesStepsStrip}
+              >
+                {(streak?.days || []).slice(0, visibleStepsLimit).map((d) => {
+                  const isSelected = d.dayNumber === selectedDayNum;
+                  const isDone = d.status === 'completed';
+                  const isCurrent = d.dayNumber === streak?.currentDayNumber;
+                  return (
+                    <TouchableOpacity
+                      key={d.dayNumber}
+                      style={[
+                        styles.stepChip,
+                        isDone && {
+                          borderColor: activeTopic.borderColor,
+                          backgroundColor: activeTopic.softBg,
+                        },
+                        isCurrent && {
+                          borderColor: activeTopic.accentColor,
+                        },
+                        isSelected && {
+                          backgroundColor: activeTopic.accentColor,
+                          borderColor: activeTopic.accentColor,
+                        },
+                      ]}
+                      onPress={() => {
+                        setSelectedDayNum(d.dayNumber);
+                        setPostponedEncouragementQuote(null);
+                      }}
+                      activeOpacity={0.8}
+                    >
+                      <Text
+                        style={[
+                          styles.stepChipText,
+                          isDone && { color: activeTopic.accentColor },
+                          isSelected && { color: '#FFFFFF', fontWeight: '800' },
+                        ]}
+                      >
+                        Act. {d.dayNumber}
+                      </Text>
+                      {isDone && (
+                        <Ionicons
+                          name={
+                            d.visibility === 'private'
+                              ? 'lock-closed'
+                              : 'checkmark-circle'
+                          }
+                          size={11}
+                          color={isSelected ? '#FFFFFF' : activeTopic.accentColor}
+                        />
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
+
+                {visibleStepsLimit < 100 && (
                   <TouchableOpacity
-                    key={d.dayNumber}
                     style={[
-                      styles.stepChip,
-                      isDone && {
-                        borderColor: activeTopic.borderColor,
-                        backgroundColor: activeTopic.softBg,
-                      },
-                      isCurrent && {
-                        borderColor: activeTopic.accentColor,
-                      },
-                      isSelected && {
-                        backgroundColor: activeTopic.accentColor,
-                        borderColor: activeTopic.accentColor,
-                      },
+                      styles.loadMoreStepsChip,
+                      { borderColor: activeTopic.accentColor },
                     ]}
-                    onPress={() => {
-                      setSelectedDayNum(d.dayNumber);
-                      setPostponedEncouragementQuote(null);
-                    }}
+                    onPress={handleLoadMoreSteps}
+                    disabled={isLoadingMoreSteps}
                     activeOpacity={0.8}
                   >
-                    <Text
-                      style={[
-                        styles.stepChipText,
-                        isDone && { color: activeTopic.accentColor },
-                        isSelected && { color: '#FFFFFF', fontWeight: '800' },
-                      ]}
-                    >
-                      Act. {d.dayNumber}
-                    </Text>
-                    {isDone && (
-                      <Ionicons
-                        name={
-                          d.visibility === 'private'
-                            ? 'lock-closed'
-                            : 'checkmark-circle'
-                        }
-                        size={11}
-                        color={isSelected ? '#FFFFFF' : activeTopic.accentColor}
-                      />
+                    {isLoadingMoreSteps ? (
+                      <ActivityIndicator size="small" color={activeTopic.accentColor} />
+                    ) : (
+                      <>
+                        <Ionicons
+                          name="add-circle-outline"
+                          size={13}
+                          color={activeTopic.accentColor}
+                        />
+                        <Text
+                          style={[
+                            styles.loadMoreStepsChipText,
+                            { color: activeTopic.accentColor },
+                          ]}
+                        >
+                          Ver más
+                        </Text>
+                      </>
                     )}
                   </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
+                )}
+              </ScrollView>
+            )}
           </View>
 
-          {/* 2. CURRENT INTERACTIVE ACTIVITY CARD */}
+          {/* 2. CURRENT ACTIVITY & EVIDENCE CARD (NO EMOJIS, FULL WIDTH, SIMPLE SWAP BUTTON, STACKED VISIBILITY BUTTONS) */}
           {activeDayObj && (
-            <View style={[styles.cleanWhiteCard, { padding: 16 }]}>
+            <View style={styles.cleanWhiteCard}>
               <View style={styles.activityCardTopRow}>
                 <View
                   style={[
@@ -1121,7 +1272,7 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
                       { color: activeTopic.accentColor },
                     ]}
                   >
-                    {activeDayObj.dayName} • {activeTopic.name}
+                    Actividad de hoy • Día {activeDayObj.dayNumber}
                   </Text>
                 </View>
 
@@ -1133,8 +1284,8 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
                     activeOpacity={0.75}
                   >
                     <Ionicons
-                      name="shuffle-outline"
-                      size={14}
+                      name="refresh-outline"
+                      size={13}
                       color={activeTopic.accentColor}
                     />
                     <Text
@@ -1143,7 +1294,7 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
                         { color: activeTopic.accentColor },
                       ]}
                     >
-                      Otra actividad (100 disponibles)
+                      Cambiar actividad
                     </Text>
                   </TouchableOpacity>
                 ) : (
@@ -1166,15 +1317,10 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
                 )}
               </View>
 
-              {/* Activity Title & Description */}
-              <View style={styles.activityTitleRow}>
-                <Text style={styles.activityEmojiLarge}>
-                  {activeDayObj.task.emoji}
-                </Text>
-                <Text style={styles.activityMainTitle}>
-                  {activeDayObj.task.title}
-                </Text>
-              </View>
+              {/* Activity Title & Description (NO EMOJIS) */}
+              <Text style={styles.activityMainTitleClean}>
+                {activeDayObj.task.title}
+              </Text>
 
               <View style={styles.taskDescriptionBox}>
                 <Text style={styles.taskDescriptionText}>
@@ -1228,15 +1374,38 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
                       "{activeDayObj.evidenceNote}"
                     </Text>
                   ) : null}
+
+                  {!isDesktop &&
+                    streak?.currentDayNumber &&
+                    selectedDayNum !== streak.currentDayNumber && (
+                      <TouchableOpacity
+                        style={[
+                          styles.secondaryOutlineBtn,
+                          { marginTop: 10, paddingVertical: 10 },
+                        ]}
+                        onPress={() => setSelectedDayNum(streak.currentDayNumber)}
+                        activeOpacity={0.8}
+                      >
+                        <Text style={styles.secondaryOutlineBtnText}>
+                          Volver a mi actividad de hoy (Día {streak.currentDayNumber})
+                        </Text>
+                      </TouchableOpacity>
+                    )}
                 </View>
               ) : (
                 <View style={styles.publishSectionWrap}>
-                  <Text style={styles.registerSectionTitle}>
-                    Registrar mi actividad
-                  </Text>
-
-                  {/* Photo + Comment Row */}
+                  {/* Comment + Photo Upload Area */}
                   <View style={styles.photoAndCommentRow}>
+                    <TextInput
+                      style={styles.commentCompactInput}
+                      placeholder="Escribe tu comentario sobre esta actividad..."
+                      placeholderTextColor="#94A3B8"
+                      value={evidenceNote}
+                      onChangeText={setEvidenceNote}
+                      multiline
+                      maxLength={280}
+                    />
+
                     <TouchableOpacity
                       style={styles.photoPickerCompactBox}
                       onPress={handlePickEvidencePhoto}
@@ -1252,7 +1421,7 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
                         <>
                           <Ionicons
                             name="camera-outline"
-                            size={22}
+                            size={20}
                             color={activeTopic.accentColor}
                           />
                           <Text style={styles.photoPickerCompactText}>
@@ -1261,26 +1430,13 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
                         </>
                       )}
                     </TouchableOpacity>
-
-                    <TextInput
-                      style={styles.commentCompactInput}
-                      placeholder="Escribe cómo te sentiste al realizar esta actividad... (opcional)"
-                      placeholderTextColor="#94A3B8"
-                      value={evidenceNote}
-                      onChangeText={setEvidenceNote}
-                      multiline
-                      maxLength={280}
-                    />
                   </View>
 
-                  {/* PUBLIC VS PRIVATE SELECTOR */}
-                  <Text style={styles.visibilitySectionLabel}>
-                    ¿Cómo deseas guardar tu actividad?
-                  </Text>
-                  <View style={styles.visibilityToggleRow}>
+                  {/* PUBLIC VS PRIVATE SELECTOR: ONE BUTTON ABOVE, THE OTHER BELOW */}
+                  <View style={styles.visibilityStackedCol}>
                     <TouchableOpacity
                       style={[
-                        styles.visibilityOptionBtn,
+                        styles.visibilityOptionBtnStacked,
                         evidenceVisibility === 'public' && {
                           backgroundColor: activeTopic.softBg,
                           borderColor: activeTopic.accentColor,
@@ -1289,31 +1445,46 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
                       onPress={() => setEvidenceVisibility('public')}
                       activeOpacity={0.8}
                     >
+                      <View style={styles.visibilityOptionLeftRow}>
+                        <Ionicons
+                          name="earth-outline"
+                          size={16}
+                          color={
+                            evidenceVisibility === 'public'
+                              ? activeTopic.accentColor
+                              : '#64748B'
+                          }
+                        />
+                        <Text
+                          style={[
+                            styles.visibilityOptionText,
+                            evidenceVisibility === 'public' && {
+                              color: activeTopic.accentColor,
+                              fontWeight: '800',
+                            },
+                          ]}
+                        >
+                          Publicar en comunidad
+                        </Text>
+                      </View>
                       <Ionicons
-                        name="earth-outline"
-                        size={15}
+                        name={
+                          evidenceVisibility === 'public'
+                            ? 'radio-button-on'
+                            : 'radio-button-off'
+                        }
+                        size={17}
                         color={
                           evidenceVisibility === 'public'
                             ? activeTopic.accentColor
-                            : '#64748B'
+                            : '#94A3B8'
                         }
                       />
-                      <Text
-                        style={[
-                          styles.visibilityOptionText,
-                          evidenceVisibility === 'public' && {
-                            color: activeTopic.accentColor,
-                            fontWeight: '800',
-                          },
-                        ]}
-                      >
-                        Publicar en comunidad
-                      </Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
                       style={[
-                        styles.visibilityOptionBtn,
+                        styles.visibilityOptionBtnStacked,
                         evidenceVisibility === 'private' && {
                           backgroundColor: activeTopic.softBg,
                           borderColor: activeTopic.accentColor,
@@ -1322,26 +1493,41 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
                       onPress={() => setEvidenceVisibility('private')}
                       activeOpacity={0.8}
                     >
+                      <View style={styles.visibilityOptionLeftRow}>
+                        <Ionicons
+                          name="lock-closed-outline"
+                          size={16}
+                          color={
+                            evidenceVisibility === 'private'
+                              ? activeTopic.accentColor
+                              : '#64748B'
+                          }
+                        />
+                        <Text
+                          style={[
+                            styles.visibilityOptionText,
+                            evidenceVisibility === 'private' && {
+                              color: activeTopic.accentColor,
+                              fontWeight: '800',
+                            },
+                          ]}
+                        >
+                          Mantener privada
+                        </Text>
+                      </View>
                       <Ionicons
-                        name="lock-closed-outline"
-                        size={15}
+                        name={
+                          evidenceVisibility === 'private'
+                            ? 'radio-button-on'
+                            : 'radio-button-off'
+                        }
+                        size={17}
                         color={
                           evidenceVisibility === 'private'
                             ? activeTopic.accentColor
-                            : '#64748B'
+                            : '#94A3B8'
                         }
                       />
-                      <Text
-                        style={[
-                          styles.visibilityOptionText,
-                          evidenceVisibility === 'private' && {
-                            color: activeTopic.accentColor,
-                            fontWeight: '800',
-                          },
-                        ]}
-                      >
-                        Mantener privada
-                      </Text>
                     </TouchableOpacity>
                   </View>
 
@@ -1360,11 +1546,7 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
                     ) : (
                       <>
                         <Ionicons
-                          name={
-                            evidenceVisibility === 'private'
-                              ? 'lock-closed'
-                              : 'checkmark-circle'
-                          }
+                          name="checkmark-circle-outline"
                           size={17}
                           color="#FFFFFF"
                           style={{ marginRight: 7 }}
@@ -1384,14 +1566,8 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
                     onPress={handlePostponeDay}
                     activeOpacity={0.75}
                   >
-                    <Ionicons
-                      name="heart-outline"
-                      size={14}
-                      color={activeTopic.accentColor}
-                      style={{ marginRight: 6 }}
-                    />
                     <Text style={styles.postponeCleanBtnText}>
-                      Hoy prefiero descansar • Hacerlo en otro momento y recibir ánimo
+                      Hacerlo en otro momento
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -1399,7 +1575,109 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
             </View>
           )}
 
-          {/* 3. USER DECIDES WHEN TO STOP & CLAIM MEDAL */}
+          {/* 3. MIS ACTIVIDADES REALIZADAS (SHOWS UP TO 12 AT A TIME + HORIZONTAL SCROLL + "VER MÁS") */}
+          <View style={[styles.cleanWhiteCard, { padding: 14 }]}>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={{ fontSize: 13.5, fontWeight: '800', color: '#0F172A' }}>
+                Mis Actividades Realizadas
+              </Text>
+              <View style={styles.countGrayBadge}>
+                <Text style={styles.countGrayBadgeText}>
+                  {completedActivitiesList.length} registradas
+                </Text>
+              </View>
+            </View>
+
+            {completedActivitiesList.length === 0 ? (
+              <Text style={styles.emptyCompletedHintText}>
+                Aquí aparecerán tus actividades conforme las vayas registrando.
+              </Text>
+            ) : (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ gap: 10, alignItems: 'center' }}
+              >
+                {completedActivitiesList
+                  .slice(0, visibleCompletedLimit)
+                  .map((d) => (
+                    <TouchableOpacity
+                      key={d.dayNumber}
+                      style={[
+                        styles.completedThumbCard,
+                        d.dayNumber === selectedDayNum && {
+                          borderColor: activeTopic.accentColor,
+                          borderWidth: 2,
+                        },
+                      ]}
+                      activeOpacity={0.88}
+                      onPress={() => {
+                        if (isDesktop) {
+                          setSelectedDayNum(d.dayNumber);
+                        }
+                        if (d.evidenceImageUrl) {
+                          handleOpenGalleryPhoto(d.evidenceImageUrl);
+                        }
+                      }}
+                    >
+                      {d.evidenceImageUrl ? (
+                        <Image
+                          source={{ uri: d.evidenceImageUrl }}
+                          style={{ width: '100%', height: '100%' }}
+                          resizeMode="cover"
+                        />
+                      ) : null}
+                      <View style={styles.completedThumbBadge}>
+                        <Ionicons
+                          name={
+                            d.visibility === 'private'
+                              ? 'lock-closed'
+                              : 'earth'
+                          }
+                          size={9}
+                          color="#FFFFFF"
+                        />
+                        <Text style={styles.completedThumbBadgeText}>
+                          Act. {d.dayNumber}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  ))}
+
+                {completedActivitiesList.length > visibleCompletedLimit && (
+                  <TouchableOpacity
+                    style={[
+                      styles.loadMoreCompletedThumbBtn,
+                      {
+                        borderColor: activeTopic.accentColor,
+                        backgroundColor: activeTopic.softBg,
+                      },
+                    ]}
+                    onPress={() =>
+                      setVisibleCompletedLimit((prev) => prev + 12)
+                    }
+                    activeOpacity={0.8}
+                  >
+                    <Ionicons
+                      name="add-circle-outline"
+                      size={18}
+                      color={activeTopic.accentColor}
+                    />
+                    <Text
+                      style={[
+                        styles.loadMoreCompletedThumbText,
+                        { color: activeTopic.accentColor },
+                      ]}
+                    >
+                      Ver más
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </ScrollView>
+            )}
+          </View>
+
+          {/* 4. USER DECIDES WHEN TO STOP & CLAIM MEDAL (MOVED BELOW MIS ACTIVIDADES REALIZADAS, NO EMOJIS) */}
           <View
             style={[
               styles.cleanWhiteCard,
@@ -1409,30 +1687,17 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
               },
             ]}
           >
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 10 }}>
-              <View
-                style={[
-                  styles.medalPreviewCircle,
-                  {
-                    backgroundColor: activeTopic.softBg,
-                    borderColor: activeTopic.borderColor,
-                  },
-                ]}
-              >
-                <Text style={{ fontSize: 24 }}>{targetBadge.emoji}</Text>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.concludeCardTitle}>
-                  Tú decides hasta dónde parar
+            <View style={{ marginBottom: 12 }}>
+              <Text style={styles.concludeCardTitle}>
+                Tú decides hasta dónde parar
+              </Text>
+              <Text style={styles.concludeCardSub}>
+                Cuando sientas que estas actividades ya te ayudaron a superar o sentirte mejor respecto a {activeTopic.name}, concluye el tema para recibir tu{' '}
+                <Text style={{ fontWeight: '800', color: activeTopic.accentColor }}>
+                  {targetBadge.name}
                 </Text>
-                <Text style={styles.concludeCardSub}>
-                  Cuando sientas que estas actividades ya te ayudaron a superar o sentirte mejor respecto a {activeTopic.name}, concluye el tema para recibir tu{' '}
-                  <Text style={{ fontWeight: '800', color: activeTopic.accentColor }}>
-                    {targetBadge.name}
-                  </Text>
-                  .
-                </Text>
-              </View>
+                .
+              </Text>
             </View>
 
             <TouchableOpacity
@@ -1453,7 +1718,7 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
                 <>
                   <Ionicons
                     name="medal-outline"
-                    size={17}
+                    size={16}
                     color={activeTopic.accentColor}
                     style={{ marginRight: 7 }}
                   />
@@ -1470,63 +1735,7 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
             </TouchableOpacity>
           </View>
 
-          {/* 4. GALLERY OF COMPLETED ACTIVITIES */}
-          {completedActivitiesList.length > 0 && (
-            <View style={[styles.cleanWhiteCard, { padding: 14 }]}>
-              <View style={styles.sectionHeaderRow}>
-                <Text style={{ fontSize: 13.5, fontWeight: '800', color: '#0F172A' }}>
-                  Mis Actividades Realizadas
-                </Text>
-                <View style={styles.countGrayBadge}>
-                  <Text style={styles.countGrayBadgeText}>
-                    {completedActivitiesList.length} registradas
-                  </Text>
-                </View>
-              </View>
-
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ gap: 8 }}
-              >
-                {completedActivitiesList.map((d) => (
-                  <TouchableOpacity
-                    key={d.dayNumber}
-                    style={[
-                      styles.completedThumbCard,
-                      d.dayNumber === selectedDayNum && {
-                        borderColor: activeTopic.accentColor,
-                        borderWidth: 2,
-                      },
-                    ]}
-                    activeOpacity={0.88}
-                    onPress={() => {
-                      setSelectedDayNum(d.dayNumber);
-                      if (d.evidenceImageUrl) {
-                        handleOpenGalleryPhoto(d.evidenceImageUrl);
-                      }
-                    }}
-                  >
-                    {d.evidenceImageUrl ? (
-                      <Image
-                        source={{ uri: d.evidenceImageUrl }}
-                        style={{ width: '100%', height: '100%' }}
-                        resizeMode="cover"
-                      />
-                    ) : null}
-                    <View style={styles.completedThumbBadge}>
-                      <Text style={styles.completedThumbBadgeText}>
-                        Act. {d.dayNumber}{' '}
-                        {d.visibility === 'private' ? '🔒' : '🌍'}
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
-          )}
-
-          {/* 5. MEDALS FOR THE 4 TOPICS */}
+          {/* 5. MEDALS FOR THE 4 TOPICS (BOTTOM, CLEAN & NO EMOJIS) */}
           <View style={[styles.cleanWhiteCard, { paddingVertical: 12, paddingHorizontal: 14 }]}>
             <View style={styles.sectionHeaderRow}>
               <Text style={{ fontSize: 12.5, fontWeight: '800', color: '#475569' }}>
@@ -1537,7 +1746,7 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
               </Text>
             </View>
 
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               {OFFICIAL_STREAK_BADGES.map((b) => {
                 const isUnlocked = Boolean(result.unlockedBadges?.includes(b.id));
                 return (
@@ -1547,19 +1756,37 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
                       flex: 1,
                       backgroundColor: isUnlocked ? b.softBg : '#F8FAFC',
                       borderRadius: 12,
-                      paddingVertical: isUnlocked ? 10 : 8,
-                      paddingHorizontal: 4,
+                      paddingVertical: 10,
+                      paddingHorizontal: 6,
                       alignItems: 'center',
                       justifyContent: 'center',
                       borderWidth: isUnlocked ? 1.5 : 1,
                       borderColor: isUnlocked ? b.color : '#E2E8F0',
-                      opacity: isUnlocked ? 1 : 0.55,
+                      opacity: isUnlocked ? 1 : 0.6,
                     }}
                   >
-                    <Text style={{ fontSize: 20, marginBottom: 3 }}>{b.emoji}</Text>
+                    <View
+                      style={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: 14,
+                        backgroundColor: isUnlocked ? '#FFFFFF' : '#F1F5F9',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        marginBottom: 5,
+                        borderWidth: 1,
+                        borderColor: isUnlocked ? b.borderColor : '#E2E8F0',
+                      }}
+                    >
+                      <Ionicons
+                        name={isUnlocked ? 'medal' : 'medal-outline'}
+                        size={15}
+                        color={isUnlocked ? b.color : '#94A3B8'}
+                      />
+                    </View>
                     <Text
                       style={{
-                        fontSize: 9.2,
+                        fontSize: 9.5,
                         fontWeight: '800',
                         color: isUnlocked ? b.color : '#64748B',
                         textAlign: 'center',
@@ -1623,9 +1850,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FAFC',
   },
   desktopSafeArea: {
-    maxWidth: 760,
+    flex: 1,
     width: '100%',
-    alignSelf: 'center',
     backgroundColor: '#F8FAFC',
   },
   topHeader: {
@@ -2064,8 +2290,15 @@ const styles = StyleSheet.create({
   },
   resultScrollContent: {
     padding: 12,
+    width: '100%',
+  },
+  resultScrollContentDesktop: {
+    paddingHorizontal: 22,
+    paddingVertical: 18,
+    width: '100%',
   },
   cleanHeaderCard: {
+    width: '100%',
     backgroundColor: '#FFFFFF',
     borderRadius: 18,
     padding: 14,
@@ -2084,14 +2317,45 @@ const styles = StyleSheet.create({
   topicPillHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 7,
     paddingHorizontal: 11,
     paddingVertical: 5,
     borderRadius: 12,
     borderWidth: 1,
   },
+  topicDotIndicator: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
   topicPillHeaderText: {
     fontSize: 12,
+    fontWeight: '800',
+  },
+  mobileInlineCloseBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  mobileSingleDayRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  mobileSingleDayBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6.5,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  mobileSingleDayBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 11.5,
     fontWeight: '800',
   },
   completedCountSoftPill: {
@@ -2148,6 +2412,7 @@ const styles = StyleSheet.create({
   activitiesStepsStrip: {
     gap: 6,
     paddingVertical: 2,
+    alignItems: 'center',
   },
   stepChip: {
     flexDirection: 'row',
@@ -2165,7 +2430,22 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#64748B',
   },
+  loadMoreStepsChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 10,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+  },
+  loadMoreStepsChipText: {
+    fontSize: 11.5,
+    fontWeight: '800',
+  },
   cleanWhiteCard: {
+    width: '100%',
     backgroundColor: '#FFFFFF',
     borderRadius: 18,
     padding: 16,
@@ -2196,15 +2476,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 5,
     backgroundColor: '#F8FAFC',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingHorizontal: 11,
+    paddingVertical: 6,
     borderRadius: 9,
     borderWidth: 1,
     borderColor: '#E2E8F0',
   },
   swapActivityBtnText: {
-    fontSize: 11,
-    fontWeight: '700',
+    fontSize: 11.5,
+    fontWeight: '800',
   },
   completedGrayTag: {
     flexDirection: 'row',
@@ -2222,21 +2502,12 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#475569',
   },
-  activityTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginBottom: 10,
-  },
-  activityEmojiLarge: {
-    fontSize: 28,
-  },
-  activityMainTitle: {
-    flex: 1,
+  activityMainTitleClean: {
     fontSize: 16,
     fontWeight: '900',
     color: '#0F172A',
     lineHeight: 22,
+    marginBottom: 8,
   },
   taskDescriptionBox: {
     backgroundColor: '#F8FAFC',
@@ -2285,20 +2556,14 @@ const styles = StyleSheet.create({
     borderTopColor: '#F1F5F9',
     paddingTop: 12,
   },
-  registerSectionTitle: {
-    fontSize: 12.5,
-    fontWeight: '800',
-    color: '#0F172A',
-    marginBottom: 8,
-  },
   photoAndCommentRow: {
     flexDirection: 'row',
     gap: 10,
     marginBottom: 12,
   },
   photoPickerCompactBox: {
-    width: 92,
-    height: 76,
+    width: 96,
+    height: 78,
     borderRadius: 12,
     borderWidth: 1.5,
     borderColor: '#CBD5E1',
@@ -2324,43 +2589,41 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     fontSize: 12.5,
     color: '#0F172A',
-    minHeight: 76,
+    minHeight: 78,
     textAlignVertical: 'top',
   },
-  visibilitySectionLabel: {
-    fontSize: 11.5,
-    fontWeight: '700',
-    color: '#475569',
-    marginBottom: 6,
-  },
-  visibilityToggleRow: {
-    flexDirection: 'row',
+  visibilityStackedCol: {
+    flexDirection: 'column',
     gap: 8,
     marginBottom: 12,
   },
-  visibilityOptionBtn: {
-    flex: 1,
+  visibilityOptionBtnStacked: {
+    width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 9,
-    paddingHorizontal: 10,
-    borderRadius: 11,
+    justifyContent: 'space-between',
+    paddingVertical: 11,
+    paddingHorizontal: 14,
+    borderRadius: 12,
     backgroundColor: '#F8FAFC',
     borderWidth: 1.5,
     borderColor: '#E2E8F0',
   },
+  visibilityOptionLeftRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   visibilityOptionText: {
-    fontSize: 11.5,
+    fontSize: 12.5,
     fontWeight: '600',
-    color: '#64748B',
+    color: '#475569',
   },
   primaryActionBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 12,
+    paddingVertical: 12.5,
     paddingHorizontal: 16,
     borderRadius: 12,
     marginBottom: 8,
@@ -2384,7 +2647,7 @@ const styles = StyleSheet.create({
   postponeCleanBtnText: {
     fontSize: 11.5,
     fontWeight: '600',
-    color: '#475569',
+    color: '#64748B',
     textAlign: 'center',
   },
   completedDayPreviewBox: {
@@ -2421,21 +2684,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   concludeCardTitle: {
-    fontSize: 14,
+    fontSize: 14.5,
     fontWeight: '800',
     color: '#0F172A',
   },
   concludeCardSub: {
-    fontSize: 12,
+    fontSize: 12.5,
     color: '#64748B',
-    lineHeight: 17.5,
-    marginTop: 2,
+    lineHeight: 18,
+    marginTop: 4,
   },
   concludeMedalBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 11,
+    paddingVertical: 11.5,
     paddingHorizontal: 14,
     borderRadius: 12,
     borderWidth: 1.5,
@@ -2462,9 +2725,14 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#334155',
   },
+  emptyCompletedHintText: {
+    fontSize: 12,
+    color: '#64748B',
+    paddingVertical: 4,
+  },
   completedThumbCard: {
-    width: 82,
-    height: 82,
+    width: 84,
+    height: 84,
     borderRadius: 12,
     overflow: 'hidden',
     backgroundColor: '#F8FAFC',
@@ -2477,14 +2745,31 @@ const styles = StyleSheet.create({
     bottom: 4,
     left: 4,
     right: 4,
-    backgroundColor: 'rgba(15, 23, 42, 0.72)',
-    paddingVertical: 2,
+    backgroundColor: 'rgba(15, 23, 42, 0.75)',
+    paddingVertical: 2.5,
+    paddingHorizontal: 4,
     borderRadius: 5,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 3,
   },
   completedThumbBadgeText: {
     color: '#FFFFFF',
     fontSize: 9.5,
+    fontWeight: '800',
+  },
+  loadMoreCompletedThumbBtn: {
+    width: 84,
+    height: 84,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+  },
+  loadMoreCompletedThumbText: {
+    fontSize: 11,
     fontWeight: '800',
   },
   /* Celebration View */

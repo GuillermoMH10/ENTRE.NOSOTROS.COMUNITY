@@ -371,6 +371,46 @@ export const swapCurrentActivityTask = async (
 };
 
 /**
+ * Loads more activity steps gradually (e.g. +6 at a time) after the initial 12 when the user taps "Ver más"
+ */
+export const loadMoreActivitySteps = async (
+  currentResult: TestResult,
+  countToAdd = 6,
+  userId?: string
+): Promise<TestResult> => {
+  const normalized = normalizeTestResultWithStreak(currentResult, userId);
+  const streak = normalized.streakState!;
+  const pool = getTasksForTopic(streak.focusCategory);
+  const updatedDays = [...streak.days];
+
+  for (let i = 0; i < countToAdd; i++) {
+    if (updatedDays.length >= 100) break;
+    const usedIds = new Set(updatedDays.map((d) => d.task.id));
+    const available = pool.filter((t) => !usedIds.has(t.id));
+    const nextNum = updatedDays.length + 1;
+    const nextTask = available[0] || pool[(nextNum - 1) % pool.length];
+    updatedDays.push({
+      dayNumber: nextNum,
+      dayName: `Actividad ${nextNum}`,
+      task: nextTask,
+      status: 'locked',
+      postponedCount: 0,
+    });
+  }
+
+  const updatedResult: TestResult = {
+    ...normalized,
+    streakState: {
+      ...streak,
+      days: updatedDays,
+      lastUpdatedAt: new Date().toISOString(),
+    },
+  };
+
+  return saveLatestTestResult(updatedResult, userId);
+};
+
+/**
  * Called when the user decides they have overcome/concluded their current topic and claims their Medal
  */
 export const concludeTopicAndClaimMedal = async (
