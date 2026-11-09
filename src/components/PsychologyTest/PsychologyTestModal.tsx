@@ -546,7 +546,7 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
                       { color: selectedTopicForIntro.accentColor },
                     ]}
                   >
-                    {selectedTopicForIntro.name} • 100 actividades disponibles
+                    {selectedTopicForIntro.name} • Acompañamiento a tu ritmo
                   </Text>
                 </View>
 
