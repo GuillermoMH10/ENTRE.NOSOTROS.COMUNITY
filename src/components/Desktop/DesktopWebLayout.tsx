@@ -231,10 +231,9 @@ export const DesktopWebLayout: React.FC<DesktopWebLayoutProps> = ({
       ? [
           {
             id: 'racha' as DesktopNavId,
-            label: 'Mi Racha',
-            icon: 'flame-outline',
-            iconActive: 'flame',
-            badge: `🔥 ${streakDaysDone}/7`,
+            label: 'Actividades de Mejora',
+            icon: 'sparkles-outline',
+            iconActive: 'sparkles',
             isStreakOrange: true,
           },
         ]
@@ -333,9 +332,9 @@ export const DesktopWebLayout: React.FC<DesktopWebLayoutProps> = ({
                       styles.navItem,
                       isActive && styles.navItemActive,
                       isOrangeStreak && {
-                        backgroundColor: '#FFFFFF',
+                        backgroundColor: isActive ? '#EFF6FF' : '#FFFFFF',
                         borderWidth: 1.5,
-                        borderColor: '#FF7A00',
+                        borderColor: '#3B82F6',
                       },
                     ]}
                     activeOpacity={0.7}
@@ -357,7 +356,7 @@ export const DesktopWebLayout: React.FC<DesktopWebLayoutProps> = ({
                       size={20}
                       color={
                         isOrangeStreak
-                          ? '#FF7A00'
+                          ? '#3B82F6'
                           : isActive
                           ? colors.coffeePrimary
                           : '#4B6779'
@@ -376,31 +375,6 @@ export const DesktopWebLayout: React.FC<DesktopWebLayoutProps> = ({
                     >
                       {item.label}
                     </Text>
-                    {item.badge && (
-                      <View
-                        style={[
-                          styles.navItemBadge,
-                          isOrangeStreak && {
-                            backgroundColor: 'transparent',
-                            paddingHorizontal: 2,
-                            paddingVertical: 0,
-                          },
-                        ]}
-                      >
-                        <Text
-                          style={[
-                            styles.navItemBadgeText,
-                            isOrangeStreak && {
-                              color: '#FF7A00',
-                              fontWeight: '900',
-                              fontSize: 11.5,
-                            },
-                          ]}
-                        >
-                          {item.badge}
-                        </Text>
-                      </View>
-                    )}
                   </TouchableOpacity>
                 );
               })}

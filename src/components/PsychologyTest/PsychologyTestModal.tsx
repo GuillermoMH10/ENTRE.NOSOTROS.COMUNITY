@@ -18,23 +18,25 @@ import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import {
   OFFICIAL_STREAK_BADGES,
-  FOCUS_CATEGORY_META,
+  MAIN_SUPPORT_TOPICS,
+  MainSupportTopicConfig,
+  getTopicConfig,
   getRandomStreakMotivationalQuote,
 } from '../../data/streakChallengesData';
-import { TestResult } from '../../types/psychologyTest';
+import { TestResult, MainSupportTopicKey } from '../../types/psychologyTest';
 import {
-  startSevenDayImprovementChallenge,
+  startSupportTopicActivities,
   resetUserStreakInDatabase,
   completeStreakDayWithEvidence,
   postponeStreakDayWithEncouragement,
   publishFullStreakSummaryToFeed,
-  startNextSevenDayStreak,
+  swapCurrentActivityTask,
+  concludeTopicAndClaimMedal,
   normalizeTestResultWithStreak,
 } from '../../services/psychologyTestService';
 import { useAuth } from '../../context/AuthContext';
 import { showAnimaToast } from '../Anima/AnimaToast';
 import { ImageViewerModal } from '../UI/ImageViewerModal';
-import { colors } from '../../theme/colors';
 
 interface PsychologyTestModalProps {
   visible: boolean;
@@ -43,8 +45,8 @@ interface PsychologyTestModalProps {
   startMode?: 'questionnaire' | 'result';
   onClose: () => void;
   onNavigateToProfile?: () => void;
-  onOpenPsychologists: () => void;
-  onOpenCreatePost: () => void;
+  onOpenPsychologists?: () => void;
+  onOpenCreatePost?: () => void;
   onTestCompleted?: (result: TestResult) => void;
   onRequireAuth?: () => void;
   embedded?: boolean;
@@ -68,32 +70,37 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
 
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [result, setResult] = useState<TestResult | null>(null);
+  const [selectedTopicForIntro, setSelectedTopicForIntro] =
+    useState<MainSupportTopicConfig | null>(null);
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
   const [isResettingAll, setIsResettingAll] = useState(false);
 
-  // Active Day selection in 7-Day Streak view (1..7)
+  // Active Activity selection (1, 2, 3... unlimited)
   const [selectedDayNum, setSelectedDayNum] = useState<number>(1);
   const [evidencePhotoUri, setEvidencePhotoUri] = useState<string | null>(null);
   const [evidenceNote, setEvidenceNote] = useState<string>('');
+  const [evidenceVisibility, setEvidenceVisibility] = useState<'public' | 'private'>('public');
   const [isSubmittingDay, setIsSubmittingDay] = useState<boolean>(false);
+  const [isSwappingTask, setIsSwappingTask] = useState<boolean>(false);
+  const [isConcludingTopic, setIsConcludingTopic] = useState<boolean>(false);
   const [postponedEncouragementQuote, setPostponedEncouragementQuote] = useState<string | null>(null);
 
-  // Fullscreen image viewer for "Mis Avances (Grid de 7)"
+  // Fullscreen image viewer
   const [viewerImages, setViewerImages] = useState<string[]>([]);
   const [viewerIndex, setViewerIndex] = useState<number>(0);
   const [viewerVisible, setViewerVisible] = useState<boolean>(false);
 
-  // Random phrase (1 of 100) shown next to ANIMA in the Streak Header
+  // Supportive phrase from ANIMA
   const [headerQuote, setHeaderQuote] = useState<string>(() =>
     getRandomStreakMotivationalQuote()
   );
 
-  // Final 7-day summary celebration state
+  // Final topic celebration state
   const [celebrationQuote, setCelebrationQuote] = useState<string>(() =>
     getRandomStreakMotivationalQuote()
   );
   const [summaryPostText, setSummaryPostText] = useState<string>(
-    '¡Lo logré! Completé mi racha de 7 días paso a paso y desbloqueé mi insignia en Entre Nosotros 🔥'
+    '¡Hoy concluí esta etapa de actividades a mi propio ritmo y obtuve mi medalla de superación en Entre Nosotros! 💙'
   );
   const [isPublishingSummary, setIsPublishingSummary] = useState<boolean>(false);
 
@@ -105,7 +112,6 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
         initialResult.userId === (activeUid || 'anonymous') ||
         (activeUid && initialResult.userId === activeUid);
 
-      // While the user has an active 7-day challenge, always show their active challenge (cannot start a duplicate one)
       if (initialResult && isMatchingUser && initialResult.streakState?.isActive) {
         const normalized = normalizeTestResultWithStreak(initialResult, activeUid);
         setResult((prev) => {
@@ -121,6 +127,7 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
         });
       } else {
         setResult(null);
+        setSelectedTopicForIntro(null);
         setEvidencePhotoUri(null);
         setEvidenceNote('');
         setPostponedEncouragementQuote(null);
@@ -131,7 +138,7 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
 
   if (!visible) return null;
 
-  const handleJoinChallenge = async () => {
+  const handleConfirmTopicAndStart = async (topicKey: MainSupportTopicKey) => {
     if (!user && !userId) {
       if (onRequireAuth) {
         onRequireAuth();
@@ -141,8 +148,13 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
     setIsEvaluating(true);
     const activeUid = user?.id || userId;
     try {
-      const saved = await startSevenDayImprovementChallenge(activeUid, result || initialResult);
+      const saved = await startSupportTopicActivities(
+        topicKey,
+        activeUid,
+        result || initialResult
+      );
       setIsEvaluating(false);
+      setSelectedTopicForIntro(null);
       setResult(saved);
       setSelectedDayNum(saved.streakState?.currentDayNumber || 1);
       if (onTestCompleted) {
@@ -157,72 +169,65 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
   };
 
   const handleConfirmResetChallenge = async () => {
-    const activeUid = user?.id || userId;
     setIsResettingAll(true);
+    const activeUid = user?.id || userId;
     try {
       await resetUserStreakInDatabase(activeUid, result || initialResult);
-      setIsResetConfirmOpen(false);
       setResult(null);
+      setSelectedTopicForIntro(null);
       setEvidencePhotoUri(null);
       setEvidenceNote('');
       setPostponedEncouragementQuote(null);
+      setIsResetConfirmOpen(false);
     } finally {
       setIsResettingAll(false);
     }
   };
 
-  // Pick evidence image from gallery
   const handlePickEvidencePhoto = async () => {
     try {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') {
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted && Platform.OS !== 'web') {
         Alert.alert(
-          'Permiso necesario',
-          'Necesitamos acceso a tus fotos para subir la evidencia de tu actividad del día.'
+          'Permiso requerido',
+          'Necesitamos acceso a tu galería para adjuntar la fotografía de tu actividad.'
         );
         return;
       }
 
-      const pickerRes = await ImagePicker.launchImageLibraryAsync({
+      const pickerResult = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
-        allowsMultipleSelection: false,
-        quality: 0.45,
+        allowsEditing: true,
+        quality: 0.78,
         base64: true,
       });
 
-      if (!pickerRes.canceled && pickerRes.assets && pickerRes.assets[0]) {
-        const asset = pickerRes.assets[0];
-        const source = asset.base64
-          ? `data:image/jpeg;base64,${asset.base64}`
-          : asset.uri;
-        setEvidencePhotoUri(source);
+      if (!pickerResult.canceled && pickerResult.assets && pickerResult.assets.length > 0) {
+        const asset = pickerResult.assets[0];
+        if (asset.base64) {
+          const mime = asset.mimeType || 'image/jpeg';
+          setEvidencePhotoUri(`data:${mime};base64,${asset.base64}`);
+        } else if (asset.uri) {
+          setEvidencePhotoUri(asset.uri);
+        }
       }
-    } catch (err: any) {
-      Alert.alert('Error', 'No se pudo seleccionar la imagen de evidencia.');
+    } catch (err) {
+      console.warn('Error selecting activity photo:', err);
     }
   };
 
-  // Submit daily evidence & publish to community feed
-  const handleCompleteDay = async () => {
+  const handleCompleteSelectedDay = async () => {
     if (!result || !result.streakState) return;
     if (!user) {
-      if (onRequireAuth) {
-        onRequireAuth();
-      } else {
-        Alert.alert(
-          'Inicia sesión',
-          'Necesitas iniciar sesión en tu cuenta para publicar tu avance y guardar tu racha.'
-        );
-      }
+      if (onRequireAuth) onRequireAuth();
       return;
     }
-
     if (!evidencePhotoUri) {
       showAnimaToast({
-        title: 'Agrega tu foto del día 📸',
-        message: 'Selecciona una fotografía de tu actividad de hoy para registrar tu avance en la racha.',
+        title: 'Agrega tu foto de la actividad 📸',
+        message: 'Sube una fotografía de tu momento antes de registrarlo.',
         emoji: '📸',
-        accentColor: '#FF7A00',
+        accentColor: '#3B82F6',
       });
       return;
     }
@@ -237,27 +242,41 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
         authorId: user.id,
         authorUsername: user.username,
         authorAvatarUrl: user.avatarUrl,
+        visibility: evidenceVisibility,
       });
 
       setResult(updatedResult);
       setEvidencePhotoUri(null);
       setEvidenceNote('');
       setPostponedEncouragementQuote(null);
-      // Keep selectedDayNum on the day just completed so the user sees their registered evidence immediately
-      setSelectedDayNum(selectedDayNum);
+      setSelectedDayNum(updatedResult.streakState?.currentDayNumber || selectedDayNum + 1);
       setCelebrationQuote(getRandomStreakMotivationalQuote());
 
       if (onTestCompleted) {
         onTestCompleted(updatedResult);
       }
     } catch (err: any) {
-      Alert.alert('Error', err?.message || 'No se pudo subir la evidencia de hoy.');
+      Alert.alert('Error', err?.message || 'No se pudo guardar tu actividad.');
     } finally {
       setIsSubmittingDay(false);
     }
   };
 
-  // Postpone / Shift day when user couldn't complete it today
+  const handleSwapTask = async () => {
+    if (!result || !result.streakState || isSwappingTask) return;
+    setIsSwappingTask(true);
+    try {
+      const activeUid = user?.id || userId;
+      const updated = await swapCurrentActivityTask(result, selectedDayNum, activeUid);
+      setResult(updated);
+      if (onTestCompleted) {
+        onTestCompleted(updated);
+      }
+    } finally {
+      setIsSwappingTask(false);
+    }
+  };
+
   const handlePostponeDay = async () => {
     if (!result || !result.streakState) return;
     const activeUid = user?.id || userId;
@@ -273,8 +292,23 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
     }
   };
 
-  // Publish full 7-day summary album + badge to the community feed
-  const handlePublishSevenDaySummary = async () => {
+  const handleConcludeTopicForMedal = async () => {
+    if (!result || !result.streakState || isConcludingTopic) return;
+    setIsConcludingTopic(true);
+    try {
+      const activeUid = user?.id || userId;
+      const { updatedResult } = await concludeTopicAndClaimMedal(result, activeUid);
+      setResult(updatedResult);
+      setCelebrationQuote(getRandomStreakMotivationalQuote());
+      if (onTestCompleted) {
+        onTestCompleted(updatedResult);
+      }
+    } finally {
+      setIsConcludingTopic(false);
+    }
+  };
+
+  const handlePublishTopicSummary = async () => {
     if (!result || !result.streakState) return;
     if (!user) {
       if (onRequireAuth) onRequireAuth();
@@ -295,39 +329,25 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
         onTestCompleted(updated);
       }
     } catch (err: any) {
-      Alert.alert('Error', err?.message || 'No se pudo publicar tu resumen en la comunidad.');
+      Alert.alert('Error', err?.message || 'No se pudo publicar tu logro en la comunidad.');
     } finally {
       setIsPublishingSummary(false);
     }
   };
 
-  // Start next 7-day streak for the next badge level
-  const handleStartNextStreak = async () => {
-    if (!result) return;
-    const activeUid = user?.id || userId;
-    const updated = await startNextSevenDayStreak(result, activeUid);
-    setResult(updated);
-    setSelectedDayNum(1);
-    setEvidencePhotoUri(null);
-    setEvidenceNote('');
-    if (onTestCompleted) {
-      onTestCompleted(updated);
-    }
-  };
-
   const streak = result?.streakState;
-  const focusMeta = result?.focusCategory
-    ? FOCUS_CATEGORY_META[result.focusCategory]
-    : FOCUS_CATEGORY_META.tristeza;
-
+  const activeTopic = getTopicConfig(streak?.focusCategory || result?.focusCategory);
   const targetBadge =
-    OFFICIAL_STREAK_BADGES.find((b) => b.id === streak?.targetBadgeId) ||
+    OFFICIAL_STREAK_BADGES.find((b) => b.id === activeTopic.badgeId) ||
     OFFICIAL_STREAK_BADGES[0];
 
   const activeDayObj =
     streak?.days.find((d) => d.dayNumber === selectedDayNum) || streak?.days[0];
 
-  const allCompletedPhotos = (streak?.days || [])
+  const completedActivitiesList = (streak?.days || []).filter(
+    (d) => d.status === 'completed'
+  );
+  const allCompletedPhotos = completedActivitiesList
     .map((d) => d.evidenceImageUrl)
     .filter((u): u is string => Boolean(u));
 
@@ -339,9 +359,12 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
     setViewerVisible(true);
   };
 
-  // Spacious & eye-catching invitation modal when user has not joined the 7-day challenge yet
+  // ============================================================================
+  // ONBOARDING MODAL: STEP 1 (2x2 GRID OF 4 TOPICS) & STEP 2 (ANIMA EXPLANATION)
+  // ============================================================================
   if (!result || !streak?.isActive) {
     const isWideModal = windowWidth >= 640;
+
     return (
       <Modal
         visible={visible}
@@ -350,141 +373,226 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
         onRequestClose={onClose}
         statusBarTranslucent
       >
-        <View style={styles.compactModalOverlay}>
+        <View style={styles.onboardingOverlay}>
           <View
             style={[
-              styles.compactInvitationCard,
-              isWideModal && styles.compactInvitationCardDesktop,
+              styles.onboardingCard,
+              isWideModal && styles.onboardingCardDesktop,
             ]}
           >
-            {/* Top Bar: Subtle Orange Badge + Close Button */}
-            <View style={styles.compactTopBar}>
-              <View style={styles.compactOrangePill}>
-                <Ionicons name="flame" size={14} color="#FF7A00" />
-                <Text style={styles.compactOrangePillText}>RETO DE 7 DÍAS CON ANIMA</Text>
+            {/* Top Bar */}
+            <View style={styles.onboardingTopBar}>
+              <View style={styles.calmPillBadge}>
+                <Ionicons name="sparkles" size={13} color="#3B82F6" />
+                <Text style={styles.calmPillBadgeText}>
+                  {selectedTopicForIntro
+                    ? `TEMA SELECCIONADO • ${selectedTopicForIntro.name.toUpperCase()}`
+                    : 'ESPACIO DE APOYO Y BIENESTAR'}
+                </Text>
               </View>
-              <TouchableOpacity onPress={onClose} style={styles.compactCloseBtn} activeOpacity={0.7}>
+              <TouchableOpacity
+                onPress={onClose}
+                style={styles.onboardingCloseBtn}
+                activeOpacity={0.7}
+              >
                 <Ionicons name="close" size={19} color="#475569" />
               </TouchableOpacity>
             </View>
 
-            <ScrollView
-              style={{ flexShrink: 1 }}
-              contentContainerStyle={{ paddingBottom: 4 }}
-              showsVerticalScrollIndicator={false}
-              bounces={false}
-            >
-              {/* ANIMA Companion Header */}
-              <View style={styles.compactAnimaHeader}>
-                <Image
-                  source={require('../../../assets/perfilANIMA.png')}
-                  style={styles.compactAnimaAvatar}
-                  resizeMode="cover"
-                />
-                <Text style={styles.compactMainTitle}>Reto de Mejora Personal</Text>
-                <Text style={styles.compactSubtitle}>
-                  Un camino práctico de 7 días para reconectar contigo, crear hábitos positivos e inspirar a la comunidad.
-                </Text>
-              </View>
-
-              {/* Explanation Box: What the Challenge Consists Of */}
-              <View style={styles.compactStepsBox}>
-                <Text style={styles.compactStepsHeader}>
-                  Este reto consiste en lo siguiente:
-                </Text>
-
-                <View style={isWideModal ? styles.compactStepsGridDesktop : styles.compactStepsListMobile}>
-                  <View style={[styles.compactStepCard, isWideModal && styles.compactStepCardDesktop]}>
-                    <View style={styles.compactStepCardHeader}>
-                      <View style={styles.compactStepDot}>
-                        <Ionicons name="sparkles-outline" size={16} color="#FF7A00" />
-                      </View>
-                      <Text style={styles.compactStepBold}>7 actividades diarias</Text>
-                    </View>
-                    <Text style={styles.compactStepText}>
-                      Cada día desbloquearás una misión sencilla y positiva para tu bienestar (sin cuestionarios ni diagnósticos).
+            {!selectedTopicForIntro ? (
+              /* ----------------- STEP 1: ANIMA INVITES USER TO SELECT 1 OF THE 4 TOPICS (2x2 GRID) ----------------- */
+              <ScrollView
+                style={{ flexShrink: 1 }}
+                contentContainerStyle={{ paddingBottom: 4 }}
+                showsVerticalScrollIndicator={false}
+                bounces={false}
+              >
+                <View style={styles.animaIntroRow}>
+                  <Image
+                    source={require('../../../assets/perfilANIMA.png')}
+                    style={styles.animaAvatarOnboarding}
+                    resizeMode="cover"
+                  />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.onboardingTitle}>
+                      Hola, estoy aquí para acompañarte a sentirte mejor 💙
                     </Text>
-                  </View>
-
-                  <View style={[styles.compactStepCard, isWideModal && styles.compactStepCardDesktop]}>
-                    <View style={styles.compactStepCardHeader}>
-                      <View style={styles.compactStepDot}>
-                        <Ionicons name="camera-outline" size={16} color="#FF7A00" />
-                      </View>
-                      <Text style={styles.compactStepBold}>Comparte tu evidencia</Text>
-                    </View>
-                    <Text style={styles.compactStepText}>
-                      Sube una foto realizando tu actividad del día; se publicará en Principal para motivar a la comunidad.
-                    </Text>
-                  </View>
-
-                  <View style={[styles.compactStepCard, isWideModal && styles.compactStepCardDesktop]}>
-                    <View style={styles.compactStepCardHeader}>
-                      <View style={styles.compactStepDot}>
-                        <Ionicons name="heart-outline" size={16} color="#FF7A00" />
-                      </View>
-                      <Text style={styles.compactStepBold}>A tu propio ritmo</Text>
-                    </View>
-                    <Text style={styles.compactStepText}>
-                      Si un día no te sientes con ánimos para hacerlo, puedes recorrer el día y recibir palabras de apoyo de ANIMA.
-                    </Text>
-                  </View>
-
-                  <View style={[styles.compactStepCard, isWideModal && styles.compactStepCardDesktop]}>
-                    <View style={styles.compactStepCardHeader}>
-                      <View style={styles.compactStepDot}>
-                        <Ionicons name="ribbon-outline" size={16} color="#FF7A00" />
-                      </View>
-                      <Text style={styles.compactStepBold}>Insignias y reinicio libre</Text>
-                    </View>
-                    <Text style={styles.compactStepText}>
-                      Al completar los 7 días ganarás tu insignia. Puedes tener una semana activa a la vez o reiniciar todo desde cero cuando quieras.
+                    <Text style={styles.onboardingDescription}>
+                      Esta dinámica consiste en actividades agradables e interactivas que podrás hacer a tu propio ritmo cada vez que lo necesites, sin límite de días y eligiendo si deseas compartirlas o guardarlas en privado.
                     </Text>
                   </View>
                 </View>
-              </View>
-            </ScrollView>
 
-            {/* Primary Confirm & Secondary Close Buttons */}
-            <View style={isWideModal ? styles.compactButtonsRowDesktop : styles.compactButtonsColMobile}>
-              <TouchableOpacity
-                style={[
-                  styles.compactSecondaryCancelBtn,
-                  isWideModal && styles.compactSecondaryCancelBtnDesktop,
-                ]}
-                onPress={onClose}
-                activeOpacity={0.75}
-              >
-                <Text style={styles.compactSecondaryCancelBtnText}>Ahora no</Text>
-              </TouchableOpacity>
+                <Text style={styles.selectPromptText}>
+                  Selecciona uno de los 4 temas principales para comenzar:
+                </Text>
 
-              <TouchableOpacity
-                style={[
-                  styles.compactPrimaryJoinBtn,
-                  isWideModal && styles.compactPrimaryJoinBtnDesktop,
-                ]}
-                onPress={handleJoinChallenge}
-                disabled={isEvaluating}
-                activeOpacity={0.88}
+                {/* 2x2 Grid with Square Images & Topic Name */}
+                <View style={styles.topicsTwoByTwoGrid}>
+                  {MAIN_SUPPORT_TOPICS.map((topic) => (
+                    <TouchableOpacity
+                      key={topic.key}
+                      style={styles.topicGridCard}
+                      activeOpacity={0.88}
+                      onPress={() => setSelectedTopicForIntro(topic)}
+                    >
+                      <View style={styles.topicSquareImageWrap}>
+                        <Image
+                          source={{ uri: topic.squareImageUrl }}
+                          style={styles.topicSquareImage}
+                          resizeMode="cover"
+                        />
+                      </View>
+                      <View style={styles.topicCardFooter}>
+                        <Text style={styles.topicCardName}>{topic.name}</Text>
+                      </View>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </ScrollView>
+            ) : (
+              /* ----------------- STEP 2: ANIMA EXPLAINS HOW ACTIVITIES WORK FOR THE CHOSEN TOPIC ----------------- */
+              <ScrollView
+                style={{ flexShrink: 1 }}
+                contentContainerStyle={{ paddingBottom: 4 }}
+                showsVerticalScrollIndicator={false}
+                bounces={false}
               >
-                {isEvaluating ? (
-                  <ActivityIndicator size="small" color="#FFFFFF" />
-                ) : (
-                  <>
-                    <Ionicons name="flame" size={17} color="#FFFFFF" style={{ marginRight: 8 }} />
-                    <Text style={styles.compactPrimaryJoinBtnText}>
-                      ¡Quiero unirme al Reto!
+                <View style={styles.step2AnimaHeader}>
+                  <Image
+                    source={require('../../../assets/perfilANIMA.png')}
+                    style={[
+                      styles.animaAvatarStep2,
+                      { borderColor: selectedTopicForIntro.accentColor },
+                    ]}
+                    resizeMode="cover"
+                  />
+                  <View
+                    style={[
+                      styles.step2TopicTag,
+                      {
+                        backgroundColor: selectedTopicForIntro.softBg,
+                        borderColor: selectedTopicForIntro.borderColor,
+                      },
+                    ]}
+                  >
+                    <Text style={{ fontSize: 13 }}>{selectedTopicForIntro.emoji}</Text>
+                    <Text
+                      style={[
+                        styles.step2TopicTagText,
+                        { color: selectedTopicForIntro.accentColor },
+                      ]}
+                    >
+                      {selectedTopicForIntro.name} • 100 actividades disponibles
                     </Text>
-                  </>
-                )}
-              </TouchableOpacity>
-            </View>
+                  </View>
+
+                  <Text style={styles.step2MainTitle}>
+                    {selectedTopicForIntro.animaStep2Title}
+                  </Text>
+                  <Text style={styles.step2Subtitle}>
+                    {selectedTopicForIntro.animaStep2Intro}
+                  </Text>
+                </View>
+
+                <View style={styles.step2ExplanationBox}>
+                  {selectedTopicForIntro.animaStep2Bullets.map((bullet, idx) => (
+                    <View
+                      key={idx}
+                      style={[
+                        styles.step2BulletRow,
+                        idx === selectedTopicForIntro.animaStep2Bullets.length - 1 && {
+                          marginBottom: 0,
+                        },
+                      ]}
+                    >
+                      <View
+                        style={[
+                          styles.step2BulletIconCircle,
+                          {
+                            backgroundColor: selectedTopicForIntro.softBg,
+                            borderColor: selectedTopicForIntro.borderColor,
+                          },
+                        ]}
+                      >
+                        <Ionicons
+                          name={
+                            idx === 0
+                              ? 'walk-outline'
+                              : idx === 1
+                              ? 'lock-open-outline'
+                              : 'medal-outline'
+                          }
+                          size={15}
+                          color={selectedTopicForIntro.accentColor}
+                        />
+                      </View>
+                      <Text style={styles.step2BulletText}>{bullet}</Text>
+                    </View>
+                  ))}
+                </View>
+
+                <View
+                  style={
+                    isWideModal
+                      ? styles.step2ActionsRowDesktop
+                      : styles.step2ActionsColMobile
+                  }
+                >
+                  <TouchableOpacity
+                    style={[
+                      styles.secondaryBackTopicBtn,
+                      isWideModal && { flex: 1 },
+                    ]}
+                    onPress={() => setSelectedTopicForIntro(null)}
+                    disabled={isEvaluating}
+                    activeOpacity={0.75}
+                  >
+                    <Text style={styles.secondaryBackTopicBtnText}>
+                      ← Elegir otro tema
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[
+                      styles.primaryAcceptTopicBtn,
+                      { backgroundColor: selectedTopicForIntro.accentColor },
+                      isWideModal && { flex: 1.6 },
+                    ]}
+                    onPress={() =>
+                      handleConfirmTopicAndStart(selectedTopicForIntro.key)
+                    }
+                    disabled={isEvaluating}
+                    activeOpacity={0.88}
+                  >
+                    {isEvaluating ? (
+                      <ActivityIndicator size="small" color="#FFFFFF" />
+                    ) : (
+                      <>
+                        <Ionicons
+                          name="sparkles"
+                          size={16}
+                          color="#FFFFFF"
+                          style={{ marginRight: 7 }}
+                        />
+                        <Text style={styles.primaryAcceptTopicBtnText}>
+                          Aceptar y comenzar actividades
+                        </Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </ScrollView>
+            )}
           </View>
         </View>
       </Modal>
     );
   }
 
+  // ============================================================================
+  // MAIN ACTIVITIES DASHBOARD ("ACTIVIDADES DE MEJORA")
+  // ============================================================================
   const modalContent = (
     <SafeAreaView style={[styles.safeArea, isDesktop && styles.desktopSafeArea]}>
       <ImageViewerModal
@@ -495,7 +603,7 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
         inlineOverlay={!isEmbeddedMode}
       />
 
-      {/* Compact Reset Confirmation Modal (Deletes Streak + Published Posts) */}
+      {/* Reset / Change Topic Confirmation Modal */}
       {isResetConfirmOpen && (
         <Modal
           visible={isResetConfirmOpen}
@@ -504,34 +612,52 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
           onRequestClose={() => setIsResetConfirmOpen(false)}
           statusBarTranslucent
         >
-          <View style={styles.compactModalOverlay}>
-            <View style={styles.compactInvitationCard}>
-              <View style={styles.compactAnimaHeader}>
+          <View style={styles.onboardingOverlay}>
+            <View style={[styles.onboardingCard, { maxWidth: 440 }]}>
+              <View style={styles.step2AnimaHeader}>
                 <Image
                   source={require('../../../assets/perfilANIMA.png')}
-                  style={styles.compactAnimaAvatar}
+                  style={[
+                    styles.animaAvatarStep2,
+                    { borderColor: activeTopic.accentColor },
+                  ]}
                   resizeMode="cover"
                 />
-                <Text style={styles.compactMainTitle}>¿Reiniciar tu Reto de 7 Días?</Text>
-                <Text style={styles.compactSubtitle}>
-                  Mientras tengas una semana activa para conseguir tu insignia no puedes iniciar otra a la vez, pero puedes reiniciar tu reto desde cero.
+                <Text style={styles.step2MainTitle}>
+                  ¿Cambiar de tema o reiniciar tus actividades?
+                </Text>
+                <Text style={styles.step2Subtitle}>
+                  Si reinicias tu proceso actual de {activeTopic.name}, podrás elegir cualquiera de los 4 temas principales para empezar desde cero.
                 </Text>
               </View>
 
               <View
                 style={[
-                  styles.compactStepsBox,
-                  { backgroundColor: '#FFF7ED', borderColor: '#FFEDD5' },
+                  styles.step2ExplanationBox,
+                  {
+                    backgroundColor: '#F8FAFC',
+                    borderColor: '#E2E8F0',
+                  },
                 ]}
               >
-                <Text style={{ fontSize: 12, color: '#334155', lineHeight: 17.5, textAlign: 'center' }}>
-                  Al reiniciar todo, <Text style={{ fontWeight: '800', color: '#EA580C' }}>se borrará tu progreso actual y se eliminarán las publicaciones de evidencia</Text> que hayas subido durante este reto en Principal.
+                <Text
+                  style={{
+                    fontSize: 12,
+                    color: '#475569',
+                    lineHeight: 18,
+                    textAlign: 'center',
+                  }}
+                >
+                  Al reiniciar, se borrará tu progreso actual y se eliminarán las publicaciones públicas que hayas subido durante este tema.
                 </Text>
               </View>
 
               <View style={{ gap: 10 }}>
                 <TouchableOpacity
-                  style={styles.compactPrimaryJoinBtn}
+                  style={[
+                    styles.primaryAcceptTopicBtn,
+                    { backgroundColor: activeTopic.accentColor },
+                  ]}
                   onPress={handleConfirmResetChallenge}
                   disabled={isResettingAll}
                   activeOpacity={0.88}
@@ -540,21 +666,28 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
                     <ActivityIndicator size="small" color="#FFFFFF" />
                   ) : (
                     <>
-                      <Ionicons name="trash-outline" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
-                      <Text style={styles.compactPrimaryJoinBtnText}>
-                        Sí, reiniciar todo y borrar publicaciones
+                      <Ionicons
+                        name="refresh-outline"
+                        size={16}
+                        color="#FFFFFF"
+                        style={{ marginRight: 6 }}
+                      />
+                      <Text style={styles.primaryAcceptTopicBtnText}>
+                        Sí, reiniciar y elegir nuevo tema
                       </Text>
                     </>
                   )}
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={styles.compactSecondaryCancelBtn}
+                  style={styles.secondaryBackTopicBtn}
                   onPress={() => setIsResetConfirmOpen(false)}
                   disabled={isResettingAll}
                   activeOpacity={0.75}
                 >
-                  <Text style={styles.compactSecondaryCancelBtnText}>Cancelar y seguir en mi racha</Text>
+                  <Text style={styles.secondaryBackTopicBtnText}>
+                    Cancelar y continuar en mi tema
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -571,49 +704,74 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
         <View style={styles.headerTitleContainer}>
           <Text style={styles.headerMainTitle}>
             {streak?.status === 'completed'
-              ? '¡Reto de 7 Días Logrado!'
-              : 'Mi Reto de 7 Días'}
+              ? `¡Tema Superado: ${activeTopic.name}!`
+              : 'Actividades de Mejora'}
           </Text>
           <Text style={styles.headerSubTitle}>
-            {`${streak?.completedDaysCount || 0} de 7 días completados`}
+            Tema actual: {activeTopic.name} • A tu propio ritmo
           </Text>
         </View>
 
         <TouchableOpacity
           onPress={() => setIsResetConfirmOpen(true)}
-          style={styles.resetPillHeaderBtn}
+          style={[
+            styles.resetTopicHeaderBtn,
+            { borderColor: activeTopic.accentColor },
+          ]}
           activeOpacity={0.7}
-          accessibilityLabel="Reiniciar reto"
+          accessibilityLabel="Cambiar tema"
         >
-          <Ionicons name="refresh-outline" size={13} color="#FF7A00" />
-          <Text style={styles.resetPillHeaderBtnText}>Reiniciar</Text>
+          <Ionicons name="swap-horizontal-outline" size={13} color={activeTopic.accentColor} />
+          <Text
+            style={[
+              styles.resetTopicHeaderBtnText,
+              { color: activeTopic.accentColor },
+            ]}
+          >
+            Cambiar tema
+          </Text>
         </TouchableOpacity>
       </View>
 
       {streak && streak.status === 'completed' ? (
-        /* =================== VIEW 2: COMPLETED 7-DAY CELEBRATION & FULL SUMMARY POST =================== */
+        /* =================== COMPLETED MEDAL CELEBRATION VIEW =================== */
         <ScrollView
           style={styles.scrollBody}
           contentContainerStyle={styles.resultScrollContent}
           showsVerticalScrollIndicator={Platform.OS === 'web'}
         >
-          {/* Clean White Celebration Card */}
           <View style={styles.celebrationHeroCard}>
             <Text style={styles.unlockedEmojiBig}>{targetBadge.emoji}</Text>
-            <View style={styles.levelPillBadge}>
-              <Text style={styles.levelPillBadgeText}>
-                INSIGNIA DESBLOQUEADA • {targetBadge.levelLabel}
+            <View
+              style={[
+                styles.levelPillBadge,
+                {
+                  backgroundColor: activeTopic.softBg,
+                  borderColor: activeTopic.borderColor,
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.levelPillBadgeText,
+                  { color: activeTopic.accentColor },
+                ]}
+              >
+                MEDALLA DE SUPERACIÓN • {targetBadge.levelLabel}
               </Text>
             </View>
             <Text style={styles.celebrationTitle}>{targetBadge.name}</Text>
             <Text style={styles.celebrationSubtitle}>{targetBadge.description}</Text>
 
-            {/* Motivational Quote from ANIMA */}
+            {/* Supportive Quote from ANIMA */}
             <View style={styles.celebrationQuoteBox}>
               <View style={styles.celebrationQuoteHeader}>
                 <Image
                   source={require('../../../assets/perfilANIMA.png')}
-                  style={styles.animaAvatarMedium}
+                  style={[
+                    styles.animaAvatarMedium,
+                    { borderColor: activeTopic.accentColor },
+                  ]}
                   resizeMode="cover"
                 />
                 <View style={{ flex: 1 }}>
@@ -621,456 +779,380 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
                   <Text style={styles.celebrationQuoteText}>"{celebrationQuote}"</Text>
                 </View>
                 <TouchableOpacity
-                  onPress={() => setCelebrationQuote(getRandomStreakMotivationalQuote())}
+                  onPress={() =>
+                    setCelebrationQuote(getRandomStreakMotivationalQuote())
+                  }
                   style={styles.nextQuoteMiniBtn}
                 >
-                  <Ionicons name="reload" size={14} color="#FF7A00" />
+                  <Ionicons name="reload" size={14} color={activeTopic.accentColor} />
                 </TouchableOpacity>
               </View>
             </View>
           </View>
 
-          {/* Publish Full 7-Day Album & Badge to Community */}
+          {/* Optional Share Medal to Community */}
           <View style={styles.cleanWhiteCard}>
             <View style={styles.publishSummaryHeader}>
-              <Ionicons name="sparkles" size={18} color="#FF7A00" style={{ marginRight: 8 }} />
+              <Ionicons
+                name="medal-outline"
+                size={18}
+                color={activeTopic.accentColor}
+                style={{ marginRight: 8 }}
+              />
               <Text style={styles.sectionTitleText}>
-                Publicar mi Resumen de 7 Días e Insignia
+                Compartir mi Medalla en la Comunidad (Opcional)
               </Text>
             </View>
             <Text style={styles.sectionSubText}>
-              Comparte en Principal tus fotografías de la semana, tu mensaje de "¡Lo logré!" y tu insignia {targetBadge.name}:
+              Si lo deseas, comparte con la comunidad que concluiste tu etapa de {activeTopic.name} y ganaste la {targetBadge.name}:
             </Text>
-
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.summaryPhotosStrip}
-            >
-              {streak.days.map((d) => (
-                <View key={d.dayNumber} style={styles.summaryThumbItem}>
-                  {d.evidenceImageUrl ? (
-                    <Image
-                      source={{ uri: d.evidenceImageUrl }}
-                      style={styles.summaryThumbImg}
-                      resizeMode="cover"
-                    />
-                  ) : (
-                    <View style={styles.summaryThumbPlaceholder}>
-                      <Text style={{ fontSize: 22 }}>{d.task.emoji}</Text>
-                    </View>
-                  )}
-                  <View style={styles.summaryThumbBadge}>
-                    <Text style={styles.summaryThumbBadgeText}>Día {d.dayNumber}</Text>
-                  </View>
-                </View>
-              ))}
-            </ScrollView>
 
             <TextInput
               style={styles.cleanInputBox}
-              multiline
-              maxLength={350}
+              placeholder="Escribe cómo te sientes al concluir este tema..."
+              placeholderTextColor="#94A3B8"
               value={summaryPostText}
               onChangeText={setSummaryPostText}
-              placeholder="Escribe tu mensaje de '¡Lo logré!' para la comunidad..."
-              placeholderTextColor="#94A3B8"
+              multiline
+              maxLength={350}
             />
 
             <TouchableOpacity
-              style={styles.primaryOrangeBtn}
-              onPress={handlePublishSevenDaySummary}
-              disabled={isPublishingSummary}
-              activeOpacity={0.88}
+              style={[
+                styles.primaryActionBtn,
+                { backgroundColor: activeTopic.accentColor },
+                streak.summaryPublished && { backgroundColor: '#10B981' },
+              ]}
+              onPress={handlePublishTopicSummary}
+              disabled={isPublishingSummary || Boolean(streak.summaryPublished)}
+              activeOpacity={0.85}
             >
               {isPublishingSummary ? (
                 <ActivityIndicator size="small" color="#FFFFFF" />
               ) : (
                 <>
                   <Ionicons
-                    name={streak.summaryPublished ? 'checkmark-done-circle' : 'paper-plane'}
+                    name={
+                      streak.summaryPublished
+                        ? 'checkmark-circle'
+                        : 'share-social-outline'
+                    }
                     size={18}
                     color="#FFFFFF"
                     style={{ marginRight: 8 }}
                   />
-                  <Text style={styles.primaryOrangeBtnText}>
+                  <Text style={styles.primaryActionBtnText}>
                     {streak.summaryPublished
-                      ? 'Resumen publicado en Principal (Compartir de nuevo)'
-                      : 'Publicar mis 7 fotos, "¡Lo logré!" y mi Insignia'}
+                      ? 'Logro publicado en Principal ✓'
+                      : 'Publicar mi Medalla en Principal'}
                   </Text>
                 </>
               )}
             </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.secondaryOutlineBtn}
+              onPress={() => setIsResetConfirmOpen(true)}
+              activeOpacity={0.8}
+            >
+              <Ionicons
+                name="sparkles-outline"
+                size={16}
+                color="#0F172A"
+                style={{ marginRight: 8 }}
+              />
+              <Text style={styles.secondaryOutlineBtnText}>
+                Elegir otro tema para seguir trabajando
+              </Text>
+            </TouchableOpacity>
           </View>
-
-          {/* Start Next 7-Day Streak Button */}
-          <TouchableOpacity
-            style={styles.secondaryOutlineBtn}
-            onPress={handleStartNextStreak}
-            activeOpacity={0.85}
-          >
-            <Ionicons name="flame-outline" size={18} color="#FF7A00" style={{ marginRight: 8 }} />
-            <Text style={styles.secondaryOutlineBtnText}>
-              Iniciar siguiente Ruta de 7 Días (Subir de Nivel)
-            </Text>
-          </TouchableOpacity>
-
-          <View style={{ height: 36 }} />
         </ScrollView>
       ) : (
-        /* =================== VIEW 3: REDESIGNED COMPACT & PROFESSIONAL STREAK DASHBOARD =================== */
+        /* =================== ACTIVE TOPIC ACTIVITIES DASHBOARD =================== */
         <ScrollView
           style={styles.scrollBody}
           contentContainerStyle={styles.resultScrollContent}
           showsVerticalScrollIndicator={Platform.OS === 'web'}
         >
-          {/* 1. Compact Header Card: ANIMA Mascot + Random Phrase + Counter Pill + 7-Day Selector */}
-          <View
-            style={[
-              styles.cleanStreakHeaderCard,
-              { padding: 12, marginBottom: 10, borderRadius: 16 },
-            ]}
-          >
-            {/* ANIMA Mascot + Random Quote + Compact Counter Pill */}
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                backgroundColor: '#F8FAFC',
-                borderRadius: 12,
-                paddingVertical: 8,
-                paddingHorizontal: 10,
-                borderWidth: 1,
-                borderColor: '#E2E8F0',
-                marginBottom: 10,
-                gap: 9,
-              }}
-            >
+          {/* 1. TOPIC & ANIMA SUPPORT HEADER CARD (NO ORANGE, NO FIRE, NO 1/7 COUNTER) */}
+          <View style={styles.cleanHeaderCard}>
+            <View style={styles.topicBannerRow}>
+              <View
+                style={[
+                  styles.topicPillHeader,
+                  {
+                    backgroundColor: activeTopic.softBg,
+                    borderColor: activeTopic.borderColor,
+                  },
+                ]}
+              >
+                <Text style={{ fontSize: 14 }}>{activeTopic.emoji}</Text>
+                <Text
+                  style={[
+                    styles.topicPillHeaderText,
+                    { color: activeTopic.accentColor },
+                  ]}
+                >
+                  Trabajando en: {activeTopic.name}
+                </Text>
+              </View>
+
+              <View style={styles.completedCountSoftPill}>
+                <Ionicons
+                  name="checkmark-circle-outline"
+                  size={13}
+                  color="#475569"
+                />
+                <Text style={styles.completedCountSoftPillText}>
+                  {completedActivitiesList.length}{' '}
+                  {completedActivitiesList.length === 1
+                    ? 'actividad realizada'
+                    : 'actividades realizadas'}
+                </Text>
+              </View>
+            </View>
+
+            {/* ANIMA Quote Box */}
+            <View style={styles.animaSupportQuoteBox}>
               <Image
                 source={require('../../../assets/perfilANIMA.png')}
-                style={{
-                  width: 38,
-                  height: 38,
-                  borderRadius: 19,
-                  borderWidth: 1.5,
-                  borderColor: '#FF7A00',
-                }}
+                style={[
+                  styles.animaSupportAvatar,
+                  { borderColor: activeTopic.accentColor },
+                ]}
                 resizeMode="cover"
               />
-              <View style={{ flex: 1 }}>
-                <Text
-                  style={{
-                    fontSize: 11.5,
-                    fontWeight: '600',
-                    color: '#334155',
-                    lineHeight: 15.5,
-                    fontStyle: 'italic',
-                  }}
-                  numberOfLines={2}
-                >
-                  "{headerQuote}"
-                </Text>
-              </View>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  backgroundColor: '#FFF7ED',
-                  borderWidth: 1,
-                  borderColor: '#FFEDD5',
-                  paddingHorizontal: 7,
-                  paddingVertical: 3.5,
-                  borderRadius: 9,
-                  gap: 3,
-                }}
-              >
-                <Text style={{ fontSize: 11 }}>🔥</Text>
-                <Text style={{ fontSize: 11, fontWeight: '900', color: '#FF7A00' }}>
-                  {streak?.completedDaysCount || 0}/7
-                </Text>
-              </View>
+              <Text style={styles.animaSupportQuoteText} numberOfLines={2}>
+                "{headerQuote}"
+              </Text>
               <TouchableOpacity
-                onPress={() => setHeaderQuote(getRandomStreakMotivationalQuote())}
+                onPress={() =>
+                  setHeaderQuote(getRandomStreakMotivationalQuote())
+                }
+                style={styles.refreshQuoteBtn}
                 activeOpacity={0.7}
-                style={{
-                  width: 26,
-                  height: 26,
-                  borderRadius: 13,
-                  backgroundColor: '#FFFFFF',
-                  borderWidth: 1,
-                  borderColor: '#E2E8F0',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
               >
-                <Ionicons name="reload" size={12} color="#FF7A00" />
+                <Ionicons
+                  name="refresh"
+                  size={13}
+                  color={activeTopic.accentColor}
+                />
               </TouchableOpacity>
             </View>
 
-            {/* Minimalist 7-Day Selector Pills (No Emojis) */}
-            <View style={styles.cleanSevenDaysBar}>
+            {/* Horizontal Strip of Unlimited Activity Steps */}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.activitiesStepsStrip}
+            >
               {streak?.days.map((d) => {
                 const isSelected = d.dayNumber === selectedDayNum;
                 const isDone = d.status === 'completed';
                 const isCurrent = d.dayNumber === streak.currentDayNumber;
-
                 return (
                   <TouchableOpacity
                     key={d.dayNumber}
                     style={[
-                      styles.cleanDayPill,
-                      { paddingVertical: 6, borderRadius: 10 },
-                      isDone && styles.cleanDayPillDone,
-                      isCurrent && !isDone && styles.cleanDayPillCurrent,
-                      isSelected && styles.cleanDayPillSelected,
+                      styles.stepChip,
+                      isDone && {
+                        borderColor: activeTopic.borderColor,
+                        backgroundColor: activeTopic.softBg,
+                      },
+                      isCurrent && {
+                        borderColor: activeTopic.accentColor,
+                      },
+                      isSelected && {
+                        backgroundColor: activeTopic.accentColor,
+                        borderColor: activeTopic.accentColor,
+                      },
                     ]}
                     onPress={() => {
                       setSelectedDayNum(d.dayNumber);
-                      setPostponedEncouragementQuote(d.motivationalQuoteUsed || null);
+                      setPostponedEncouragementQuote(null);
                     }}
                     activeOpacity={0.8}
                   >
                     <Text
                       style={[
-                        styles.cleanDayPillText,
-                        (isDone || isCurrent) && { color: '#FF7A00', fontWeight: '800' },
-                        isSelected && { color: '#FFFFFF', fontWeight: '900' },
+                        styles.stepChipText,
+                        isDone && { color: activeTopic.accentColor },
+                        isSelected && { color: '#FFFFFF', fontWeight: '800' },
                       ]}
                     >
-                      D{d.dayNumber}
+                      Act. {d.dayNumber}
                     </Text>
-                    <View
-                      style={[
-                        styles.miniDotIndicator,
-                        isSelected
-                          ? { backgroundColor: '#FFFFFF' }
-                          : isDone || isCurrent
-                          ? { backgroundColor: '#FF7A00' }
-                          : { backgroundColor: '#CBD5E1' },
-                      ]}
-                    />
+                    {isDone && (
+                      <Ionicons
+                        name={
+                          d.visibility === 'private'
+                            ? 'lock-closed'
+                            : 'checkmark-circle'
+                        }
+                        size={11}
+                        color={isSelected ? '#FFFFFF' : activeTopic.accentColor}
+                      />
+                    )}
                   </TouchableOpacity>
                 );
               })}
-            </View>
+            </ScrollView>
           </View>
 
-          {/* 2. COMPACT Active Day Challenge & Sleek Unified Register Card */}
+          {/* 2. CURRENT INTERACTIVE ACTIVITY CARD */}
           {activeDayObj && (
-            <View
-              style={[
-                styles.cleanWhiteCard,
-                { paddingVertical: 12, paddingHorizontal: 14, marginBottom: 10, borderRadius: 16 },
-              ]}
-            >
-              {/* Top Row: Day Pill Badge well separated from the Title below */}
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginBottom: 8,
-                }}
-              >
+            <View style={[styles.cleanWhiteCard, { padding: 16 }]}>
+              <View style={styles.activityCardTopRow}>
                 <View
-                  style={{
-                    backgroundColor: '#FFF7ED',
-                    paddingHorizontal: 9,
-                    paddingVertical: 3,
-                    borderRadius: 7,
-                    borderWidth: 1,
-                    borderColor: '#FFEDD5',
-                  }}
+                  style={[
+                    styles.activityLabelBadge,
+                    {
+                      backgroundColor: activeTopic.softBg,
+                      borderColor: activeTopic.borderColor,
+                    },
+                  ]}
                 >
-                  <Text style={{ fontSize: 10.5, fontWeight: '800', color: '#FF7A00' }}>
-                    {activeDayObj.dayName}
+                  <Text
+                    style={[
+                      styles.activityLabelBadgeText,
+                      { color: activeTopic.accentColor },
+                    ]}
+                  >
+                    {activeDayObj.dayName} • {activeTopic.name}
                   </Text>
                 </View>
 
-                {activeDayObj.status === 'completed' ? (
+                {activeDayObj.status !== 'completed' ? (
+                  <TouchableOpacity
+                    style={styles.swapActivityBtn}
+                    onPress={handleSwapTask}
+                    disabled={isSwappingTask}
+                    activeOpacity={0.75}
+                  >
+                    <Ionicons
+                      name="shuffle-outline"
+                      size={14}
+                      color={activeTopic.accentColor}
+                    />
+                    <Text
+                      style={[
+                        styles.swapActivityBtnText,
+                        { color: activeTopic.accentColor },
+                      ]}
+                    >
+                      Otra actividad (100 disponibles)
+                    </Text>
+                  </TouchableOpacity>
+                ) : (
                   <View style={styles.completedGrayTag}>
-                    <Ionicons name="checkmark-circle" size={13} color="#FF7A00" />
-                    <Text style={styles.completedGrayTagText}>Completado</Text>
+                    <Ionicons
+                      name={
+                        activeDayObj.visibility === 'private'
+                          ? 'lock-closed'
+                          : 'earth'
+                      }
+                      size={12}
+                      color="#475569"
+                    />
+                    <Text style={styles.completedGrayTagText}>
+                      {activeDayObj.visibility === 'private'
+                        ? 'Guardada en privado'
+                        : 'Publicada en comunidad'}
+                    </Text>
                   </View>
-                ) : activeDayObj.status === 'postponed' ? (
-                  <View style={styles.completedGrayTag}>
-                    <Ionicons name="reload-circle" size={13} color="#64748B" />
-                    <Text style={styles.completedGrayTagText}>Recorrido</Text>
-                  </View>
-                ) : null}
+                )}
               </View>
 
-              {/* Separated Activity Title + Clean Description (without heavy box) */}
-              <Text
-                style={{
-                  fontSize: 14.5,
-                  fontWeight: '800',
-                  color: '#0F172A',
-                  lineHeight: 19,
-                  marginBottom: 4,
-                }}
-              >
-                {activeDayObj.task.title}
-              </Text>
+              {/* Activity Title & Description */}
+              <View style={styles.activityTitleRow}>
+                <Text style={styles.activityEmojiLarge}>
+                  {activeDayObj.task.emoji}
+                </Text>
+                <Text style={styles.activityMainTitle}>
+                  {activeDayObj.task.title}
+                </Text>
+              </View>
 
-              <Text
-                style={{
-                  fontSize: 12,
-                  color: '#64748B',
-                  lineHeight: 16.5,
-                  marginBottom: 10,
-                }}
-              >
-                {activeDayObj.task.description}
-              </Text>
+              <View style={styles.taskDescriptionBox}>
+                <Text style={styles.taskDescriptionText}>
+                  {activeDayObj.task.description}
+                </Text>
+              </View>
 
-              {/* Encouragement Box if user postponed this day */}
-              {postponedEncouragementQuote && activeDayObj.status !== 'completed' && (
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    backgroundColor: '#F8FAFC',
-                    borderRadius: 10,
-                    padding: 7,
-                    borderWidth: 1,
-                    borderColor: '#E2E8F0',
-                    marginBottom: 8,
-                    gap: 8,
-                  }}
-                >
+              {postponedEncouragementQuote && (
+                <View style={styles.cleanAnimaNoteBox}>
                   <Image
                     source={require('../../../assets/perfilANIMA.png')}
-                    style={{ width: 28, height: 28, borderRadius: 14, borderWidth: 1, borderColor: '#FF7A00' }}
+                    style={[
+                      styles.animaAvatarMedium,
+                      { borderColor: activeTopic.accentColor },
+                    ]}
                     resizeMode="cover"
                   />
-                  <Text style={{ flex: 1, fontSize: 11, color: '#475569', fontStyle: 'italic' }}>
-                    "{postponedEncouragementQuote}"
-                  </Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.cleanAnimaNoteTitle}>
+                      ANIMA está contigo:
+                    </Text>
+                    <Text style={styles.cleanAnimaNoteText}>
+                      "{postponedEncouragementQuote}"
+                    </Text>
+                  </View>
                 </View>
               )}
 
-              {activeDayObj.status === 'completed' ? (
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    backgroundColor: '#F8FAFC',
-                    borderRadius: 12,
-                    padding: 8,
-                    borderWidth: 1,
-                    borderColor: '#E2E8F0',
-                    gap: 10,
-                  }}
-                >
-                  {activeDayObj.evidenceImageUrl ? (
-                    <TouchableOpacity
-                      activeOpacity={0.85}
-                      onPress={() => handleOpenGalleryPhoto(activeDayObj.evidenceImageUrl!)}
-                    >
-                      <Image
-                        source={{ uri: activeDayObj.evidenceImageUrl }}
-                        style={{
-                          width: 56,
-                          height: 56,
-                          borderRadius: 10,
-                          borderWidth: 1,
-                          borderColor: '#FF7A00',
-                        }}
-                        resizeMode="cover"
-                      />
-                    </TouchableOpacity>
+              {activeDayObj.status === 'completed' &&
+              activeDayObj.evidenceImageUrl ? (
+                <View style={styles.completedDayPreviewBox}>
+                  <TouchableOpacity
+                    activeOpacity={0.9}
+                    onPress={() =>
+                      handleOpenGalleryPhoto(activeDayObj.evidenceImageUrl!)
+                    }
+                  >
+                    <Image
+                      source={{ uri: activeDayObj.evidenceImageUrl }}
+                      style={styles.completedDayPreviewImg}
+                      resizeMode="cover"
+                    />
+                  </TouchableOpacity>
+                  <Text style={styles.completedDayPreviewStatus}>
+                    {activeDayObj.visibility === 'private'
+                      ? 'Actividad guardada en privado (solo visible para ti)'
+                      : 'Actividad compartida con la comunidad'}
+                  </Text>
+                  {activeDayObj.evidenceNote ? (
+                    <Text style={styles.completedDayPreviewNote}>
+                      "{activeDayObj.evidenceNote}"
+                    </Text>
                   ) : null}
-                  <View style={{ flex: 1 }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                      <Ionicons name="checkmark-circle" size={14} color="#FF7A00" />
-                      <Text style={{ fontSize: 12, fontWeight: '800', color: '#0F172A' }}>
-                        Día {activeDayObj.dayNumber} completado
-                      </Text>
-                    </View>
-                    {activeDayObj.evidenceNote ? (
-                      <Text
-                        style={{ fontSize: 11, color: '#64748B', fontStyle: 'italic', marginTop: 2 }}
-                        numberOfLines={2}
-                      >
-                        "{activeDayObj.evidenceNote}"
-                      </Text>
-                    ) : (
-                      <Text style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>
-                        Toca la foto para verla en pantalla completa
-                      </Text>
-                    )}
-                  </View>
-
-                  {activeDayObj.dayNumber < 7 && (
-                    <TouchableOpacity
-                      style={{
-                        backgroundColor: '#FF7A00',
-                        borderRadius: 9,
-                        paddingVertical: 7,
-                        paddingHorizontal: 10,
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        gap: 4,
-                      }}
-                      activeOpacity={0.85}
-                      onPress={() => setSelectedDayNum(activeDayObj.dayNumber + 1)}
-                    >
-                      <Text style={{ color: '#FFFFFF', fontSize: 11, fontWeight: '800' }}>
-                        Día {activeDayObj.dayNumber + 1}
-                      </Text>
-                      <Ionicons name="arrow-forward" size={12} color="#FFFFFF" />
-                    </TouchableOpacity>
-                  )}
                 </View>
               ) : (
-                /* SLEEK UNIFIED Evidence Bar + Compact Action Buttons */
-                <View>
-                  {/* Unified 44px Bar: Compact Photo Pill/Thumbnail on Left + 1-Line Comment Input on Right */}
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      backgroundColor: '#F8FAFC',
-                      borderRadius: 11,
-                      borderWidth: 1,
-                      borderColor: evidencePhotoUri ? '#FDBA74' : '#E2E8F0',
-                      paddingHorizontal: 6,
-                      paddingVertical: 4,
-                      gap: 8,
-                      marginBottom: 8,
-                    }}
-                  >
+                <View style={styles.publishSectionWrap}>
+                  <Text style={styles.registerSectionTitle}>
+                    Registrar mi actividad
+                  </Text>
+
+                  {/* Photo + Comment Row */}
+                  <View style={styles.photoAndCommentRow}>
                     <TouchableOpacity
+                      style={styles.photoPickerCompactBox}
                       onPress={handlePickEvidencePhoto}
                       activeOpacity={0.85}
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        backgroundColor: evidencePhotoUri ? '#FFFFFF' : '#FFF7ED',
-                        borderWidth: 1,
-                        borderColor: evidencePhotoUri ? '#FF7A00' : '#FFEDD5',
-                        borderRadius: 8,
-                        paddingHorizontal: evidencePhotoUri ? 6 : 10,
-                        paddingVertical: evidencePhotoUri ? 3 : 6,
-                        gap: 5,
-                      }}
                     >
                       {evidencePhotoUri ? (
-                        <>
-                          <Image
-                            source={{ uri: evidencePhotoUri }}
-                            style={{ width: 26, height: 26, borderRadius: 6 }}
-                            resizeMode="cover"
-                          />
-                          <Text style={{ fontSize: 10.5, fontWeight: '800', color: '#FF7A00' }}>
-                            Cambiar
-                          </Text>
-                        </>
+                        <Image
+                          source={{ uri: evidencePhotoUri }}
+                          style={{ width: '100%', height: '100%' }}
+                          resizeMode="cover"
+                        />
                       ) : (
                         <>
-                          <Ionicons name="camera-outline" size={15} color="#FF7A00" />
-                          <Text style={{ fontSize: 11, fontWeight: '800', color: '#FF7A00' }}>
+                          <Ionicons
+                            name="camera-outline"
+                            size={22}
+                            color={activeTopic.accentColor}
+                          />
+                          <Text style={styles.photoPickerCompactText}>
                             Subir foto
                           </Text>
                         </>
@@ -1078,201 +1160,277 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
                     </TouchableOpacity>
 
                     <TextInput
-                      style={{
-                        flex: 1,
-                        height: 34,
-                        fontSize: 12,
-                        color: '#0F172A',
-                        paddingHorizontal: 4,
-                        paddingVertical: 0,
-                      }}
-                      placeholder="Comentario de tu experiencia (opcional)..."
+                      style={styles.commentCompactInput}
+                      placeholder="Escribe cómo te sentiste al realizar esta actividad... (opcional)"
                       placeholderTextColor="#94A3B8"
                       value={evidenceNote}
                       onChangeText={setEvidenceNote}
-                      maxLength={240}
+                      multiline
+                      maxLength={280}
                     />
                   </View>
 
-                  {/* Compact Stacked Action Buttons */}
-                  <View style={{ gap: 6 }}>
+                  {/* PUBLIC VS PRIVATE SELECTOR */}
+                  <Text style={styles.visibilitySectionLabel}>
+                    ¿Cómo deseas guardar tu actividad?
+                  </Text>
+                  <View style={styles.visibilityToggleRow}>
                     <TouchableOpacity
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        backgroundColor: '#FF7A00',
-                        paddingVertical: 9.5,
-                        paddingHorizontal: 14,
-                        borderRadius: 10,
-                      }}
-                      onPress={handleCompleteDay}
-                      disabled={isSubmittingDay}
-                      activeOpacity={0.88}
+                      style={[
+                        styles.visibilityOptionBtn,
+                        evidenceVisibility === 'public' && {
+                          backgroundColor: activeTopic.softBg,
+                          borderColor: activeTopic.accentColor,
+                        },
+                      ]}
+                      onPress={() => setEvidenceVisibility('public')}
+                      activeOpacity={0.8}
                     >
-                      {isSubmittingDay ? (
-                        <ActivityIndicator size="small" color="#FFFFFF" />
-                      ) : (
-                        <>
-                          <Ionicons name="checkmark-circle" size={15} color="#FFFFFF" style={{ marginRight: 5 }} />
-                          <Text style={{ color: '#FFFFFF', fontSize: 12.5, fontWeight: '800' }}>
-                            Publicar Día {activeDayObj.dayNumber}
-                          </Text>
-                        </>
-                      )}
+                      <Ionicons
+                        name="earth-outline"
+                        size={15}
+                        color={
+                          evidenceVisibility === 'public'
+                            ? activeTopic.accentColor
+                            : '#64748B'
+                        }
+                      />
+                      <Text
+                        style={[
+                          styles.visibilityOptionText,
+                          evidenceVisibility === 'public' && {
+                            color: activeTopic.accentColor,
+                            fontWeight: '800',
+                          },
+                        ]}
+                      >
+                        Publicar en comunidad
+                      </Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        backgroundColor: '#F8FAFC',
-                        paddingVertical: 7.5,
-                        paddingHorizontal: 10,
-                        borderRadius: 9,
-                        borderWidth: 1,
-                        borderColor: '#E2E8F0',
-                      }}
-                      onPress={handlePostponeDay}
-                      activeOpacity={0.75}
+                      style={[
+                        styles.visibilityOptionBtn,
+                        evidenceVisibility === 'private' && {
+                          backgroundColor: activeTopic.softBg,
+                          borderColor: activeTopic.accentColor,
+                        },
+                      ]}
+                      onPress={() => setEvidenceVisibility('private')}
+                      activeOpacity={0.8}
                     >
-                      <Ionicons name="heart-outline" size={13} color="#FF7A00" style={{ marginRight: 5 }} />
+                      <Ionicons
+                        name="lock-closed-outline"
+                        size={15}
+                        color={
+                          evidenceVisibility === 'private'
+                            ? activeTopic.accentColor
+                            : '#64748B'
+                        }
+                      />
                       <Text
-                        style={{ fontSize: 11, fontWeight: '700', color: '#64748B', textAlign: 'center' }}
-                        numberOfLines={1}
+                        style={[
+                          styles.visibilityOptionText,
+                          evidenceVisibility === 'private' && {
+                            color: activeTopic.accentColor,
+                            fontWeight: '800',
+                          },
+                        ]}
                       >
-                        Hoy no me sentí bien • Recorrer día y recibir ánimo
+                        Mantener privada
                       </Text>
                     </TouchableOpacity>
                   </View>
+
+                  {/* Save / Publish Activity Button */}
+                  <TouchableOpacity
+                    style={[
+                      styles.primaryActionBtn,
+                      { backgroundColor: activeTopic.accentColor },
+                    ]}
+                    onPress={handleCompleteSelectedDay}
+                    disabled={isSubmittingDay}
+                    activeOpacity={0.85}
+                  >
+                    {isSubmittingDay ? (
+                      <ActivityIndicator size="small" color="#FFFFFF" />
+                    ) : (
+                      <>
+                        <Ionicons
+                          name={
+                            evidenceVisibility === 'private'
+                              ? 'lock-closed'
+                              : 'checkmark-circle'
+                          }
+                          size={17}
+                          color="#FFFFFF"
+                          style={{ marginRight: 7 }}
+                        />
+                        <Text style={styles.primaryActionBtnText}>
+                          {evidenceVisibility === 'private'
+                            ? 'Guardar actividad en privado'
+                            : 'Publicar actividad en comunidad'}
+                        </Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+
+                  {/* Gentle Pause / Postpone Button */}
+                  <TouchableOpacity
+                    style={styles.postponeCleanBtn}
+                    onPress={handlePostponeDay}
+                    activeOpacity={0.75}
+                  >
+                    <Ionicons
+                      name="heart-outline"
+                      size={14}
+                      color={activeTopic.accentColor}
+                      style={{ marginRight: 6 }}
+                    />
+                    <Text style={styles.postponeCleanBtnText}>
+                      Hoy prefiero descansar • Hacerlo en otro momento y recibir ánimo
+                    </Text>
+                  </TouchableOpacity>
                 </View>
               )}
             </View>
           )}
 
-          {/* 3. MIS AVANCES (GRID DE 7 EN UNA SOLA FILA EN WEB/LAPTOP, Y 4+3 CON ALTURA FIJA EN MÓVIL) */}
+          {/* 3. USER DECIDES WHEN TO STOP & CLAIM MEDAL */}
           <View
             style={[
               styles.cleanWhiteCard,
-              { paddingVertical: 12, paddingHorizontal: 14, marginBottom: 10, borderRadius: 16 },
+              {
+                borderColor: activeTopic.borderColor,
+                backgroundColor: '#FFFFFF',
+              },
             ]}
           >
-            <View style={[styles.sectionHeaderRow, { marginBottom: 8 }]}>
-              <Text style={{ fontSize: 13, fontWeight: '800', color: '#0F172A' }}>
-                Mis Avances (7 Días)
-              </Text>
-              <View style={styles.countGrayBadge}>
-                <Text style={styles.countGrayBadgeText}>
-                  {streak?.completedDaysCount || 0} / 7
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+              <View
+                style={[
+                  styles.medalPreviewCircle,
+                  {
+                    backgroundColor: activeTopic.softBg,
+                    borderColor: activeTopic.borderColor,
+                  },
+                ]}
+              >
+                <Text style={{ fontSize: 24 }}>{targetBadge.emoji}</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.concludeCardTitle}>
+                  Tú decides hasta dónde parar
+                </Text>
+                <Text style={styles.concludeCardSub}>
+                  Cuando sientas que estas actividades ya te ayudaron a superar o sentirte mejor respecto a {activeTopic.name}, concluye el tema para recibir tu{' '}
+                  <Text style={{ fontWeight: '800', color: activeTopic.accentColor }}>
+                    {targetBadge.name}
+                  </Text>
+                  .
                 </Text>
               </View>
             </View>
 
-            {streak?.days && (() => {
-              const days = streak.days;
-              const isDesktopGrid = windowWidth >= 768;
+            <TouchableOpacity
+              style={[
+                styles.concludeMedalBtn,
+                {
+                  borderColor: activeTopic.accentColor,
+                  backgroundColor: activeTopic.softBg,
+                },
+              ]}
+              onPress={handleConcludeTopicForMedal}
+              disabled={isConcludingTopic}
+              activeOpacity={0.85}
+            >
+              {isConcludingTopic ? (
+                <ActivityIndicator size="small" color={activeTopic.accentColor} />
+              ) : (
+                <>
+                  <Ionicons
+                    name="medal-outline"
+                    size={17}
+                    color={activeTopic.accentColor}
+                    style={{ marginRight: 7 }}
+                  />
+                  <Text
+                    style={[
+                      styles.concludeMedalBtnText,
+                      { color: activeTopic.accentColor },
+                    ]}
+                  >
+                    Concluir tema y recibir mi {targetBadge.name}
+                  </Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
 
-              const renderCell = (d: typeof days[0]) => {
-                const hasPhoto = Boolean(d.evidenceImageUrl);
-                const isSelected = d.dayNumber === selectedDayNum;
-                return (
+          {/* 4. GALLERY OF COMPLETED ACTIVITIES */}
+          {completedActivitiesList.length > 0 && (
+            <View style={[styles.cleanWhiteCard, { padding: 14 }]}>
+              <View style={styles.sectionHeaderRow}>
+                <Text style={{ fontSize: 13.5, fontWeight: '800', color: '#0F172A' }}>
+                  Mis Actividades Realizadas
+                </Text>
+                <View style={styles.countGrayBadge}>
+                  <Text style={styles.countGrayBadgeText}>
+                    {completedActivitiesList.length} registradas
+                  </Text>
+                </View>
+              </View>
+
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ gap: 8 }}
+              >
+                {completedActivitiesList.map((d) => (
                   <TouchableOpacity
                     key={d.dayNumber}
-                    style={{
-                      flex: 1,
-                      height: isDesktopGrid ? 80 : 72,
-                      borderRadius: 11,
-                      overflow: 'hidden',
-                      backgroundColor: '#F8FAFC',
-                      borderWidth: isSelected || hasPhoto ? 1.5 : 1,
-                      borderColor: hasPhoto || isSelected ? '#FF7A00' : '#E2E8F0',
-                      position: 'relative',
-                    }}
-                    activeOpacity={0.85}
+                    style={[
+                      styles.completedThumbCard,
+                      d.dayNumber === selectedDayNum && {
+                        borderColor: activeTopic.accentColor,
+                        borderWidth: 2,
+                      },
+                    ]}
+                    activeOpacity={0.88}
                     onPress={() => {
-                      if (hasPhoto && d.evidenceImageUrl) {
+                      setSelectedDayNum(d.dayNumber);
+                      if (d.evidenceImageUrl) {
                         handleOpenGalleryPhoto(d.evidenceImageUrl);
-                      } else {
-                        setSelectedDayNum(d.dayNumber);
                       }
                     }}
                   >
-                    {hasPhoto && d.evidenceImageUrl ? (
-                      <>
-                        <Image
-                          source={{ uri: d.evidenceImageUrl }}
-                          style={{ width: '100%', height: '100%' }}
-                          resizeMode="cover"
-                        />
-                        <View style={styles.advanceDayOverlayPill}>
-                          <Text style={styles.advanceDayOverlayText}>Día {d.dayNumber}</Text>
-                        </View>
-                      </>
-                    ) : (
-                      <View style={styles.advanceEmptySlot}>
-                        <Text
-                          style={{
-                            fontSize: 10.5,
-                            fontWeight: '800',
-                            color: isSelected ? '#FF7A00' : '#475569',
-                          }}
-                        >
-                          Día {d.dayNumber}
-                        </Text>
-                        <Text
-                          style={{
-                            fontSize: 8.5,
-                            color: '#94A3B8',
-                            fontWeight: '600',
-                            marginTop: 2,
-                          }}
-                          numberOfLines={1}
-                        >
-                          {d.status === 'unlocked' ? 'Actual' : 'Pendiente'}
-                        </Text>
-                      </View>
-                    )}
+                    {d.evidenceImageUrl ? (
+                      <Image
+                        source={{ uri: d.evidenceImageUrl }}
+                        style={{ width: '100%', height: '100%' }}
+                        resizeMode="cover"
+                      />
+                    ) : null}
+                    <View style={styles.completedThumbBadge}>
+                      <Text style={styles.completedThumbBadgeText}>
+                        Act. {d.dayNumber}{' '}
+                        {d.visibility === 'private' ? '🔒' : '🌍'}
+                      </Text>
+                    </View>
                   </TouchableOpacity>
-                );
-              };
+                ))}
+              </ScrollView>
+            </View>
+          )}
 
-              if (isDesktopGrid) {
-                return (
-                  <View style={{ flexDirection: 'row', gap: 6 }}>
-                    {days.map((d) => renderCell(d))}
-                  </View>
-                );
-              }
-
-              return (
-                <View style={{ gap: 7 }}>
-                  <View style={{ flexDirection: 'row', gap: 7 }}>
-                    {days.slice(0, 4).map((d) => renderCell(d))}
-                  </View>
-                  <View style={{ flexDirection: 'row', gap: 7, paddingHorizontal: '11%' }}>
-                    {days.slice(4, 7).map((d) => renderCell(d))}
-                  </View>
-                </View>
-              );
-            })()}
-          </View>
-
-          {/* 4. INSIGNIAS EN 1 SOLA LÍNEA (PEQUEÑAS/OCULTAS/INACTIVAS HASTA DESBLOQUEARSE, Y MÁS GRANDES/COLOR AL DESBLOQUEARSE) */}
+          {/* 5. MEDALS FOR THE 4 TOPICS */}
           <View style={[styles.cleanWhiteCard, { paddingVertical: 12, paddingHorizontal: 14 }]}>
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: 8,
-              }}
-            >
+            <View style={styles.sectionHeaderRow}>
               <Text style={{ fontSize: 12.5, fontWeight: '800', color: '#475569' }}>
-                Insignias
+                Medallas de Superación
               </Text>
               <Text style={{ fontSize: 10.5, fontWeight: '700', color: '#94A3B8' }}>
-                {(result.unlockedBadges?.length || 0)} / 4 desbloqueadas
+                {result.unlockedBadges?.length || 0} / 4 obtenidas
               </Text>
             </View>
 
@@ -1284,48 +1442,29 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
                     key={b.id}
                     style={{
                       flex: 1,
-                      backgroundColor: isUnlocked ? '#FFF7ED' : '#F8FAFC',
+                      backgroundColor: isUnlocked ? b.softBg : '#F8FAFC',
                       borderRadius: 12,
-                      paddingVertical: isUnlocked ? 10 : 7,
+                      paddingVertical: isUnlocked ? 10 : 8,
                       paddingHorizontal: 4,
                       alignItems: 'center',
                       justifyContent: 'center',
                       borderWidth: isUnlocked ? 1.5 : 1,
-                      borderColor: isUnlocked ? '#FF7A00' : '#E2E8F0',
-                      opacity: isUnlocked ? 1 : 0.42,
-                      transform: [{ scale: isUnlocked ? 1.03 : 0.94 }],
+                      borderColor: isUnlocked ? b.color : '#E2E8F0',
+                      opacity: isUnlocked ? 1 : 0.55,
                     }}
                   >
-                    {isUnlocked ? (
-                      <>
-                        <Text style={{ fontSize: 22, marginBottom: 3 }}>{b.emoji}</Text>
-                        <Text
-                          style={{
-                            fontSize: 9.5,
-                            fontWeight: '800',
-                            color: '#FF7A00',
-                            textAlign: 'center',
-                          }}
-                          numberOfLines={1}
-                        >
-                          {b.name}
-                        </Text>
-                      </>
-                    ) : (
-                      <>
-                        <Ionicons name="lock-closed" size={14} color="#94A3B8" style={{ marginBottom: 2 }} />
-                        <Text
-                          style={{
-                            fontSize: 9,
-                            fontWeight: '700',
-                            color: '#94A3B8',
-                            textAlign: 'center',
-                          }}
-                        >
-                          Nivel {b.level}
-                        </Text>
-                      </>
-                    )}
+                    <Text style={{ fontSize: 20, marginBottom: 3 }}>{b.emoji}</Text>
+                    <Text
+                      style={{
+                        fontSize: 9.2,
+                        fontWeight: '800',
+                        color: isUnlocked ? b.color : '#64748B',
+                        textAlign: 'center',
+                      }}
+                      numberOfLines={1}
+                    >
+                      {b.name.replace('Medalla de ', '')}
+                    </Text>
                   </View>
                 );
               })}
@@ -1394,562 +1533,412 @@ const styles = StyleSheet.create({
     color: '#64748B',
     marginTop: 1,
   },
-  headerActionBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: '#F1F5F9',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  resetPillHeaderBtn: {
+  resetTopicHeaderBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
     backgroundColor: '#FFFFFF',
     borderWidth: 1.5,
-    borderColor: '#FF7A00',
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 10,
   },
-  resetPillHeaderBtnText: {
+  resetTopicHeaderBtnText: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#FF7A00',
   },
-  /* Spacious Centered Invitation & Reset Modal Styles */
-  compactModalOverlay: {
+  /* Onboarding Step 1 (2x2 Grid) & Step 2 (ANIMA Explanation) */
+  onboardingOverlay: {
     flex: 1,
     backgroundColor: 'rgba(15, 23, 42, 0.55)',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 18,
-    paddingVertical: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 18,
   },
-  compactInvitationCard: {
+  onboardingCard: {
     width: '100%',
     maxWidth: 500,
     maxHeight: '92%',
     backgroundColor: '#FFFFFF',
     borderRadius: 24,
-    paddingHorizontal: 22,
-    paddingVertical: 20,
-    borderWidth: 1.5,
-    borderColor: '#FFEDD5',
+    paddingHorizontal: 20,
+    paddingVertical: 18,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.16,
+    shadowOpacity: 0.15,
     shadowRadius: 22,
     elevation: 10,
   },
-  compactInvitationCardDesktop: {
-    maxWidth: 660,
-    paddingHorizontal: 32,
-    paddingVertical: 26,
+  onboardingCardDesktop: {
+    maxWidth: 620,
+    paddingHorizontal: 28,
+    paddingVertical: 22,
   },
-  compactTopBar: {
+  onboardingTopBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 12,
   },
-  compactOrangePill: {
+  calmPillBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#FFF7ED',
+    backgroundColor: '#EFF6FF',
     borderWidth: 1,
-    borderColor: '#FDBA74',
-    paddingHorizontal: 12,
-    paddingVertical: 5,
+    borderColor: '#BFDBFE',
+    paddingHorizontal: 11,
+    paddingVertical: 4.5,
     borderRadius: 12,
   },
-  compactOrangePillText: {
-    fontSize: 11,
-    fontWeight: '900',
-    color: '#FF7A00',
-    letterSpacing: 0.5,
+  calmPillBadgeText: {
+    fontSize: 10.5,
+    fontWeight: '800',
+    color: '#2563EB',
+    letterSpacing: 0.4,
   },
-  compactCloseBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+  onboardingCloseBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     backgroundColor: '#F8FAFC',
     borderWidth: 1,
     borderColor: '#E2E8F0',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  compactAnimaHeader: {
+  animaIntroRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 18,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 16,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    gap: 12,
+    marginBottom: 14,
   },
-  compactAnimaAvatar: {
+  animaAvatarOnboarding: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    borderWidth: 2,
+    borderColor: '#3B82F6',
+  },
+  onboardingTitle: {
+    fontSize: 15,
+    fontWeight: '900',
+    color: '#0F172A',
+    marginBottom: 3,
+  },
+  onboardingDescription: {
+    fontSize: 12,
+    color: '#475569',
+    lineHeight: 17.5,
+  },
+  selectPromptText: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#0F172A',
+    marginBottom: 10,
+  },
+  topicsTwoByTwoGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    rowGap: 12,
+  },
+  topicGridCard: {
+    width: '48.2%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    overflow: 'hidden',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  topicSquareImageWrap: {
+    width: '100%',
+    aspectRatio: 1,
+    backgroundColor: '#F1F5F9',
+  },
+  topicSquareImage: {
+    width: '100%',
+    height: '100%',
+  },
+  topicCardFooter: {
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  topicCardName: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#0F172A',
+    textAlign: 'center',
+  },
+  /* Step 2 Styles */
+  step2AnimaHeader: {
+    alignItems: 'center',
+    marginBottom: 14,
+  },
+  animaAvatarStep2: {
     width: 72,
     height: 72,
     borderRadius: 36,
     borderWidth: 2.5,
-    borderColor: '#FF7A00',
     marginBottom: 10,
   },
-  compactMainTitle: {
-    fontSize: 20,
+  step2TopicTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 8,
+  },
+  step2TopicTagText: {
+    fontSize: 11.5,
+    fontWeight: '800',
+  },
+  step2MainTitle: {
+    fontSize: 18,
     fontWeight: '900',
     color: '#0F172A',
     textAlign: 'center',
   },
-  compactSubtitle: {
-    fontSize: 13.5,
-    color: '#64748B',
+  step2Subtitle: {
+    fontSize: 13,
+    color: '#475569',
     textAlign: 'center',
-    lineHeight: 19.5,
-    marginTop: 6,
-    paddingHorizontal: 10,
-    maxWidth: 520,
+    lineHeight: 19,
+    marginTop: 5,
+    paddingHorizontal: 6,
   },
-  compactStepsBox: {
+  step2ExplanationBox: {
     backgroundColor: '#F8FAFC',
-    borderRadius: 18,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    marginBottom: 18,
-  },
-  compactStepsHeader: {
-    fontSize: 13.5,
-    fontWeight: '800',
-    color: '#0F172A',
-    marginBottom: 12,
-  },
-  compactStepsGridDesktop: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  compactStepsListMobile: {
-    gap: 10,
-  },
-  compactStepCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
+    borderRadius: 16,
     padding: 14,
     borderWidth: 1,
     borderColor: '#E2E8F0',
+    marginBottom: 16,
   },
-  compactStepCardDesktop: {
-    width: '48.2%',
-    flexGrow: 1,
-  },
-  compactStepCardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 9,
-    marginBottom: 6,
-  },
-  compactStepRow: {
+  step2BulletRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 10,
-    marginBottom: 10,
+    marginBottom: 11,
   },
-  compactStepDot: {
+  step2BulletIconCircle: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#FFF7ED',
     borderWidth: 1,
-    borderColor: '#FFEDD5',
     alignItems: 'center',
     justifyContent: 'center',
+    marginTop: 1,
   },
-  compactStepText: {
+  step2BulletText: {
+    flex: 1,
     fontSize: 12.5,
-    color: '#475569',
+    color: '#334155',
     lineHeight: 18,
   },
-  compactStepBold: {
-    fontSize: 13.2,
-    fontWeight: '800',
-    color: '#0F172A',
-    flex: 1,
-  },
-  compactButtonsRowDesktop: {
+  step2ActionsRowDesktop: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    marginTop: 4,
   },
-  compactButtonsColMobile: {
+  step2ActionsColMobile: {
     flexDirection: 'column-reverse',
     gap: 8,
   },
-  compactPrimaryJoinBtn: {
+  primaryAcceptTopicBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FF7A00',
     paddingVertical: 13,
-    paddingHorizontal: 20,
+    paddingHorizontal: 18,
     borderRadius: 14,
   },
-  compactPrimaryJoinBtnDesktop: {
-    flex: 1.6,
-  },
-  compactPrimaryJoinBtnText: {
+  primaryAcceptTopicBtnText: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: 13.5,
     fontWeight: '800',
   },
-  compactSecondaryCancelBtn: {
+  secondaryBackTopicBtn: {
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 12,
-    paddingHorizontal: 18,
+    paddingHorizontal: 16,
     borderRadius: 14,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#E2E8F0',
   },
-  compactSecondaryCancelBtnDesktop: {
-    flex: 1,
-  },
-  compactSecondaryCancelBtnText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#64748B',
-  },
-  progressBarTrack: {
-    width: '100%',
-    height: 4,
-    backgroundColor: '#E2E8F0',
-  },
-  progressBarFill: {
-    height: '100%',
-    backgroundColor: '#FF7A00',
-  },
-  evaluatingContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 32,
-  },
-  evaluatingAnimaImg: {
-    width: 84,
-    height: 84,
-    borderRadius: 42,
-    borderWidth: 2,
-    borderColor: '#FF7A00',
-  },
-  evaluatingTitle: {
-    fontSize: 16.5,
-    fontWeight: '800',
-    color: '#0F172A',
-    textAlign: 'center',
-  },
-  evaluatingDesc: {
-    fontSize: 13,
-    color: '#64748B',
-    textAlign: 'center',
-    marginTop: 6,
-    lineHeight: 19,
-  },
-  /* Questionnaire View */
-  questionContainer: {
-    flex: 1,
-    paddingHorizontal: 16,
-    paddingTop: 14,
-    paddingBottom: 16,
-    justifyContent: 'space-between',
-  },
-  questionAnimaBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    padding: 14,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    gap: 14,
-  },
-  questionAnimaAvatarLarge: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
-    borderWidth: 2,
-    borderColor: '#FF7A00',
-  },
-  questionAnimaTitle: {
-    fontSize: 14.5,
-    fontWeight: '800',
-    color: '#0F172A',
-  },
-  questionAnimaSub: {
-    fontSize: 12,
-    color: '#64748B',
-    marginTop: 3,
-    lineHeight: 17,
-  },
-  dimensionPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  dimensionPillText: {
-    fontSize: 11.5,
-    fontWeight: '700',
-    color: '#475569',
-  },
-  questionBox: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    padding: 18,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  questionTitleText: {
-    fontSize: 16.5,
-    fontWeight: '800',
-    color: '#0F172A',
-    lineHeight: 23,
-    marginBottom: 6,
-  },
-  questionSubtitleText: {
-    fontSize: 13,
-    color: '#64748B',
-    lineHeight: 18.5,
-  },
-  optionsGridContainer: {
-    gap: 12,
-  },
-  optionsGridRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  gridOptionCard: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    paddingVertical: 18,
-    paddingHorizontal: 12,
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
-    minHeight: 124,
-  },
-  gridOptionCardSelected: {
-    borderColor: '#FF7A00',
-    backgroundColor: '#FFFFFF',
-  },
-  gridEmojiLarge: {
-    fontSize: 38,
-    marginBottom: 8,
-  },
-  gridOptionLabel: {
-    fontSize: 13.5,
-    fontWeight: '800',
-    color: '#0F172A',
-    textAlign: 'center',
-  },
-  gridOptionLabelSelected: {
-    color: '#FF7A00',
-  },
-  gridOptionSublabel: {
-    fontSize: 11,
-    color: '#64748B',
-    textAlign: 'center',
-    marginTop: 3,
-  },
-  gridOptionSublabelSelected: {
-    color: '#475569',
-    fontWeight: '600',
-  },
-  gridCheckmark: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
-  },
-  bottomNavRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingTop: 6,
-  },
-  navControlBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 12,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  navControlBtnDisabled: {
-    opacity: 0.45,
-  },
-  navControlText: {
-    fontSize: 12.5,
-    fontWeight: '700',
-    color: '#0F172A',
-    marginLeft: 4,
-  },
-  stepIndicatorText: {
+  secondaryBackTopicBtnText: {
     fontSize: 12.5,
     fontWeight: '700',
     color: '#64748B',
   },
-  /* Scrollable Dashboards */
+  /* Dashboard Body */
   scrollBody: {
     flex: 1,
   },
   resultScrollContent: {
     padding: 12,
   },
-  /* Clean White Streak Header Card */
-  cleanStreakHeaderCard: {
+  cleanHeaderCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 18,
-    marginBottom: 16,
+    borderRadius: 18,
+    padding: 14,
+    marginBottom: 12,
     borderWidth: 1,
     borderColor: '#E2E8F0',
   },
-  cleanStreakTopRow: {
+  topicBannerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  cleanStreakTitleCol: {
-    flex: 1,
-    paddingRight: 10,
-  },
-  streakBadgeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    marginBottom: 10,
+    flexWrap: 'wrap',
     gap: 8,
   },
-  flameIconText: {
-    fontSize: 24,
-  },
-  streakMainCountText: {
-    fontSize: 20,
-    fontWeight: '900',
-    color: '#0F172A',
-  },
-  subtleOrangeTag: {
-    backgroundColor: '#FFF7ED',
-    borderWidth: 1,
-    borderColor: '#FDBA74',
-    paddingHorizontal: 8,
-    paddingVertical: 2.5,
-    borderRadius: 8,
-  },
-  subtleOrangeTagText: {
-    fontSize: 9.5,
-    fontWeight: '800',
-    color: '#FF7A00',
-    letterSpacing: 0.4,
-  },
-  streakFocusName: {
-    fontSize: 13,
-    color: '#64748B',
-    fontWeight: '600',
-    marginTop: 4,
-  },
-  metaBadgeRightBox: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#F8FAFC',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  metaBadgeEmoji: {
-    fontSize: 24,
-  },
-  metaBadgeLabel: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#64748B',
-    marginTop: 2,
-  },
-  cleanSevenDaysBar: {
+  topicPillHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    alignItems: 'center',
     gap: 6,
-  },
-  cleanDayPill: {
-    flex: 1,
-    paddingVertical: 9,
-    borderRadius: 12,
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-  },
-  cleanDayPillDone: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#FDBA74',
-  },
-  cleanDayPillCurrent: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#FF7A00',
-  },
-  cleanDayPillSelected: {
-    backgroundColor: '#FF7A00',
-    borderColor: '#FF7A00',
-  },
-  cleanDayPillText: {
-    fontSize: 11.5,
-    fontWeight: '700',
-    color: '#64748B',
-  },
-  miniDotIndicator: {
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
-  },
-  /* Clean White Card Container */
-  cleanWhiteCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 18,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  dayCardTopBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 14,
-  },
-  dayStepTag: {
-    backgroundColor: '#F8FAFC',
     paddingHorizontal: 11,
     paddingVertical: 5,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  topicPillHeaderText: {
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  completedCountSoftPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    paddingHorizontal: 10,
+    paddingVertical: 4.5,
     borderRadius: 10,
+  },
+  completedCountSoftPillText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#475569',
+  },
+  animaSupportQuoteBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    marginBottom: 10,
+    gap: 10,
+  },
+  animaSupportAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 1.5,
+  },
+  animaSupportQuoteText: {
+    flex: 1,
+    fontSize: 12,
+    color: '#334155',
+    fontStyle: 'italic',
+    lineHeight: 16.5,
+  },
+  refreshQuoteBtn: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  activitiesStepsStrip: {
+    gap: 6,
+    paddingVertical: 2,
+  },
+  stepChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 11,
+    paddingVertical: 6,
+    borderRadius: 10,
+    backgroundColor: '#F8FAFC',
     borderWidth: 1,
     borderColor: '#E2E8F0',
   },
-  dayStepTagText: {
+  stepChipText: {
     fontSize: 11.5,
+    fontWeight: '700',
+    color: '#64748B',
+  },
+  cleanWhiteCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  activityCardTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  activityLabelBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  activityLabelBadgeText: {
+    fontSize: 11,
     fontWeight: '800',
-    color: '#334155',
+  },
+  swapActivityBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: '#F8FAFC',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 9,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  swapActivityBtnText: {
+    fontSize: 11,
+    fontWeight: '700',
   },
   completedGrayTag: {
     flexDirection: 'row',
@@ -1967,39 +1956,34 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#475569',
   },
-  taskHeroRow: {
+  activityTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 14,
-    marginBottom: 12,
+    gap: 10,
+    marginBottom: 10,
   },
-  taskHeroEmoji: {
-    fontSize: 38,
+  activityEmojiLarge: {
+    fontSize: 28,
   },
-  taskHeroTitle: {
-    fontSize: 16.5,
-    fontWeight: '800',
+  activityMainTitle: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '900',
     color: '#0F172A',
     lineHeight: 22,
   },
-  taskHeroSub: {
-    fontSize: 12,
-    color: '#64748B',
-    fontWeight: '500',
-    marginTop: 2,
-  },
   taskDescriptionBox: {
     backgroundColor: '#F8FAFC',
-    borderRadius: 14,
-    padding: 14,
+    borderRadius: 12,
+    padding: 12,
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   taskDescriptionText: {
-    fontSize: 13.5,
+    fontSize: 13,
     color: '#334155',
-    lineHeight: 20,
+    lineHeight: 19,
   },
   cleanAnimaNoteBox: {
     flexDirection: 'row',
@@ -2009,15 +1993,14 @@ const styles = StyleSheet.create({
     padding: 12,
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    marginBottom: 16,
+    marginBottom: 14,
     gap: 12,
   },
   animaAvatarMedium: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
     borderWidth: 1.5,
-    borderColor: '#FF7A00',
   },
   cleanAnimaNoteTitle: {
     fontSize: 12,
@@ -2031,122 +2014,112 @@ const styles = StyleSheet.create({
     marginTop: 2,
     lineHeight: 18,
   },
-  /* Publish Section */
   publishSectionWrap: {
     borderTopWidth: 1,
     borderTopColor: '#F1F5F9',
-    paddingTop: 14,
+    paddingTop: 12,
   },
-  publishHeaderLine: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginBottom: 10,
-  },
-  publishHeaderLabel: {
-    fontSize: 13,
+  registerSectionTitle: {
+    fontSize: 12.5,
     fontWeight: '800',
     color: '#0F172A',
+    marginBottom: 8,
   },
-  cleanPhotoDropzone: {
-    backgroundColor: '#F8FAFC',
-    borderRadius: 16,
+  photoAndCommentRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 12,
+  },
+  photoPickerCompactBox: {
+    width: 92,
+    height: 76,
+    borderRadius: 12,
     borderWidth: 1.5,
     borderColor: '#CBD5E1',
     borderStyle: 'dashed',
-    paddingVertical: 22,
-    paddingHorizontal: 16,
+    backgroundColor: '#F8FAFC',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
+    overflow: 'hidden',
   },
-  cleanPhotoDropzoneTitle: {
-    fontSize: 13.5,
+  photoPickerCompactText: {
+    fontSize: 10.5,
     fontWeight: '800',
     color: '#0F172A',
-    marginTop: 8,
-    textAlign: 'center',
-  },
-  cleanPhotoDropzoneSub: {
-    fontSize: 11.5,
-    color: '#64748B',
     marginTop: 3,
-    textAlign: 'center',
   },
-  evidencePreviewBox: {
-    width: '100%',
-    height: 220,
-    borderRadius: 16,
-    overflow: 'hidden',
-    marginBottom: 12,
-    position: 'relative',
-    backgroundColor: '#F1F5F9',
-  },
-  evidencePreviewImage: {
-    width: '100%',
-    height: '100%',
-  },
-  changePhotoPill: {
-    position: 'absolute',
-    bottom: 10,
-    right: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(15, 23, 42, 0.78)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 10,
-    gap: 5,
-  },
-  changePhotoPillText: {
-    color: '#FFFFFF',
-    fontSize: 11.5,
-    fontWeight: '700',
-  },
-  cleanInputBox: {
+  commentCompactInput: {
+    flex: 1,
     backgroundColor: '#F8FAFC',
-    borderRadius: 14,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    paddingHorizontal: 14,
-    paddingVertical: 11,
-    fontSize: 13,
+    paddingHorizontal: 11,
+    paddingVertical: 8,
+    fontSize: 12.5,
     color: '#0F172A',
-    minHeight: 70,
+    minHeight: 76,
     textAlignVertical: 'top',
+  },
+  visibilitySectionLabel: {
+    fontSize: 11.5,
+    fontWeight: '700',
+    color: '#475569',
+    marginBottom: 6,
+  },
+  visibilityToggleRow: {
+    flexDirection: 'row',
+    gap: 8,
     marginBottom: 12,
   },
-  primaryOrangeBtn: {
+  visibilityOptionBtn: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FF7A00',
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderRadius: 14,
-    marginBottom: 10,
+    gap: 6,
+    paddingVertical: 9,
+    paddingHorizontal: 10,
+    borderRadius: 11,
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
   },
-  primaryOrangeBtnText: {
+  visibilityOptionText: {
+    fontSize: 11.5,
+    fontWeight: '600',
+    color: '#64748B',
+  },
+  primaryActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    marginBottom: 8,
+  },
+  primaryActionBtnText: {
     color: '#FFFFFF',
-    fontSize: 13.5,
+    fontSize: 13,
     fontWeight: '800',
-    textAlign: 'center',
   },
   postponeCleanBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#F8FAFC',
-    paddingVertical: 11,
+    paddingVertical: 10,
     paddingHorizontal: 12,
-    borderRadius: 12,
+    borderRadius: 11,
     borderWidth: 1,
     borderColor: '#E2E8F0',
   },
   postponeCleanBtnText: {
-    fontSize: 12,
+    fontSize: 11.5,
     fontWeight: '600',
     color: '#475569',
+    textAlign: 'center',
   },
   completedDayPreviewBox: {
     backgroundColor: '#F8FAFC',
@@ -2157,159 +2130,98 @@ const styles = StyleSheet.create({
   },
   completedDayPreviewImg: {
     width: '100%',
-    height: 200,
+    height: 190,
     borderRadius: 12,
     marginBottom: 10,
   },
   completedDayPreviewStatus: {
-    fontSize: 13,
+    fontSize: 12.5,
     fontWeight: '800',
     color: '#0F172A',
   },
   completedDayPreviewNote: {
-    fontSize: 12.5,
+    fontSize: 12,
     color: '#475569',
     fontStyle: 'italic',
     marginTop: 4,
   },
-  /* Section 3: Mis Avances Grid de 7 Días */
+  /* Conclude Topic & Claim Medal Card */
+  medalPreviewCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  concludeCardTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  concludeCardSub: {
+    fontSize: 12,
+    color: '#64748B',
+    lineHeight: 17.5,
+    marginTop: 2,
+  },
+  concludeMedalBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 11,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    borderWidth: 1.5,
+  },
+  concludeMedalBtnText: {
+    fontSize: 12.5,
+    fontWeight: '800',
+  },
+  /* Completed Activities Strip */
   sectionHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 14,
-  },
-  sectionTitleText: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: '#0F172A',
-  },
-  sectionSubText: {
-    fontSize: 12,
-    color: '#64748B',
-    marginTop: 2,
+    marginBottom: 10,
   },
   countGrayBadge: {
     backgroundColor: '#F1F5F9',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 10,
+    paddingHorizontal: 9,
+    paddingVertical: 3.5,
+    borderRadius: 9,
   },
   countGrayBadgeText: {
-    fontSize: 11.5,
+    fontSize: 11,
     fontWeight: '800',
     color: '#334155',
   },
-  sevenPhotosGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  advanceGridCell: {
-    width: '23%',
-    minWidth: 74,
-    aspectRatio: 0.88,
-    borderRadius: 14,
+  completedThumbCard: {
+    width: 82,
+    height: 82,
+    borderRadius: 12,
     overflow: 'hidden',
     backgroundColor: '#F8FAFC',
     borderWidth: 1,
     borderColor: '#E2E8F0',
     position: 'relative',
   },
-  advanceGridCellSelected: {
-    borderColor: '#FF7A00',
-    borderWidth: 1.5,
-  },
-  advanceGridImg: {
-    width: '100%',
-    height: '100%',
-  },
-  advanceDayOverlayPill: {
+  completedThumbBadge: {
     position: 'absolute',
-    bottom: 5,
-    left: 5,
-    right: 5,
+    bottom: 4,
+    left: 4,
+    right: 4,
     backgroundColor: 'rgba(15, 23, 42, 0.72)',
-    paddingVertical: 2.5,
-    borderRadius: 6,
+    paddingVertical: 2,
+    borderRadius: 5,
     alignItems: 'center',
   },
-  advanceDayOverlayText: {
+  completedThumbBadgeText: {
     color: '#FFFFFF',
-    fontSize: 10,
-    fontWeight: '800',
-  },
-  advanceEmptySlot: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 6,
-    gap: 4,
-  },
-  advanceEmptyDayNum: {
-    fontSize: 10.5,
-    fontWeight: '800',
-    color: '#475569',
-  },
-  advanceEmptyEmoji: {
-    fontSize: 22,
-  },
-  advanceEmptyLabel: {
     fontSize: 9.5,
-    color: '#94A3B8',
-    fontWeight: '600',
-  },
-  /* Section 4: Minimalist Spaced Badges List */
-  cleanBadgesList: {
-    gap: 12,
-  },
-  cleanBadgeItemCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderRadius: 16,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    gap: 14,
-  },
-  cleanBadgeItemActiveBorder: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#FF7A00',
-  },
-  cleanBadgeEmoji: {
-    fontSize: 32,
-  },
-  cleanBadgeHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 4,
-  },
-  cleanBadgeName: {
-    fontSize: 14,
     fontWeight: '800',
-    color: '#0F172A',
   },
-  cleanBadgeLevelPill: {
-    backgroundColor: '#F1F5F9',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    paddingHorizontal: 8,
-    paddingVertical: 2.5,
-    borderRadius: 8,
-  },
-  cleanBadgeLevelText: {
-    fontSize: 10.5,
-    fontWeight: '800',
-    color: '#475569',
-  },
-  cleanBadgeDesc: {
-    fontSize: 12,
-    color: '#64748B',
-    lineHeight: 17,
-  },
-  /* Completed Celebration View */
+  /* Celebration View */
   celebrationHeroCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 20,
@@ -2324,16 +2236,13 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   levelPillBadge: {
-    backgroundColor: '#FFF7ED',
     borderWidth: 1,
-    borderColor: '#FDBA74',
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 10,
     marginBottom: 8,
   },
   levelPillBadgeText: {
-    color: '#FF7A00',
     fontSize: 10.5,
     fontWeight: '800',
     letterSpacing: 0.4,
@@ -2392,58 +2301,43 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 4,
   },
-  summaryPhotosStrip: {
-    gap: 8,
-    paddingVertical: 12,
+  sectionTitleText: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#0F172A',
   },
-  summaryThumbItem: {
-    width: 78,
-    height: 78,
-    borderRadius: 12,
-    overflow: 'hidden',
-    position: 'relative',
+  sectionSubText: {
+    fontSize: 12,
+    color: '#64748B',
+    marginTop: 2,
+    marginBottom: 10,
+  },
+  cleanInputBox: {
     backgroundColor: '#F8FAFC',
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: '#E2E8F0',
-  },
-  summaryThumbImg: {
-    width: '100%',
-    height: '100%',
-  },
-  summaryThumbPlaceholder: {
-    width: '100%',
-    height: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  summaryThumbBadge: {
-    position: 'absolute',
-    bottom: 4,
-    left: 4,
-    right: 4,
-    backgroundColor: 'rgba(15, 23, 42, 0.72)',
-    borderRadius: 6,
-    paddingVertical: 2,
-    alignItems: 'center',
-  },
-  summaryThumbBadgeText: {
-    color: '#FFFFFF',
-    fontSize: 9.5,
-    fontWeight: '800',
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+    fontSize: 13,
+    color: '#0F172A',
+    minHeight: 70,
+    textAlignVertical: 'top',
+    marginBottom: 12,
   },
   secondaryOutlineBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#FFFFFF',
-    paddingVertical: 14,
-    borderRadius: 14,
+    paddingVertical: 13,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: '#E2E8F0',
   },
   secondaryOutlineBtnText: {
     color: '#0F172A',
-    fontSize: 13.5,
+    fontSize: 13,
     fontWeight: '800',
   },
 });

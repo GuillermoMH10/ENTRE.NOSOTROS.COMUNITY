@@ -73,9 +73,9 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({
       ? [
           {
             id: 'racha' as TabId,
-            label: `Racha ${completedDays}/7`,
-            icon: 'flame-outline' as const,
-            activeIcon: 'flame' as const,
+            label: 'Actividades',
+            icon: 'sparkles-outline' as const,
+            activeIcon: 'sparkles' as const,
             isStreak: true,
           },
         ]
@@ -134,9 +134,9 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({
                 ) : tab.isStreak ? (
                   <View style={styles.streakFireIconClean}>
                     <Ionicons
-                      name="flame"
-                      size={21}
-                      color="#FF7A00"
+                      name={isCurrentActive ? 'sparkles' : 'sparkles-outline'}
+                      size={20}
+                      color="#3B82F6"
                     />
                   </View>
                 ) : (
@@ -225,7 +225,7 @@ const styles = StyleSheet.create({
   streakTabButtonOutline: {
     backgroundColor: '#FFFFFF',
     borderWidth: 1.5,
-    borderColor: '#FF7A00',
+    borderColor: '#3B82F6',
     borderRadius: 12,
     marginHorizontal: 3,
     paddingVertical: 3,

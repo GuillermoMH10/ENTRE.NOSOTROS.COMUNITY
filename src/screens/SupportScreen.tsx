@@ -116,15 +116,15 @@ export const SupportScreen: React.FC<SupportScreenProps> = ({
   const carouselCards = [
     {
       id: 'reto',
-      title: 'RETO DE MEJORA',
+      title: 'ACTIVIDADES DE APOYO',
       description:
-        'Únete al reto semanal de 7 días con ANIMA: realiza actividades diarias para tu bienestar, sube tu foto de evidencia y desbloquea insignias.',
+        'Un espacio de actividades guiadas por ANIMA para acompañarte y hacerte sentir mejor a tu propio ritmo en el tema que elijas.',
       image: 'https://i.pinimg.com/1200x/8f/f4/ba/8ff4ba8f214a91d8e34718a2c69b3563.jpg',
       onPress: handleOpenOrJoinChallenge,
       buttonText: hasActiveChallenge
-        ? `Ver mi racha (${completedChallengeDays}/7)`
-        : 'Comenzar reto',
-      icon: 'flame-outline' as const,
+        ? 'Ir a mis actividades'
+        : 'Comenzar actividades',
+      icon: 'sparkles-outline' as const,
     },
     {
       id: 'psicologos',
@@ -326,25 +326,25 @@ export const SupportScreen: React.FC<SupportScreenProps> = ({
           </View>
         )}
 
-        {/* 3. ACTIVE 7-DAY CHALLENGE STATUS CARD */}
+        {/* 3. ACTIVE SUPPORT ACTIVITIES STATUS CARD */}
         {hasActiveChallenge && latestResult && (
           <View style={[styles.latestTestCard, isDesktop && { maxWidth: 880, width: '100%', alignSelf: 'center' }]}>
             <View style={styles.latestTestHeader}>
               <View style={styles.latestTestTitleRow}>
-                <Ionicons name="flame" size={17} color="#FF7A00" style={{ marginRight: 6 }} />
-                <Text style={styles.latestTestMainTitle}>Tu Reto de 7 Días en curso</Text>
+                <Ionicons name="sparkles" size={17} color="#3B82F6" style={{ marginRight: 6 }} />
+                <Text style={styles.latestTestMainTitle}>Tus Actividades de Mejora en curso</Text>
               </View>
               <Text style={styles.latestTestDate}>{formatDate(latestResult.createdAt)}</Text>
             </View>
 
-            <View style={[styles.resultTagBox, { backgroundColor: '#FFF7ED' }]}>
-              <Text style={[styles.resultTagText, { color: '#FF7A00' }]}>
-                {completedChallengeDays} de 7 días completados
+            <View style={[styles.resultTagBox, { backgroundColor: '#EFF6FF' }]}>
+              <Text style={[styles.resultTagText, { color: '#2563EB' }]}>
+                {latestResult.streakState?.focusTitle || 'Actividades de Apoyo'} • A tu propio ritmo
               </Text>
             </View>
 
             <Text style={styles.latestTestSummary} numberOfLines={3}>
-              Tienes una semana activa para conseguir tu insignia. Avanza en tu actividad del día o reinicia tu reto desde la pantalla de Mi Racha si deseas empezar desde cero.
+              Avanza en tus actividades cada vez que sientas que lo necesitas, eligiendo si deseas compartirlas o mantenerlas privadas. Cuando decidas concluir tu tema, recibirás tu medalla.
             </Text>
 
             <View style={styles.testCardActionsRow}>
@@ -353,8 +353,8 @@ export const SupportScreen: React.FC<SupportScreenProps> = ({
                 activeOpacity={0.85}
                 onPress={handleOpenOrJoinChallenge}
               >
-                <Ionicons name="flame-outline" size={15} color={colors.white} style={{ marginRight: 6 }} />
-                <Text style={styles.viewResultBtnText}>Ir a Mi Racha de 7 Días</Text>
+                <Ionicons name="sparkles-outline" size={15} color={colors.white} style={{ marginRight: 6 }} />
+                <Text style={styles.viewResultBtnText}>Ir a mis Actividades de Mejora</Text>
               </TouchableOpacity>
             </View>
           </View>

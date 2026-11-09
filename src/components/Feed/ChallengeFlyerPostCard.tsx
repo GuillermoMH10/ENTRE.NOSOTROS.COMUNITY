@@ -63,27 +63,27 @@ export const ChallengeFlyerPostCard: React.FC<ChallengeFlyerPostCardProps> = ({
               <Ionicons
                 name="checkmark-circle"
                 size={15}
-                color="#FF7A00"
+                color="#3B82F6"
                 style={styles.verifiedBadge}
               />
             </View>
             <Text style={styles.subtitleText}>
-              Reto de Mejora Personal • 7 Días
+              Actividades de Apoyo y Mejora • A tu propio ritmo
             </Text>
           </View>
 
           <View style={styles.badgeHighlightPill}>
-            <Ionicons name="ribbon" size={12} color="#FF7A00" />
-            <Text style={styles.badgeHighlightPillText}>Obtén Insignias</Text>
+            <Ionicons name="medal-outline" size={12} color="#2563EB" />
+            <Text style={styles.badgeHighlightPillText}>Obtén Medallas</Text>
           </View>
         </View>
 
         {/* Short Description about the Challenge & Badges */}
         <Text style={styles.descriptionTitle}>
-          ¡Descubre tu mejor versión un día a la vez y gana insignias para tu perfil!
+          ¡Realiza actividades agradables a tu ritmo para sentirte mejor y gana medallas en tu perfil!
         </Text>
         <Text style={styles.descriptionText}>
-          Únete a nuestro reto de 7 días con misiones sencillas de bienestar, creatividad y autocuidado. Comparte tu evidencia diaria en la comunidad y desbloquea las 4 insignias coleccionables (🌱 Semilla de Cambio, 🔥 Impulso Vital, 🌿 Equilibrio Interior y 👑 Maestría Emocional).
+          Elige el tema en el que te gustaría trabajar hoy (Depresión, Ansiedad, Estrés o Amor Propio) y realiza actividades interactivas cada vez que lo necesites, decidiendo si deseas publicarlas o guardarlas en privado.
         </Text>
 
         {/* Full Flyer Image */}
@@ -131,15 +131,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 20,
     borderWidth: 1.5,
-    borderColor: '#FFEDD5',
+    borderColor: '#E2E8F0',
     paddingHorizontal: 14,
     paddingTop: 14,
     paddingBottom: 14,
-    shadowColor: '#FF7A00',
+    shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.06,
     shadowRadius: 10,
-    elevation: 3,
+    elevation: 2,
   },
   headerRow: {
     flexDirection: 'row',
@@ -151,8 +151,8 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 20,
     borderWidth: 1.5,
-    borderColor: '#FF7A00',
-    backgroundColor: '#FFF7ED',
+    borderColor: '#3B82F6',
+    backgroundColor: '#EFF6FF',
   },
   authorInfo: {
     marginLeft: 10,
@@ -173,16 +173,16 @@ const styles = StyleSheet.create({
   subtitleText: {
     fontSize: 11.5,
     fontWeight: '700',
-    color: '#FF7A00',
+    color: '#2563EB',
     marginTop: 1,
   },
   badgeHighlightPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#FFF7ED',
+    backgroundColor: '#EFF6FF',
     borderWidth: 1,
-    borderColor: '#FDBA74',
+    borderColor: '#BFDBFE',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
@@ -190,7 +190,7 @@ const styles = StyleSheet.create({
   badgeHighlightPillText: {
     fontSize: 10.5,
     fontWeight: '800',
-    color: '#EA580C',
+    color: '#2563EB',
   },
   descriptionTitle: {
     fontSize: 14.5,
@@ -211,9 +211,9 @@ const styles = StyleSheet.create({
     aspectRatio: 2056 / 765,
     borderRadius: 16,
     overflow: 'hidden',
-    backgroundColor: '#FFF7ED',
+    backgroundColor: '#F8FAFC',
     borderWidth: 1,
-    borderColor: '#FFEDD5',
+    borderColor: '#E2E8F0',
   },
   flyerImage: {
     width: '100%',

@@ -5,12 +5,20 @@ export type TestDimensionKey =
   | 'energia_sueno'
   | 'autoestima_social';
 
-export type EmotionalFocusCategory =
-  | 'tristeza'
+export type MainSupportTopicKey =
+  | 'depresion'
   | 'ansiedad'
+  | 'estres'
+  | 'amor_propio';
+
+export type EmotionalFocusCategory =
+  | 'depresion'
+  | 'ansiedad'
+  | 'estres'
+  | 'amor_propio'
+  | 'tristeza'
   | 'enojo'
   | 'inseguridad'
-  | 'estres'
   | 'felicidad';
 
 export interface TestOption {
@@ -50,13 +58,14 @@ export interface StreakTaskItem {
 }
 
 export interface StreakDayProgress {
-  dayNumber: number; // 1..7
-  dayName: string; // e.g., "Día 1 • Lunes"
+  dayNumber: number; // Activity step number (1, 2, 3... unlimited)
+  dayName: string; // e.g., "Actividad 1"
   task: StreakTaskItem;
   status: 'locked' | 'unlocked' | 'completed' | 'postponed';
   completedAt?: string;
   evidenceImageUrl?: string;
   evidenceNote?: string;
+  visibility?: 'public' | 'private';
   postId?: string;
   postponedCount?: number;
   motivationalQuoteUsed?: string;

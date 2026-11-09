@@ -11,12 +11,21 @@ import {
   where,
 } from 'firebase/firestore';
 import { db } from './firebase';
-import { TestResult, EmotionalStreakState } from '../types/psychologyTest';
+import {
+  TestResult,
+  EmotionalStreakState,
+  EmotionalFocusCategory,
+  MainSupportTopicKey,
+  StreakDayProgress,
+} from '../types/psychologyTest';
 import {
   FOCUS_CATEGORY_META,
   OFFICIAL_STREAK_BADGES,
   getRandomStreakMotivationalQuote,
   resolveFreshTaskItem,
+  getTopicConfig,
+  getTasksForTopic,
+  normalizeTopicCategory,
 } from '../data/streakChallengesData';
 import { buildInitialStreakState } from '../data/psychologyTestQuestions';
 import { createPost, deletePost, uploadMediaToStorage } from './postsService';
@@ -56,7 +65,8 @@ export const normalizeTestResultWithStreak = (
   raw: TestResult,
   userId?: string
 ): TestResult => {
-  const focusCategory = raw.focusCategory || 'tristeza';
+  const focusCategory = normalizeTopicCategory(raw.focusCategory || 'depresion');
+  const topic = getTopicConfig(focusCategory);
   const unlockedBadges = Array.isArray(raw.unlockedBadges) ? raw.unlockedBadges : [];
   const totalCompletedStreaks =
     typeof raw.totalCompletedStreaks === 'number'
@@ -70,8 +80,13 @@ export const normalizeTestResultWithStreak = (
 
   const streakState: EmotionalStreakState = {
     ...baseStreakState,
+    focusCategory,
+    focusColor: topic.accentColor,
+    focusEmoji: topic.emoji,
+    targetBadgeId: topic.badgeId,
     days: baseStreakState.days.map((d) => ({
       ...d,
+      dayName: `Actividad ${d.dayNumber}`,
       task: resolveFreshTaskItem(d.task, d.dayNumber),
     })),
   };
@@ -252,55 +267,51 @@ export const subscribeToUserTestAndStreak = (
 };
 
 /**
- * Starts the 7-Day Personal Improvement Challenge directly (without any questionnaire or emotional diagnostic).
- * If the user ALREADY has an active 7-day week in progress, it returns that active challenge without overwriting it.
+ * Starts the Support Activities dynamic for a chosen topic (`depresion`, `ansiedad`, `estres`, `amor_propio`).
  */
-export const startSevenDayImprovementChallenge = async (
+export const startSupportTopicActivities = async (
+  topicKey: MainSupportTopicKey,
   userId?: string,
   existingResult?: TestResult | null
 ): Promise<TestResult> => {
   const cleanUserId = userId && userId !== 'anonymous' ? userId.trim() : undefined;
-
-  if (
-    existingResult?.streakState?.isActive &&
-    existingResult.streakState.status === 'active'
-  ) {
-    return normalizeTestResultWithStreak(existingResult, cleanUserId);
-  }
+  const topic = getTopicConfig(topicKey);
+  const meta = FOCUS_CATEGORY_META[topic.key];
 
   const prevBadges = existingResult?.unlockedBadges || [];
   const prevCount = existingResult?.totalCompletedStreaks || 0;
 
-  const baseStreak = buildInitialStreakState('felicidad', cleanUserId, prevBadges);
+  const baseStreak = buildInitialStreakState(topic.key, cleanUserId, prevBadges);
   const streakState: EmotionalStreakState = {
     ...baseStreak,
     isActive: true,
     status: 'active',
-    focusTitle: 'Reto de Mejora Personal • 7 Días',
-    focusSubtitle: 'Actividades diarias para reconectar contigo y desbloquear insignias',
-    focusColor: '#FF7A00',
-    focusEmoji: '🔥',
-    publishedPostIds: [],
+    focusCategory: topic.key,
+    focusTitle: meta.title,
+    focusSubtitle: meta.subtitle,
+    focusColor: topic.accentColor,
+    focusEmoji: topic.emoji,
+    targetBadgeId: topic.badgeId,
+    publishedPostIds: existingResult?.streakState?.publishedPostIds || [],
   };
 
   const challengeResult: TestResult = {
-    id: `challenge_${Date.now()}`,
+    id: `support_${topic.key}_${Date.now()}`,
     userId: cleanUserId || 'anonymous',
     createdAt: new Date().toISOString(),
     totalScore: 0,
     maxPossibleScore: 0,
     overallPercentage: 100,
-    levelTitle: 'Reto de Mejora Personal • 7 Días',
+    levelTitle: `Actividades de Apoyo • ${topic.name}`,
     levelTag: 'equilibrio',
-    badgeColor: '#FF7A00',
+    badgeColor: topic.accentColor,
     badgeTextColor: '#FFFFFF',
-    summary:
-      'Reto semanal activo de 7 días con actividades prácticas para tu bienestar e insignias en tu perfil.',
+    summary: meta.subtitle,
     detailedAnalysis: '',
     dimensions: [],
     recommendations: [],
-    suggestedSpecialty: 'Bienestar Integral',
-    focusCategory: 'felicidad',
+    suggestedSpecialty: topic.name,
+    focusCategory: topic.key,
     streakState,
     unlockedBadges: prevBadges,
     totalCompletedStreaks: prevCount,
@@ -309,14 +320,106 @@ export const startSevenDayImprovementChallenge = async (
   const saved = await saveLatestTestResult(challengeResult, cleanUserId);
 
   showAnimaToast({
-    title: '¡Reto de 7 Días Activado! 🔥',
+    title: `Actividades de ${topic.name} listas ${topic.emoji}`,
     message:
-      'Tu racha ya está disponible en tu barra de navegación y en tu Perfil. ¡Comencemos con la actividad del Día 1!',
-    emoji: '🔥',
-    accentColor: '#FF7A00',
+      'Ya se habilitó "Actividades de Mejora" en tu barra de navegación. Avanza a tu propio ritmo cuando sientas que lo necesitas.',
+    emoji: topic.emoji,
+    accentColor: topic.accentColor,
   });
 
   return saved;
+};
+
+export const startSevenDayImprovementChallenge = async (
+  userId?: string,
+  existingResult?: TestResult | null,
+  topicKey: MainSupportTopicKey = 'depresion'
+): Promise<TestResult> => {
+  return startSupportTopicActivities(topicKey, userId, existingResult);
+};
+
+/**
+ * Swaps the current activity task for another random interactive task from the 100-task pool of the user's topic
+ */
+export const swapCurrentActivityTask = async (
+  currentResult: TestResult,
+  dayNumber: number,
+  userId?: string
+): Promise<TestResult> => {
+  const normalized = normalizeTestResultWithStreak(currentResult, userId);
+  const streak = normalized.streakState!;
+  const pool = getTasksForTopic(streak.focusCategory);
+  const usedTaskIds = new Set(streak.days.map((d) => d.task.id));
+  const candidates = pool.filter((t) => !usedTaskIds.has(t.id));
+  const sourcePool = candidates.length > 0 ? candidates : pool;
+  const nextTask = sourcePool[Math.floor(Math.random() * sourcePool.length)] || pool[0];
+
+  const updatedDays = streak.days.map((d) =>
+    d.dayNumber === dayNumber ? { ...d, task: nextTask } : d
+  );
+
+  const updatedResult: TestResult = {
+    ...normalized,
+    streakState: {
+      ...streak,
+      days: updatedDays,
+      lastUpdatedAt: new Date().toISOString(),
+    },
+  };
+
+  return saveLatestTestResult(updatedResult, userId);
+};
+
+/**
+ * Called when the user decides they have overcome/concluded their current topic and claims their Medal
+ */
+export const concludeTopicAndClaimMedal = async (
+  currentResult: TestResult,
+  userId?: string
+): Promise<{ updatedResult: TestResult; unlockedBadgeId: string }> => {
+  const normalized = normalizeTestResultWithStreak(currentResult, userId);
+  const streak = normalized.streakState!;
+  const topic = getTopicConfig(streak.focusCategory);
+  const badgeId = topic.badgeId;
+
+  const existingBadges = [...(normalized.unlockedBadges || [])];
+  if (!existingBadges.includes(badgeId)) {
+    existingBadges.push(badgeId);
+  }
+  const totalCompletedStreaks = Math.max(
+    (normalized.totalCompletedStreaks || 0) + 1,
+    existingBadges.length
+  );
+
+  const updatedStreak: EmotionalStreakState = {
+    ...streak,
+    isActive: true,
+    status: 'completed',
+    completedAt: new Date().toISOString(),
+    targetBadgeId: badgeId,
+    lastUpdatedAt: new Date().toISOString(),
+  };
+
+  const updatedResult: TestResult = {
+    ...normalized,
+    streakState: updatedStreak,
+    unlockedBadges: existingBadges,
+    totalCompletedStreaks,
+  };
+
+  const saved = await saveLatestTestResult(updatedResult, userId);
+  const badgeObj =
+    OFFICIAL_STREAK_BADGES.find((b) => b.id === badgeId) || OFFICIAL_STREAK_BADGES[0];
+
+  showAnimaToast({
+    title: `¡Ganaste la ${badgeObj.name}! ${badgeObj.emoji}`,
+    message: `Felicidades por concluir tu proceso de ${topic.name} a tu propio ritmo. Tu medalla ya está en tu Perfil 💙.`,
+    emoji: badgeObj.emoji,
+    accentColor: topic.accentColor,
+    durationMs: 7000,
+  });
+
+  return { updatedResult: saved, unlockedBadgeId: badgeId };
 };
 
 /**
@@ -371,12 +474,18 @@ export const resetUserStreakInDatabase = async (
         const tags: string[] = Array.isArray(pData?.hashtags) ? pData.hashtags : [];
         const isStreakPost =
           postIdsToDelete.has(docSnap.id) ||
+          tags.includes('#ActividadesDeMejora') ||
           tags.includes('#MiRachaEntreNosotros') ||
           tags.includes('#Racha7Dias') ||
           tags.includes('#LoLogre') ||
           content.startsWith('🔥 Racha Día') ||
           content.startsWith('🔥 Reto Día') ||
-          content.startsWith('🏆 ¡LO LOGRÉ!');
+          content.startsWith('🌤️ Actividad de Mejora') ||
+          content.startsWith('🌿 Actividad de Mejora') ||
+          content.startsWith('🌊 Actividad de Mejora') ||
+          content.startsWith('💙 Actividad de Mejora') ||
+          content.startsWith('🏆 ¡LO LOGRÉ!') ||
+          content.startsWith('🏅 ¡TEMA SUPERADO!');
 
         if (isStreakPost) {
           postIdsToDelete.add(docSnap.id);
@@ -400,11 +509,11 @@ export const resetUserStreakInDatabase = async (
   notifyResultListeners(null);
 
   showAnimaToast({
-    title: 'Reto reiniciado por completo',
+    title: 'Actividades reiniciadas',
     message:
-      'Se reinició tu progreso y se eliminaron tus publicaciones del reto. Puedes comenzar de nuevo cuando tú quieras.',
+      'Se reinició tu progreso y se eliminaron tus publicaciones de la dinámica. Puedes elegir un tema nuevo cuando quieras.',
     emoji: '🌱',
-    accentColor: '#FF7A00',
+    accentColor: '#3B82F6',
   });
 };
 
@@ -449,7 +558,9 @@ export const acceptEmotionalStreak = async (
 };
 
 /**
- * Completes a day of the 7-day streak, uploads evidence photo, and publishes to the community feed
+ * Completes an activity step, uploads photo, and either publishes to the community feed ('public')
+ * OR keeps it private ('private') in the user's personal activity history.
+ * Unlimited activities: automatically appends new activities from the 100-task pool so there is no day limit.
  */
 export const completeStreakDayWithEvidence = async (params: {
   currentResult: TestResult;
@@ -459,6 +570,7 @@ export const completeStreakDayWithEvidence = async (params: {
   authorId: string;
   authorUsername: string;
   authorAvatarUrl: string;
+  visibility?: 'public' | 'private';
 }): Promise<{ updatedResult: TestResult; newlyUnlockedBadgeId?: string }> => {
   const {
     currentResult,
@@ -468,54 +580,60 @@ export const completeStreakDayWithEvidence = async (params: {
     authorId,
     authorUsername,
     authorAvatarUrl,
+    visibility = 'public',
   } = params;
 
   const normalized = normalizeTestResultWithStreak(currentResult, authorId);
   const streak = normalized.streakState!;
-  const focusMeta = FOCUS_CATEGORY_META[streak.focusCategory || 'tristeza'];
+  const topic = getTopicConfig(streak.focusCategory);
 
-  // 1. Upload evidence photo so we can store the URL both in the streak day and in the community post
-  const storagePath = `streaks/${authorId}/day_${dayNumber}_${Date.now()}.jpg`;
+  // 1. Upload evidence photo so we can store the URL in the user's activity history (and post if public)
+  const storagePath = `streaks/${authorId}/act_${dayNumber}_${Date.now()}.jpg`;
   let publicEvidenceUrl = mediaSource;
   try {
     publicEvidenceUrl = await uploadMediaToStorage(mediaSource, storagePath);
   } catch (uploadErr) {
-    console.warn('Fallback to direct media source for streak evidence:', uploadErr);
+    console.warn('Fallback to direct media source for activity evidence:', uploadErr);
     publicEvidenceUrl = mediaSource;
   }
 
-  // 2. Find the day object
+  // 2. Find the activity object
   const targetDay = streak.days.find((d) => d.dayNumber === dayNumber) || streak.days[0];
   const quoteForDay = getRandomStreakMotivationalQuote();
-
-  // 3. Build inspiring community post content (without any ANIMA quote line)
   const cleanNote = userNote.trim();
-  const postHeader = `🔥 Reto Día ${dayNumber}/7 • Superando mi Reto de 7 Días`;
-  const taskLine = `Actividad de hoy: "${targetDay.task.title}"`;
-  const postBody = cleanNote
-    ? `${postHeader}\n${taskLine}\n\n"${cleanNote}"`
-    : `${postHeader}\n${taskLine}\n\nHoy completé mi actividad del Día ${dayNumber} en el Reto de 7 Días de Entre Nosotros.`;
 
-  const postCreated = await createPost(
-    authorId,
-    authorUsername,
-    authorAvatarUrl,
-    postBody,
-    [publicEvidenceUrl],
-    ['#MiRachaEntreNosotros', `#Dia${dayNumber}De7`, '#PasoAPaso', '#BienestarEmocional']
-  );
+  // 3. If visibility is 'public', publish to the community feed; if 'private', keep strictly private
+  let createdPostId: string | undefined;
+  if (visibility === 'public') {
+    const postHeader = `${topic.emoji} Actividad de Mejora • ${topic.name}`;
+    const taskLine = `Actividad realizada: "${targetDay.task.title}"`;
+    const postBody = cleanNote
+      ? `${postHeader}\n${taskLine}\n\n"${cleanNote}"`
+      : `${postHeader}\n${taskLine}\n\nHoy dediqué este momento a mi bienestar en Entre Nosotros.`;
 
-  // 4. Update streak days progression
-  const updatedDays = streak.days.map((d) => {
+    const postCreated = await createPost(
+      authorId,
+      authorUsername,
+      authorAvatarUrl,
+      postBody,
+      [publicEvidenceUrl],
+      ['#ActividadesDeMejora', `#${topic.name.replace(/\s+/g, '')}`, '#PasoAPaso', '#BienestarEmocional']
+    );
+    createdPostId = postCreated.postId;
+  }
+
+  // 4. Update activity progression and unlock the next activity (unlimited pace)
+  const updatedDays: StreakDayProgress[] = streak.days.map((d) => {
     if (d.dayNumber === dayNumber) {
       return {
         ...d,
         status: 'completed' as const,
         completedAt: new Date().toISOString(),
         evidenceImageUrl: publicEvidenceUrl,
-        evidenceNote: cleanNote || `Logré el reto: ${d.task.title}`,
+        evidenceNote: cleanNote || `Actividad realizada: ${d.task.title}`,
+        visibility,
         motivationalQuoteUsed: quoteForDay,
-        ...(postCreated.postId ? { postId: postCreated.postId } : {}),
+        ...(createdPostId ? { postId: createdPostId } : {}),
       };
     }
     if (d.dayNumber === dayNumber + 1 && d.status === 'locked') {
@@ -527,46 +645,39 @@ export const completeStreakDayWithEvidence = async (params: {
     return d;
   });
 
-  const completedCount = updatedDays.filter((d) => d.status === 'completed').length;
-  const isAllSevenCompleted = completedCount >= 7;
-
-  let newlyUnlockedBadgeId: string | undefined;
-  const existingBadges = [...(normalized.unlockedBadges || [])];
-  let totalCompletedStreaks = normalized.totalCompletedStreaks || 0;
-
-  if (isAllSevenCompleted) {
-    totalCompletedStreaks += 1;
-    const badgeToUnlock =
-      OFFICIAL_STREAK_BADGES.find((b) => !existingBadges.includes(b.id)) ||
-      OFFICIAL_STREAK_BADGES[Math.min(totalCompletedStreaks - 1, OFFICIAL_STREAK_BADGES.length - 1)];
-
-    if (badgeToUnlock && !existingBadges.includes(badgeToUnlock.id)) {
-      existingBadges.push(badgeToUnlock.id);
-      newlyUnlockedBadgeId = badgeToUnlock.id;
-    } else if (badgeToUnlock) {
-      newlyUnlockedBadgeId = badgeToUnlock.id;
-    }
+  // Ensure the user never runs out of activities (append from the 100-task pool as they advance)
+  const uncompletedRemaining = updatedDays.filter((d) => d.status !== 'completed').length;
+  if (uncompletedRemaining < 4 && updatedDays.length < 100) {
+    const pool = getTasksForTopic(streak.focusCategory);
+    const usedIds = new Set(updatedDays.map((d) => d.task.id));
+    const available = pool.filter((t) => !usedIds.has(t.id));
+    const nextNum = updatedDays.length + 1;
+    const nextTask = available[0] || pool[(nextNum - 1) % pool.length];
+    updatedDays.push({
+      dayNumber: nextNum,
+      dayName: `Actividad ${nextNum}`,
+      task: nextTask,
+      status: uncompletedRemaining === 0 ? 'unlocked' : 'locked',
+      postponedCount: 0,
+    });
   }
 
-  const nextUnlockedDay = updatedDays.find((d) => d.status !== 'completed');
+  const completedCount = updatedDays.filter((d) => d.status === 'completed').length;
+  const nextUnlockedDay =
+    updatedDays.find((d) => d.status !== 'completed') || updatedDays[updatedDays.length - 1];
 
   const existingPublishedIds = Array.isArray(streak.publishedPostIds)
     ? [...streak.publishedPostIds]
     : [];
-  if (postCreated.postId && !existingPublishedIds.includes(postCreated.postId)) {
-    existingPublishedIds.push(postCreated.postId);
+  if (createdPostId && !existingPublishedIds.includes(createdPostId)) {
+    existingPublishedIds.push(createdPostId);
   }
 
   const updatedStreak: EmotionalStreakState = {
     ...streak,
     isActive: true,
-    status: isAllSevenCompleted ? 'completed' : 'active',
-    ...(isAllSevenCompleted
-      ? { completedAt: new Date().toISOString() }
-      : streak.completedAt
-      ? { completedAt: streak.completedAt }
-      : {}),
-    currentDayNumber: nextUnlockedDay ? nextUnlockedDay.dayNumber : 7,
+    status: 'active',
+    currentDayNumber: nextUnlockedDay.dayNumber,
     completedDaysCount: completedCount,
     days: updatedDays,
     publishedPostIds: existingPublishedIds,
@@ -576,32 +687,29 @@ export const completeStreakDayWithEvidence = async (params: {
   const updatedResult: TestResult = {
     ...normalized,
     streakState: updatedStreak,
-    unlockedBadges: existingBadges,
-    totalCompletedStreaks,
   };
 
   const saved = await saveLatestTestResult(updatedResult, authorId);
 
-  if (isAllSevenCompleted) {
-    const unlockedBadgeObj = OFFICIAL_STREAK_BADGES.find((b) => b.id === newlyUnlockedBadgeId);
+  if (visibility === 'public') {
     showAnimaToast({
-      title: `¡Completaste los 7 Días! ${unlockedBadgeObj?.emoji || '🏆'}`,
-      message: `Tu Día 7 se publicó en Principal y desbloqueaste la insignia "${unlockedBadgeObj?.name || 'Semilla de Valentía'}". ¡Ahora puedes publicar tu resumen completo!`,
-      emoji: '👑',
-      accentColor: '#FF7A00',
-      durationMs: 7000,
+      title: `¡Actividad compartida en Principal! ${topic.emoji}`,
+      message: `Tu actividad se publicó en la comunidad. ${quoteForDay}`,
+      emoji: '✨',
+      accentColor: topic.accentColor,
+      durationMs: 6000,
     });
   } else {
     showAnimaToast({
-      title: `¡Día ${dayNumber} de 7 publicado en Principal! 🔥`,
-      message: `Tu evidencia ya fue publicada en la comunidad. ${quoteForDay}`,
-      emoji: '✨',
-      accentColor: '#FF7A00',
+      title: `Actividad guardada en privado 🔒`,
+      message: `Tu foto y reflexión quedaron guardadas solo para ti. ${quoteForDay}`,
+      emoji: topic.emoji,
+      accentColor: topic.accentColor,
       durationMs: 6000,
     });
   }
 
-  return { updatedResult: saved, newlyUnlockedBadgeId };
+  return { updatedResult: saved };
 };
 
 /**
@@ -654,7 +762,7 @@ export const postponeStreakDayWithEncouragement = async (
 };
 
 /**
- * Publishes the full 7-Day Journey Summary (all evidence photos + unlocked badge + celebratory message)
+ * Publishes the Topic Completion & Medal Summary to the community feed
  */
 export const publishFullStreakSummaryToFeed = async (params: {
   currentResult: TestResult;
@@ -673,31 +781,35 @@ export const publishFullStreakSummaryToFeed = async (params: {
 
   const normalized = normalizeTestResultWithStreak(currentResult, authorId);
   const streak = normalized.streakState!;
-  const focusMeta = FOCUS_CATEGORY_META[streak.focusCategory || 'tristeza'];
+  const topic = getTopicConfig(streak.focusCategory);
+  const focusMeta = FOCUS_CATEGORY_META[topic.key];
 
-  const latestBadgeId =
-    normalized.unlockedBadges?.[normalized.unlockedBadges.length - 1] ||
-    streak.targetBadgeId ||
-    'badge_semilla_valentia';
   const badgeObj =
-    OFFICIAL_STREAK_BADGES.find((b) => b.id === latestBadgeId) || OFFICIAL_STREAK_BADGES[0];
+    OFFICIAL_STREAK_BADGES.find((b) => b.id === topic.badgeId) || OFFICIAL_STREAK_BADGES[0];
 
-  const allEvidenceUrls = streak.days
+  const completedPublicOrAllDays = streak.days.filter((d) => d.status === 'completed');
+  const allEvidenceUrls = completedPublicOrAllDays
+    .filter((d) => d.visibility !== 'private')
     .map((d) => d.evidenceImageUrl)
     .filter((url): url is string => Boolean(url));
 
-  const finalQuote = getRandomStreakMotivationalQuote();
-  const userText = customCelebrationMessage.trim() || '¡Lo logré! Completé mis 7 días paso a paso sin rendirme.';
+  const userText =
+    customCelebrationMessage.trim() ||
+    `¡Hoy concluí mi etapa de actividades de ${topic.name} a mi propio ritmo y obtuve mi medalla en Entre Nosotros!`;
 
   const summaryPostContent = [
-    `🏆 ¡LO LOGRÉ! Racha de 7 Días Completada (7/7) 🔥`,
-    `${badgeObj.emoji} Insignia Desbloqueada: ${badgeObj.name} (${badgeObj.levelLabel})`,
-    `🌱 Camino recorrido: ${focusMeta.title}`,
+    `🏅 ¡TEMA SUPERADO! ${topic.name} • Actividades de Mejora`,
+    `${badgeObj.emoji} Medalla Obtenida: ${badgeObj.name}`,
+    `🌱 Proceso: ${focusMeta.title}`,
     ``,
     `"${userText}"`,
-    ``,
-    `📋 Mis 7 pasos superados:`,
-    ...streak.days.map((d) => `• Día ${d.dayNumber}: ${d.task.title}`),
+    ...(completedPublicOrAllDays.length > 0
+      ? [
+          ``,
+          `📋 Actividades que me acompañaron:`,
+          ...completedPublicOrAllDays.map((d) => `• ${d.task.title}`),
+        ]
+      : []),
   ].join('\n');
 
   const summaryPostRes = await createPost(
@@ -706,7 +818,7 @@ export const publishFullStreakSummaryToFeed = async (params: {
     authorAvatarUrl,
     summaryPostContent,
     allEvidenceUrls,
-    ['#LoLogre', '#Racha7Dias', `#${badgeObj.name.replace(/\s+/g, '')}`, '#EntreNosotros']
+    ['#ActividadesDeMejora', '#LoLogre', `#${badgeObj.name.replace(/\s+/g, '')}`, '#EntreNosotros']
   );
 
   const updatedPublishedIds = Array.isArray(streak.publishedPostIds)
@@ -730,10 +842,10 @@ export const publishFullStreakSummaryToFeed = async (params: {
   const saved = await saveLatestTestResult(updatedResult, authorId);
 
   showAnimaToast({
-    title: '¡Tu Camino Recorrido fue publicado! 🎉',
-    message: `Tus fotos, tu logro y tu insignia "${badgeObj.name}" ya inspiran a toda la comunidad Entre Nosotros 💙.`,
+    title: '¡Tu logro y medalla fueron publicados! 🎉',
+    message: `Tu medalla "${badgeObj.name}" ya inspira a toda la comunidad Entre Nosotros 💙.`,
     emoji: badgeObj.emoji,
-    accentColor: badgeObj.color,
+    accentColor: topic.accentColor,
     durationMs: 6000,
   });
 
@@ -741,40 +853,16 @@ export const publishFullStreakSummaryToFeed = async (params: {
 };
 
 /**
- * Starts a brand new 7-Day Streak for the next badge level
+ * Starts a new topic session
  */
 export const startNextSevenDayStreak = async (
   currentResult: TestResult,
-  userId?: string
+  userId?: string,
+  nextTopicKey?: MainSupportTopicKey
 ): Promise<TestResult> => {
   const normalized = normalizeTestResultWithStreak(currentResult, userId);
-  const newStreak = buildInitialStreakState(
-    normalized.focusCategory || 'felicidad',
-    userId,
-    normalized.unlockedBadges || []
-  );
-
-  const activatedStreak: EmotionalStreakState = {
-    ...newStreak,
-    isActive: true,
-    status: 'active',
-  };
-
-  const updatedResult: TestResult = {
-    ...normalized,
-    streakState: activatedStreak,
-  };
-
-  const saved = await saveLatestTestResult(updatedResult, userId);
-
-  showAnimaToast({
-    title: '¡Nueva Ruta de 7 Días en marcha! 🔥',
-    message: 'Se prepararon 7 nuevos desafíos interactivos para ti. ¡Vamos por tu siguiente insignia!',
-    emoji: '🔥',
-    accentColor: '#FF7A00',
-  });
-
-  return saved;
+  const chosenTopic = nextTopicKey || normalizeTopicCategory(normalized.focusCategory);
+  return startSupportTopicActivities(chosenTopic, userId, normalized);
 };
 
 /**

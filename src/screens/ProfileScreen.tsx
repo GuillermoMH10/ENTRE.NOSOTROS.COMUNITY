@@ -709,29 +709,29 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                   >
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                       <Text style={{ fontSize: 14.5, fontWeight: '900', color: '#0F172A' }}>
-                        Mis Avances
+                        Mis Actividades de Mejora
                       </Text>
                       <View
                         style={{
                           flexDirection: 'row',
                           alignItems: 'center',
-                          backgroundColor: '#FFF7ED',
+                          backgroundColor: '#EFF6FF',
                           paddingHorizontal: 8,
                           paddingVertical: 3,
                           borderRadius: 8,
                           borderWidth: 1,
-                          borderColor: '#FFEDD5',
-                          gap: 3,
+                          borderColor: '#BFDBFE',
+                          gap: 4,
                         }}
                       >
-                        <Text style={{ fontSize: 11 }}>🔥</Text>
-                        <Text style={{ fontSize: 10.5, fontWeight: '800', color: '#FF7A00' }}>
-                          {latestTestResult.streakState?.completedDaysCount || 0} / 7 Días
+                        <Text style={{ fontSize: 11 }}>{latestTestResult.streakState?.focusEmoji || '🌤️'}</Text>
+                        <Text style={{ fontSize: 10.5, fontWeight: '800', color: '#2563EB' }}>
+                          A tu ritmo
                         </Text>
                       </View>
                     </View>
 
-                    {/* Botón pequeño y discreto de Reiniciar Reto */}
+                    {/* Botón pequeño y discreto de Cambiar Tema / Reiniciar */}
                     <TouchableOpacity
                       style={{
                         flexDirection: 'row',
@@ -741,22 +741,22 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                         paddingVertical: 5,
                         borderRadius: 9,
                         borderWidth: 1.5,
-                        borderColor: '#FF7A00',
+                        borderColor: '#3B82F6',
                         gap: 4,
                       }}
                       activeOpacity={0.8}
                       onPress={() => setIsResetStreakConfirmOpen(true)}
                     >
-                      <Ionicons name="refresh-outline" size={12} color="#FF7A00" />
-                      <Text style={{ fontSize: 11, fontWeight: '800', color: '#FF7A00' }}>
-                        Reiniciar reto
+                      <Ionicons name="swap-horizontal-outline" size={12} color="#3B82F6" />
+                      <Text style={{ fontSize: 11, fontWeight: '800', color: '#3B82F6' }}>
+                        Cambiar tema
                       </Text>
                     </TouchableOpacity>
                   </View>
 
-                  {/* Galería de 7 Días: 1 sola fila de 7 en Web/Laptop, y diseño balanceado 4+3 en Móvil */}
+                  {/* Galería de Actividades */}
                   {latestTestResult.streakState && (() => {
-                    const days = latestTestResult.streakState.days;
+                    const days = latestTestResult.streakState.days.slice(0, 7);
                     const allPhotos = days
                       .map((item) => item.evidenceImageUrl)
                       .filter((u): u is string => Boolean(u));
@@ -783,7 +783,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                             borderRadius: 13,
                             backgroundColor: hasPhoto ? '#FFFFFF' : '#F8FAFC',
                             borderWidth: hasPhoto || isCurr ? 1.5 : 1,
-                            borderColor: hasPhoto ? '#FF7A00' : isCurr ? '#FDBA74' : '#E2E8F0',
+                            borderColor: hasPhoto ? '#3B82F6' : isCurr ? '#93C5FD' : '#E2E8F0',
                             overflow: 'hidden',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -810,7 +810,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                                 }}
                               >
                                 <Text style={{ fontSize: 9, fontWeight: '800', color: '#FFFFFF' }}>
-                                  Día {d.dayNumber}
+                                  Act. {d.dayNumber} {d.visibility === 'private' ? '🔒' : ''}
                                 </Text>
                               </View>
                             </>
@@ -820,20 +820,20 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                                 style={{
                                   fontSize: 11,
                                   fontWeight: '800',
-                                  color: isCurr ? '#FF7A00' : '#475569',
+                                  color: isCurr ? '#2563EB' : '#475569',
                                 }}
                               >
-                                Día {d.dayNumber}
+                                Act. {d.dayNumber}
                               </Text>
                               <Text
                                 style={{
                                   fontSize: 8.5,
                                   fontWeight: '600',
-                                  color: isCurr ? '#FF7A00' : '#94A3B8',
+                                  color: isCurr ? '#3B82F6' : '#94A3B8',
                                   marginTop: 2,
                                 }}
                               >
-                                {isCurr ? 'En curso' : 'Pendiente'}
+                                {isCurr ? 'Actual' : 'Disponible'}
                               </Text>
                             </View>
                           )}
@@ -849,7 +849,6 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                       );
                     }
 
-                    // Mobile balanced 2-row grid: 4 on top row (D1..D4) + 3 on bottom row (D5..D7)
                     return (
                       <View style={{ gap: 7 }}>
                         <View style={{ flexDirection: 'row', gap: 7 }}>
@@ -869,23 +868,23 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                     { backgroundColor: '#FFFFFF', borderColor: '#E2E8F0', borderWidth: 1 },
                   ]}
                 >
-                  <Text style={{ fontSize: 36, marginBottom: 8 }}>🔥</Text>
+                  <Text style={{ fontSize: 36, marginBottom: 8 }}>💙</Text>
                   <Text style={[styles.profileNoTestTitle, { color: '#0F172A' }]}>
-                    Únete al Reto de Mejora de 7 Días
+                    Actividades de Apoyo y Mejora
                   </Text>
                   <Text style={[styles.profileNoTestSubtitle, { color: '#64748B' }]}>
-                    Realiza una actividad diaria acompañada por ANIMA, registra tus avances en fotos y desbloquea tus 4 insignias oficiales.
+                    Elige el tema que deseas trabajar hoy junto a ANIMA, realiza actividades agradables a tu propio ritmo y obtén tus medallas de superación.
                   </Text>
                   <TouchableOpacity
-                    style={[styles.profileStartTestBtn, { backgroundColor: '#FF7A00' }]}
+                    style={[styles.profileStartTestBtn, { backgroundColor: '#3B82F6' }]}
                     activeOpacity={0.85}
                     onPress={() => {
                       setTestModalMode('questionnaire');
                       setIsTestModalOpen(true);
                     }}
                   >
-                    <Ionicons name="flame" size={17} color={colors.white} style={{ marginRight: 6 }} />
-                    <Text style={styles.profileStartTestBtnText}>Comenzar Reto de 7 Días</Text>
+                    <Ionicons name="sparkles" size={17} color={colors.white} style={{ marginRight: 6 }} />
+                    <Text style={styles.profileStartTestBtnText}>Comenzar Actividades</Text>
                   </TouchableOpacity>
                 </View>
               )}
@@ -1025,7 +1024,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           onClose={() => setSelectedPostForEdit(null)}
         />
 
-        {/* Reset 7-Day Challenge Confirmation Modal */}
+        {/* Reset / Change Topic Confirmation Modal */}
         {isResetStreakConfirmOpen && (
           <Modal
             transparent
@@ -1037,7 +1036,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               <View
                 style={[
                   styles.logoutModalCard,
-                  { maxWidth: 410, borderWidth: 1.5, borderColor: '#FFEDD5' },
+                  { maxWidth: 410, borderWidth: 1.5, borderColor: '#E2E8F0' },
                 ]}
               >
                 <Image
@@ -1047,19 +1046,19 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                     height: 64,
                     borderRadius: 32,
                     borderWidth: 2,
-                    borderColor: '#FF7A00',
+                    borderColor: '#3B82F6',
                     marginBottom: 10,
                   }}
                   resizeMode="cover"
                 />
-                <Text style={styles.logoutModalTitle}>¿Reiniciar tu Reto de 7 Días?</Text>
+                <Text style={styles.logoutModalTitle}>¿Cambiar de tema o reiniciar tus actividades?</Text>
                 <Text style={styles.logoutModalMessage}>
-                  Al reiniciar todo, se borrará tu progreso actual y se eliminarán de Principal las publicaciones de evidencia que hayas subido durante este reto.
+                  Al reiniciar, se borrará tu progreso actual y podrás elegir nuevamente cualquiera de los 4 temas principales con ANIMA.
                 </Text>
                 <View style={{ width: '100%', gap: 8, marginTop: 4 }}>
                   <TouchableOpacity
                     style={{
-                      backgroundColor: '#FF7A00',
+                      backgroundColor: '#3B82F6',
                       paddingVertical: 11,
                       borderRadius: 11,
                       alignItems: 'center',
@@ -1082,7 +1081,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                       <ActivityIndicator size="small" color="#FFFFFF" />
                     ) : (
                       <Text style={{ color: '#FFFFFF', fontSize: 12.5, fontWeight: '800' }}>
-                        Sí, reiniciar todo y borrar publicaciones
+                        Sí, reiniciar y elegir nuevo tema
                       </Text>
                     )}
                   </TouchableOpacity>

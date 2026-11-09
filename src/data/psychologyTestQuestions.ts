@@ -11,6 +11,8 @@ import {
   FOCUS_CATEGORY_META,
   OFFICIAL_STREAK_BADGES,
   generateSevenDayTasksForUser,
+  getTopicConfig,
+  normalizeTopicCategory,
 } from './streakChallengesData';
 
 export const TEST_OPTIONS: TestOption[] = [
@@ -163,29 +165,28 @@ export const TEST_QUESTIONS: TestQuestion[] = [
 export const buildInitialStreakState = (
   focusCategory: EmotionalFocusCategory,
   userId?: string,
-  existingUnlockedBadges: string[] = []
+  _existingUnlockedBadges: string[] = []
 ): EmotionalStreakState => {
-  const meta = FOCUS_CATEGORY_META[focusCategory];
-  const nextBadge =
-    OFFICIAL_STREAK_BADGES.find((b) => !existingUnlockedBadges.includes(b.id)) ||
-    OFFICIAL_STREAK_BADGES[OFFICIAL_STREAK_BADGES.length - 1];
+  const normalizedCategory = normalizeTopicCategory(focusCategory);
+  const topic = getTopicConfig(normalizedCategory);
+  const meta = FOCUS_CATEGORY_META[normalizedCategory];
 
   return {
     id: `streak_${Date.now()}`,
     userId: userId || 'anonymous',
     isActive: true,
     status: 'active',
-    focusCategory,
+    focusCategory: normalizedCategory,
     focusTitle: meta.title,
     focusSubtitle: meta.subtitle,
-    focusColor: meta.color,
-    focusEmoji: meta.emoji,
+    focusColor: topic.accentColor,
+    focusEmoji: topic.emoji,
     startedAt: new Date().toISOString(),
     currentDayNumber: 1,
     completedDaysCount: 0,
     postponedDaysCount: 0,
-    days: generateSevenDayTasksForUser(focusCategory, userId),
-    targetBadgeId: nextBadge.id,
+    days: generateSevenDayTasksForUser(normalizedCategory, userId, 12),
+    targetBadgeId: topic.badgeId,
     summaryPublished: false,
     lastUpdatedAt: new Date().toISOString(),
   };
@@ -212,11 +213,13 @@ export const calculateTestResult = (
   };
 
   const categoryTotals: Record<EmotionalFocusCategory, { score: number; count: number }> = {
-    tristeza: { score: 0, count: 0 },
+    depresion: { score: 0, count: 0 },
     ansiedad: { score: 0, count: 0 },
+    estres: { score: 0, count: 0 },
+    amor_propio: { score: 0, count: 0 },
+    tristeza: { score: 0, count: 0 },
     enojo: { score: 0, count: 0 },
     inseguridad: { score: 0, count: 0 },
-    estres: { score: 0, count: 0 },
     felicidad: { score: 0, count: 0 },
   };
 
