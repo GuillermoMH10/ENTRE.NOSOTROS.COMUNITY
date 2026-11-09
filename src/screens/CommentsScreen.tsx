@@ -24,6 +24,7 @@ import {
   addComment,
   subscribeToComments,
   toggleCommentHeart,
+  subscribeToLiveUserProfile,
 } from '../services/postsService';
 
 interface CommentsScreenProps {
@@ -51,6 +52,7 @@ export const CommentsScreen: React.FC<CommentsScreenProps> = ({
   const [viewerImages, setViewerImages] = useState<string[]>([]);
   const [viewerIndex, setViewerIndex] = useState(0);
   const [viewerVisible, setViewerVisible] = useState(false);
+  const [liveAvatars, setLiveAvatars] = useState<Record<string, string>>({});
 
   // Subscribe to comments in real-time
   useEffect(() => {
@@ -63,6 +65,26 @@ export const CommentsScreen: React.FC<CommentsScreenProps> = ({
       return () => unsubscribe();
     }
   }, [visible, post]);
+
+  // Subscribe to live avatars for post author and comment authors
+  useEffect(() => {
+    if (!visible || !post) return;
+    const authorIds = Array.from(
+      new Set([post.authorId, ...comments.map((c) => c.authorId)].filter(Boolean))
+    );
+    const unsubs = authorIds.map((uid) =>
+      subscribeToLiveUserProfile(uid, (data) => {
+        if (data.avatarUrl) {
+          setLiveAvatars((prev) =>
+            prev[uid] === data.avatarUrl ? prev : { ...prev, [uid]: data.avatarUrl! }
+          );
+        }
+      })
+    );
+    return () => {
+      unsubs.forEach((u) => u());
+    };
+  }, [visible, post?.authorId, comments]);
 
   // Pick up to 1 image
   const handlePickImage = async () => {
@@ -175,9 +197,11 @@ export const CommentsScreen: React.FC<CommentsScreenProps> = ({
               <View style={styles.postContextAuthorRow}>
                 <Image
                   source={{
-                    uri: (user && user.id === post.authorId && user.avatarUrl)
-                      ? user.avatarUrl
-                      : post.authorAvatarUrl,
+                    uri:
+                      liveAvatars[post.authorId] ||
+                      (user && user.id === post.authorId && user.avatarUrl
+                        ? user.avatarUrl
+                        : post.authorAvatarUrl),
                   }}
                   style={styles.contextAvatar}
                 />
@@ -217,9 +241,11 @@ export const CommentsScreen: React.FC<CommentsScreenProps> = ({
             <View style={styles.commentCard}>
               <Image
                 source={{
-                  uri: (user && user.id === item.authorId && user.avatarUrl)
-                    ? user.avatarUrl
-                    : item.authorAvatarUrl,
+                  uri:
+                    liveAvatars[item.authorId] ||
+                    (user && user.id === item.authorId && user.avatarUrl
+                      ? user.avatarUrl
+                      : item.authorAvatarUrl),
                 }}
                 style={styles.commentAvatar}
               />

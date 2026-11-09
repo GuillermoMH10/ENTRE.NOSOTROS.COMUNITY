@@ -112,7 +112,13 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const [followModalVisible, setFollowModalVisible] = useState(false);
   const [followModalTab, setFollowModalTab] = useState<FollowTabType>('following');
   const [selectedOtherUser, setSelectedOtherUser] = useState<{ userId: string; username?: string; avatarUrl?: string } | null>(null);
-  const [liveCounts, setLiveCounts] = useState<{ followingCount?: number; followersCount?: number }>({});
+  const [liveCounts, setLiveCounts] = useState<{
+    followingCount?: number;
+    followersCount?: number;
+    avatarUrl?: string;
+    coverPhotoUrl?: string;
+    bio?: string;
+  }>({});
 
   // Full-screen Image Viewer (Cover & Avatar)
   const [viewerImages, setViewerImages] = useState<string[]>([]);
@@ -125,7 +131,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     setViewerVisible(true);
   };
 
-  // Subscribe to live user counts (followers / following)
+  // Subscribe to live user counts & profile assets (avatar, cover, bio, followers, following)
   useEffect(() => {
     if (!visible || !user) return;
     const userDocRef = doc(db, 'users', user.id);
@@ -135,6 +141,9 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         setLiveCounts({
           followingCount: data.followingCount || 0,
           followersCount: data.followersCount || 0,
+          avatarUrl: data.avatarUrl || undefined,
+          coverPhotoUrl: data.coverPhotoUrl || undefined,
+          bio: data.bio ?? undefined,
         });
       }
     });
@@ -213,17 +222,23 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
         allowsMultipleSelection: false,
-        quality: 0.35,
+        quality: 0.45,
         base64: true,
       });
 
       if (!result.canceled && result.assets && result.assets[0]) {
         setIsUploadingCover(true);
         const asset = result.assets[0];
-        const source = asset.base64 ? `data:image/jpeg;base64,${asset.base64}` : asset.uri;
+        const mime = asset.mimeType || 'image/jpeg';
+        const source = asset.base64
+          ? asset.base64.startsWith('data:')
+            ? asset.base64
+            : `data:${mime};base64,${asset.base64}`
+          : asset.uri;
         const storagePath = `users/${user.id}/cover_${Date.now()}.jpg`;
 
-        const publicUrl = await uploadMediaToStorage(source, storagePath);
+        const publicUrl = await uploadMediaToStorage(source, storagePath, asset.uri);
+        setLiveCounts((prev) => ({ ...prev, coverPhotoUrl: publicUrl }));
         await updateUserProfile({ coverPhotoUrl: publicUrl });
         setIsUploadingCover(false);
       }
@@ -246,17 +261,23 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
         allowsMultipleSelection: false,
-        quality: 0.35,
+        quality: 0.45,
         base64: true,
       });
 
       if (!result.canceled && result.assets && result.assets[0]) {
         setIsUploadingAvatar(true);
         const asset = result.assets[0];
-        const source = asset.base64 ? `data:image/jpeg;base64,${asset.base64}` : asset.uri;
+        const mime = asset.mimeType || 'image/jpeg';
+        const source = asset.base64
+          ? asset.base64.startsWith('data:')
+            ? asset.base64
+            : `data:${mime};base64,${asset.base64}`
+          : asset.uri;
         const storagePath = `users/${user.id}/avatar_${Date.now()}.jpg`;
 
-        const publicUrl = await uploadMediaToStorage(source, storagePath);
+        const publicUrl = await uploadMediaToStorage(source, storagePath, asset.uri);
+        setLiveCounts((prev) => ({ ...prev, avatarUrl: publicUrl }));
         await updateUserProfile({ avatarUrl: publicUrl });
         setIsUploadingAvatar(false);
       }
@@ -313,6 +334,10 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
       : selectedTab === 'reacted'
       ? reactedPosts
       : [];
+
+  const activeCoverUrl = liveCounts.coverPhotoUrl || user.coverPhotoUrl;
+  const activeAvatarUrl = liveCounts.avatarUrl || user.avatarUrl;
+  const activeBio = liveCounts.bio !== undefined ? liveCounts.bio : user.bio;
 
   const profileBody = (
     <View style={styles.rootContainer}>
@@ -408,13 +433,13 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         <ScrollView showsVerticalScrollIndicator={Platform.OS === 'web' ? true : false} style={styles.scrollBody}>
           {/* 1. Cover Photo Banner */}
           <View style={styles.coverBanner}>
-            {user.coverPhotoUrl ? (
+            {activeCoverUrl ? (
               <TouchableOpacity
                 style={styles.coverImageTouchable}
-                onPress={() => handleOpenImageViewer([user.coverPhotoUrl!])}
+                onPress={() => handleOpenImageViewer([activeCoverUrl])}
                 activeOpacity={0.9}
               >
-                <Image source={{ uri: user.coverPhotoUrl }} style={styles.coverImage} resizeMode="cover" />
+                <Image source={{ uri: activeCoverUrl }} style={styles.coverImage} resizeMode="cover" />
               </TouchableOpacity>
             ) : (
               <TouchableOpacity
@@ -449,10 +474,10 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             <View style={styles.avatarContainer}>
               <View style={styles.avatarTouchable}>
                 <TouchableOpacity
-                  onPress={() => user.avatarUrl && handleOpenImageViewer([user.avatarUrl])}
+                  onPress={() => activeAvatarUrl && handleOpenImageViewer([activeAvatarUrl])}
                   activeOpacity={0.85}
                 >
-                  <Image source={{ uri: user.avatarUrl }} style={styles.avatarImage} resizeMode="cover" />
+                  <Image source={{ uri: activeAvatarUrl }} style={styles.avatarImage} resizeMode="cover" />
                 </TouchableOpacity>
 
                 {isUploadingAvatar ? (
@@ -477,8 +502,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
             {/* Editable Bio / Description */}
             <TouchableOpacity style={styles.bioContainer} onPress={handleOpenBioEditor} activeOpacity={0.7}>
-              {user.bio ? (
-                <Text style={styles.bioText}>{user.bio}</Text>
+              {activeBio ? (
+                <Text style={styles.bioText}>{activeBio}</Text>
               ) : (
                 <Text style={styles.bioPlaceholderText}>Agregar una pequeña descripción...</Text>
               )}

@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import {
   collection,
   doc,
@@ -18,17 +19,183 @@ import { ref, uploadString, uploadBytes, getDownloadURL } from 'firebase/storage
 import { db, storage } from './firebase';
 import { Post, PostComment, ReactionType, HashtagItem } from '../types/post';
 
+export interface LiveUserAssets {
+  id: string;
+  username?: string;
+  avatarUrl?: string;
+  coverPhotoUrl?: string;
+  bio?: string;
+  followingCount?: number;
+  followersCount?: number;
+}
+
+const liveUserCache = new Map<string, LiveUserAssets>();
+const liveUserSubscribers = new Map<string, Set<(data: LiveUserAssets) => void>>();
+const liveUserUnsubscribers = new Map<string, () => void>();
+
 /**
- * Uploads an image or video to Firebase Storage and returns the public download URL
+ * Shared real-time listener multiplexer for `users/{userId}` so that profile photos,
+ * cover photos, usernames, and bios update in real-time across all screens and devices.
+ */
+export function subscribeToLiveUserProfile(
+  userId: string | null | undefined,
+  callback: (data: LiveUserAssets) => void
+): () => void {
+  if (!userId) return () => {};
+
+  const cached = liveUserCache.get(userId);
+  if (cached) {
+    callback(cached);
+  }
+
+  let subs = liveUserSubscribers.get(userId);
+  if (!subs) {
+    subs = new Set();
+    liveUserSubscribers.set(userId, subs);
+  }
+  subs.add(callback);
+
+  if (!liveUserUnsubscribers.has(userId)) {
+    const userDocRef = doc(db, 'users', userId);
+    const unsub = onSnapshot(
+      userDocRef,
+      (snap) => {
+        if (snap.exists()) {
+          const raw = snap.data();
+          const payload: LiveUserAssets = {
+            id: snap.id,
+            username: raw.username,
+            avatarUrl: raw.avatarUrl,
+            coverPhotoUrl: raw.coverPhotoUrl,
+            bio: raw.bio,
+            followingCount: raw.followingCount ?? 0,
+            followersCount: raw.followersCount ?? 0,
+          };
+          liveUserCache.set(userId, payload);
+          const currentSubs = liveUserSubscribers.get(userId);
+          if (currentSubs) {
+            currentSubs.forEach((cb) => cb(payload));
+          }
+        }
+      },
+      (err) => {
+        console.warn('Error en listener de usuario en tiempo real:', err);
+      }
+    );
+    liveUserUnsubscribers.set(userId, unsub);
+  }
+
+  return () => {
+    const currentSubs = liveUserSubscribers.get(userId);
+    if (currentSubs) {
+      currentSubs.delete(callback);
+      if (currentSubs.size === 0) {
+        liveUserSubscribers.delete(userId);
+        const unsub = liveUserUnsubscribers.get(userId);
+        if (unsub) {
+          unsub();
+          liveUserUnsubscribers.delete(userId);
+        }
+      }
+    }
+  };
+}
+
+/**
+ * Compresses an image data URL on Web using an offscreen HTML5 canvas
+ * (since expo-image-picker on Web ignores the `quality` option).
+ */
+async function compressImageOnWebIfPossible(
+  source: string,
+  maxDimension = 1200,
+  quality = 0.78
+): Promise<string> {
+  if (Platform.OS !== 'web' || typeof document === 'undefined') {
+    return source;
+  }
+  if (!source.startsWith('data:image/') && !source.startsWith('blob:')) {
+    return source;
+  }
+  return new Promise((resolve) => {
+    try {
+      const img = new window.Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        try {
+          let width = img.naturalWidth || img.width || 800;
+          let height = img.naturalHeight || img.height || 800;
+          if (width > maxDimension || height > maxDimension) {
+            if (width >= height) {
+              height = Math.round((height * maxDimension) / width);
+              width = maxDimension;
+            } else {
+              width = Math.round((width * maxDimension) / height);
+              height = maxDimension;
+            }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            resolve(source);
+            return;
+          }
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressed = canvas.toDataURL('image/jpeg', quality);
+          resolve(compressed || source);
+        } catch {
+          resolve(source);
+        }
+      };
+      img.onerror = () => resolve(source);
+      img.src = source;
+    } catch {
+      resolve(source);
+    }
+  });
+}
+
+/**
+ * Converts a local file:// or data: URI into a native Blob via XMLHttpRequest
+ * (compatible with React Native Android/iOS where new Blob([Uint8Array]) fails).
+ */
+function uriToNativeBlob(uri: string): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    try {
+      const xhr = new XMLHttpRequest();
+      xhr.onload = () => {
+        resolve(xhr.response);
+      };
+      xhr.onerror = () => {
+        reject(new Error('No se pudo convertir la imagen en Blob nativo'));
+      };
+      xhr.responseType = 'blob';
+      xhr.open('GET', uri, true);
+      xhr.send(null);
+    } catch (err) {
+      reject(err);
+    }
+  });
+}
+
+/**
+ * Uploads an image or video to Firebase Storage and returns the public download URL.
+ * Works reliably across both Web and Native Mobile (Android/iOS) and includes
+ * automatic compression and safe fallback so profile/cover photos always sync.
  */
 export async function uploadMediaToStorage(
   mediaSource: string,
-  storagePath: string
+  storagePath: string,
+  localFileUri?: string
 ): Promise<string> {
   const storageRef = ref(storage, storagePath);
 
-  // If already a remote URL, return as is
-  if (mediaSource.startsWith('http://') || mediaSource.startsWith('https://')) {
+  // If already a remote http(s) URL (and not a local blob: URL), return as is
+  if (
+    (mediaSource.startsWith('http://') || mediaSource.startsWith('https://')) &&
+    !mediaSource.startsWith('blob:')
+  ) {
     return mediaSource;
   }
 
@@ -38,19 +205,58 @@ export async function uploadMediaToStorage(
     mediaSource.includes('video/') ||
     mediaSource.startsWith('data:video');
 
-  // If base64 data URL, upload with uploadString (fastest and most reliable)
-  if (mediaSource.startsWith('data:')) {
-    await uploadString(storageRef, mediaSource, 'data_url');
-    return await getDownloadURL(storageRef);
+  let preparedSource = mediaSource;
+  if (!isVideo && Platform.OS === 'web') {
+    const isAvatar = storagePath.includes('avatar_');
+    preparedSource = await compressImageOnWebIfPossible(
+      mediaSource,
+      isAvatar ? 720 : 1280,
+      isAvatar ? 0.8 : 0.78
+    );
   }
 
-  // Otherwise upload blob via fetch with appropriate content-type metadata
-  const response = await fetch(mediaSource);
-  const blob = await response.blob();
-  await uploadBytes(storageRef, blob, {
-    contentType: isVideo ? 'video/mp4' : 'image/jpeg',
-  });
-  return await getDownloadURL(storageRef);
+  // 1. On Web: if base64 data URL, upload with uploadString
+  if (Platform.OS === 'web' && preparedSource.startsWith('data:')) {
+    try {
+      await uploadString(storageRef, preparedSource, 'data_url');
+      return await getDownloadURL(storageRef);
+    } catch (webErr) {
+      console.warn('Fallback uploadBytes on web:', webErr);
+    }
+  }
+
+  // 2. On Native Mobile (Android/iOS) or Web Blob: use native Blob via XMLHttpRequest + uploadBytes
+  // (Avoids Firebase JS SDK's uploadString Uint8Array->Blob crash on React Native)
+  const uriForBlob =
+    Platform.OS !== 'web' && localFileUri ? localFileUri : preparedSource;
+
+  try {
+    const nativeBlob = await uriToNativeBlob(uriForBlob);
+    await uploadBytes(storageRef, nativeBlob, {
+      contentType: isVideo ? 'video/mp4' : 'image/jpeg',
+    });
+    if (typeof (nativeBlob as any).close === 'function') {
+      try {
+        (nativeBlob as any).close();
+      } catch {}
+    }
+    return await getDownloadURL(storageRef);
+  } catch (blobErr) {
+    // 3. Secondary attempt via uploadString if data URL is available
+    if (preparedSource.startsWith('data:')) {
+      try {
+        await uploadString(storageRef, preparedSource, 'data_url');
+        return await getDownloadURL(storageRef);
+      } catch (strErr) {
+        console.warn('Fallback to inline data URI after storage error:', strErr);
+        // Return compressed data URI (<150KB) so Firestore still syncs the image across all devices
+        if (preparedSource.length < 750000) {
+          return preparedSource;
+        }
+      }
+    }
+    throw blobErr;
+  }
 }
 
 /**

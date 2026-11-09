@@ -402,7 +402,7 @@ export const DesktopWebLayout: React.FC<DesktopWebLayoutProps> = ({
                   onPress={() => setActiveSection('perfil')}
                 >
                   <Image
-                    source={{ uri: user.avatarUrl }}
+                    source={{ uri: liveUserData.avatarUrl || user.avatarUrl }}
                     style={styles.userStripAvatar}
                     resizeMode="cover"
                   />
@@ -475,7 +475,7 @@ export const DesktopWebLayout: React.FC<DesktopWebLayoutProps> = ({
                     >
                       {user ? (
                         <Image
-                          source={{ uri: user.avatarUrl }}
+                          source={{ uri: liveUserData.avatarUrl || user.avatarUrl }}
                           style={styles.quickPostAvatar}
                           resizeMode="cover"
                         />
@@ -686,9 +686,9 @@ export const DesktopWebLayout: React.FC<DesktopWebLayoutProps> = ({
                         <Text style={styles.profileCardEmail} numberOfLines={1}>
                           {user.email}
                         </Text>
-                        {user.bio ? (
+                        {(liveUserData.bio ?? user.bio) ? (
                           <Text style={styles.profileCardBio} numberOfLines={2}>
-                            {user.bio}
+                            {liveUserData.bio ?? user.bio}
                           </Text>
                         ) : null}
 

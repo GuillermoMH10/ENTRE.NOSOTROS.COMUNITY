@@ -6,6 +6,7 @@ import {
   setDoc,
   getDocs,
   updateDoc,
+  onSnapshot,
   query,
   where,
 } from 'firebase/firestore';
@@ -40,6 +41,63 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
     loadSession();
   }, []);
+
+  // Real-time synchronization of user profile (avatar, cover photo, bio, counts) across all devices
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const userDocRef = doc(db, 'users', user.id);
+    const unsubscribe = onSnapshot(
+      userDocRef,
+      (snap) => {
+        if (!snap.exists()) return;
+        const data = snap.data();
+
+        setUser((prev) => {
+          if (!prev || prev.id !== user.id) return prev;
+
+          const nextAvatarUrl =
+            data.avatarUrl || prev.avatarUrl || generateRandomAvatar(data.username || prev.username);
+          const nextCoverPhotoUrl =
+            data.coverPhotoUrl !== undefined ? data.coverPhotoUrl : prev.coverPhotoUrl;
+          const nextBio = data.bio !== undefined ? data.bio : prev.bio;
+          const nextUsername = data.username || prev.username;
+          const nextEmail = data.email || prev.email;
+          const nextFollowingCount = data.followingCount ?? prev.followingCount ?? 0;
+          const nextFollowersCount = data.followersCount ?? prev.followersCount ?? 0;
+
+          const hasChanged =
+            prev.avatarUrl !== nextAvatarUrl ||
+            prev.coverPhotoUrl !== nextCoverPhotoUrl ||
+            prev.bio !== nextBio ||
+            prev.username !== nextUsername ||
+            prev.followingCount !== nextFollowingCount ||
+            prev.followersCount !== nextFollowersCount;
+
+          if (!hasChanged) return prev;
+
+          const syncedUser: UserProfile = {
+            ...prev,
+            email: nextEmail,
+            username: nextUsername,
+            avatarUrl: nextAvatarUrl,
+            coverPhotoUrl: nextCoverPhotoUrl || undefined,
+            bio: nextBio || undefined,
+            followingCount: nextFollowingCount,
+            followersCount: nextFollowersCount,
+          };
+
+          AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(syncedUser)).catch(() => {});
+          return syncedUser;
+        });
+      },
+      (err) => {
+        console.warn('Error en sincronización de perfil en tiempo real:', err);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [user?.id]);
 
   // Login handler with Firestore lookup and SHA-256 password hash comparison
   const login = async (
@@ -190,7 +248,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!user) return { success: false, error: 'No hay usuario autenticado.' };
     try {
       const userRef = doc(db, 'users', user.id);
-      await updateDoc(userRef, updates);
+      await setDoc(
+        userRef,
+        {
+          ...updates,
+          updatedAt: Date.now(),
+        },
+        { merge: true }
+      );
 
       const updatedUser: UserProfile = {
         ...user,

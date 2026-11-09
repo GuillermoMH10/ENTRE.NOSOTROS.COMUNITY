@@ -14,7 +14,12 @@ import { PostMediaView } from './PostMediaView';
 import { ReactionPicker } from './ReactionPicker';
 import { HashtagFeedModal } from './HashtagFeedModal';
 import { ImageViewerModal } from '../UI/ImageViewerModal';
-import { togglePostReaction, toggleSavePost, toggleFollowUser } from '../../services/postsService';
+import {
+  togglePostReaction,
+  toggleSavePost,
+  toggleFollowUser,
+  subscribeToLiveUserProfile,
+} from '../../services/postsService';
 import { useAuth } from '../../context/AuthContext';
 
 interface PostCardProps {
@@ -49,7 +54,18 @@ export const PostCard: React.FC<PostCardProps> = ({
   const [viewerIndex, setViewerIndex] = useState(0);
   const [selectedHashtag, setSelectedHashtag] = useState<string | null>(null);
   const [isFollowing, setIsFollowing] = useState<boolean>(Boolean(isFollowingProp));
+  const [liveAuthorAvatar, setLiveAuthorAvatar] = useState<string | undefined>(undefined);
   const reactionBtnRef = React.useRef<View>(null);
+
+  useEffect(() => {
+    if (!post.authorId) return;
+    const unsub = subscribeToLiveUserProfile(post.authorId, (data) => {
+      if (data.avatarUrl) {
+        setLiveAuthorAvatar(data.avatarUrl);
+      }
+    });
+    return () => unsub();
+  }, [post.authorId]);
 
   useEffect(() => {
     if (isFollowingProp !== undefined) {
@@ -175,14 +191,26 @@ export const PostCard: React.FC<PostCardProps> = ({
       <View style={styles.headerRow}>
         <TouchableOpacity
           style={styles.authorTouchable}
-          onPress={() => onUserPress && onUserPress(post.authorId, post.authorUsername, (user && user.id === post.authorId && user.avatarUrl) ? user.avatarUrl : post.authorAvatarUrl)}
+          onPress={() =>
+            onUserPress &&
+            onUserPress(
+              post.authorId,
+              post.authorUsername,
+              liveAuthorAvatar ||
+                (user && user.id === post.authorId && user.avatarUrl
+                  ? user.avatarUrl
+                  : post.authorAvatarUrl)
+            )
+          }
           activeOpacity={0.7}
         >
           <Image
             source={{
-              uri: (user && user.id === post.authorId && user.avatarUrl)
-                ? user.avatarUrl
-                : post.authorAvatarUrl,
+              uri:
+                liveAuthorAvatar ||
+                (user && user.id === post.authorId && user.avatarUrl
+                  ? user.avatarUrl
+                  : post.authorAvatarUrl),
             }}
             style={styles.authorAvatar}
             resizeMode="cover"
