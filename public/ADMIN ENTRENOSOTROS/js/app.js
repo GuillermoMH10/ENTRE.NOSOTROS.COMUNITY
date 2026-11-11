@@ -3625,17 +3625,8 @@
       // ======================================================================
       h('div', { className: 'exec-topbar' },
         h('div', { className: 'exec-topbar-left' },
-          h('div', { className: 'exec-status-badge' },
-            h('span', { className: 'exec-status-dot' }),
-            'Sincronización en vivo • Firestore'
-          ),
-          h('div', { className: 'exec-greeting-row' },
-            h('h2', { className: 'exec-greeting-title' },
-              `Panel Ejecutivo — Hola, ${currentUser?.name || currentUser?.username || 'Administrador'}`
-            ),
-            h('span', { className: 'exec-greeting-sub' },
-              'Métricas operativas y actividad semanal de Entre Nosotros'
-            )
+          h('h2', { className: 'exec-greeting-title' },
+            `Hola, ${currentUser?.name || currentUser?.username || 'Administrador'}`
           )
         ),
 
