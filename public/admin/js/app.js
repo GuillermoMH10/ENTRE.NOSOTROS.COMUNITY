@@ -578,6 +578,12 @@
       chevronDown: h('svg', { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth, strokeLinecap: 'round', strokeLinejoin: 'round' },
         h('polyline', { points: '6 9 12 15 18 9' })
       ),
+      calendar: h('svg', { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth, strokeLinecap: 'round', strokeLinejoin: 'round' },
+        h('rect', { x: '3', y: '4', width: '18', height: '18', rx: '2', ry: '2' }),
+        h('line', { x1: '16', y1: '2', x2: '16', y2: '6' }),
+        h('line', { x1: '8', y1: '2', x2: '8', y2: '6' }),
+        h('line', { x1: '3', y1: '10', x2: '21', y2: '10' })
+      ),
       chevronUp: h('svg', { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth, strokeLinecap: 'round', strokeLinejoin: 'round' },
         h('polyline', { points: '18 15 12 9 6 15' })
       ),
@@ -3213,7 +3219,7 @@
   };
 
   // ==========================================================================
-  // COMPONENTE: MÓDULO PRINCIPAL (DASHBOARD REAL, COLORIDO E INTERACTIVO)
+  // COMPONENTE: MÓDULO PRINCIPAL (DASHBOARD EJECUTIVO, COMPACTO Y PROFESIONAL)
   // ==========================================================================
   const PrincipalDashboardView = ({
     currentUser,
@@ -3237,26 +3243,26 @@
         hour: '2-digit',
         minute: '2-digit',
         second: '2-digit'
-      }) + ' hrs';
+      });
     }, [currentTime]);
 
     const formattedDate = useMemo(() => {
       const dStr = currentTime.toLocaleDateString('es-MX', {
-        weekday: 'long',
+        weekday: 'short',
         day: 'numeric',
-        month: 'long',
+        month: 'short',
         year: 'numeric'
       });
       return dStr.charAt(0).toUpperCase() + dStr.slice(1);
     }, [currentTime]);
 
-    // 2. Widget de Clima (SIEMPRE Santa Catarina, N.L.)
+    // 2. Widget de Clima (Santa Catarina, N.L.)
     const SANTA_CATARINA_COORDS = { lat: 25.6761, lon: -100.4639, name: 'Santa Catarina, N.L.' };
 
     const [weatherData, setWeatherData] = useState({
       temp: null,
       city: 'Santa Catarina, N.L.',
-      desc: 'Cargando clima...',
+      desc: 'Actualizando...',
       icon: '☀️',
       loading: true,
     });
@@ -3293,7 +3299,6 @@
           });
         })
         .catch(() => {
-          // Fallback a Open-Meteo
           fetch(`https://api.open-meteo.com/v1/forecast?latitude=${SANTA_CATARINA_COORDS.lat}&longitude=${SANTA_CATARINA_COORDS.lon}&current_weather=true`)
             .then((r) => r.json())
             .then((mReport) => {
@@ -3330,19 +3335,20 @@
       fetchWeather();
     }, []);
 
-    // 3. Modal de Vista Previa de Psicólogo (cuando se clickea en el carrusel)
+    // 3. Modal de Vista Previa de Psicólogo
     const [selectedPsicoForPreview, setSelectedPsicoForPreview] = useState(null);
 
-    // 4. Ref del Carrusel Horizontal de Psicólogos
-    const carouselTrackRef = useRef(null);
-    const scrollCarousel = (direction) => {
-      if (carouselTrackRef.current) {
-        const offset = direction === 'left' ? -240 : 240;
-        carouselTrackRef.current.scrollBy({ left: offset, behavior: 'smooth' });
-      }
+    // Helper para formatear YYYY-MM-DD en hora local
+    const toLocalDateKey = (dateObj) => {
+      const y = dateObj.getFullYear();
+      const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const d = String(dateObj.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
     };
 
-    // 5. CÁLCULO DE DÍAS DE LA SEMANA ACTUAL (Lunes a Domingo)
+    const todayKey = useMemo(() => toLocalDateKey(new Date()), []);
+
+    // 4. DÍAS DE LA SEMANA ACTUAL (Lunes a Domingo)
     const weekDays = useMemo(() => {
       const now = new Date();
       const dayNamesShort = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
@@ -3354,733 +3360,791 @@
       monday.setHours(0, 0, 0, 0);
 
       const days = [];
-      const todayKey = now.toISOString().split('T')[0];
+      const tKey = toLocalDateKey(now);
 
       for (let i = 0; i < 7; i++) {
         const d = new Date(monday);
         d.setDate(monday.getDate() + i);
-        const y = d.getFullYear();
-        const m = String(d.getMonth() + 1).padStart(2, '0');
-        const dayNum = String(d.getDate()).padStart(2, '0');
-        const dateKey = `${y}-${m}-${dayNum}`;
+        const dateKey = toLocalDateKey(d);
         const dow = d.getDay();
         days.push({
           dateKey: dateKey,
           short: dayNamesShort[dow],
           full: dayNamesFull[dow],
           number: d.getDate(),
-          isToday: dateKey === todayKey,
+          isToday: dateKey === tKey,
         });
       }
       return days;
     }, []);
 
-    // 6. VISITAS Y ACTIVIDAD DE LOS 7 DÍAS (100% REAL DE LA BASE DE DATOS)
+    // 5. MAPA GLOBAL DE ACTIVIDAD POR FECHA (Para gráficas y Calendario)
+    const dailyStatsMap = useMemo(() => {
+      const map = {};
+      const ensureDate = (dk) => {
+        if (!map[dk]) map[dk] = { posts: 0, users: 0, moods: 0, total: 0 };
+        return map[dk];
+      };
+
+      allPostsList.forEach((p) => {
+        const raw = p.createdAt ? String(p.createdAt) : '';
+        const dk = raw.includes('T') ? raw.split('T')[0] : raw.slice(0, 10);
+        if (/^\d{4}-\d{2}-\d{2}$/.test(dk)) {
+          const entry = ensureDate(dk);
+          entry.posts += 1;
+          entry.total += 1;
+        }
+      });
+
+      usersList.forEach((u) => {
+        const raw = u.lastActiveAt || u.createdAt ? String(u.lastActiveAt || u.createdAt) : '';
+        const dk = raw.includes('T') ? raw.split('T')[0] : raw.slice(0, 10);
+        if (/^\d{4}-\d{2}-\d{2}$/.test(dk)) {
+          const entry = ensureDate(dk);
+          entry.users += 1;
+          entry.total += 1;
+        }
+      });
+
+      (moodRecordsList || []).forEach((m) => {
+        const raw = m.createdAt || m.date ? String(m.createdAt || m.date) : '';
+        const dk = raw.includes('T') ? raw.split('T')[0] : raw.slice(0, 10);
+        if (/^\d{4}-\d{2}-\d{2}$/.test(dk)) {
+          const entry = ensureDate(dk);
+          entry.moods += 1;
+          entry.total += 1;
+        }
+      });
+
+      return map;
+    }, [allPostsList, usersList, moodRecordsList]);
+
+    // 6. GRÁFICA 1: ACTIVIDAD Y VISITAS A LA APP (7 DÍAS)
     const visitsActivityData = useMemo(() => {
       return weekDays.map((wd) => {
-        let count = 0;
-        // Usuarios activos o creados en este día
-        usersList.forEach((u) => {
-          const act = u.lastActiveAt || u.createdAt;
-          if (act && typeof act === 'string' && act.startsWith(wd.dateKey)) {
-            count++;
-          }
-        });
-        // Publicaciones realizadas en este día
-        allPostsList.forEach((p) => {
-          const pDate = p.createdAt ? (typeof p.createdAt === 'string' ? p.createdAt.split('T')[0] : '') : '';
-          if (pDate === wd.dateKey) {
-            count++;
-          }
-        });
+        const st = dailyStatsMap[wd.dateKey] || { posts: 0, users: 0, moods: 0, total: 0 };
         return {
           ...wd,
-          count: count,
+          count: st.total,
+          posts: st.posts,
+          users: st.users,
         };
       });
-    }, [weekDays, usersList, allPostsList]);
+    }, [weekDays, dailyStatsMap]);
 
     const totalWeekActivity = useMemo(() => {
       return visitsActivityData.reduce((acc, curr) => acc + curr.count, 0);
     }, [visitsActivityData]);
 
-    // 7. PUBLICACIONES DE ESTA SEMANA POR DÍA (100% REAL DE FIRESTORE)
+    const peakActivityDay = useMemo(() => {
+      if (visitsActivityData.length === 0) return { short: 'Hoy', count: 0 };
+      return visitsActivityData.reduce((best, curr) => (curr.count > best.count ? curr : best), visitsActivityData[0]);
+    }, [visitsActivityData]);
+
+    // 7. GRÁFICA 2: PUBLICACIONES ESTA SEMANA POR DÍA (LUN - DOM)
     const postsByDayOfWeek = useMemo(() => {
       return weekDays.map((wd) => {
-        const matchingPosts = allPostsList.filter((p) => {
-          const pDate = p.createdAt ? (typeof p.createdAt === 'string' ? p.createdAt.split('T')[0] : '') : '';
-          return pDate === wd.dateKey;
-        });
+        const st = dailyStatsMap[wd.dateKey] || { posts: 0 };
         return {
           ...wd,
-          count: matchingPosts.length,
+          count: st.posts,
         };
       });
-    }, [weekDays, allPostsList]);
+    }, [weekDays, dailyStatsMap]);
 
     const totalPostsThisWeek = useMemo(() => {
       return postsByDayOfWeek.reduce((acc, curr) => acc + curr.count, 0);
     }, [postsByDayOfWeek]);
 
     const maxPostsInDay = useMemo(() => {
-      const max = Math.max(...postsByDayOfWeek.map((d) => d.count), 1);
-      return max;
+      return Math.max(...postsByDayOfWeek.map((d) => d.count), 1);
     }, [postsByDayOfWeek]);
 
-    // 8. GRÁFICA DE PASTEL (DONUT CHART - DISTRIBUCIÓN REAL DE CONTENIDO Y MODALIDADES)
-    const donutData = useMemo(() => {
-      let postsConImagen = 0;
-      let postsSoloTexto = 0;
-      allPostsList.forEach((p) => {
-        if (Array.isArray(p.imageUrls) && p.imageUrls.length > 0) {
-          postsConImagen++;
-        } else {
-          postsSoloTexto++;
-        }
-      });
+    // 8. CALENDARIO EJECUTIVO INTERACTIVO
+    const [calendarViewDate, setCalendarViewDate] = useState(() => {
+      const now = new Date();
+      return new Date(now.getFullYear(), now.getMonth(), 1);
+    });
+    const [selectedCalendarDateKey, setSelectedCalendarDateKey] = useState(() => todayKey);
 
-      let psicoOnline = 0;
-      let psicoPresencial = 0;
+    const calendarData = useMemo(() => {
+      const year = calendarViewDate.getFullYear();
+      const month = calendarViewDate.getMonth();
+      const monthTitleRaw = calendarViewDate.toLocaleDateString('es-MX', { month: 'long', year: 'numeric' });
+      const monthTitle = monthTitleRaw.charAt(0).toUpperCase() + monthTitleRaw.slice(1);
+
+      const firstDayOfMonth = new Date(year, month, 1);
+      const lastDayOfMonth = new Date(year, month + 1, 0);
+      const daysInMonth = lastDayOfMonth.getDate();
+      // Lunes = 0 ... Domingo = 6
+      const startOffset = (firstDayOfMonth.getDay() + 6) % 7;
+
+      const cells = [];
+      // Días del mes previo para rellenar inicio
+      const prevMonthLastDate = new Date(year, month, 0).getDate();
+      for (let i = startOffset - 1; i >= 0; i--) {
+        const dNum = prevMonthLastDate - i;
+        const dObj = new Date(year, month - 1, dNum);
+        const dk = toLocalDateKey(dObj);
+        cells.push({
+          day: dNum,
+          dateKey: dk,
+          isCurrentMonth: false,
+          isToday: dk === todayKey,
+          stats: dailyStatsMap[dk] || { posts: 0, users: 0, moods: 0, total: 0 },
+        });
+      }
+
+      // Días del mes actual
+      let activeDaysInMonth = 0;
+      for (let dNum = 1; dNum <= daysInMonth; dNum++) {
+        const dObj = new Date(year, month, dNum);
+        const dk = toLocalDateKey(dObj);
+        const st = dailyStatsMap[dk] || { posts: 0, users: 0, moods: 0, total: 0 };
+        if (st.total > 0) activeDaysInMonth++;
+        cells.push({
+          day: dNum,
+          dateKey: dk,
+          isCurrentMonth: true,
+          isToday: dk === todayKey,
+          stats: st,
+        });
+      }
+
+      // Rellenar hasta completar filas (35 o 42 celdas)
+      const totalTarget = cells.length > 35 ? 42 : 35;
+      const remaining = totalTarget - cells.length;
+      for (let i = 1; i <= remaining; i++) {
+        const dObj = new Date(year, month + 1, i);
+        const dk = toLocalDateKey(dObj);
+        cells.push({
+          day: i,
+          dateKey: dk,
+          isCurrentMonth: false,
+          isToday: dk === todayKey,
+          stats: dailyStatsMap[dk] || { posts: 0, users: 0, moods: 0, total: 0 },
+        });
+      }
+
+      return {
+        monthTitle,
+        cells,
+        activeDaysInMonth,
+      };
+    }, [calendarViewDate, dailyStatsMap, todayKey]);
+
+    const selectedDateSummary = useMemo(() => {
+      const st = dailyStatsMap[selectedCalendarDateKey] || { posts: 0, users: 0, moods: 0, total: 0 };
+      const parts = selectedCalendarDateKey.split('-');
+      let label = selectedCalendarDateKey;
+      if (parts.length === 3) {
+        const dObj = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+        label = dObj.toLocaleDateString('es-MX', { weekday: 'short', day: 'numeric', month: 'short' });
+        label = label.charAt(0).toUpperCase() + label.slice(1);
+      }
+      return {
+        label,
+        isToday: selectedCalendarDateKey === todayKey,
+        ...st,
+      };
+    }, [selectedCalendarDateKey, dailyStatsMap, todayKey]);
+
+    const changeCalendarMonth = (delta) => {
+      setCalendarViewDate((prev) => new Date(prev.getFullYear(), prev.getMonth() + delta, 1));
+    };
+
+    const goToTodayCalendar = () => {
+      const now = new Date();
+      setCalendarViewDate(new Date(now.getFullYear(), now.getMonth(), 1));
+      setSelectedCalendarDateKey(todayKey);
+    };
+
+    // 9. RESUMEN COMPACTO DE MODALIDAD CLÍNICA Y PULSO COMUNITARIO
+    const clinicalBreakdown = useMemo(() => {
+      let online = 0;
+      let presencial = 0;
       psychologistsList.forEach((p) => {
         const mod = (p.modalidad || p.modalidadAtencion || '').toLowerCase();
-        if (mod.includes('presencial')) {
-          psicoPresencial++;
-        }
-        if (mod.includes('línea') || mod.includes('linea') || !mod.includes('presencial')) {
-          psicoOnline++;
+        if (mod.includes('presencial')) presencial++;
+        if (mod.includes('línea') || mod.includes('linea') || !mod.includes('presencial')) online++;
+      });
+      return { online, presencial };
+    }, [psychologistsList]);
+
+    const topCommunityTags = useMemo(() => {
+      const map = {};
+      allPostsList.forEach((post) => {
+        if (Array.isArray(post.hashtags)) {
+          post.hashtags.forEach((t) => {
+            const clean = t.replace('#', '').toLowerCase().trim();
+            if (clean && clean.length > 1) map[clean] = (map[clean] || 0) + 1;
+          });
         }
       });
-
-      const items = [
-        { label: 'Publicaciones con Imagen', value: postsConImagen, color: '#2563EB' },
-        { label: 'Desahogos de Solo Texto', value: postsSoloTexto, color: '#7C3AED' },
-        { label: 'Especialistas En Línea', value: psicoOnline, color: '#059669' },
-        { label: 'Especialistas Presenciales', value: psicoPresencial, color: '#D97706' },
-      ].filter((item) => item.value > 0);
-
-      // Respaldo transparente si la BD apenas está iniciando
-      if (items.length === 0) {
-        if (allPostsList.length > 0) items.push({ label: 'Publicaciones', value: allPostsList.length, color: '#7C3AED' });
-        if (psychologistsList.length > 0) items.push({ label: 'Psicólogos', value: psychologistsList.length, color: '#059669' });
-        if (usersList.length > 0) items.push({ label: 'Usuarios', value: usersList.length, color: '#2563EB' });
-        if (reportedPostsList.length > 0) items.push({ label: 'Reportes', value: reportedPostsList.length, color: '#DC2626' });
+      const sorted = Object.keys(map)
+        .map((k) => ({ tag: '#' + k, count: map[k] }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 4);
+      if (sorted.length === 0) {
+        return [
+          { tag: '#saludmental', count: allPostsList.length || 1 },
+          { tag: '#bienestar', count: 1 },
+          { tag: '#ansiedad', count: 1 },
+        ];
       }
+      return sorted;
+    }, [allPostsList]);
 
-      const totalVal = items.reduce((acc, curr) => acc + curr.value, 0);
-      return {
-        items: items.map((it) => ({
-          ...it,
-          percentage: totalVal > 0 ? Math.round((it.value / totalVal) * 100) : 0,
-        })),
-        total: totalVal,
-      };
-    }, [allPostsList, psychologistsList, usersList, reportedPostsList]);
-
-    // 9. CÓMO SE HA SENTIDO LA COMUNIDAD (100% REAL DE LA BASE DE DATOS: mood_checkins)
-    const communityMoodData = useMemo(() => {
-      const counts = {
-        feliz: 0,
-        tranquilo: 0,
-        ansioso: 0,
-        triste: 0,
-        agotado: 0,
-      };
-
-      // Contar EXCLUSIVAMENTE los chequeos emocionales auténticos de mood_checkins
+    const dominantMoodSummary = useMemo(() => {
+      const counts = { feliz: 0, tranquilo: 0, ansioso: 0, triste: 0, agotado: 0 };
       (moodRecordsList || []).forEach((rec) => {
         const m = (rec.mood || '').toLowerCase().trim();
-        if (counts[m] !== undefined) {
-          counts[m]++;
-        }
+        if (counts[m] !== undefined) counts[m]++;
       });
-
-      const totalRecords = counts.feliz + counts.tranquilo + counts.ansioso + counts.triste + counts.agotado;
-
-      const emotionDefinitions = [
-        { id: 'feliz', label: 'Feliz', emoji: '😊', color: '#D97706', count: counts.feliz, badgeClass: 'badge-amber' },
-        { id: 'tranquilo', label: 'Tranquilo', emoji: '😌', color: '#059669', count: counts.tranquilo, badgeClass: 'badge-green' },
-        { id: 'ansioso', label: 'Ansioso', emoji: '😰', color: '#EA580C', count: counts.ansioso, badgeClass: 'badge-orange' },
-        { id: 'triste', label: 'Triste', emoji: '😔', color: '#2563EB', count: counts.triste, badgeClass: 'badge-blue' },
-        { id: 'agotado', label: 'Agotado', emoji: '😮‍💨', color: '#7C3AED', count: counts.agotado, badgeClass: 'badge-purple' },
+      const defs = [
+        { id: 'tranquilo', label: 'Tranquilo', color: '#059669', count: counts.tranquilo },
+        { id: 'feliz', label: 'Feliz', color: '#D97706', count: counts.feliz },
+        { id: 'ansioso', label: 'Ansioso', color: '#EA580C', count: counts.ansioso },
+        { id: 'triste', label: 'Triste', color: '#2563EB', count: counts.triste },
+        { id: 'agotado', label: 'Agotado', color: '#7C3AED', count: counts.agotado },
       ];
-
-      const emotionsWithPct = emotionDefinitions.map((emo) => {
-        const pct = totalRecords > 0 ? Math.round((emo.count / totalRecords) * 100) : 0;
-        return { ...emo, pct: pct };
-      });
-
-      // Emoción predominante (solo si existen registros reales)
-      let dominant = null;
-      if (totalRecords > 0) {
-        dominant = emotionsWithPct.reduce((max, emo) => (emo.count > max.count ? emo : max), emotionsWithPct[0]);
-      }
-
+      const total = defs.reduce((a, b) => a + b.count, 0);
+      if (total === 0) return { label: 'Estable', total: 0, color: '#059669' };
+      const dom = defs.reduce((best, curr) => (curr.count > best.count ? curr : best), defs[0]);
       return {
-        total: totalRecords,
-        emotions: emotionsWithPct,
-        dominant: dominant,
+        label: dom.label,
+        total,
+        pct: Math.round((dom.count / total) * 100),
+        color: dom.color,
       };
     }, [moodRecordsList]);
 
-    // 10. TEMAS FAVORITOS DE LA COMUNIDAD (HASHTAGS REALES)
-    const favoriteTopics = useMemo(() => {
-      const topicCountMap = {};
-
-      allPostsList.forEach((post) => {
-        if (Array.isArray(post.hashtags)) {
-          post.hashtags.forEach((tag) => {
-            const clean = tag.replace('#', '').toLowerCase().trim();
-            if (clean && clean.length > 1) {
-              topicCountMap[clean] = (topicCountMap[clean] || 0) + 1;
-            }
-          });
-        }
-      });
-
-      psychologistsList.forEach((psico) => {
-        if (Array.isArray(psico.temas)) {
-          psico.temas.forEach((tema) => {
-            const clean = tema.toLowerCase().trim();
-            if (clean) {
-              topicCountMap[clean] = (topicCountMap[clean] || 0) + 1;
-            }
-          });
-        }
-      });
-
-      const list = Object.keys(topicCountMap).map((key) => ({
-        tag: '#' + key,
-        name: key.charAt(0).toUpperCase() + key.slice(1),
-        count: topicCountMap[key],
-      }));
-
-      list.sort((a, b) => b.count - a.count);
-
-      if (list.length === 0) {
-        return [
-          { tag: '#saludmental', name: 'Salud Mental', count: 1, rank: 1, pct: 100 },
-          { tag: '#ansiedad', name: 'Ansiedad', count: 1, rank: 2, pct: 100 },
-          { tag: '#autoestima', name: 'Autoestima', count: 1, rank: 3, pct: 100 },
-          { tag: '#bienestar', name: 'Bienestar', count: 1, rank: 4, pct: 100 },
-        ];
-      }
-
-      const top6 = list.slice(0, 6);
-      const maxCount = top6[0]?.count || 1;
-      return top6.map((item, idx) => ({
-        ...item,
-        rank: idx + 1,
-        pct: Math.round((item.count / maxCount) * 100),
-      }));
-    }, [allPostsList, psychologistsList]);
-
-    return h('div', { className: 'principal-dashboard-view' },
-      // 1. Barra superior: Saludo + Reloj & Clima
-      h('div', { className: 'dash-top-bar' },
-        h('div', { className: 'dash-greeting-wrap' },
-          h('div', { className: 'dash-greeting-title' },
-            `¡Hola de nuevo, ${currentUser?.name || currentUser?.username || 'Administrador'}!`
+    return h('div', { className: 'principal-dashboard-view exec-compact-dashboard' },
+      // ======================================================================
+      // 1. HEADER EJECUTIVO SUPERIOR (Saludo + Estado + Reloj & Clima)
+      // ======================================================================
+      h('div', { className: 'exec-topbar' },
+        h('div', { className: 'exec-topbar-left' },
+          h('div', { className: 'exec-status-badge' },
+            h('span', { className: 'exec-status-dot' }),
+            'Sincronización en vivo • Firestore'
+          ),
+          h('div', { className: 'exec-greeting-row' },
+            h('h2', { className: 'exec-greeting-title' },
+              `Panel Ejecutivo — Hola, ${currentUser?.name || currentUser?.username || 'Administrador'}`
+            ),
+            h('span', { className: 'exec-greeting-sub' },
+              'Métricas operativas y actividad semanal de Entre Nosotros'
+            )
           )
         ),
-        // Widget Reloj y Clima
-        h('div', { className: 'dash-weather-time-widget' },
-          // Reloj
-          h('div', { className: 'dash-clock-wrap' },
-            h('div', { className: 'dash-clock-time' }, formattedTime),
-            h('div', { className: 'dash-clock-date' }, formattedDate)
+
+        h('div', { className: 'exec-topbar-right' },
+          // Reloj y Fecha
+          h('div', { className: 'exec-SysClock' },
+            h(Icon, { name: 'clock', size: 15, color: '#2563EB' }),
+            h('div', { className: 'exec-SysClock-text' },
+              h('span', { className: 'exec-SysClock-time' }, `${formattedTime} hrs`),
+              h('span', { className: 'exec-SysClock-date' }, formattedDate)
+            )
           ),
-          // Divisor vertical
-          h('div', { className: 'dash-weather-divider' }),
-          // Clima
-          h('div', { className: 'dash-weather-wrap' },
-            h('span', { className: 'dash-weather-icon' }, weatherData.icon),
-            h('div', { className: 'dash-weather-info' },
-              h('div', { className: 'dash-weather-temp' },
-                weatherData.loading ? 'Consultando...' : `${weatherData.temp}°C • ${weatherData.desc}`
+          h('div', { className: 'exec-topbar-sep' }),
+          // Clima compacto
+          h('div', { className: 'exec-SysWeather' },
+            h('span', { className: 'exec-SysWeather-icon' }, weatherData.icon),
+            h('div', { className: 'exec-SysWeather-text' },
+              h('span', { className: 'exec-SysWeather-temp' },
+                weatherData.loading ? 'Clima...' : `${weatherData.temp}°C • ${weatherData.desc}`
               ),
-              h('div', { className: 'dash-weather-loc' },
-                `📍 ${weatherData.city}`
-              )
+              h('span', { className: 'exec-SysWeather-city' }, weatherData.city)
             ),
             h('button', {
-              className: 'dash-weather-loc-btn',
+              type: 'button',
+              className: 'exec-weather-refresh-btn',
               onClick: fetchWeather,
-              title: 'Actualizar clima de Santa Catarina, N.L.',
-            }, '📍 Actualizar')
+              title: 'Actualizar clima',
+            }, h(Icon, { name: 'refresh', size: 12, color: '#475569' }))
           )
         )
       ),
 
-      // 2. KPIs Superiores (4 KPIs: PSICÓLOGOS, USUARIOS, PUBLICACIONES, REPORTES)
-      h('div', { className: 'dash-4-kpis-grid' },
-        // KPI 1: Psicólogos
+      // ======================================================================
+      // 2. FILA DE 4 KPIs EJECUTIVAS COMPACTAS
+      // ======================================================================
+      h('div', { className: 'exec-kpi-grid' },
+        // KPI 1: Usuarios
         h('div', {
-          className: 'dash-kpi-card card-kpi-green',
-          onClick: () => onNavigate && onNavigate('psicologos'),
-          style: { cursor: 'pointer' },
-          title: 'Ir al Módulo de Psicólogos',
-        },
-          h('div', { className: 'dash-kpi-header' },
-            h('div', { className: 'dash-kpi-icon-wrap icon-green' },
-              h(Icon, { name: 'stethoscope', size: 18, color: '#059669' })
-            ),
-            h('span', { className: 'dash-kpi-trend trend-green' },
-              h(Icon, { name: 'check', size: 12, color: '#047857' }),
-              'Verificados'
-            )
-          ),
-          h('div', { className: 'dash-kpi-body' },
-            h('div', { className: 'dash-kpi-number' }, psychologistsList.length),
-            h('div', { className: 'dash-kpi-label' }, 'PSICÓLOGOS'),
-            h('div', { className: 'dash-kpi-micro' }, 'Especialistas clínicos en la app')
-          )
-        ),
-
-        // KPI 2: Usuarios
-        h('div', {
-          className: 'dash-kpi-card card-kpi-blue',
+          className: 'exec-kpi-card kpi-accent-blue',
           onClick: () => onNavigate && onNavigate('usuarios'),
-          style: { cursor: 'pointer' },
           title: 'Ir al Directorio de Usuarios',
         },
-          h('div', { className: 'dash-kpi-header' },
-            h('div', { className: 'dash-kpi-icon-wrap icon-blue' },
-              h(Icon, { name: 'users', size: 18, color: '#2563EB' })
-            ),
-            h('span', { className: 'dash-kpi-trend trend-blue' },
-              h(Icon, { name: 'activity', size: 12, color: '#1D4ED8' }),
-              'Comunidad'
+          h('div', { className: 'exec-kpi-top' },
+            h('span', { className: 'exec-kpi-title' }, 'USUARIOS REGISTRADOS'),
+            h('div', { className: 'exec-kpi-icon-box box-blue' },
+              h(Icon, { name: 'users', size: 16, color: '#2563EB' })
             )
           ),
-          h('div', { className: 'dash-kpi-body' },
-            h('div', { className: 'dash-kpi-number' }, usersList.length),
-            h('div', { className: 'dash-kpi-label' }, 'USUARIOS'),
-            h('div', { className: 'dash-kpi-micro' }, 'Cuentas registradas activas')
+          h('div', { className: 'exec-kpi-mid' },
+            h('span', { className: 'exec-kpi-value' }, usersList.length),
+            h('span', { className: 'exec-kpi-pill pill-blue' }, 'Comunidad activa')
+          ),
+          h('div', { className: 'exec-kpi-foot' },
+            h('span', null, `${visitsActivityData.find((d) => d.isToday)?.users || 0} activos hoy`),
+            h('span', { className: 'exec-kpi-link' }, 'Ver usuarios →')
           )
         ),
 
-        // KPI 3: Publicaciones
+        // KPI 2: Publicaciones
         h('div', {
-          className: 'dash-kpi-card card-kpi-purple',
+          className: 'exec-kpi-card kpi-accent-purple',
         },
-          h('div', { className: 'dash-kpi-header' },
-            h('div', { className: 'dash-kpi-icon-wrap icon-purple' },
-              h(Icon, { name: 'fileText', size: 18, color: '#7C3AED' })
-            ),
-            h('span', { className: 'dash-kpi-trend trend-purple' },
-              h(Icon, { name: 'trendingUp', size: 12, color: '#6D28D9' }),
-              `${totalPostsThisWeek} esta sem.`
+          h('div', { className: 'exec-kpi-top' },
+            h('span', { className: 'exec-kpi-title' }, 'PUBLICACIONES EN APP'),
+            h('div', { className: 'exec-kpi-icon-box box-purple' },
+              h(Icon, { name: 'fileText', size: 16, color: '#7C3AED' })
             )
           ),
-          h('div', { className: 'dash-kpi-body' },
-            h('div', { className: 'dash-kpi-number' }, allPostsList.length),
-            h('div', { className: 'dash-kpi-label' }, 'PUBLICACIONES'),
-            h('div', { className: 'dash-kpi-micro' }, 'Desahogos y vivencias registradas')
+          h('div', { className: 'exec-kpi-mid' },
+            h('span', { className: 'exec-kpi-value' }, allPostsList.length),
+            h('span', { className: 'exec-kpi-pill pill-purple' }, `+${totalPostsThisWeek} esta sem.`)
+          ),
+          h('div', { className: 'exec-kpi-foot' },
+            h('span', null, `${postsByDayOfWeek.find((d) => d.isToday)?.count || 0} publicadas hoy`),
+            h('span', { className: 'exec-kpi-muted' }, 'Feed general')
           )
         ),
 
-        // KPI 4: Reportes de Contenido
+        // KPI 3: Psicólogos
         h('div', {
-          className: 'dash-kpi-card card-kpi-red',
+          className: 'exec-kpi-card kpi-accent-emerald',
+          onClick: () => onNavigate && onNavigate('psicologos'),
+          title: 'Ir al Módulo de Psicólogos',
+        },
+          h('div', { className: 'exec-kpi-top' },
+            h('span', { className: 'exec-kpi-title' }, 'ESPECIALISTAS CLÍNICOS'),
+            h('div', { className: 'exec-kpi-icon-box box-emerald' },
+              h(Icon, { name: 'stethoscope', size: 16, color: '#059669' })
+            )
+          ),
+          h('div', { className: 'exec-kpi-mid' },
+            h('span', { className: 'exec-kpi-value' }, psychologistsList.length),
+            h('span', { className: 'exec-kpi-pill pill-emerald' }, 'Verificados')
+          ),
+          h('div', { className: 'exec-kpi-foot' },
+            h('span', null, `${clinicalBreakdown.online} en línea • ${clinicalBreakdown.presencial} pres.`),
+            h('span', { className: 'exec-kpi-link' }, 'Gestionar →')
+          )
+        ),
+
+        // KPI 4: Moderación / Reportes
+        h('div', {
+          className: 'exec-kpi-card kpi-accent-rose',
           onClick: () => onNavigate && onNavigate('moderacion'),
-          style: { cursor: 'pointer' },
           title: 'Ir al Centro de Moderación',
         },
-          h('div', { className: 'dash-kpi-header' },
-            h('div', { className: 'dash-kpi-icon-wrap icon-red' },
-              h(Icon, { name: 'shieldAlert', size: 18, color: '#DC2626' })
-            ),
-            h('span', { className: 'dash-kpi-trend trend-red' },
-              h(Icon, { name: 'alert', size: 12, color: '#B91C1C' }),
-              reportedPostsList.length > 0 ? 'Revisión Pendiente' : 'Todo Seguro'
+          h('div', { className: 'exec-kpi-top' },
+            h('span', { className: 'exec-kpi-title' }, 'REPORTES Y MODERACIÓN'),
+            h('div', { className: 'exec-kpi-icon-box box-rose' },
+              h(Icon, { name: 'shieldAlert', size: 16, color: '#E11D48' })
             )
           ),
-          h('div', { className: 'dash-kpi-body' },
-            h('div', { className: 'dash-kpi-number' }, reportedPostsList.length),
-            h('div', { className: 'dash-kpi-label' }, 'REPORTES DE CONTENIDO'),
-            h('div', { className: 'dash-kpi-micro' }, 'Alertas de seguridad comunitaria')
+          h('div', { className: 'exec-kpi-mid' },
+            h('span', { className: 'exec-kpi-value' }, reportedPostsList.length),
+            h('span', {
+              className: `exec-kpi-pill ${reportedPostsList.length > 0 ? 'pill-rose' : 'pill-emerald'}`
+            }, reportedPostsList.length > 0 ? 'Atención requerida' : 'Sin incidencias')
+          ),
+          h('div', { className: 'exec-kpi-foot' },
+            h('span', null, reportedPostsList.length > 0 ? 'Alertas pendientes' : 'Comunidad protegida'),
+            h('span', { className: 'exec-kpi-link' }, 'Moderación →')
           )
         )
       ),
 
-      // 3. Fila 1: Carrusel de Psicólogos + Gráfica de Visitas/Actividad 7 Días
-      h('div', { className: 'dash-charts-row', style: { marginBottom: '14px' } },
-        // Carrusel de Psicólogos
-        h('div', { className: 'dash-card dash-carousel-card', style: { borderTop: '3.5px solid #059669' } },
-          h('div', { className: 'dash-chart-header' },
+      // ======================================================================
+      // 3. GRID CENTRAL: 2 GRÁFICAS CLAVE + CALENDARIO EJECUTIVO
+      // ======================================================================
+      h('div', { className: 'exec-bento-grid' },
+        // ------------------------------------------------------------------
+        // PANEL 1: ACTIVIDAD Y VISITAS A LA APP (7 DÍAS)
+        // ------------------------------------------------------------------
+        h('div', { className: 'exec-panel-card' },
+          h('div', { className: 'exec-panel-header' },
             h('div', null,
-              h('h3', { className: 'dash-card-title' }, 'Especialistas Clínicos de la Red'),
-              h('div', { className: 'dash-card-subtitle' }, `${psychologistsList.length} psicólogos registrados en la plataforma`)
+              h('div', { className: 'exec-panel-eyebrow' }, 'TRÁFICO E INTERACCIÓN'),
+              h('h3', { className: 'exec-panel-title' }, 'Actividad y Visitas a la App')
             ),
-            h('div', { className: 'dash-carousel-header-actions' },
-              h('button', {
-                className: 'dash-carousel-nav-btn',
-                onClick: () => scrollCarousel('left'),
-                title: 'Desplazar a la izquierda',
-              }, '‹'),
-              h('button', {
-                className: 'dash-carousel-nav-btn',
-                onClick: () => scrollCarousel('right'),
-                title: 'Desplazar a la derecha',
-              }, '›')
+            h('span', { className: 'exec-panel-badge badge-blue-soft' },
+              `${totalWeekActivity} eventos (7d)`
             )
           ),
-          // Track horizontal (Solo foto y nombre, destacando imagen)
-          psychologistsList.length === 0
-            ? h('div', { style: { padding: '30px 10px', textAlign: 'center', color: '#64748B' } },
-                h('p', { style: { margin: '0 0 10px 0', fontSize: '13px' } }, 'Aún no hay psicólogos registrados en la base de datos.'),
-                h('button', {
-                  className: 'btn-primary',
-                  onClick: () => onNavigate && onNavigate('psicologos'),
-                }, 'Ir a Alta Psicólogos')
-              )
-            : h('div', { className: 'dash-carousel-track', ref: carouselTrackRef },
-                psychologistsList.map((psico) => {
-                  const nombre = (psico.nombre || psico.name || psico.nombreCompleto || 'Especialista').trim();
-                  const foto = psico.imagen || psico.fotoPerfilUrl || '';
-                  const initials = getInitials(nombre);
 
-                  return h('div', {
-                    key: psico.id,
-                    className: 'dash-psico-card-item',
-                    onClick: () => setSelectedPsicoForPreview(psico),
-                    title: nombre,
-                  },
-                    h('div', { className: 'dash-psico-avatar-wrap' },
-                      foto
-                        ? h('img', {
-                            className: 'dash-psico-avatar',
-                            src: foto,
-                            alt: nombre,
-                            onError: (e) => {
-                              e.currentTarget.style.display = 'none';
-                              const parent = e.currentTarget.parentElement;
-                              if (parent) {
-                                const ph = parent.querySelector('.dash-psico-avatar-ph');
-                                if (ph) ph.style.display = 'flex';
-                              }
-                            }
-                          })
-                        : null,
-                      h('div', {
-                        className: 'dash-psico-avatar-ph',
-                        style: { display: foto ? 'none' : 'flex' }
-                      }, initials)
-                    ),
-                    h('div', { className: 'dash-psico-name', title: nombre }, nombre)
-                  );
-                })
-              )
-        ),
-
-        // Gráfica de Visitas y Actividad de los 7 Días (SVG Interactivo)
-        h('div', { className: 'dash-card dash-chart-main-card' },
-          h('div', { className: 'dash-chart-header' },
-            h('div', null,
-              h('h3', { className: 'dash-card-title' }, 'Actividad y Visitas al Sistema (7 Días)'),
-              h('div', { className: 'dash-card-subtitle' }, 'Interacciones registradas esta semana en la base de datos')
-            ),
-            h('span', { className: 'dash-mini-badge badge-teal' },
-              `Total: ${totalWeekActivity} eventos`
-            )
-          ),
-          // Gráfica SVG
-          h('div', { className: 'dash-svg-container', style: { height: '180px' } },
+          h('div', { className: 'exec-chart-canvas' },
             (() => {
-              const maxVal = Math.max(...visitsActivityData.map((d) => d.count), 5);
-              const points = visitsActivityData.map((d, i) => {
-                const x = 35 + i * 70;
-                const y = 135 - ((d.count / maxVal) * 95);
-                return { x, y, count: d.count, short: d.short, isToday: d.isToday, dateKey: d.dateKey };
+              const maxVal = Math.max(...visitsActivityData.map((d) => d.count), 4);
+              const pts = visitsActivityData.map((d, i) => {
+                const x = 32 + i * 62;
+                const y = 126 - ((d.count / maxVal) * 86);
+                return { x, y, ...d };
               });
-              const linePathStr = points.map((p, i) => (i === 0 ? `M ${p.x},${p.y}` : `L ${p.x},${p.y}`)).join(' ');
-              const areaPathStr = linePathStr + ` L ${points[points.length - 1].x},145 L ${points[0].x},145 Z`;
 
-              return h('svg', { className: 'dash-svg-chart', viewBox: '0 0 500 180', preserveAspectRatio: 'none' },
+              // Curva cúbica suave (Catmull-Rom / Bezier simple)
+              let smoothPath = '';
+              pts.forEach((p, idx) => {
+                if (idx === 0) {
+                  smoothPath += `M ${p.x},${p.y}`;
+                } else {
+                  const prev = pts[idx - 1];
+                  const cpx1 = prev.x + (p.x - prev.x) * 0.45;
+                  const cpy1 = prev.y;
+                  const cpx2 = prev.x + (p.x - prev.x) * 0.55;
+                  const cpy2 = p.y;
+                  smoothPath += ` C ${cpx1},${cpy1} ${cpx2},${cpy2} ${p.x},${p.y}`;
+                }
+              });
+              const areaPath = `${smoothPath} L ${pts[pts.length - 1].x},134 L ${pts[0].x},134 Z`;
+
+              return h('svg', {
+                className: 'exec-svg-chart',
+                viewBox: '0 0 436 160',
+                preserveAspectRatio: 'none'
+              },
                 h('defs', null,
-                  h('linearGradient', { id: 'visitasAreaGrad', x1: '0', y1: '0', x2: '0', y2: '1' },
-                    h('stop', { offset: '0%', stopColor: '#2563EB', stopOpacity: 0.4 }),
-                    h('stop', { offset: '100%', stopColor: '#2563EB', stopOpacity: 0.0 })
+                  h('linearGradient', { id: 'execVisitGrad', x1: '0', y1: '0', x2: '0', y2: '1' },
+                    h('stop', { offset: '0%', stopColor: '#2563EB', stopOpacity: 0.28 }),
+                    h('stop', { offset: '100%', stopColor: '#2563EB', stopOpacity: 0.01 })
                   )
                 ),
-                // Líneas de fondo tenue
-                h('line', { x1: '30', y1: '40', x2: '465', y2: '40', stroke: '#F1F5F9', strokeWidth: 1 }),
-                h('line', { x1: '30', y1: '88', x2: '465', y2: '88', stroke: '#F1F5F9', strokeWidth: 1 }),
-                h('line', { x1: '30', y1: '135', x2: '465', y2: '135', stroke: '#E2E8F0', strokeWidth: 1.5 }),
-                // Área degradada
-                h('path', { d: areaPathStr, fill: 'url(#visitasAreaGrad)' }),
-                // Línea principal
-                h('path', { d: linePathStr, fill: 'none', stroke: '#2563EB', strokeWidth: 3, strokeLinecap: 'round', strokeLinejoin: 'round' }),
-                // Puntos y etiquetas
-                points.map((p, idx) =>
-                  h('g', { key: idx },
+                // Líneas guía horizontales
+                h('line', { x1: '20', y1: '36', x2: '416', y2: '36', stroke: '#F1F5F9', strokeWidth: 1, strokeDasharray: '3 3' }),
+                h('line', { x1: '20', y1: '85', x2: '416', y2: '85', stroke: '#F1F5F9', strokeWidth: 1, strokeDasharray: '3 3' }),
+                h('line', { x1: '20', y1: '134', x2: '416', y2: '134', stroke: '#E2E8F0', strokeWidth: 1.2 }),
+                // Área y curva
+                h('path', { d: areaPath, fill: 'url(#execVisitGrad)' }),
+                h('path', {
+                  d: smoothPath,
+                  fill: 'none',
+                  stroke: '#2563EB',
+                  strokeWidth: 2.6,
+                  strokeLinecap: 'round',
+                }),
+                // Nodos por día
+                pts.map((p) =>
+                  h('g', {
+                    key: p.dateKey,
+                    style: { cursor: 'pointer' },
+                    onClick: () => setSelectedCalendarDateKey(p.dateKey),
+                  },
+                    p.isToday
+                      ? h('line', {
+                          x1: p.x,
+                          y1: p.y + 5,
+                          x2: p.x,
+                          y2: 134,
+                          stroke: '#93C5FD',
+                          strokeWidth: 1,
+                          strokeDasharray: '2 2',
+                        })
+                      : null,
                     h('circle', {
                       cx: p.x,
                       cy: p.y,
-                      r: p.isToday ? 6 : 4.5,
-                      fill: p.isToday ? '#059669' : '#2563EB',
+                      r: p.isToday ? 5.5 : 4,
+                      fill: p.isToday ? '#0F172A' : '#2563EB',
                       stroke: '#FFFFFF',
-                      strokeWidth: 2.5,
+                      strokeWidth: 2,
                     }),
                     h('text', {
                       x: p.x,
-                      y: Math.max(p.y - 9, 14),
+                      y: Math.max(p.y - 9, 13),
                       textAnchor: 'middle',
-                      fontSize: '10.5',
+                      fontSize: '10',
                       fontWeight: '800',
-                      fill: p.isToday ? '#059669' : '#0F172A',
+                      fill: p.isToday ? '#0F172A' : '#334155',
                     }, p.count),
                     h('text', {
                       x: p.x,
-                      y: 162,
+                      y: 151,
                       textAnchor: 'middle',
-                      fontSize: '11',
-                      fontWeight: p.isToday ? '800' : '700',
-                      fill: p.isToday ? '#059669' : '#64748B',
+                      fontSize: '10.5',
+                      fontWeight: p.isToday ? '800' : '600',
+                      fill: p.isToday ? '#2563EB' : '#64748B',
                     }, p.short)
                   )
                 )
               );
             })()
           ),
-          h('div', { className: 'dash-chart-footer' },
-            h('div', { className: 'chart-footer-stat' },
-              h('span', { className: 'stat-label' }, 'Actividad total en 7 días:'),
-              h('span', { className: 'stat-value' }, `${totalWeekActivity} registros`)
+
+          h('div', { className: 'exec-panel-metrics-row' },
+            h('div', { className: 'exec-mini-metric' },
+              h('span', { className: 'exec-mini-metric-lbl' }, 'Promedio diario'),
+              h('span', { className: 'exec-mini-metric-val' }, `${(totalWeekActivity / 7).toFixed(1)} ev.`)
             ),
-            h('div', { className: 'chart-footer-stat' },
-              h('span', { className: 'stat-label' }, 'Promedio diario:'),
-              h('span', { className: 'stat-value' }, `${(totalWeekActivity / 7).toFixed(1)}`)
+            h('div', { className: 'exec-mini-metric' },
+              h('span', { className: 'exec-mini-metric-lbl' }, 'Día más activo'),
+              h('span', { className: 'exec-mini-metric-val' }, `${peakActivityDay.short} (${peakActivityDay.count})`)
+            ),
+            h('div', { className: 'exec-mini-metric' },
+              h('span', { className: 'exec-mini-metric-lbl' }, 'Hoy'),
+              h('span', { className: 'exec-mini-metric-val', style: { color: '#2563EB' } },
+                `${visitsActivityData.find((d) => d.isToday)?.count || 0} accesos`
+              )
             )
           )
-        )
-      ),
+        ),
 
-      // 4. Fila 2: Publicaciones de Esta Semana por Día + Gráfica de Pastel (Distribución)
-      h('div', { className: 'dash-charts-row', style: { marginBottom: '14px' } },
-        // Publicaciones de Esta Semana por Día
-        h('div', { className: 'dash-card', style: { borderTop: '3.5px solid #7C3AED' } },
-          h('div', { className: 'dash-chart-header' },
+        // ------------------------------------------------------------------
+        // PANEL 2: PUBLICACIONES ESTA SEMANA POR DÍA (LUN - DOM)
+        // ------------------------------------------------------------------
+        h('div', { className: 'exec-panel-card' },
+          h('div', { className: 'exec-panel-header' },
             h('div', null,
-              h('h3', { className: 'dash-card-title' }, 'Publicaciones de Esta Semana (Por Día)'),
-              h('div', { className: 'dash-card-subtitle' }, 'Desahogos y publicaciones creadas de Lunes a Domingo')
+              h('div', { className: 'exec-panel-eyebrow' }, 'RITMO DE CONTENIDO'),
+              h('h3', { className: 'exec-panel-title' }, 'Publicaciones Esta Semana por Día')
             ),
-            h('span', { className: 'dash-mini-badge badge-purple' },
-              `${totalPostsThisWeek} esta semana`
+            h('span', { className: 'exec-panel-badge badge-purple-soft' },
+              `${totalPostsThisWeek} en la semana`
             )
           ),
-          // Barras verticales Lun-Dom
-          h('div', { className: 'dash-days-grid' },
+
+          h('div', { className: 'exec-bars-stage' },
             postsByDayOfWeek.map((day) => {
-              const barHeightPct = Math.max(6, Math.round((day.count / maxPostsInDay) * 100));
-              return h('div', { key: day.dateKey, className: 'dash-day-col' },
-                h('div', { className: 'dash-day-count-badge' }, day.count),
-                h('div', { className: 'dash-day-bar-track' },
+              const pct = day.count === 0 ? 6 : Math.max(14, Math.round((day.count / maxPostsInDay) * 100));
+              const isSelected = day.dateKey === selectedCalendarDateKey;
+              return h('div', {
+                key: day.dateKey,
+                className: `exec-bar-col ${day.isToday ? 'is-today' : ''} ${isSelected ? 'is-selected' : ''}`,
+                onClick: () => setSelectedCalendarDateKey(day.dateKey),
+                title: `${day.full} (${day.number}): ${day.count} publicaciones`,
+              },
+                h('span', { className: 'exec-bar-num' }, day.count),
+                h('div', { className: 'exec-bar-track' },
                   h('div', {
-                    className: `dash-day-bar-fill ${day.isToday ? 'active-today' : ''}`,
-                    style: { height: `${barHeightPct}%` },
-                    title: `${day.full}: ${day.count} publicaciones`,
+                    className: `exec-bar-fill ${day.isToday ? 'fill-today' : day.count > 0 ? 'fill-active' : 'fill-empty'}`,
+                    style: { height: `${pct}%` },
                   })
                 ),
-                h('div', { className: `dash-day-name-label ${day.isToday ? 'today' : ''}` },
-                  day.short
-                )
+                h('span', { className: 'exec-bar-day' }, day.short),
+                h('span', { className: 'exec-bar-date-num' }, day.number)
               );
             })
           ),
-          h('div', { className: 'dash-chart-footer' },
-            h('div', { className: 'chart-footer-stat' },
-              h('span', { className: 'stat-label' }, 'Total general en historial:'),
-              h('span', { className: 'stat-value' }, `${allPostsList.length} publicaciones`)
+
+          h('div', { className: 'exec-panel-metrics-row' },
+            h('div', { className: 'exec-mini-metric' },
+              h('span', { className: 'exec-mini-metric-lbl' }, 'Esta semana'),
+              h('span', { className: 'exec-mini-metric-val' }, `${totalPostsThisWeek} posts`)
             ),
-            h('div', { className: 'chart-footer-stat' },
-              h('span', { className: 'stat-label' }, 'Hoy:'),
-              h('span', { className: 'stat-value', style: { color: '#059669' } },
-                `${postsByDayOfWeek.find((d) => d.isToday)?.count || 0} publicaciones`
+            h('div', { className: 'exec-mini-metric' },
+              h('span', { className: 'exec-mini-metric-lbl' }, 'Publicaciones hoy'),
+              h('span', { className: 'exec-mini-metric-val', style: { color: '#7C3AED' } },
+                `${postsByDayOfWeek.find((d) => d.isToday)?.count || 0} hoy`
               )
+            ),
+            h('div', { className: 'exec-mini-metric' },
+              h('span', { className: 'exec-mini-metric-lbl' }, 'Histórico total'),
+              h('span', { className: 'exec-mini-metric-val' }, `${allPostsList.length} reg.`)
             )
           )
         ),
 
-        // Gráfica de Pastel / Donut: Distribución de Formatos y Contenido
-        h('div', { className: 'dash-card', style: { borderTop: '3.5px solid #2563EB' } },
-          h('div', { className: 'dash-chart-header' },
-            h('div', null,
-              h('h3', { className: 'dash-card-title' }, 'Distribución de Formatos y Contenido'),
-              h('div', { className: 'dash-card-subtitle' }, 'Proporción real de vivencias, recursos y atención clínica')
+        // ------------------------------------------------------------------
+        // PANEL 3: CALENDARIO EJECUTIVO INTERACTIVO
+        // ------------------------------------------------------------------
+        h('div', { className: 'exec-panel-card exec-calendar-card' },
+          h('div', { className: 'exec-cal-header' },
+            h('div', { className: 'exec-cal-title-wrap' },
+              h(Icon, { name: 'calendar', size: 15, color: '#0F172A' }),
+              h('span', { className: 'exec-cal-month-name' }, calendarData.monthTitle)
             ),
-            h('span', { className: 'dash-mini-badge badge-teal' },
-              'Pastel Donut SVG'
+            h('div', { className: 'exec-cal-nav' },
+              h('button', {
+                type: 'button',
+                className: 'exec-cal-btn',
+                onClick: () => changeCalendarMonth(-1),
+                title: 'Mes anterior',
+              }, '‹'),
+              h('button', {
+                type: 'button',
+                className: 'exec-cal-today-btn',
+                onClick: goToTodayCalendar,
+                title: 'Ir a hoy',
+              }, 'Hoy'),
+              h('button', {
+                type: 'button',
+                className: 'exec-cal-btn',
+                onClick: () => changeCalendarMonth(1),
+                title: 'Mes siguiente',
+              }, '›')
             )
           ),
-          // Donut SVG + Legend
-          h('div', { className: 'dash-donut-wrap' },
-            // Donut SVG Box
-            h('div', { className: 'dash-donut-svg-box' },
-              (() => {
-                const radius = 54;
-                const circumference = 2 * Math.PI * radius; // ~339.292
-                let currentOffset = 0;
 
-                return h('svg', {
-                  width: '165',
-                  height: '165',
-                  viewBox: '0 0 164 164',
-                  style: { transform: 'rotate(-90deg)' }
-                },
-                  // Fondo circular
-                  h('circle', {
-                    cx: 82,
-                    cy: 82,
-                    r: radius,
-                    fill: 'transparent',
-                    stroke: '#F1F5F9',
-                    strokeWidth: 20,
-                  }),
-                  // Segmentos coloridos reales
-                  donutData.items.map((item, idx) => {
-                    const dashLength = (item.value / (donutData.total || 1)) * circumference;
-                    const strokeDasharray = `${dashLength} ${circumference - dashLength}`;
-                    const strokeDashoffset = -currentOffset;
-                    currentOffset += dashLength;
-                    return h('circle', {
-                      key: idx,
-                      cx: 82,
-                      cy: 82,
-                      r: radius,
-                      fill: 'transparent',
-                      stroke: item.color,
-                      strokeWidth: 20,
-                      strokeDasharray: strokeDasharray,
-                      strokeDashoffset: strokeDashoffset,
-                      strokeLinecap: 'butt',
-                    });
-                  })
-                );
-              })(),
-              // Texto centrado
-              h('div', { className: 'dash-donut-center-text' },
-                h('div', { className: 'dash-donut-center-val' }, donutData.total),
-                h('div', { className: 'dash-donut-center-lbl' }, 'Registros')
-              )
-            ),
-            // Leyenda colorida
-            h('div', { className: 'dash-donut-legend' },
-              donutData.items.map((item, idx) =>
-                h('div', { key: idx, className: 'dash-donut-legend-item' },
-                  h('div', { className: 'dash-donut-legend-left' },
-                    h('span', { className: 'dash-donut-color-dot', style: { background: item.color } }),
-                    h('span', { className: 'dash-donut-legend-name' }, item.label)
-                  ),
-                  h('div', { className: 'dash-donut-legend-right' },
-                    h('span', { className: 'dash-donut-legend-count' }, `${item.value} reg.`),
-                    h('span', { className: 'dash-donut-legend-pct' }, `${item.percentage}%`)
-                  )
-                )
-              )
+          // Cabecera de días de la semana
+          h('div', { className: 'exec-cal-weekdays' },
+            ['LU', 'MA', 'MI', 'JU', 'VI', 'SA', 'DO'].map((wd) =>
+              h('span', { key: wd, className: 'exec-cal-wd' }, wd)
             )
           ),
-          h('div', { className: 'dash-chart-footer' },
-            h('div', { className: 'chart-footer-stat' },
-              h('span', { className: 'stat-label' }, 'Categorías registradas:'),
-              h('span', { className: 'stat-value' }, `${donutData.items.length} activas`)
+
+          // Celdas del mes
+          h('div', { className: 'exec-cal-grid' },
+            calendarData.cells.map((cell) => {
+              const isSelected = cell.dateKey === selectedCalendarDateKey;
+              const hasActivity = cell.stats.total > 0;
+              const cls = [
+                'exec-cal-cell',
+                !cell.isCurrentMonth ? 'is-outside' : '',
+                cell.isToday ? 'is-today' : '',
+                isSelected ? 'is-selected' : '',
+                hasActivity ? 'has-activity' : '',
+              ].filter(Boolean).join(' ');
+
+              return h('button', {
+                key: cell.dateKey,
+                type: 'button',
+                className: cls,
+                onClick: () => setSelectedCalendarDateKey(cell.dateKey),
+                title: `${cell.dateKey}: ${cell.stats.posts} publicaciones, ${cell.stats.users} usuarios activos`,
+              },
+                h('span', { className: 'exec-cal-day-num' }, cell.day),
+                hasActivity
+                  ? h('span', {
+                      className: `exec-cal-dot ${cell.stats.posts > 0 ? 'dot-purple' : 'dot-blue'}`
+                    })
+                  : null
+              );
+            })
+          ),
+
+          // Resumen del día seleccionado en el calendario
+          h('div', { className: 'exec-cal-inspector' },
+            h('div', { className: 'exec-cal-inspector-left' },
+              h('span', { className: 'exec-cal-inspector-date' },
+                selectedDateSummary.isToday ? `Hoy • ${selectedDateSummary.label}` : selectedDateSummary.label
+              ),
+              h('span', { className: 'exec-cal-inspector-sub' },
+                selectedDateSummary.total > 0
+                  ? `${selectedDateSummary.total} interacciones registradas`
+                  : 'Sin registros en esta fecha'
+              )
+            ),
+            h('div', { className: 'exec-cal-inspector-pills' },
+              h('span', { className: 'exec-cal-stat-pill pill-p' }, `${selectedDateSummary.posts} posts`),
+              h('span', { className: 'exec-cal-stat-pill pill-u' }, `${selectedDateSummary.users} act.`)
             )
           )
         )
       ),
 
-      // 5. Fila 3: ¿Cómo se ha sentido la comunidad? + Temas Favoritos de la Comunidad
-      h('div', { className: 'dash-charts-row' },
-        // Cómo se ha sentido la comunidad (5 Emociones)
-        h('div', { className: 'dash-card dash-emotions-card' },
-          h('div', { className: 'dash-chart-header' },
-            h('div', null,
-              h('h3', { className: 'dash-card-title' }, '¿Cómo se ha sentido la comunidad?'),
-              h('div', { className: 'dash-card-subtitle' }, 'Monitoreo emocional y chequeos diarios de la aplicación')
-            ),
-            communityMoodData.dominant && communityMoodData.total > 0
-              ? h('span', { className: `dash-dominant-badge ${communityMoodData.dominant.badgeClass}` },
-                  `Dominante: ${communityMoodData.dominant.emoji} ${communityMoodData.dominant.label} (${communityMoodData.dominant.pct}%)`
-                )
-              : h('span', { className: 'dash-mini-badge badge-teal' }, 'Sin registros aún')
+      // ======================================================================
+      // 4. FRANJA INFERIOR COMPACTA: DATOS CLAVE Y ACCESOS DIRECTOS
+      // ======================================================================
+      h('div', { className: 'exec-bottom-strip' },
+        // Bloque 1: Red de Especialistas (Avatares compactos + clic para vista previa)
+        h('div', { className: 'exec-strip-card' },
+          h('div', { className: 'exec-strip-head' },
+            h('span', { className: 'exec-strip-title' }, 'Red de Especialistas'),
+            h('button', {
+              type: 'button',
+              className: 'exec-strip-action',
+              onClick: () => onNavigate && onNavigate('psicologos'),
+            }, 'Ver todos →')
           ),
-          // Lista de las 5 emociones con barras
-          h('div', { className: 'dash-emotions-list' },
-            communityMoodData.emotions.map((emo) =>
-              h('div', { key: emo.id, className: 'dash-emotion-item' },
-                h('div', { className: 'emotion-label-row' },
-                  h('span', { className: 'emotion-name' }, `${emo.emoji} ${emo.label}`),
-                  h('span', { className: 'emotion-pct', style: { color: emo.color } },
-                    `${emo.count} (${emo.pct}%)`
-                  )
-                ),
-                h('div', { className: 'emotion-track' },
-                  h('div', {
-                    className: 'emotion-bar',
-                    style: { width: `${emo.pct}%`, background: emo.color }
+          psychologistsList.length === 0
+            ? h('div', { className: 'exec-strip-empty' }, 'Sin especialistas registrados aún')
+            : h('div', { className: 'exec-psico-compact-row' },
+                h('div', { className: 'exec-avatar-stack' },
+                  psychologistsList.slice(0, 6).map((psico) => {
+                    const nombre = (psico.nombre || psico.name || psico.nombreCompleto || 'Especialista').trim();
+                    const foto = psico.imagen || psico.fotoPerfilUrl || '';
+                    return h('button', {
+                      key: psico.id,
+                      type: 'button',
+                      className: 'exec-stack-avatar-btn',
+                      onClick: () => setSelectedPsicoForPreview(psico),
+                      title: `Ver ficha de ${nombre}`,
+                    },
+                      foto
+                        ? h('img', { src: foto, alt: nombre, className: 'exec-stack-avatar-img' })
+                        : h('span', { className: 'exec-stack-avatar-ph' }, getInitials(nombre))
+                    );
                   })
+                ),
+                h('div', { className: 'exec-psico-compact-meta' },
+                  h('span', { className: 'exec-psico-meta-main' }, `${psychologistsList.length} activos en catálogo`),
+                  h('span', { className: 'exec-psico-meta-sub' }, 'Clic en un perfil para vista rápida')
                 )
               )
+        ),
+
+        // Bloque 2: Pulso y Tópicos de la Comunidad (Datos concisos)
+        h('div', { className: 'exec-strip-card' },
+          h('div', { className: 'exec-strip-head' },
+            h('span', { className: 'exec-strip-title' }, 'Pulso y Tópicos de la App'),
+            h('span', {
+              className: 'exec-mood-chip',
+              style: { color: dominantMoodSummary.color, borderColor: `${dominantMoodSummary.color}33`, background: `${dominantMoodSummary.color}12` }
+            },
+              dominantMoodSummary.total > 0
+                ? `Clima: ${dominantMoodSummary.label} (${dominantMoodSummary.pct}%)`
+                : `Clima: ${dominantMoodSummary.label}`
             )
           ),
-          h('div', { className: 'dash-insight-box' },
-            h(Icon, { name: 'heart', size: 16, color: '#DB2777' }),
-            h('p', null,
-              `Total de ${communityMoodData.total} registros de bienestar emocional leídos directamente de la base de datos de Entre Nosotros.`
+          h('div', { className: 'exec-tags-compact-row' },
+            topCommunityTags.map((item) =>
+              h('span', { key: item.tag, className: 'exec-compact-tag' },
+                h('span', { className: 'exec-compact-tag-name' }, item.tag),
+                h('span', { className: 'exec-compact-tag-count' }, item.count)
+              )
             )
           )
         ),
 
-        // Temas y Categorías Favoritas de la Comunidad
-        h('div', { className: 'dash-card', style: { borderTop: '3.5px solid #D97706' } },
-          h('div', { className: 'dash-chart-header' },
-            h('div', null,
-              h('h3', { className: 'dash-card-title' }, 'Temas Favoritos de la Comunidad'),
-              h('div', { className: 'dash-card-subtitle' }, 'Hashtags y tópicos con mayor recurrencia e impacto')
+        // Bloque 3: Accesos Rápidos de Administración
+        h('div', { className: 'exec-strip-card' },
+          h('div', { className: 'exec-strip-head' },
+            h('span', { className: 'exec-strip-title' }, 'Atajos Operativos'),
+            h('span', { className: 'exec-strip-sub-badge' }, 'Gestión rápida')
+          ),
+          h('div', { className: 'exec-quick-actions' },
+            h('button', {
+              type: 'button',
+              className: 'exec-qbtn',
+              onClick: () => onNavigate && onNavigate('psicologos'),
+            },
+              h(Icon, { name: 'stethoscope', size: 13, color: '#059669' }),
+              'Psicólogos'
             ),
-            h('span', { className: 'dash-mini-badge badge-purple' },
-              'En Tendencia'
-            )
-          ),
-          // Ranking de temas detallado con barras de progreso
-          h('div', { style: { display: 'flex', flexDirection: 'column', gap: '8px' } },
-            favoriteTopics.map((top) =>
-              h('div', { key: top.tag, className: 'dash-topic-ranked-row' },
-                h('span', { className: `dash-topic-rank-num rank-${top.rank}` }, `#${top.rank}`),
-                h('span', { style: { fontSize: '12px', fontWeight: '700', color: '#1E293B', minWidth: '100px' } },
-                  top.tag
-                ),
-                h('div', { className: 'dash-topic-bar-bg' },
-                  h('div', { className: 'dash-topic-bar-fill', style: { width: `${top.pct}%` } })
-                ),
-                h('span', {
-                  style: {
-                    fontSize: '11px',
-                    fontWeight: '800',
-                    color: '#7C3AED',
-                    background: '#EDE9FE',
-                    padding: '2px 8px',
-                    borderRadius: '8px',
-                    whiteSpace: 'nowrap'
-                  }
-                }, `${top.count} menciones`)
-              )
-            )
-          ),
-          // Nube de etiquetas complementaria
-          h('div', { className: 'dash-topics-wrap', style: { marginTop: '14px', paddingTop: '10px', borderTop: '1px solid #F1F5F9' } },
-            favoriteTopics.map((top) =>
-              h('span', { key: top.tag, className: 'dash-topic-pill' },
-                h('span', { className: 'dash-topic-rank' }, `#${top.rank}`),
-                h('span', { className: 'dash-topic-name' }, top.tag),
-                h('span', { className: 'dash-topic-count' }, top.count)
-              )
+            h('button', {
+              type: 'button',
+              className: 'exec-qbtn',
+              onClick: () => onNavigate && onNavigate('usuarios'),
+            },
+              h(Icon, { name: 'users', size: 13, color: '#2563EB' }),
+              'Usuarios'
+            ),
+            h('button', {
+              type: 'button',
+              className: 'exec-qbtn',
+              onClick: () => onNavigate && onNavigate('moderacion'),
+            },
+              h(Icon, { name: 'shieldAlert', size: 13, color: '#E11D48' }),
+              'Moderación'
+            ),
+            h('button', {
+              type: 'button',
+              className: 'exec-qbtn',
+              onClick: () => onNavigate && onNavigate('accesos'),
+            },
+              h(Icon, { name: 'key', size: 13, color: '#475569' }),
+              'Accesos'
             )
           )
         )
       ),
 
-      // Modal de Vista Previa de Tarjeta del Psicólogo al hacer click en el carrusel
+      // Modal de Vista Previa de Tarjeta del Psicólogo
       h(PsychologistCardPreviewModal, {
         isOpen: !!selectedPsicoForPreview,
         psychologist: selectedPsicoForPreview,

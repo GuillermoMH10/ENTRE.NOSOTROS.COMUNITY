@@ -4952,5 +4952,952 @@ body {
   font-style: italic;
 }
 
+/* ==========================================================================
+   PANEL PRINCIPAL EJECUTIVO COMPACTO (BENTO GRID + CALENDARIO PROFESIONAL)
+   ========================================================================== */
+.exec-compact-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-bottom: 12px;
+}
+
+/* 1. Barra Superior Ejecutiva */
+.exec-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 14px;
+  padding: 12px 18px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+  flex-wrap: wrap;
+}
+
+.exec-topbar-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.exec-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #047857;
+  background: #ECFDF5;
+  border: 1px solid #A7F3D0;
+  padding: 2px 8px;
+  border-radius: 999px;
+  letter-spacing: 0.2px;
+}
+
+.exec-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10B981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25);
+}
+
+.exec-greeting-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.exec-greeting-title {
+  margin: 0;
+  font-size: 16.5px;
+  font-weight: 800;
+  color: #0F172A;
+  letter-spacing: -0.3px;
+}
+
+.exec-greeting-sub {
+  font-size: 12px;
+  color: #64748B;
+  font-weight: 500;
+}
+
+.exec-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 11px;
+  padding: 7px 14px;
+}
+
+.exec-SysClock {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.exec-SysClock-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.exec-SysClock-time {
+  font-size: 13px;
+  font-weight: 800;
+  color: #0F172A;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.15;
+}
+
+.exec-SysClock-date {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #64748B;
+}
+
+.exec-topbar-sep {
+  width: 1px;
+  height: 24px;
+  background: #CBD5E1;
+}
+
+.exec-SysWeather {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.exec-SysWeather-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.exec-SysWeather-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.exec-SysWeather-temp {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #0F172A;
+  line-height: 1.15;
+}
+
+.exec-SysWeather-city {
+  font-size: 10px;
+  font-weight: 600;
+  color: #64748B;
+}
+
+.exec-weather-refresh-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: 1px solid #E2E8F0;
+  background: #FFFFFF;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.exec-weather-refresh-btn:hover {
+  background: #EFF6FF;
+  border-color: #BFDBFE;
+}
+
+/* 2. Fila de 4 KPIs Compactas */
+.exec-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.exec-kpi-card {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 13px;
+  padding: 13px 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  cursor: pointer;
+  transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+  position: relative;
+  overflow: hidden;
+}
+
+.exec-kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+}
+
+.exec-kpi-card.kpi-accent-blue::before { background: #2563EB; }
+.exec-kpi-card.kpi-accent-purple::before { background: #7C3AED; }
+.exec-kpi-card.kpi-accent-emerald::before { background: #059669; }
+.exec-kpi-card.kpi-accent-rose::before { background: #E11D48; }
+
+.exec-kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+  border-color: #CBD5E1;
+}
+
+.exec-kpi-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.exec-kpi-title {
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #64748B;
+  letter-spacing: 0.45px;
+}
+
+.exec-kpi-icon-box {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.exec-kpi-icon-box.box-blue { background: #EFF6FF; }
+.exec-kpi-icon-box.box-purple { background: #F5F3FF; }
+.exec-kpi-icon-box.box-emerald { background: #ECFDF5; }
+.exec-kpi-icon-box.box-rose { background: #FFF1F2; }
+
+.exec-kpi-mid {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.exec-kpi-value {
+  font-size: 26px;
+  font-weight: 900;
+  color: #0F172A;
+  letter-spacing: -0.8px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.exec-kpi-pill {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.exec-kpi-pill.pill-blue { background: #EFF6FF; color: #1D4ED8; border: 1px solid #DBEAFE; }
+.exec-kpi-pill.pill-purple { background: #F5F3FF; color: #6D28D9; border: 1px solid #EDE9FE; }
+.exec-kpi-pill.pill-emerald { background: #ECFDF5; color: #047857; border: 1px solid #D1FAE5; }
+.exec-kpi-pill.pill-rose { background: #FFF1F2; color: #BE123C; border: 1px solid #FFE4E6; }
+
+.exec-kpi-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding-top: 6px;
+  border-top: 1px solid #F1F5F9;
+  font-size: 11px;
+  color: #64748B;
+  font-weight: 600;
+}
+
+.exec-kpi-link {
+  color: #0F172A;
+  font-weight: 700;
+  font-size: 10.5px;
+}
+
+.exec-kpi-muted {
+  color: #94A3B8;
+  font-size: 10.5px;
+}
+
+/* 3. Bento Grid Central (2 Gráficas + Calendario) */
+.exec-bento-grid {
+  display: grid;
+  grid-template-columns: 1.15fr 1.1fr 0.95fr;
+  gap: 12px;
+  align-items: stretch;
+}
+
+.exec-panel-card {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 14px;
+  padding: 15px 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+  min-width: 0;
+}
+
+.exec-panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.exec-panel-eyebrow {
+  font-size: 9.5px;
+  font-weight: 800;
+  color: #64748B;
+  letter-spacing: 0.6px;
+  margin-bottom: 2px;
+}
+
+.exec-panel-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 800;
+  color: #0F172A;
+  letter-spacing: -0.2px;
+}
+
+.exec-panel-badge {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 7px;
+  white-space: nowrap;
+}
+
+.exec-panel-badge.badge-blue-soft {
+  background: #EFF6FF;
+  color: #1D4ED8;
+  border: 1px solid #DBEAFE;
+}
+
+.exec-panel-badge.badge-purple-soft {
+  background: #F5F3FF;
+  color: #6D28D9;
+  border: 1px solid #EDE9FE;
+}
+
+/* Gráfica 1: Área / Línea de Actividad y Visitas */
+.exec-chart-canvas {
+  width: 100%;
+  height: 158px;
+  display: flex;
+  align-items: center;
+}
+
+.exec-svg-chart {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* Gráfica 2: Barras de Publicaciones por Día */
+.exec-bars-stage {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+  height: 158px;
+  align-items: flex-end;
+  padding: 8px 4px 2px 4px;
+}
+
+.exec-bar-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  justify-content: flex-end;
+  cursor: pointer;
+  padding: 4px 2px;
+  border-radius: 9px;
+  transition: background 0.15s ease;
+}
+
+.exec-bar-col:hover,
+.exec-bar-col.is-selected {
+  background: #F8FAFC;
+}
+
+.exec-bar-num {
+  font-size: 10px;
+  font-weight: 800;
+  color: #334155;
+  margin-bottom: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.exec-bar-col.is-today .exec-bar-num {
+  color: #6D28D9;
+}
+
+.exec-bar-track {
+  width: 100%;
+  max-width: 24px;
+  height: 96px;
+  background: #F1F5F9;
+  border-radius: 7px;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+  padding: 2px;
+}
+
+.exec-bar-fill {
+  width: 100%;
+  border-radius: 5px;
+  transition: height 0.35s ease;
+}
+
+.exec-bar-fill.fill-active {
+  background: #8B5CF6;
+}
+
+.exec-bar-fill.fill-today {
+  background: #0F172A;
+}
+
+.exec-bar-fill.fill-empty {
+  background: #CBD5E1;
+}
+
+.exec-bar-day {
+  margin-top: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #475569;
+  line-height: 1;
+}
+
+.exec-bar-col.is-today .exec-bar-day {
+  color: #0F172A;
+  font-weight: 800;
+}
+
+.exec-bar-date-num {
+  font-size: 9px;
+  font-weight: 600;
+  color: #94A3B8;
+  margin-top: 2px;
+}
+
+/* Métricas inferiores de las tarjetas de gráficas */
+.exec-panel-metrics-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid #F1F5F9;
+}
+
+.exec-mini-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.exec-mini-metric-lbl {
+  font-size: 10px;
+  font-weight: 600;
+  color: #64748B;
+}
+
+.exec-mini-metric-val {
+  font-size: 12px;
+  font-weight: 800;
+  color: #0F172A;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Panel 3: Calendario Ejecutivo Interactivo */
+.exec-calendar-card {
+  gap: 10px;
+}
+
+.exec-cal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.exec-cal-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.exec-cal-month-name {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #0F172A;
+  letter-spacing: -0.2px;
+}
+
+.exec-cal-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.exec-cal-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: 1px solid #E2E8F0;
+  background: #F8FAFC;
+  color: #334155;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.exec-cal-btn:hover {
+  background: #0F172A;
+  color: #FFFFFF;
+  border-color: #0F172A;
+}
+
+.exec-cal-today-btn {
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 6px;
+  border: 1px solid #E2E8F0;
+  background: #FFFFFF;
+  color: #0F172A;
+  font-size: 10.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.exec-cal-today-btn:hover {
+  background: #EFF6FF;
+  border-color: #BFDBFE;
+  color: #1D4ED8;
+}
+
+.exec-cal-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #F1F5F9;
+}
+
+.exec-cal-wd {
+  font-size: 9.5px;
+  font-weight: 800;
+  color: #94A3B8;
+  letter-spacing: 0.4px;
+}
+
+.exec-cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+}
+
+.exec-cal-cell {
+  height: 27px;
+  border-radius: 7px;
+  border: 1px solid transparent;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.12s ease;
+}
+
+.exec-cal-cell:hover {
+  background: #F1F5F9;
+}
+
+.exec-cal-day-num {
+  font-size: 11px;
+  font-weight: 700;
+  color: #1E293B;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.exec-cal-cell.is-outside .exec-cal-day-num {
+  color: #CBD5E1;
+  font-weight: 500;
+}
+
+.exec-cal-cell.is-today {
+  background: #EFF6FF;
+  border-color: #93C5FD;
+}
+
+.exec-cal-cell.is-today .exec-cal-day-num {
+  color: #1D4ED8;
+  font-weight: 900;
+}
+
+.exec-cal-cell.is-selected {
+  background: #0F172A;
+  border-color: #0F172A;
+}
+
+.exec-cal-cell.is-selected .exec-cal-day-num {
+  color: #FFFFFF;
+  font-weight: 800;
+}
+
+.exec-cal-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  position: absolute;
+  bottom: 2px;
+}
+
+.exec-cal-dot.dot-purple {
+  background: #7C3AED;
+}
+
+.exec-cal-dot.dot-blue {
+  background: #2563EB;
+}
+
+.exec-cal-cell.is-selected .exec-cal-dot {
+  background: #38BDF8;
+}
+
+.exec-cal-inspector {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 9px;
+  padding: 7px 10px;
+}
+
+.exec-cal-inspector-left {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.exec-cal-inspector-date {
+  font-size: 11px;
+  font-weight: 800;
+  color: #0F172A;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.exec-cal-inspector-sub {
+  font-size: 10px;
+  font-weight: 600;
+  color: #64748B;
+}
+
+.exec-cal-inspector-pills {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.exec-cal-stat-pill {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 5px;
+}
+
+.exec-cal-stat-pill.pill-p {
+  background: #F5F3FF;
+  color: #6D28D9;
+}
+
+.exec-cal-stat-pill.pill-u {
+  background: #EFF6FF;
+  color: #1D4ED8;
+}
+
+/* 4. Franja Inferior Compacta (3 tarjetas de resumen rápido) */
+.exec-bottom-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.exec-strip-card {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 13px;
+  padding: 12px 15px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.02);
+}
+
+.exec-strip-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.exec-strip-title {
+  font-size: 12px;
+  font-weight: 800;
+  color: #0F172A;
+}
+
+.exec-strip-action {
+  background: transparent;
+  border: none;
+  color: #2563EB;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+}
+
+.exec-strip-action:hover {
+  text-decoration: underline;
+}
+
+.exec-strip-empty {
+  font-size: 11.5px;
+  color: #94A3B8;
+  padding: 4px 0;
+}
+
+.exec-psico-compact-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.exec-avatar-stack {
+  display: flex;
+  align-items: center;
+}
+
+.exec-stack-avatar-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid #FFFFFF;
+  background: #ECFDF5;
+  margin-left: -7px;
+  padding: 0;
+  overflow: hidden;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(15, 23, 42, 0.1);
+  transition: transform 0.15s ease, z-index 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.exec-stack-avatar-btn:first-child {
+  margin-left: 0;
+}
+
+.exec-stack-avatar-btn:hover {
+  transform: translateY(-2px) scale(1.06);
+  z-index: 4;
+}
+
+.exec-stack-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.exec-stack-avatar-ph {
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #059669;
+}
+
+.exec-psico-compact-meta {
+  display: flex;
+  flex-direction: column;
+  text-align: right;
+}
+
+.exec-psico-meta-main {
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #0F172A;
+}
+
+.exec-psico-meta-sub {
+  font-size: 10px;
+  color: #64748B;
+  font-weight: 500;
+}
+
+.exec-mood-chip {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+}
+
+.exec-tags-compact-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.exec-compact-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 7px;
+  padding: 4px 8px;
+}
+
+.exec-compact-tag-name {
+  font-size: 11px;
+  font-weight: 700;
+  color: #1E293B;
+}
+
+.exec-compact-tag-count {
+  font-size: 10px;
+  font-weight: 800;
+  color: #6D28D9;
+  background: #EDE9FE;
+  padding: 0 5px;
+  border-radius: 999px;
+}
+
+.exec-strip-sub-badge {
+  font-size: 10px;
+  font-weight: 700;
+  color: #64748B;
+  background: #F1F5F9;
+  padding: 2px 7px;
+  border-radius: 6px;
+}
+
+.exec-quick-actions {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.exec-qbtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid #E2E8F0;
+  background: #F8FAFC;
+  color: #1E293B;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.exec-qbtn:hover {
+  background: #0F172A;
+  color: #FFFFFF;
+  border-color: #0F172A;
+}
+
+.exec-qbtn:hover svg {
+  stroke: #FFFFFF;
+}
+
+/* Responsividad del Dashboard Ejecutivo */
+@media (max-width: 1200px) {
+  .exec-bento-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .exec-calendar-card {
+    grid-column: span 2;
+  }
+  .exec-bottom-strip {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 960px) {
+  .exec-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .exec-bento-grid {
+    grid-template-columns: 1fr;
+  }
+  .exec-calendar-card {
+    grid-column: span 1;
+  }
+}
+
+@media (max-width: 600px) {
+  .exec-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+  .exec-topbar-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .exec-quick-actions {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+
 
 
