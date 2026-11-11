@@ -49,12 +49,14 @@ if (fs.existsSync(demoPostsHtml)) {
   console.log('✅ Copiado panel_publicaciones_demo.html a dist');
 }
 
-// 4.1 Copy ADMIN ENTRENOSOTROS directory to dist
+// 4.1 Copy ADMIN ENTRENOSOTROS directory to dist/ADMIN ENTRENOSOTROS and dist/admin
 const adminDir = path.join(rootDir, 'ADMIN ENTRENOSOTROS');
 const distAdminDir = path.join(distDir, 'ADMIN ENTRENOSOTROS');
+const distShortAdminDir = path.join(distDir, 'admin');
 if (fs.existsSync(adminDir)) {
   fs.cpSync(adminDir, distAdminDir, { recursive: true });
-  console.log('✅ Copiado ADMIN ENTRENOSOTROS a dist');
+  fs.cpSync(adminDir, distShortAdminDir, { recursive: true });
+  console.log('✅ Copiado ADMIN ENTRENOSOTROS a dist/ADMIN ENTRENOSOTROS y dist/admin');
 }
 
 // 5. Inject PWA tags into dist/index.html

@@ -11,6 +11,26 @@
       "destination": "/portal_psicologo.html"
     },
     {
+      "source": "/admin",
+      "destination": "/admin/index.html"
+    },
+    {
+      "source": "/admin/",
+      "destination": "/admin/index.html"
+    },
+    {
+      "source": "/admin/(.*)",
+      "destination": "/admin/$1"
+    },
+    {
+      "source": "/ADMIN ENTRENOSOTROS",
+      "destination": "/ADMIN ENTRENOSOTROS/index.html"
+    },
+    {
+      "source": "/ADMIN ENTRENOSOTROS/",
+      "destination": "/ADMIN ENTRENOSOTROS/index.html"
+    },
+    {
       "source": "/ADMIN ENTRENOSOTROS/(.*)",
       "destination": "/ADMIN ENTRENOSOTROS/$1"
     },

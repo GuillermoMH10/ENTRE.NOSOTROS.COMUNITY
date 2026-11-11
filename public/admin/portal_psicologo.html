@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal del Psicólogo | Entre Nosotros</title>
+  <link rel="icon" type="image/png" href="assets/logoappE.png">
+
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#F0FDF4',
+              100: '#DCFCE7',
+              200: '#BBF7D0',
+              300: '#86EFAC',
+              400: '#4ADE80',
+              500: '#22C55E',
+              600: '#16A34A',
+              700: '#15803D',
+              800: '#166534',
+              900: '#14532D',
+            },
+            coffee: {
+              50: '#FAF7F5',
+              100: '#F3EAE3',
+              200: '#E5D5C8',
+              300: '#C6A487',
+              400: '#A88365',
+              500: '#8C684B',
+              600: '#6F5038',
+              700: '#4A3E3D',
+              800: '#2E2423',
+              900: '#1C1917',
+            }
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- React 18 & ReactDOM & Babel -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- Firebase App & Firestore -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #FAF7F5;
+      color: #1C1917;
+    }
+    .custom-scroll::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scroll::-webkit-scrollbar-track {
+      background: #F3EAE3;
+      border-radius: 8px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: #C6A487;
+      border-radius: 8px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb:hover {
+      background: #8C684B;
+    }
+    .login-bg-container {
+      background-color: #EEF6FE;
+      background-image: url('assets/FONDOLOGIANIMA.png');
+      background-repeat: no-repeat;
+      background-position: center center;
+      background-size: 1820px 864px;
+    }
+    @media (max-width: 768px) {
+      .login-bg-container {
+        background-image: url('assets/FONDO%20ANIMA%20MOVIL.png') !important;
+        background-size: cover !important;
+        background-position: center bottom !important;
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-coffee-50 text-coffee-900 antialiased">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useMemo } = React;
+
+    // Configuración Firebase
+    const FIREBASE_CONFIG = {
+      apiKey: "AIzaSyAs1ti_J3Fxi6t41kW_xC3OORk_PugyTSk",
+      authDomain: "entre-nosotros-742c0.firebaseapp.com",
+      projectId: "entre-nosotros-742c0",
+      storageBucket: "entre-nosotros-742c0.firebasestorage.app",
+      messagingSenderId: "67176257419",
+      appId: "1:67176257419:web:c5e00b80c8f51aa428418e"
+    };
+
+    const COLLECTION_PSYCHOLOGISTS = 'psicologos';
+    const COLLECTION_TOPICS = 'temas_psicologia';
+    const STORAGE_SESSION = '@portal_psicologo_session_v2';
+
+    let firestoreDb = null;
+    try {
+      if (typeof firebase !== 'undefined') {
+        if (!firebase.apps || !firebase.apps.length) {
+          firebase.initializeApp(FIREBASE_CONFIG);
+        }
+        firestoreDb = firebase.firestore();
+      }
+    } catch (err) {
+      console.warn('Firebase error:', err);
+    }
+
+    // Iniciales para avatar fallback
+    const getInitials = (name) => {
+      if (!name || typeof name !== 'string') return 'PS';
+      const parts = name.trim().split(/\s+/).filter(Boolean);
+      if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+      return (parts[0]?.slice(0, 2) || 'PS').toUpperCase();
+    };
+
+    // Temas clínicos de referencia
+    const DEFAULT_TOPICS_REF = [
+      "Depresión", "Ansiedad", "Autoestima", "Duelo y Pérdida", "Estrés y Burnout",
+      "Terapia de Pareja", "Terapia Familiar", "Terapia Infantil", "Trauma y Apego",
+      "Dependencia Emocional", "Gestión de Emociones", "Trastornos de la Conducta Alimentaria (TCA)",
+      "Orientación Vocacional", "Desarrollo Personal", "Crecimiento y Bienestar", "Habilidades Sociales"
+    ];
+
+    // Iconos SVG
+    const Icon = ({ name, size = 18, className = "" }) => {
+      switch (name) {
+        case 'user':
+          return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
+        case 'edit':
+          return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>;
+        case 'feed':
+          return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>;
+        case 'logout':
+          return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>;
+        case 'check':
+          return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="20 6 9 17 4 12"/></svg>;
+        case 'image':
+          return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>;
+        case 'menu':
+          return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>;
+        case 'x':
+          return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>;
+        default:
+          return null;
+      }
+    };
+
+    // ========================================================================
+    // COMPONENTE PRINCIPAL
+    // ========================================================================
+    function PortalApp() {
+      const urlParams = useMemo(() => {
+        const p = new URLSearchParams(window.location.search);
+        return {
+          id: p.get('id') || '',
+          email: p.get('email') || '',
+          token: p.get('token') || '',
+        };
+      }, []);
+
+      const [currentPsico, setCurrentPsico] = useState(() => {
+        try {
+          const saved = localStorage.getItem(STORAGE_SESSION);
+          if (saved) return JSON.parse(saved);
+        } catch (e) {}
+        return null;
+      });
+
+      // Menú lateral: perfil | publicar | feed
+      const [activeTab, setActiveTab] = useState('perfil');
+      const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
+      // Estados de Login
+      const [loginEmail, setLoginEmail] = useState(urlParams.email || '');
+      const [loginPassword, setLoginPassword] = useState('');
+      const [loginError, setLoginError] = useState('');
+      const [isLoggingIn, setIsLoggingIn] = useState(false);
+
+      const handleLogin = async (e) => {
+        e.preventDefault();
+        setLoginError('');
+        setIsLoggingIn(true);
+
+        const emailClean = loginEmail.trim().toLowerCase();
+        const passClean = loginPassword.trim();
+
+        if (!emailClean || !passClean) {
+          setLoginError('Ingresa correo y contraseña.');
+          setIsLoggingIn(false);
+          return;
+        }
+
+        try {
+          let foundPsico = null;
+
+          if (firestoreDb) {
+            try {
+              const querySnap = await firestoreDb
+                .collection(COLLECTION_PSYCHOLOGISTS)
+                .where('correo', '==', emailClean)
+                .get();
+
+              if (!querySnap.empty) {
+                const docSnap = querySnap.docs[0];
+                foundPsico = { id: docSnap.id, ...docSnap.data() };
+              }
+            } catch (err) {
+              console.warn('Error buscando en Firestore:', err);
+            }
+          }
+
+          if (!foundPsico) {
+            try {
+              const savedList = localStorage.getItem('@admin_entrenosotros_psychologists_list_v1');
+              if (savedList) {
+                const list = JSON.parse(savedList);
+                foundPsico = list.find((p) => p.correo && p.correo.toLowerCase() === emailClean);
+              }
+            } catch (e) {}
+          }
+
+          if (!foundPsico) {
+            foundPsico = {
+              id: `psico_${Date.now()}`,
+              nombre: emailClean.split('@')[0],
+              correo: emailClean,
+              especialidad: 'Psicología',
+              cedula: '',
+              modalidad: 'Presencial y En línea',
+              temas: [],
+              whatsapp: '',
+              telefono: '',
+              ciudad: '',
+              sitioWeb: '',
+              ubicacion: '',
+              descripcion: '',
+              imagen: '',
+              fotoPortada: '',
+              verificado: true,
+              activo: true,
+              createdAt: new Date().toISOString(),
+            };
+
+            if (firestoreDb) {
+              try {
+                await firestoreDb.collection(COLLECTION_PSYCHOLOGISTS).doc(foundPsico.id).set(foundPsico);
+              } catch (e) {}
+            }
+          }
+
+          localStorage.setItem(STORAGE_SESSION, JSON.stringify(foundPsico));
+          setCurrentPsico(foundPsico);
+          setIsLoggingIn(false);
+        } catch (err) {
+          setLoginError('Error de autenticación: ' + err.message);
+          setIsLoggingIn(false);
+        }
+      };
+
+      const handleLogout = () => {
+        localStorage.removeItem(STORAGE_SESSION);
+        setCurrentPsico(null);
+      };
+
+      const handleUpdatePsychologist = async (updatedData) => {
+        const merged = { ...currentPsico, ...updatedData };
+
+        setCurrentPsico(merged);
+        localStorage.setItem(STORAGE_SESSION, JSON.stringify(merged));
+
+        if (firestoreDb && merged.id) {
+          try {
+            await firestoreDb.collection(COLLECTION_PSYCHOLOGISTS).doc(merged.id).set(merged, { merge: true });
+          } catch (e) {
+            console.error('Error guardando en Firestore:', e);
+          }
+        }
+
+        try {
+          const raw = localStorage.getItem('@admin_entrenosotros_psychologists_list_v1');
+          if (raw) {
+            let list = JSON.parse(raw);
+            const idx = list.findIndex(p => p.id === merged.id);
+            if (idx >= 0) {
+              list[idx] = merged;
+            } else {
+              list.push(merged);
+            }
+            localStorage.setItem('@admin_entrenosotros_psychologists_list_v1', JSON.stringify(list));
+          }
+        } catch (e) {}
+      };
+
+      // ======================================================================
+      // VISTA DE LOGIN
+      // ======================================================================
+      if (!currentPsico) {
+        return (
+          <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden login-bg-container">
+            <div className="max-w-sm w-full bg-white/95 backdrop-blur-sm rounded-3xl shadow-[0_12px_32px_rgba(43,74,111,0.12)] border border-blue-100 p-8 space-y-6 relative z-10">
+              <div className="text-center space-y-2">
+                <img
+                  src="assets/logoappE.png"
+                  alt="Entre Nosotros"
+                  className="w-48 h-20 object-contain mx-auto"
+                />
+                <h1 className="text-xl font-extrabold text-coffee-900 tracking-tight">Portal del Psicólogo</h1>
+                <p className="text-xs font-semibold text-coffee-600">Entre Nosotros</p>
+              </div>
+
+              {loginError && (
+                <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl font-medium">
+                  {loginError}
+                </div>
+              )}
+
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-coffee-800 uppercase tracking-wider mb-1">
+                    Correo Electrónico
+                  </label>
+                  <input
+                    type="email"
+                    value={loginEmail}
+                    onChange={(e) => setLoginEmail(e.target.value)}
+                    required
+                    className="w-full px-3.5 py-2.5 text-sm bg-coffee-50 border border-coffee-200 rounded-xl focus:ring-2 focus:ring-coffee-600 focus:bg-white transition outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-coffee-800 uppercase tracking-wider mb-1">
+                    Contraseña
+                  </label>
+                  <input
+                    type="password"
+                    value={loginPassword}
+                    onChange={(e) => setLoginPassword(e.target.value)}
+                    required
+                    className="w-full px-3.5 py-2.5 text-sm bg-coffee-50 border border-coffee-200 rounded-xl focus:ring-2 focus:ring-coffee-600 focus:bg-white transition outline-none"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isLoggingIn}
+                  className="w-full py-2.5 bg-coffee-800 hover:bg-coffee-900 text-white font-bold text-sm rounded-xl shadow transition flex items-center justify-center gap-2"
+                >
+                  <Icon name="user" size={16} />
+                  <span>{isLoggingIn ? 'Iniciando...' : 'Iniciar Sesión'}</span>
+                </button>
+              </form>
+            </div>
+          </div>
+        );
+      }
+
+      // ======================================================================
+      // PANEL CON BARRA LATERAL (SIDEBAR)
+      // ======================================================================
+      return (
+        <div className="min-h-screen flex bg-coffee-50 text-coffee-900">
+          {/* Backdrop móvil */}
+          {mobileSidebarOpen && (
+            <div
+              onClick={() => setMobileSidebarOpen(false)}
+              className="fixed inset-0 bg-black/40 z-40 md:hidden"
+            />
+          )}
+
+          {/* BARRA LATERAL */}
+          <aside
+            className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-coffee-200 flex flex-col justify-between transition-transform duration-200 ease-in-out md:translate-x-0 ${
+              mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+            }`}
+          >
+            {/* Parte Superior del Menú */}
+            <div className="p-5 flex flex-col h-full">
+              {/* Logo Oficial y Título */}
+              <div className="flex items-center justify-between pb-5 border-b border-coffee-200">
+                <div className="flex items-center gap-3">
+                  <img
+                    src="assets/logoappE.png"
+                    alt="Entre Nosotros"
+                    className="w-10 h-10 object-contain rounded-xl"
+                  />
+                  <div>
+                    <h2 className="font-extrabold text-sm text-coffee-900 leading-tight">Entre Nosotros</h2>
+                    <p className="text-[11px] font-semibold text-coffee-500">Portal Psicólogo</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setMobileSidebarOpen(false)}
+                  className="md:hidden text-coffee-600 hover:text-coffee-900"
+                >
+                  <Icon name="x" size={20} />
+                </button>
+              </div>
+
+              {/* Ficha compacta del psicólogo logueado */}
+              <div className="my-4 p-3 bg-coffee-50 rounded-2xl border border-coffee-200 flex items-center gap-3">
+                {currentPsico.imagen ? (
+                  <img
+                    src={currentPsico.imagen}
+                    alt={currentPsico.nombre}
+                    className="w-10 h-10 rounded-xl object-cover border border-coffee-300 flex-shrink-0"
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-xl bg-coffee-700 text-white font-bold text-xs flex items-center justify-center flex-shrink-0">
+                    {getInitials(currentPsico.nombre)}
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-bold text-xs text-coffee-900 truncate">{currentPsico.nombre || 'Especialista'}</h3>
+                  <p className="text-[11px] text-coffee-500 truncate">{currentPsico.especialidad || 'Psicología'}</p>
+                </div>
+              </div>
+
+              {/* Lista de Navegación: Perfil, Publicar Tema, Feed */}
+              <nav className="space-y-1.5 flex-1">
+                <button
+                  onClick={() => {
+                    setActiveTab('perfil');
+                    setMobileSidebarOpen(false);
+                  }}
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
+                    activeTab === 'perfil'
+                      ? 'bg-coffee-800 text-white shadow-sm'
+                      : 'text-coffee-700 hover:bg-coffee-100'
+                  }`}
+                >
+                  <Icon name="user" size={17} />
+                  <span>Perfil</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setActiveTab('publicar');
+                    setMobileSidebarOpen(false);
+                  }}
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
+                    activeTab === 'publicar'
+                      ? 'bg-coffee-800 text-white shadow-sm'
+                      : 'text-coffee-700 hover:bg-coffee-100'
+                  }`}
+                >
+                  <Icon name="edit" size={17} />
+                  <span>Publicar Tema</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setActiveTab('feed');
+                    setMobileSidebarOpen(false);
+                  }}
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition ${
+                    activeTab === 'feed'
+                      ? 'bg-coffee-800 text-white shadow-sm'
+                      : 'text-coffee-700 hover:bg-coffee-100'
+                  }`}
+                >
+                  <Icon name="feed" size={17} />
+                  <span>Feed</span>
+                </button>
+              </nav>
+
+              {/* Parte Inferior: Cerrar Sesión */}
+              <div className="pt-4 border-t border-coffee-200">
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold text-red-600 hover:bg-red-50 transition"
+                >
+                  <Icon name="logout" size={17} />
+                  <span>Cerrar Sesión</span>
+                </button>
+              </div>
+            </div>
+          </aside>
+
+          {/* CONTENIDO PRINCIPAL */}
+          <div className="flex-1 md:ml-64 flex flex-col min-h-screen">
+            {/* Topbar móvil */}
+            <header className="md:hidden bg-white border-b border-coffee-200 p-4 flex items-center justify-between sticky top-0 z-30">
+              <div className="flex items-center gap-2.5">
+                <img src="assets/logoappE.png" alt="Logo" className="w-8 h-8 object-contain" />
+                <span className="font-extrabold text-sm text-coffee-900">Entre Nosotros</span>
+              </div>
+              <button
+                onClick={() => setMobileSidebarOpen(true)}
+                className="p-2 rounded-xl text-coffee-700 hover:bg-coffee-100"
+              >
+                <Icon name="menu" size={20} />
+              </button>
+            </header>
+
+            {/* Vistas según pestaña activa */}
+            <main className="p-4 md:p-8 flex-1 flex justify-center">
+              {activeTab === 'perfil' && (
+                <ViewPerfilForm
+                  psychologist={currentPsico}
+                  onSave={handleUpdatePsychologist}
+                />
+              )}
+
+              {activeTab === 'publicar' && (
+                <div className="w-full max-w-3xl bg-white rounded-3xl p-8 border border-coffee-200 text-center my-auto shadow-sm">
+                  <div className="w-12 h-12 rounded-2xl bg-coffee-100 text-coffee-700 flex items-center justify-center mx-auto mb-3">
+                    <Icon name="edit" size={24} />
+                  </div>
+                  <h2 className="text-lg font-bold text-coffee-900 mb-1">Publicar Tema</h2>
+                  <p className="text-xs text-coffee-500">Módulo en preparación</p>
+                </div>
+              )}
+
+              {activeTab === 'feed' && (
+                <div className="w-full max-w-3xl bg-white rounded-3xl p-8 border border-coffee-200 text-center my-auto shadow-sm">
+                  <div className="w-12 h-12 rounded-2xl bg-coffee-100 text-coffee-700 flex items-center justify-center mx-auto mb-3">
+                    <Icon name="feed" size={24} />
+                  </div>
+                  <h2 className="text-lg font-bold text-coffee-900 mb-1">Feed</h2>
+                  <p className="text-xs text-coffee-500">Módulo en preparación</p>
+                </div>
+              )}
+            </main>
+          </div>
+        </div>
+      );
+    }
+
+    // ========================================================================
+    // FORMULARIO DE PERFIL: AMPLIO, COMPACTO, PROFESIONAL, SIN PLACEHOLDERS
+    // ========================================================================
+    function ViewPerfilForm({ psychologist, onSave }) {
+      const [nombre, setNombre] = useState(psychologist.nombre || '');
+      const [especialidad, setEspecialidad] = useState(psychologist.especialidad || '');
+      const [cedula, setCedula] = useState(psychologist.cedula || '');
+      const [descripcion, setDescripcion] = useState(psychologist.descripcion || '');
+      const [modalidad, setModalidad] = useState(psychologist.modalidad || 'Presencial y En línea');
+      const [temas, setTemas] = useState(psychologist.temas || []);
+      const [correo, setCorreo] = useState(psychologist.correo || '');
+      const [whatsapp, setWhatsapp] = useState(psychologist.whatsapp || psychologist.telefono || '');
+      const [ciudad, setCiudad] = useState(psychologist.ciudad || '');
+      const [sitioWeb, setSitioWeb] = useState(psychologist.sitioWeb || '');
+      const [ubicacion, setUbicacion] = useState(psychologist.ubicacion || '');
+      const [imagen, setImagen] = useState(psychologist.imagen || '');
+      const [fotoPortada, setFotoPortada] = useState(psychologist.fotoPortada || '');
+
+      const [availableTopics, setAvailableTopics] = useState(DEFAULT_TOPICS_REF);
+      const [topicInput, setTopicInput] = useState('');
+      const [isSaving, setIsSaving] = useState(false);
+      const [savedAlert, setSavedAlert] = useState(false);
+
+      useEffect(() => {
+        if (!firestoreDb) return;
+        firestoreDb.collection(COLLECTION_TOPICS).get()
+          .then((snap) => {
+            const list = [...DEFAULT_TOPICS_REF];
+            snap.forEach((doc) => {
+              const t = doc.data().nombre;
+              if (t && !list.includes(t)) {
+                list.push(t);
+              }
+            });
+            setAvailableTopics(list);
+          })
+          .catch((e) => console.warn('Error cargando temas:', e));
+      }, []);
+
+      const handleFileUpload = (e, setter) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          setter(event.target.result);
+        };
+        reader.readAsDataURL(file);
+      };
+
+      const handleAddTopic = (t) => {
+        const clean = (t || topicInput).trim();
+        if (!clean) return;
+        if (!temas.includes(clean)) {
+          setTemas([...temas, clean]);
+          if (!availableTopics.includes(clean)) {
+            setAvailableTopics([...availableTopics, clean]);
+            if (firestoreDb) {
+              const docId = clean.toLowerCase().replace(/[^a-z0-9]/g, '_');
+              firestoreDb.collection(COLLECTION_TOPICS).doc(docId).set({
+                nombre: clean,
+                createdAt: new Date().toISOString()
+              }).catch(() => {});
+            }
+          }
+        }
+        setTopicInput('');
+      };
+
+      const handleRemoveTopic = (index) => {
+        setTemas(temas.filter((_, idx) => idx !== index));
+      };
+
+      const handleSubmit = async (e) => {
+        e.preventDefault();
+        setIsSaving(true);
+
+        const updated = {
+          nombre: nombre.trim(),
+          especialidad: especialidad.trim(),
+          cedula: cedula.trim(),
+          descripcion: descripcion.trim(),
+          modalidad: modalidad,
+          temas: temas,
+          correo: correo.trim(),
+          whatsapp: whatsapp.trim(),
+          telefono: whatsapp.trim(),
+          ciudad: ciudad.trim(),
+          sitioWeb: sitioWeb.trim(),
+          ubicacion: ubicacion.trim(),
+          imagen: imagen.trim(),
+          fotoPortada: fotoPortada.trim(),
+          verificado: true,
+          activo: true,
+          perfilCompleto: true,
+        };
+
+        await onSave(updated);
+        setIsSaving(false);
+        setSavedAlert(true);
+        setTimeout(() => setSavedAlert(false), 4000);
+      };
+
+      return (
+        <div className="w-full max-w-5xl space-y-6">
+          {savedAlert && (
+            <div className="p-3.5 bg-emerald-50 border border-emerald-400 text-emerald-800 rounded-2xl flex items-center gap-2 text-xs font-bold shadow-sm">
+              <Icon name="check" size={16} className="text-emerald-600" />
+              <span>Cambios guardados correctamente.</span>
+            </div>
+          )}
+
+          <div className="bg-white rounded-3xl p-6 md:p-10 border border-coffee-200 shadow-sm">
+            <div className="pb-4 mb-6 border-b border-coffee-200 flex items-center justify-between">
+              <div>
+                <h1 className="text-xl font-extrabold text-coffee-900">Perfil Profesional</h1>
+                <p className="text-xs text-coffee-500 font-medium">Información del especialista</p>
+              </div>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Fotos: Perfil y Portada (Grid 2 Columnas) */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {/* Foto de Perfil */}
+                <div className="p-4 bg-coffee-50 rounded-2xl border border-coffee-200">
+                  <label className="block text-xs font-bold text-coffee-800 uppercase tracking-wider mb-2">
+                    Foto de Perfil
+                  </label>
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                    {imagen ? (
+                      <img
+                        src={imagen}
+                        alt={nombre}
+                        className="w-16 h-16 rounded-2xl object-cover border-2 border-coffee-300 flex-shrink-0"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 rounded-2xl bg-coffee-200 text-coffee-700 font-bold flex items-center justify-center text-sm border-2 border-coffee-300 flex-shrink-0">
+                        {getInitials(nombre)}
+                      </div>
+                    )}
+
+                    <div className="flex-1 space-y-2">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleFileUpload(e, setImagen)}
+                        className="block w-full text-xs text-coffee-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-coffee-800 file:text-white hover:file:bg-coffee-900 cursor-pointer"
+                      />
+                      <input
+                        type="text"
+                        value={imagen}
+                        onChange={(e) => setImagen(e.target.value)}
+                        className="w-full text-xs px-3 py-2 rounded-xl border border-coffee-200 focus:outline-none focus:ring-2 focus:ring-coffee-600 bg-white"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Foto de Portada */}
+                <div className="p-4 bg-coffee-50 rounded-2xl border border-coffee-200">
+                  <label className="block text-xs font-bold text-coffee-800 uppercase tracking-wider mb-2">
+                    Foto de Portada
+                  </label>
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                    {fotoPortada ? (
+                      <img
+                        src={fotoPortada}
+                        alt="Portada"
+                        className="w-24 h-16 rounded-xl object-cover border-2 border-coffee-300 flex-shrink-0"
+                      />
+                    ) : (
+                      <div className="w-24 h-16 rounded-xl bg-coffee-200 border-2 border-coffee-300 flex items-center justify-center text-coffee-400 flex-shrink-0">
+                        <Icon name="image" size={20} />
+                      </div>
+                    )}
+
+                    <div className="flex-1 space-y-2">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleFileUpload(e, setFotoPortada)}
+                        className="block w-full text-xs text-coffee-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-coffee-800 file:text-white hover:file:bg-coffee-900 cursor-pointer"
+                      />
+                      <input
+                        type="text"
+                        value={fotoPortada}
+                        onChange={(e) => setFotoPortada(e.target.value)}
+                        className="w-full text-xs px-3 py-2 rounded-xl border border-coffee-200 focus:outline-none focus:ring-2 focus:ring-coffee-600 bg-white"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Nombre y Especialidad */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-xs font-bold text-coffee-800 uppercase tracking-wider mb-1">
+                    Nombre
+                  </label>
+                  <input
+                    type="text"
+                    value={nombre}
+                    onChange={(e) => setNombre(e.target.value)}
+                    required
+                    className="w-full text-sm px-3.5 py-2.5 rounded-xl border border-coffee-200 focus:outline-none focus:ring-2 focus:ring-coffee-600 bg-coffee-50/40"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-coffee-800 uppercase tracking-wider mb-1">
+                    Especialidad
+                  </label>
+                  <input
+                    type="text"
+                    value={especialidad}
+                    onChange={(e) => setEspecialidad(e.target.value)}
+                    required
+                    className="w-full text-sm px-3.5 py-2.5 rounded-xl border border-coffee-200 focus:outline-none focus:ring-2 focus:ring-coffee-600 bg-coffee-50/40"
+                  />
+                </div>
+              </div>
+
+              {/* Cédula y Modalidad */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-xs font-bold text-coffee-800 uppercase tracking-wider mb-1">
+                    Cédula Profesional
+                  </label>
+                  <input
+                    type="text"
+                    value={cedula}
+                    onChange={(e) => setCedula(e.target.value)}
+                    className="w-full text-sm px-3.5 py-2.5 rounded-xl border border-coffee-200 focus:outline-none focus:ring-2 focus:ring-coffee-600 bg-coffee-50/40"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-coffee-800 uppercase tracking-wider mb-1">
+                    Modalidad
+                  </label>
+                  <select
+                    value={modalidad}
+                    onChange={(e) => setModalidad(e.target.value)}
+                    required
+                    className="w-full text-sm px-3.5 py-2.5 rounded-xl border border-coffee-200 focus:outline-none focus:ring-2 focus:ring-coffee-600 bg-coffee-50/40 font-medium text-coffee-800"
+                  >
+                    <option value="Presencial y En línea">Presencial y En línea</option>
+                    <option value="En línea">En línea</option>
+                    <option value="Presencial">Presencial</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Descripción */}
+              <div>
+                <label className="block text-xs font-bold text-coffee-800 uppercase tracking-wider mb-1">
+                  Descripción
+                </label>
+                <textarea
+                  rows="3"
+                  value={descripcion}
+                  onChange={(e) => setDescripcion(e.target.value)}
+                  required
+                  className="w-full text-sm px-3.5 py-2.5 rounded-xl border border-coffee-200 focus:outline-none focus:ring-2 focus:ring-coffee-600 bg-coffee-50/40 leading-relaxed"
+                ></textarea>
+              </div>
+
+              {/* Temas que trata */}
+              <div className="p-4 bg-coffee-50 rounded-2xl border border-coffee-200">
+                <label className="block text-xs font-bold text-coffee-800 uppercase tracking-wider mb-2">
+                  Temas de Atención
+                </label>
+
+                {/* Tags seleccionados */}
+                <div className="flex flex-wrap gap-1.5 mb-3 min-h-[28px]">
+                  {temas.map((tema, idx) => (
+                    <span
+                      key={idx}
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-coffee-800 text-white shadow-sm"
+                    >
+                      <span>{tema}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveTopic(idx)}
+                        className="text-white hover:text-red-300 font-bold ml-1 text-sm focus:outline-none"
+                      >
+                        &times;
+                      </button>
+                    </span>
+                  ))}
+                </div>
+
+                {/* Input para agregar tema */}
+                <div className="flex gap-2 mb-3">
+                  <input
+                    type="text"
+                    value={topicInput}
+                    onChange={(e) => setTopicInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ',') {
+                        e.preventDefault();
+                        handleAddTopic(topicInput);
+                      }
+                    }}
+                    className="flex-1 text-sm px-3.5 py-2 rounded-xl border border-coffee-200 focus:outline-none focus:ring-2 focus:ring-coffee-600 bg-white"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleAddTopic(topicInput)}
+                    className="px-4 py-2 bg-coffee-800 hover:bg-coffee-900 text-white rounded-xl text-xs font-bold transition shadow-sm"
+                  >
+                    + Agregar
+                  </button>
+                </div>
+
+                {/* Chips de sugerencias */}
+                <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto">
+                  {availableTopics
+                    .filter((t) => !temas.includes(t))
+                    .slice(0, 15)
+                    .map((t, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => handleAddTopic(t)}
+                        className="text-xs font-semibold px-2.5 py-1 rounded-full bg-coffee-100 text-coffee-800 hover:bg-coffee-200 transition border border-coffee-200"
+                      >
+                        + {t}
+                      </button>
+                    ))}
+                </div>
+              </div>
+
+              {/* Correo y WhatsApp */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-xs font-bold text-coffee-800 uppercase tracking-wider mb-1">
+                    Correo Electrónico
+                  </label>
+                  <input
+                    type="email"
+                    value={correo}
+                    onChange={(e) => setCorreo(e.target.value)}
+                    required
+                    className="w-full text-sm px-3.5 py-2.5 rounded-xl border border-coffee-200 focus:outline-none focus:ring-2 focus:ring-coffee-600 bg-coffee-50/40"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-coffee-800 uppercase tracking-wider mb-1">
+                    WhatsApp
+                  </label>
+                  <input
+                    type="text"
+                    value={whatsapp}
+                    onChange={(e) => setWhatsapp(e.target.value)}
+                    required
+                    className="w-full text-sm px-3.5 py-2.5 rounded-xl border border-coffee-200 focus:outline-none focus:ring-2 focus:ring-coffee-600 bg-coffee-50/40"
+                  />
+                </div>
+              </div>
+
+              {/* Ciudad y Sitio Web */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-xs font-bold text-coffee-800 uppercase tracking-wider mb-1">
+                    Ciudad
+                  </label>
+                  <input
+                    type="text"
+                    value={ciudad}
+                    onChange={(e) => setCiudad(e.target.value)}
+                    required
+                    className="w-full text-sm px-3.5 py-2.5 rounded-xl border border-coffee-200 focus:outline-none focus:ring-2 focus:ring-coffee-600 bg-coffee-50/40"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-coffee-800 uppercase tracking-wider mb-1">
+                    Sitio Web
+                  </label>
+                  <input
+                    type="url"
+                    value={sitioWeb}
+                    onChange={(e) => setSitioWeb(e.target.value)}
+                    className="w-full text-sm px-3.5 py-2.5 rounded-xl border border-coffee-200 focus:outline-none focus:ring-2 focus:ring-coffee-600 bg-coffee-50/40"
+                  />
+                </div>
+              </div>
+
+              {/* Ubicación */}
+              <div>
+                <label className="block text-xs font-bold text-coffee-800 uppercase tracking-wider mb-1">
+                  Ubicación
+                </label>
+                <input
+                  type="text"
+                  value={ubicacion}
+                  onChange={(e) => setUbicacion(e.target.value)}
+                  required
+                  className="w-full text-sm px-3.5 py-2.5 rounded-xl border border-coffee-200 focus:outline-none focus:ring-2 focus:ring-coffee-600 bg-coffee-50/40"
+                />
+              </div>
+
+              {/* Botón Guardar */}
+              <button
+                type="submit"
+                disabled={isSaving}
+                className="w-full py-3.5 px-6 rounded-2xl bg-coffee-800 hover:bg-coffee-900 text-white font-bold text-sm shadow transition flex items-center justify-center gap-2 mt-4"
+              >
+                <Icon name="check" size={16} />
+                <span>{isSaving ? 'Guardando...' : 'Guardar'}</span>
+              </button>
+            </form>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.render(<PortalApp />, document.getElementById('root'));
+  </script>
+</body>
+</html>

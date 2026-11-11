@@ -2,10 +2,11 @@
   "name": "admin-entrenosotros",
   "version": "1.0.0",
   "description": "Panel de Administración y Control de Accesos - Entre Nosotros",
-  "main": "index.html",
+  "main": "expo-entry.js",
   "scripts": {
     "start": "npx serve . -p 4000",
-    "dev": "npx serve . -p 4000"
+    "dev": "npx serve . -p 4000",
+    "web": "npx serve . -p 4000"
   },
   "keywords": [
     "admin",

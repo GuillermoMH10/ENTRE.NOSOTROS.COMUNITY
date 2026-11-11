@@ -42,6 +42,18 @@ self.addEventListener('fetch', (event) => {
   // Only handle same-origin or local assets
   if (url.origin !== self.location.origin) return;
 
+  // Never intercept administrative panel or standalone psychologist portals
+  const lowerPath = decodeURIComponent(url.pathname).toLowerCase();
+  if (
+    lowerPath.startsWith('/admin') ||
+    lowerPath.includes('admin entrenosotros') ||
+    lowerPath.includes('portal_psicologo') ||
+    lowerPath.includes('registro_psicologos') ||
+    lowerPath.includes('panel_publicaciones')
+  ) {
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) {

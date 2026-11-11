@@ -4,7 +4,25 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Acceso Administrativo | Entre Nosotros</title>
-  <link rel="icon" type="image/x-icon" href="../public/favicon.ico" />
+  <script>
+    (function () {
+      try {
+        if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
+          var p = window.location.pathname;
+          if (p && !p.endsWith('/') && !p.endsWith('.html')) {
+            window.location.replace(p + '/' + window.location.search + window.location.hash);
+            return;
+          }
+          if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function (regs) {
+              regs.forEach(function (r) { r.unregister(); });
+            }).catch(function () {});
+          }
+        }
+      } catch (e) {}
+    })();
+  </script>
+  <link rel="icon" type="image/png" href="assets/logoappE.png" />
   <!-- Hoja de estilos del panel administrativo -->
   <link rel="stylesheet" href="css/style.css" />
 </head>

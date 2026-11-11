@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Acceso Administrativo | Entre Nosotros</title>
+  <script>
+    (function () {
+      try {
+        if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
+          var p = window.location.pathname;
+          if (p && !p.endsWith('/') && !p.endsWith('.html')) {
+            window.location.replace(p + '/' + window.location.search + window.location.hash);
+            return;
+          }
+          if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function (regs) {
+              regs.forEach(function (r) { r.unregister(); });
+            }).catch(function () {});
+          }
+        }
+      } catch (e) {}
+    })();
+  </script>
+  <link rel="icon" type="image/png" href="assets/logoappE.png" />
+  <!-- Hoja de estilos del panel administrativo -->
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <!-- Contenedor donde se monta la aplicación React -->
+  <div id="root"></div>
+
+  <!-- Firebase Compat (Copia local sin dependencias externas + respaldo CDN) -->
+  <script src="js/firebase-app-compat.js"></script>
+  <script src="js/firebase-firestore-compat.js"></script>
+  <script>
+    if (!window.firebase) {
+      document.write('<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"><\/script>');
+      document.write('<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"><\/script>');
+    }
+  </script>
+
+  <!-- React 18 & ReactDOM 18 (Copia local sin dependencias externas) -->
+  <script src="js/react.production.min.js"></script>
+  <script src="js/react-dom.production.min.js"></script>
+
+  <!-- Respaldo CDN automático si no se encuentran las librerías locales -->
+  <script>
+    if (!window.React) {
+      document.write('<script src="https://unpkg.com/react@18/umd/react.production.min.js"><\/script>');
+      document.write('<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"><\/script>');
+    }
+  </script>
+
+  <!-- Aplicación principal en React -->
+  <script src="js/app.js"></script>
+</body>
+</html>
