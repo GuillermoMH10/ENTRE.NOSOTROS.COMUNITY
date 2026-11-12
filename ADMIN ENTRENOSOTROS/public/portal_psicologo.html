@@ -180,6 +180,20 @@
           return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>;
         case 'arrowLeft':
           return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>;
+        case 'chat':
+          return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>;
+        case 'bookmark':
+          return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>;
+        case 'bookmarkFilled':
+          return <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>;
+        case 'heart':
+          return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>;
+        case 'heartFilled':
+          return <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>;
+        case 'send':
+          return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>;
+        case 'search':
+          return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>;
         default:
           return null;
       }
@@ -547,13 +561,9 @@
               )}
 
               {activeTab === 'feed' && (
-                <div className="w-full max-w-3xl mx-auto bg-white rounded-3xl p-8 border border-coffee-200 text-center my-auto shadow-sm">
-                  <div className="w-12 h-12 rounded-2xl bg-coffee-100 text-coffee-700 flex items-center justify-center mx-auto mb-3">
-                    <Icon name="feed" size={24} />
-                  </div>
-                  <h2 className="text-lg font-bold text-coffee-900 mb-1">Feed</h2>
-                  <p className="text-xs text-coffee-500">Módulo en preparación</p>
-                </div>
+                <ViewCommunityFeed
+                  psychologist={currentPsico}
+                />
               )}
             </main>
           </div>
@@ -1428,6 +1438,1128 @@
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      );
+    }
+
+    // ========================================================================
+    // CONFIGURACIÓN IDÉNTICA DE REACCIONES DE LA APP ENTRE NOSOTROS
+    // ========================================================================
+    const APP_REACTIONS_MAP = {
+      teAbrazo: {
+        type: 'teAbrazo',
+        label: 'Te abrazo',
+        image: 'assets/iconsreacciones/teabrazo.png',
+        emoji: '🤗',
+        color: '#D47355',
+        bgColor: '#FFF0EC',
+      },
+      teEscucho: {
+        type: 'teEscucho',
+        label: 'Te escucho',
+        image: 'assets/iconsreacciones/teescucho.png',
+        emoji: '👂',
+        color: '#3B79BA',
+        bgColor: '#EDF5FD',
+      },
+      noEstasSolo: {
+        type: 'noEstasSolo',
+        label: 'No estás solo',
+        image: 'assets/iconsreacciones/noestassolo.png',
+        emoji: '🤝',
+        color: '#3F9B65',
+        bgColor: '#EEF8F1',
+      },
+      fuerza: {
+        type: 'fuerza',
+        label: 'Fuerza',
+        image: 'assets/iconsreacciones/fuerza.png',
+        emoji: '💪',
+        color: '#D9822B',
+        bgColor: '#FEF6EC',
+      },
+    };
+
+    const formatTimeAgoApp = (timestamp, createdAt) => {
+      let ts = Number(timestamp);
+      if (!ts && createdAt) {
+        const parsed = Date.parse(createdAt);
+        if (!isNaN(parsed)) ts = parsed;
+      }
+      if (!ts) return 'Ahora';
+      const diffMs = Date.now() - ts;
+      const diffMins = Math.floor(diffMs / 60000);
+      if (diffMins < 1) return 'Ahora';
+      if (diffMins < 60) return `Hace ${diffMins} min`;
+      const diffHours = Math.floor(diffMins / 60);
+      if (diffHours < 24) return `Hace ${diffHours} h`;
+      const diffDays = Math.floor(diffHours / 24);
+      return `Hace ${diffDays} d`;
+    };
+
+    const isVideoMediaUrl = (url) => {
+      if (!url || typeof url !== 'string') return false;
+      const lower = url.toLowerCase();
+      return (
+        lower.includes('.mp4') ||
+        lower.includes('.mov') ||
+        lower.includes('.webm') ||
+        lower.includes('.m4v') ||
+        lower.includes('video/') ||
+        lower.includes('video%2f') ||
+        lower.startsWith('data:video')
+      );
+    };
+
+    // ========================================================================
+    // VISOR DE IMÁGENES A PANTALLA COMPLETA (LIGHTBOX IGUAL A LA APP)
+    // ========================================================================
+    function FeedImageLightbox({ images, initialIndex = 0, onClose }) {
+      const [index, setIndex] = useState(initialIndex);
+
+      useEffect(() => {
+        setIndex(initialIndex);
+      }, [initialIndex]);
+
+      if (!images || images.length === 0) return null;
+      const currentUrl = images[index] || images[0];
+
+      return (
+        <div
+          className="fixed inset-0 z-[120] bg-black/90 backdrop-blur-sm flex flex-col items-center justify-center p-4"
+          onClick={onClose}
+        >
+          {/* Barra superior del visor */}
+          <div
+            className="w-full max-w-5xl flex items-center justify-between text-white mb-3 px-2"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <span className="text-xs font-bold bg-white/15 px-3 py-1 rounded-full">
+              {index + 1} / {images.length}
+            </span>
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-9 h-9 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center text-white transition"
+            >
+              <Icon name="x" size={18} />
+            </button>
+          </div>
+
+          {/* Contenedor de imagen o video */}
+          <div
+            className="relative max-w-4xl w-full max-h-[82vh] flex items-center justify-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {images.length > 1 && (
+              <button
+                type="button"
+                onClick={() => setIndex((prev) => (prev - 1 + images.length) % images.length)}
+                className="absolute left-2 z-10 w-10 h-10 rounded-full bg-black/60 hover:bg-black/80 text-white font-extrabold text-xl flex items-center justify-center"
+              >
+                ‹
+              </button>
+            )}
+
+            {isVideoMediaUrl(currentUrl) ? (
+              <video
+                src={currentUrl}
+                controls
+                autoPlay
+                className="max-h-[80vh] max-w-full rounded-2xl shadow-2xl"
+              />
+            ) : (
+              <img
+                src={currentUrl}
+                alt="Vista completa"
+                className="max-h-[80vh] max-w-full object-contain rounded-2xl shadow-2xl"
+              />
+            )}
+
+            {images.length > 1 && (
+              <button
+                type="button"
+                onClick={() => setIndex((prev) => (prev + 1) % images.length)}
+                className="absolute right-2 z-10 w-10 h-10 rounded-full bg-black/60 hover:bg-black/80 text-white font-extrabold text-xl flex items-center justify-center"
+              >
+                ›
+              </button>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // ========================================================================
+    // RENDERIZADO MULTIMEDIA CON PROPORCIONES REALES (IGUAL A PostMediaView)
+    // ========================================================================
+    function FeedPostMediaView({ mediaUrls = [], onMediaPress }) {
+      if (!Array.isArray(mediaUrls) || mediaUrls.length === 0) return null;
+      const count = mediaUrls.length;
+
+      // 1 sola imagen o video
+      if (count === 1) {
+        const url = mediaUrls[0];
+        if (isVideoMediaUrl(url)) {
+          return (
+            <div className="my-2.5 rounded-2xl overflow-hidden bg-black max-h-[460px] flex items-center justify-center border border-[#EDE3DA]">
+              <video
+                src={url}
+                controls
+                className="w-full max-h-[450px] object-contain"
+              />
+            </div>
+          );
+        }
+        return (
+          <div className="my-2.5">
+            <div
+              onClick={() => onMediaPress && onMediaPress(mediaUrls, 0)}
+              className="rounded-2xl overflow-hidden border border-[#EDE3DA] bg-[#F7F2EE] cursor-pointer inline-block max-w-full"
+            >
+              <img
+                src={url}
+                alt="Publicación"
+                className="max-h-[440px] w-auto max-w-full object-contain block mx-auto hover:scale-[1.01] transition-transform duration-200"
+              />
+            </div>
+          </div>
+        );
+      }
+
+      // 2 imágenes lado a lado
+      if (count === 2) {
+        return (
+          <div className="my-2.5 grid grid-cols-2 gap-1.5 rounded-2xl overflow-hidden">
+            {mediaUrls.slice(0, 2).map((url, idx) => (
+              <div
+                key={idx}
+                onClick={() => onMediaPress && onMediaPress(mediaUrls, idx)}
+                className="relative h-60 bg-[#F7F2EE] overflow-hidden cursor-pointer border border-[#EDE3DA] rounded-xl"
+              >
+                <img src={url} alt="" className="w-full h-full object-cover hover:scale-105 transition duration-200" />
+              </div>
+            ))}
+          </div>
+        );
+      }
+
+      // 3 imágenes (1 grande a la izquierda + 2 apiladas a la derecha)
+      if (count === 3) {
+        return (
+          <div className="my-2.5 grid grid-cols-2 gap-1.5 h-72 rounded-2xl overflow-hidden">
+            <div
+              onClick={() => onMediaPress && onMediaPress(mediaUrls, 0)}
+              className="relative h-full bg-[#F7F2EE] overflow-hidden cursor-pointer border border-[#EDE3DA] rounded-xl"
+            >
+              <img src={mediaUrls[0]} alt="" className="w-full h-full object-cover hover:scale-105 transition duration-200" />
+            </div>
+            <div className="grid grid-rows-2 gap-1.5 h-full">
+              {mediaUrls.slice(1, 3).map((url, idx) => (
+                <div
+                  key={idx}
+                  onClick={() => onMediaPress && onMediaPress(mediaUrls, idx + 1)}
+                  className="relative h-full bg-[#F7F2EE] overflow-hidden cursor-pointer border border-[#EDE3DA] rounded-xl"
+                >
+                  <img src={url} alt="" className="w-full h-full object-cover hover:scale-105 transition duration-200" />
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      }
+
+      // 4 o más imágenes (cuadrícula 2x2)
+      return (
+        <div className="my-2.5 grid grid-cols-2 gap-1.5 rounded-2xl overflow-hidden">
+          {mediaUrls.slice(0, 4).map((url, idx) => {
+            const extra = count - 4;
+            return (
+              <div
+                key={idx}
+                onClick={() => onMediaPress && onMediaPress(mediaUrls, idx)}
+                className="relative h-48 bg-[#F7F2EE] overflow-hidden cursor-pointer border border-[#EDE3DA] rounded-xl"
+              >
+                <img src={url} alt="" className="w-full h-full object-cover hover:scale-105 transition duration-200" />
+                {idx === 3 && extra > 0 && (
+                  <div className="absolute inset-0 bg-black/55 flex items-center justify-center text-white font-extrabold text-lg">
+                    +{extra}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      );
+    }
+
+    // ========================================================================
+    // TARJETA DE PUBLICACIÓN IDÉNTICA A LA APP (PostCard.tsx)
+    // ========================================================================
+    function FeedPostCard({
+      post,
+      currentUserId,
+      liveAvatars = {},
+      onReact,
+      onToggleSave,
+      onOpenComments,
+      onSelectHashtag,
+      onOpenMedia,
+    }) {
+      const [showPicker, setShowPicker] = useState(false);
+
+      const userReactionType = currentUserId ? post.userReactions?.[currentUserId] : undefined;
+      const activeReactionConfig = userReactionType ? APP_REACTIONS_MAP[userReactionType] : null;
+      const isSaved = currentUserId && Array.isArray(post.savedBy) ? post.savedBy.includes(currentUserId) : false;
+
+      const totalReactions =
+        (post.reactions?.teAbrazo || 0) +
+        (post.reactions?.teEscucho || 0) +
+        (post.reactions?.noEstasSolo || 0) +
+        (post.reactions?.fuerza || 0);
+
+      const resolvedAvatar =
+        liveAvatars[post.authorId] ||
+        post.authorAvatarUrl ||
+        `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(post.authorUsername || post.authorId || 'user')}`;
+
+      return (
+        <div className="bg-white px-5 pt-4 pb-2 relative transition hover:bg-[#FDFCFB]">
+          {/* Selector Flotante de las 4 Reacciones de Entre Nosotros */}
+          {showPicker && (
+            <div
+              className="absolute bottom-12 left-4 z-40 bg-white rounded-full px-3 py-2 shadow-[0_10px_30px_rgba(46,36,35,0.22)] border border-[#EDE3DA] flex items-center gap-2 animate-fade-in"
+              onMouseLeave={() => setShowPicker(false)}
+            >
+              {Object.values(APP_REACTIONS_MAP).map((r) => {
+                const isSelected = userReactionType === r.type;
+                return (
+                  <button
+                    key={r.type}
+                    type="button"
+                    onClick={() => {
+                      onReact(post, r.type);
+                      setShowPicker(false);
+                    }}
+                    className={`group flex flex-col items-center px-2.5 py-1 rounded-2xl transition transform hover:-translate-y-1 hover:scale-110 ${
+                      isSelected ? 'bg-[#F5EFEA] ring-1 ring-[#C6A487]' : ''
+                    }`}
+                    title={r.label}
+                  >
+                    <img
+                      src={r.image}
+                      alt={r.label}
+                      className="w-8 h-8 object-contain"
+                    />
+                    <span
+                      className="text-[10px] font-extrabold mt-0.5 whitespace-nowrap"
+                      style={{ color: r.color }}
+                    >
+                      {r.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Cabecera: Avatar, @username y Tiempo */}
+          <div className="flex items-center justify-between mb-2.5">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <img
+                src={resolvedAvatar}
+                alt={post.authorUsername}
+                className="w-[38px] h-[38px] rounded-full object-cover bg-[#F7F2EE] border border-[#EDE3DA] flex-shrink-0"
+              />
+              <div className="min-w-0">
+                <div className="text-[13.5px] font-bold text-[#2E2423] leading-tight truncate">
+                  @{post.authorUsername || 'usuario'}
+                </div>
+                <div className="text-[11px] text-[#9A8B82] mt-0.5">
+                  {formatTimeAgoApp(post.timestamp, post.createdAt)}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Cuerpo: Texto de la publicación */}
+          {post.content && (
+            <p className="text-[14px] text-[#2E2423] leading-[20.5px] mb-1.5 whitespace-pre-line break-words">
+              {post.content}
+            </p>
+          )}
+
+          {/* Imágenes o Videos */}
+          <FeedPostMediaView
+            mediaUrls={post.imageUrls}
+            onMediaPress={onOpenMedia}
+          />
+
+          {/* Hashtags clickeables */}
+          {Array.isArray(post.hashtags) && post.hashtags.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mt-2 mb-1">
+              {post.hashtags.map((tag, idx) => {
+                const formatted = tag.startsWith('#') ? tag : `#${tag}`;
+                return (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => onSelectHashtag && onSelectHashtag(formatted)}
+                    className="text-[12.5px] font-semibold text-[#6F5038] hover:underline mr-1"
+                  >
+                    {formatted}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Contador de Reacciones con Círculos Superpuestos (Igual que en la App) */}
+          {totalReactions > 0 && (
+            <div className="flex items-center mt-2 mb-1">
+              <div className="flex items-center mr-2">
+                {post.reactions?.teAbrazo > 0 && (
+                  <div
+                    className="w-5 h-5 rounded-full flex items-center justify-center border-[1.5px] border-white -mr-1.5 shadow-sm overflow-hidden"
+                    style={{ backgroundColor: APP_REACTIONS_MAP.teAbrazo.bgColor }}
+                  >
+                    <img src={APP_REACTIONS_MAP.teAbrazo.image} alt="Te abrazo" className="w-3.5 h-3.5 object-contain" />
+                  </div>
+                )}
+                {post.reactions?.teEscucho > 0 && (
+                  <div
+                    className="w-5 h-5 rounded-full flex items-center justify-center border-[1.5px] border-white -mr-1.5 shadow-sm overflow-hidden"
+                    style={{ backgroundColor: APP_REACTIONS_MAP.teEscucho.bgColor }}
+                  >
+                    <img src={APP_REACTIONS_MAP.teEscucho.image} alt="Te escucho" className="w-3.5 h-3.5 object-contain" />
+                  </div>
+                )}
+                {post.reactions?.noEstasSolo > 0 && (
+                  <div
+                    className="w-5 h-5 rounded-full flex items-center justify-center border-[1.5px] border-white -mr-1.5 shadow-sm overflow-hidden"
+                    style={{ backgroundColor: APP_REACTIONS_MAP.noEstasSolo.bgColor }}
+                  >
+                    <img src={APP_REACTIONS_MAP.noEstasSolo.image} alt="No estás solo" className="w-3.5 h-3.5 object-contain" />
+                  </div>
+                )}
+                {post.reactions?.fuerza > 0 && (
+                  <div
+                    className="w-5 h-5 rounded-full flex items-center justify-center border-[1.5px] border-white -mr-1.5 shadow-sm overflow-hidden"
+                    style={{ backgroundColor: APP_REACTIONS_MAP.fuerza.bgColor }}
+                  >
+                    <img src={APP_REACTIONS_MAP.fuerza.image} alt="Fuerza" className="w-3.5 h-3.5 object-contain" />
+                  </div>
+                )}
+              </div>
+              <span className="text-[11.5px] font-semibold text-[#6F5E56] ml-2">
+                {totalReactions}
+              </span>
+            </div>
+          )}
+
+          {/* Barra de Acciones: Reaccionar | Dejar unas palabras | Guardar */}
+          <div className="flex items-center justify-between py-2 mt-1">
+            {/* 1. Botón de Reacción (Clic directo o selector de las 4 reacciones) */}
+            <div
+              className="relative flex items-center"
+              onMouseEnter={() => setShowPicker(true)}
+            >
+              <button
+                type="button"
+                onClick={() => onReact(post, userReactionType || 'teAbrazo')}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  setShowPicker((prev) => !prev);
+                }}
+                className="flex items-center gap-1.5 py-1.5 px-2.5 rounded-xl hover:bg-[#F7F2EE] transition"
+              >
+                {activeReactionConfig ? (
+                  <img
+                    src={activeReactionConfig.image}
+                    alt={activeReactionConfig.label}
+                    className="w-[22px] h-[22px] object-contain"
+                  />
+                ) : (
+                  <img
+                    src={APP_REACTIONS_MAP.teAbrazo.image}
+                    alt="Te abrazo"
+                    className="w-[22px] h-[22px] object-contain opacity-50"
+                  />
+                )}
+                <span
+                  className="text-[11.5px] font-medium"
+                  style={
+                    activeReactionConfig
+                      ? { color: activeReactionConfig.color, fontWeight: 700 }
+                      : { color: '#6F5E56' }
+                  }
+                >
+                  {activeReactionConfig ? activeReactionConfig.label : 'Te abrazo'}
+                </span>
+              </button>
+            </div>
+
+            {/* 2. Botón Dejar unas palabras (Comentarios) */}
+            <button
+              type="button"
+              onClick={() => onOpenComments(post)}
+              className="flex items-center gap-1.5 py-1.5 px-2.5 rounded-xl hover:bg-[#F7F2EE] text-[#6F5E56] transition"
+            >
+              <Icon name="chat" size={17} />
+              <span className="text-[11.5px] font-medium">
+                Dejar unas palabras {post.commentsCount > 0 ? `(${post.commentsCount})` : ''}
+              </span>
+            </button>
+
+            {/* 3. Botón Guardar */}
+            <button
+              type="button"
+              onClick={() => onToggleSave(post)}
+              className={`flex items-center gap-1.5 py-1.5 px-2.5 rounded-xl hover:bg-[#F7F2EE] transition ${
+                isSaved ? 'text-[#6F5038] font-bold' : 'text-[#6F5E56] font-medium'
+              }`}
+            >
+              <Icon name={isSaved ? 'bookmarkFilled' : 'bookmark'} size={17} />
+              <span className="text-[11.5px]">
+                {isSaved ? 'Guardado' : 'Guardar'}
+              </span>
+            </button>
+          </div>
+
+          {/* Separador fino igual que en la App */}
+          <div className="h-[1px] bg-[#EDE3DA] w-full mt-1" />
+        </div>
+      );
+    }
+
+    // ========================================================================
+    // MODAL DE COMENTARIOS ("DEJAR UNAS PALABRAS" - IDÉNTICO A CommentsScreen.tsx)
+    // ========================================================================
+    function FeedCommentsModal({ post, psychologist, liveAvatars = {}, onClose, onOpenMedia }) {
+      const [comments, setComments] = useState([]);
+      const [commentText, setCommentText] = useState('');
+      const [attachedImage, setAttachedImage] = useState(null);
+      const [isSending, setIsSending] = useState(false);
+      const [isLoading, setIsLoading] = useState(true);
+
+      const psicoId = psychologist?.id || 'psico_especialista';
+      const psicoDisplayName = psychologist?.nombre
+        ? `Psic. ${psychologist.nombre.replace(/^Psic\.?\s*/i, '')}`
+        : 'Especialista Clínico';
+      const psicoAvatar =
+        psychologist?.imagen ||
+        `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(psicoDisplayName)}`;
+
+      useEffect(() => {
+        if (!post || !firestoreDb) {
+          setIsLoading(false);
+          return;
+        }
+        setIsLoading(true);
+        const unsub = firestoreDb
+          .collection(`posts/${post.id}/comments`)
+          .orderBy('timestamp', 'asc')
+          .onSnapshot(
+            (snap) => {
+              const list = [];
+              snap.forEach((docSnap) => {
+                list.push({ id: docSnap.id, ...docSnap.data() });
+              });
+              setComments(list);
+              setIsLoading(false);
+            },
+            (err) => {
+              console.warn('Error cargando comentarios:', err);
+              setIsLoading(false);
+            }
+          );
+        return () => unsub();
+      }, [post?.id]);
+
+      const handlePickCommentImage = (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          setAttachedImage(ev.target.result);
+        };
+        reader.readAsDataURL(file);
+      };
+
+      const handleSendComment = async (e) => {
+        e.preventDefault();
+        if ((!commentText.trim() && !attachedImage) || !post || !firestoreDb) return;
+
+        setIsSending(true);
+        try {
+          const commentId = 'comment_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6);
+          const newComment = {
+            id: commentId,
+            postId: post.id,
+            authorId: psicoId,
+            authorUsername: psicoDisplayName,
+            authorAvatarUrl: psicoAvatar,
+            text: commentText.trim(),
+            authorHeart: false,
+            createdAt: new Date().toISOString(),
+            timestamp: Date.now(),
+          };
+
+          if (attachedImage) {
+            newComment.imageUrl = attachedImage;
+          }
+
+          await firestoreDb
+            .collection(`posts/${post.id}/comments`)
+            .doc(commentId)
+            .set(newComment);
+
+          await firestoreDb
+            .collection('posts')
+            .doc(post.id)
+            .update({
+              commentsCount: firebase.firestore.FieldValue.increment(1),
+            });
+
+          setCommentText('');
+          setAttachedImage(null);
+        } catch (err) {
+          console.error('Error al enviar comentario:', err);
+          alert('No se pudo publicar tu comentario. Verifica tu conexión.');
+        } finally {
+          setIsSending(false);
+        }
+      };
+
+      const handleToggleHeart = async (comment) => {
+        if (!post || !firestoreDb) return;
+        try {
+          await firestoreDb
+            .collection(`posts/${post.id}/comments`)
+            .doc(comment.id)
+            .update({
+              authorHeart: !comment.authorHeart,
+            });
+        } catch (err) {
+          console.warn('Error al actualizar corazón:', err);
+        }
+      };
+
+      if (!post) return null;
+
+      const postAuthorAvatar =
+        liveAvatars[post.authorId] ||
+        post.authorAvatarUrl ||
+        `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(post.authorUsername || 'user')}`;
+
+      return (
+        <div
+          className="fixed inset-0 z-[100] bg-black/55 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5"
+          onClick={onClose}
+        >
+          <div
+            className="w-full max-w-2xl bg-[#FAF7F5] rounded-3xl border border-[#EDE3DA] shadow-2xl overflow-hidden flex flex-col max-h-[88vh]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Barra superior igual que CommentsScreen */}
+            <div className="bg-white px-5 py-3.5 border-b border-[#EDE3DA] flex items-center justify-between">
+              <button
+                type="button"
+                onClick={onClose}
+                className="p-1.5 rounded-xl text-[#2E2423] hover:bg-[#F5EFEA] transition"
+              >
+                <Icon name="arrowLeft" size={20} />
+              </button>
+              <h3 className="text-[15px] font-extrabold text-[#2E2423]">
+                Dejar unas palabras
+              </h3>
+              <div className="w-8" />
+            </div>
+
+            {/* Lista scrolleable con contexto de la publicación original + comentarios */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3 custom-scroll">
+              {/* Tarjeta de contexto de la publicación original */}
+              <div className="bg-white rounded-2xl p-4 border border-[#EDE3DA]">
+                <div className="flex items-center gap-2.5 mb-2">
+                  <img
+                    src={postAuthorAvatar}
+                    alt={post.authorUsername}
+                    className="w-9 h-9 rounded-full object-cover border border-[#EDE3DA]"
+                  />
+                  <div>
+                    <div className="text-xs font-extrabold text-[#2E2423]">
+                      @{post.authorUsername || 'usuario'}
+                    </div>
+                    <div className="text-[10.5px] font-semibold text-[#9A8B82]">
+                      Publicación original
+                    </div>
+                  </div>
+                </div>
+
+                {post.content && (
+                  <p className="text-xs text-[#4A3E3D] leading-relaxed whitespace-pre-line">
+                    {post.content}
+                  </p>
+                )}
+
+                {Array.isArray(post.imageUrls) && post.imageUrls.length > 0 && (
+                  <div className="flex gap-2 mt-2.5 overflow-x-auto pb-1">
+                    {post.imageUrls.map((url, idx) => (
+                      <img
+                        key={idx}
+                        src={url}
+                        alt=""
+                        onClick={() => onOpenMedia && onOpenMedia(post.imageUrls, idx)}
+                        className="w-16 h-16 rounded-xl object-cover border border-[#EDE3DA] cursor-pointer hover:opacity-90"
+                      />
+                    ))}
+                  </div>
+                )}
+
+                <div className="h-[1px] bg-[#EDE3DA] my-3" />
+                <div className="text-xs font-extrabold text-[#6F5038]">
+                  Palabras de la comunidad ({comments.length})
+                </div>
+              </div>
+
+              {/* Estado cargando o vacío */}
+              {isLoading ? (
+                <div className="py-10 text-center text-xs font-semibold text-[#9A8B82]">
+                  Cargando palabras de apoyo...
+                </div>
+              ) : comments.length === 0 ? (
+                <div className="bg-white rounded-2xl p-8 border border-[#EDE3DA] text-center space-y-1">
+                  <p className="text-sm font-bold text-[#4A3E3D]">
+                    Sé la primera persona en dejar unas palabras de empatía
+                  </p>
+                  <p className="text-xs text-[#9A8B82]">
+                    Tu respuesta como especialista brinda acompañamiento valioso a la comunidad.
+                  </p>
+                </div>
+              ) : (
+                comments.map((item) => {
+                  const commentAvatar =
+                    liveAvatars[item.authorId] ||
+                    item.authorAvatarUrl ||
+                    `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(item.authorUsername || 'user')}`;
+                  const isPsicoComment =
+                    String(item.authorId || '').startsWith('psico_') ||
+                    String(item.authorUsername || '').toLowerCase().startsWith('psic.');
+
+                  return (
+                    <div
+                      key={item.id}
+                      className="bg-white rounded-2xl p-3.5 border border-[#EDE3DA] flex items-start gap-3"
+                    >
+                      <img
+                        src={commentAvatar}
+                        alt={item.authorUsername}
+                        className="w-8 h-8 rounded-full object-cover border border-[#EDE3DA] flex-shrink-0 mt-0.5"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-xs font-extrabold text-[#2E2423]">
+                              @{item.authorUsername}
+                            </span>
+                            {isPsicoComment && (
+                              <span className="px-2 py-0.5 rounded-full text-[9.5px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                Especialista
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-[10px] text-[#9A8B82]">
+                            {formatTimeAgoApp(item.timestamp, item.createdAt)}
+                          </span>
+                        </div>
+
+                        {item.text && (
+                          <p className="text-[13px] text-[#2E2423] leading-relaxed mt-1 whitespace-pre-line break-words">
+                            {item.text}
+                          </p>
+                        )}
+
+                        {item.imageUrl && (
+                          <img
+                            src={item.imageUrl}
+                            alt="Adjunto"
+                            onClick={() => onOpenMedia && onOpenMedia([item.imageUrl], 0)}
+                            className="mt-2 max-h-44 rounded-xl object-cover border border-[#EDE3DA] cursor-pointer"
+                          />
+                        )}
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleToggleHeart(item)}
+                        className={`p-1.5 rounded-full transition ${
+                          item.authorHeart ? 'text-rose-500' : 'text-[#C6B8AE] hover:text-rose-400'
+                        }`}
+                        title="Dar corazón a este comentario"
+                      >
+                        <Icon name={item.authorHeart ? 'heartFilled' : 'heart'} size={15} />
+                      </button>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Previsualización de imagen adjunta al comentario */}
+            {attachedImage && (
+              <div className="px-5 py-2 bg-white border-t border-[#EDE3DA] flex items-center gap-3">
+                <div className="relative">
+                  <img
+                    src={attachedImage}
+                    alt="Adjunto"
+                    className="w-14 h-14 rounded-xl object-cover border border-[#EDE3DA]"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setAttachedImage(null)}
+                    className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-600 text-white text-xs flex items-center justify-center"
+                  >
+                    ×
+                  </button>
+                </div>
+                <span className="text-xs font-semibold text-[#6F5E56]">
+                  Imagen lista para enviar
+                </span>
+              </div>
+            )}
+
+            {/* Barra inferior para escribir comentario como Psicólogo */}
+            <form
+              onSubmit={handleSendComment}
+              className="bg-white px-4 py-3 border-t border-[#EDE3DA] flex items-center gap-2.5"
+            >
+              <img
+                src={psicoAvatar}
+                alt={psicoDisplayName}
+                className="w-8 h-8 rounded-full object-cover border border-[#EDE3DA] flex-shrink-0 hidden sm:block"
+              />
+
+              {/* Botón para adjuntar foto */}
+              <label
+                className="p-2 rounded-xl text-[#6F5038] hover:bg-[#F5EFEA] cursor-pointer transition flex-shrink-0"
+                title="Adjuntar imagen"
+              >
+                <Icon name="image" size={19} />
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePickCommentImage}
+                  className="hidden"
+                />
+              </label>
+
+              <input
+                type="text"
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                placeholder={`Escribe unas palabras de apoyo como ${psicoDisplayName}...`}
+                className="flex-1 text-xs sm:text-sm px-4 py-2.5 rounded-full bg-[#F7F2EE] border border-[#EDE3DA] focus:outline-none focus:ring-2 focus:ring-[#8C684B] focus:bg-white text-[#2E2423]"
+              />
+
+              <button
+                type="submit"
+                disabled={isSending || (!commentText.trim() && !attachedImage)}
+                className="w-10 h-10 rounded-full bg-[#6F5038] hover:bg-[#4A3E3D] disabled:opacity-40 text-white flex items-center justify-center transition shadow-sm flex-shrink-0"
+                title="Enviar palabras"
+              >
+                <Icon name="send" size={16} />
+              </button>
+            </form>
+          </div>
+        </div>
+      );
+    }
+
+    // ========================================================================
+    // MÓDULO FEED COMPLETO PARA EL PSICÓLOGO (CONECTADO EN TIEMPO REAL A LA APP)
+    // ========================================================================
+    function ViewCommunityFeed({ psychologist }) {
+      const [posts, setPosts] = useState([]);
+      const [isLoading, setIsLoading] = useState(true);
+      const [liveAvatars, setLiveAvatars] = useState({});
+      const [searchQuery, setSearchQuery] = useState('');
+      const [activeHashtag, setActiveHashtag] = useState(null);
+      const [feedFilter, setFeedFilter] = useState('all'); // 'all' | 'saved'
+      const [activeCommentPostId, setActiveCommentPostId] = useState(null);
+      const [lightboxState, setLightboxState] = useState({ visible: false, images: [], index: 0 });
+
+      const currentUserId = psychologist?.id || 'psico_especialista';
+
+      // 1. Suscripción en tiempo real a todas las publicaciones de los usuarios (colección `posts`)
+      useEffect(() => {
+        if (!firestoreDb) {
+          setIsLoading(false);
+          return;
+        }
+
+        const unsubPosts = firestoreDb
+          .collection('posts')
+          .orderBy('timestamp', 'desc')
+          .limit(100)
+          .onSnapshot(
+            (snapshot) => {
+              const list = [];
+              snapshot.forEach((docSnap) => {
+                list.push({ id: docSnap.id, ...docSnap.data() });
+              });
+              setPosts(list);
+              setIsLoading(false);
+            },
+            () => {
+              // Fallback sin orderBy si falta índice
+              firestoreDb
+                .collection('posts')
+                .limit(100)
+                .onSnapshot((snap) => {
+                  const list = [];
+                  snap.forEach((docSnap) => list.push({ id: docSnap.id, ...docSnap.data() }));
+                  list.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                  setPosts(list);
+                  setIsLoading(false);
+                });
+            }
+          );
+
+        // 2. Suscripción en tiempo real a `users` para sincronizar avatares actualizados
+        const unsubUsers = firestoreDb
+          .collection('users')
+          .onSnapshot(
+            (snap) => {
+              const map = {};
+              snap.forEach((docSnap) => {
+                const d = docSnap.data() || {};
+                if (d.avatarUrl) {
+                  map[docSnap.id] = d.avatarUrl;
+                }
+              });
+              setLiveAvatars(map);
+            },
+            () => {}
+          );
+
+        return () => {
+          unsubPosts();
+          unsubUsers();
+        };
+      }, []);
+
+      // 3. Reaccionar a una publicación (idéntico a togglePostReaction en postsService.ts)
+      const handleReactToPost = async (post, reactionType) => {
+        if (!firestoreDb || !post?.id) return;
+        try {
+          const postRef = firestoreDb.collection('posts').doc(post.id);
+          const snap = await postRef.get();
+          if (!snap.exists) return;
+
+          const postData = snap.data() || {};
+          const userReactions = { ...(postData.userReactions || {}) };
+          const currentReaction = userReactions[currentUserId];
+          const reactions = {
+            teEscucho: 0,
+            teAbrazo: 0,
+            noEstasSolo: 0,
+            fuerza: 0,
+            ...(postData.reactions || {}),
+          };
+
+          if (currentReaction === reactionType) {
+            delete userReactions[currentUserId];
+            reactions[reactionType] = Math.max(0, (reactions[reactionType] || 1) - 1);
+          } else {
+            if (currentReaction && reactions[currentReaction] !== undefined) {
+              reactions[currentReaction] = Math.max(0, (reactions[currentReaction] || 1) - 1);
+            }
+            userReactions[currentUserId] = reactionType;
+            reactions[reactionType] = (reactions[reactionType] || 0) + 1;
+          }
+
+          await postRef.update({
+            reactions,
+            userReactions,
+          });
+        } catch (err) {
+          console.error('Error al reaccionar a la publicación:', err);
+        }
+      };
+
+      // 4. Guardar / Quitar de guardados (idéntico a toggleSavePost en postsService.ts)
+      const handleToggleSavePost = async (post) => {
+        if (!firestoreDb || !post?.id) return;
+        try {
+          const postRef = firestoreDb.collection('posts').doc(post.id);
+          const snap = await postRef.get();
+          if (!snap.exists) return;
+
+          const postData = snap.data() || {};
+          const savedBy = Array.isArray(postData.savedBy) ? [...postData.savedBy] : [];
+          const idx = savedBy.indexOf(currentUserId);
+          if (idx > -1) {
+            savedBy.splice(idx, 1);
+          } else {
+            savedBy.push(currentUserId);
+          }
+          await postRef.update({ savedBy });
+        } catch (err) {
+          console.error('Error al guardar publicación:', err);
+        }
+      };
+
+      // Filtrado por búsqueda, hashtag o guardados
+      const filteredPosts = useMemo(() => {
+        return posts.filter((p) => {
+          if (feedFilter === 'saved') {
+            if (!Array.isArray(p.savedBy) || !p.savedBy.includes(currentUserId)) return false;
+          }
+          if (activeHashtag) {
+            const tags = (p.hashtags || []).map((t) => (t.startsWith('#') ? t.toLowerCase() : `#${t.toLowerCase()}`));
+            if (!tags.includes(activeHashtag.toLowerCase())) return false;
+          }
+          if (searchQuery.trim()) {
+            const q = searchQuery.trim().toLowerCase();
+            const matchContent = (p.content || '').toLowerCase().includes(q);
+            const matchAuthor = (p.authorUsername || '').toLowerCase().includes(q);
+            const matchTag = (p.hashtags || []).some((t) => t.toLowerCase().includes(q));
+            return matchContent || matchAuthor || matchTag;
+          }
+          return true;
+        });
+      }, [posts, feedFilter, activeHashtag, searchQuery, currentUserId]);
+
+      const activeCommentPost = useMemo(() => {
+        if (!activeCommentPostId) return null;
+        return posts.find((p) => p.id === activeCommentPostId) || null;
+      }, [posts, activeCommentPostId]);
+
+      return (
+        <div className="w-full max-w-2xl mx-auto flex-1 flex flex-col gap-4">
+          {/* Visor de imágenes en pantalla completa */}
+          {lightboxState.visible && (
+            <FeedImageLightbox
+              images={lightboxState.images}
+              initialIndex={lightboxState.index}
+              onClose={() => setLightboxState({ visible: false, images: [], index: 0 })}
+            />
+          )}
+
+          {/* Modal de Comentarios ("Dejar unas palabras") */}
+          {activeCommentPost && (
+            <FeedCommentsModal
+              post={activeCommentPost}
+              psychologist={psychologist}
+              liveAvatars={liveAvatars}
+              onClose={() => setActiveCommentPostId(null)}
+              onOpenMedia={(imgs, idx) => setLightboxState({ visible: true, images: imgs, index: idx })}
+            />
+          )}
+
+          {/* Cabecera del Feed estilo App Entre Nosotros */}
+          <div className="bg-white rounded-3xl px-5 py-4 border border-[#EDE3DA] shadow-sm space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h1 className="text-lg font-extrabold text-[#2E2423] tracking-tight">
+                  Comunidad Entre Nosotros
+                </h1>
+                <p className="text-xs text-[#8C7A70] font-medium">
+                  Publicaciones en tiempo real de los usuarios • Reacciona o deja palabras de apoyo
+                </p>
+              </div>
+
+              {/* Pestañas Todas / Guardadas */}
+              <div className="inline-flex bg-[#F7F2EE] p-1 rounded-2xl border border-[#EDE3DA] self-start">
+                <button
+                  type="button"
+                  onClick={() => setFeedFilter('all')}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition ${
+                    feedFilter === 'all'
+                      ? 'bg-[#2E2423] text-white shadow-xs'
+                      : 'text-[#6F5E56] hover:text-[#2E2423]'
+                  }`}
+                >
+                  Recientes ({posts.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFeedFilter('saved')}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition ${
+                    feedFilter === 'saved'
+                      ? 'bg-[#2E2423] text-white shadow-xs'
+                      : 'text-[#6F5E56] hover:text-[#2E2423]'
+                  }`}
+                >
+                  Guardados
+                </button>
+              </div>
+            </div>
+
+            {/* Buscador y filtro de hashtag activo */}
+            <div className="flex items-center gap-2">
+              <div className="flex-1 relative">
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9A8B82]">
+                  <Icon name="search" size={15} />
+                </span>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Buscar por usuario, palabra o #hashtag..."
+                  className="w-full pl-9 pr-4 py-2 rounded-2xl bg-[#FAF7F5] border border-[#EDE3DA] text-xs font-medium text-[#2E2423] focus:outline-none focus:ring-2 focus:ring-[#8C684B] focus:bg-white"
+                />
+              </div>
+
+              {activeHashtag && (
+                <button
+                  type="button"
+                  onClick={() => setActiveHashtag(null)}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-[#6F5038] text-white text-xs font-bold"
+                >
+                  <span>{activeHashtag}</span>
+                  <span>×</span>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Contenedor del Feed de Publicaciones (Idéntico al Feed de la App) */}
+          <div className="bg-white rounded-3xl border border-[#EDE3DA] shadow-sm overflow-hidden">
+            {isLoading ? (
+              <div className="py-16 text-center space-y-2">
+                <div className="w-8 h-8 border-2 border-[#6F5038] border-t-transparent rounded-full animate-spin mx-auto" />
+                <p className="text-xs font-bold text-[#8C7A70]">
+                  Sincronizando publicaciones de la comunidad...
+                </p>
+              </div>
+            ) : filteredPosts.length === 0 ? (
+              <div className="py-16 px-6 text-center space-y-2">
+                <p className="text-sm font-extrabold text-[#2E2423]">
+                  No se encontraron publicaciones
+                </p>
+                <p className="text-xs text-[#8C7A70]">
+                  {feedFilter === 'saved'
+                    ? 'Aún no has guardado publicaciones de la comunidad.'
+                    : 'Todavía no hay publicaciones que coincidan con tu filtro.'}
+                </p>
+              </div>
+            ) : (
+              filteredPosts.map((post) => (
+                <FeedPostCard
+                  key={post.id}
+                  post={post}
+                  currentUserId={currentUserId}
+                  liveAvatars={liveAvatars}
+                  onReact={handleReactToPost}
+                  onToggleSave={handleToggleSavePost}
+                  onOpenComments={(p) => setActiveCommentPostId(p.id)}
+                  onSelectHashtag={(tag) => setActiveHashtag(tag === activeHashtag ? null : tag)}
+                  onOpenMedia={(imgs, idx) => setLightboxState({ visible: true, images: imgs, index: idx })}
+                />
+              ))
+            )}
           </div>
         </div>
       );
