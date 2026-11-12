@@ -416,22 +416,16 @@
           >
             {/* Parte Superior del Menú */}
             <div className="p-5 flex flex-col h-full">
-              {/* Logo Oficial y Título */}
-              <div className="flex items-center justify-between pb-5 border-b border-coffee-200">
-                <div className="flex items-center gap-3">
-                  <img
-                    src="assets/logoappE.png"
-                    alt="Entre Nosotros"
-                    className="w-10 h-10 object-contain rounded-xl"
-                  />
-                  <div>
-                    <h2 className="font-extrabold text-sm text-coffee-900 leading-tight">Entre Nosotros</h2>
-                    <p className="text-[11px] font-semibold text-coffee-500">Portal Psicólogo</p>
-                  </div>
-                </div>
+              {/* Logo Oficial Centrado y Grande */}
+              <div className="relative flex items-center justify-center pb-5 border-b border-coffee-200">
+                <img
+                  src="assets/logoappE.png"
+                  alt="Entre Nosotros"
+                  className="w-44 h-16 object-contain mx-auto"
+                />
                 <button
                   onClick={() => setMobileSidebarOpen(false)}
-                  className="md:hidden text-coffee-600 hover:text-coffee-900"
+                  className="md:hidden absolute right-0 top-1 text-coffee-600 hover:text-coffee-900"
                 >
                   <Icon name="x" size={20} />
                 </button>
@@ -776,12 +770,12 @@
                 </div>
               </div>
 
-              {/* 2. CABECERA DE IDENTIDAD DEL ESPECIALISTA */}
-              <div className="px-6 sm:px-10 pb-7 border-b border-coffee-100 relative">
-                <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 -mt-16 sm:-mt-20">
-                  <div className="flex flex-col sm:flex-row sm:items-end gap-5">
-                    {/* Avatar grande con insignia de verificación */}
-                    <div className="relative w-28 h-28 sm:w-36 sm:h-36 rounded-3xl bg-coffee-100 border-4 border-white shadow-xl overflow-hidden flex-shrink-0">
+              {/* 2. CABECERA DE IDENTIDAD DEL ESPECIALISTA (SOBRE FONDO BLANCO) */}
+              <div className="px-6 sm:px-10 pt-4 sm:pt-5 pb-7 border-b border-coffee-100 bg-white relative">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-5">
+                    {/* Avatar grande con insignia de verificación (solo el avatar sube sobre la portada) */}
+                    <div className="relative w-28 h-28 sm:w-36 sm:h-36 -mt-16 sm:-mt-20 rounded-3xl bg-coffee-100 border-4 border-white shadow-xl overflow-hidden flex-shrink-0 z-10">
                       {displayImagen ? (
                         <img
                           src={displayImagen}
@@ -801,10 +795,10 @@
                       </div>
                     </div>
 
-                    {/* Nombre, Especialidad y Credenciales Clave */}
-                    <div className="pt-1 sm:pb-1 space-y-2">
+                    {/* Nombre, Especialidad y Credenciales Clave (100% sobre el área blanca) */}
+                    <div className="space-y-2">
                       <div className="flex items-center gap-2.5 flex-wrap">
-                        <h1 className="text-2xl sm:text-3xl font-extrabold text-coffee-900 tracking-tight">
+                        <h1 className="text-2xl sm:text-3xl font-extrabold text-coffee-900 tracking-tight leading-tight">
                           {displayNombre}
                         </h1>
                         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -840,7 +834,7 @@
                   </div>
 
                   {/* Acción rápida en cabecera derecha */}
-                  <div className="flex items-center gap-3 self-start lg:self-end">
+                  <div className="flex items-center gap-3 self-start lg:self-center">
                     <button
                       type="button"
                       onClick={() => setIsEditing(true)}
