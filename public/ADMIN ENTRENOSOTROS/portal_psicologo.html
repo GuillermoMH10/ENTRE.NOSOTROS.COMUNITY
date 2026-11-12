@@ -1725,11 +1725,11 @@
         `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(post.authorUsername || post.authorId || 'user')}`;
 
       return (
-        <div className="bg-white px-5 pt-4 pb-2 relative transition hover:bg-[#FDFCFB]">
+        <div className="bg-white px-6 sm:px-8 pt-5 pb-3 relative transition hover:bg-[#FDFCFB]">
           {/* Selector Flotante de las 4 Reacciones de Entre Nosotros */}
           {showPicker && (
             <div
-              className="absolute bottom-12 left-4 z-40 bg-white rounded-full px-3 py-2 shadow-[0_10px_30px_rgba(46,36,35,0.22)] border border-[#EDE3DA] flex items-center gap-2 animate-fade-in"
+              className="absolute bottom-14 left-6 z-40 bg-white rounded-full px-3.5 py-2 shadow-[0_10px_30px_rgba(46,36,35,0.22)] border border-[#EDE3DA] flex items-center gap-2.5 animate-fade-in"
               onMouseLeave={() => setShowPicker(false)}
             >
               {Object.values(APP_REACTIONS_MAP).map((r) => {
@@ -1765,18 +1765,18 @@
           )}
 
           {/* Cabecera: Avatar, @username y Tiempo */}
-          <div className="flex items-center justify-between mb-2.5">
-            <div className="flex items-center gap-2.5 min-w-0">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-3 min-w-0">
               <img
                 src={resolvedAvatar}
                 alt={post.authorUsername}
-                className="w-[38px] h-[38px] rounded-full object-cover bg-[#F7F2EE] border border-[#EDE3DA] flex-shrink-0"
+                className="w-11 h-11 rounded-full object-cover bg-[#F7F2EE] border border-[#EDE3DA] flex-shrink-0 shadow-2xs"
               />
               <div className="min-w-0">
-                <div className="text-[13.5px] font-bold text-[#2E2423] leading-tight truncate">
+                <div className="text-[14.5px] font-extrabold text-[#2E2423] leading-tight truncate">
                   @{post.authorUsername || 'usuario'}
                 </div>
-                <div className="text-[11px] text-[#9A8B82] mt-0.5">
+                <div className="text-[11.5px] font-medium text-[#9A8B82] mt-0.5">
                   {formatTimeAgoApp(post.timestamp, post.createdAt)}
                 </div>
               </div>
@@ -1785,7 +1785,7 @@
 
           {/* Cuerpo: Texto de la publicación */}
           {post.content && (
-            <p className="text-[14px] text-[#2E2423] leading-[20.5px] mb-1.5 whitespace-pre-line break-words">
+            <p className="text-[14.5px] text-[#2E2423] leading-[22px] mb-2.5 whitespace-pre-line break-words">
               {post.content}
             </p>
           )}
@@ -1798,7 +1798,7 @@
 
           {/* Hashtags clickeables */}
           {Array.isArray(post.hashtags) && post.hashtags.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mt-2 mb-1">
+            <div className="flex flex-wrap gap-2 mt-2.5 mb-1">
               {post.hashtags.map((tag, idx) => {
                 const formatted = tag.startsWith('#') ? tag : `#${tag}`;
                 return (
@@ -1806,7 +1806,7 @@
                     key={idx}
                     type="button"
                     onClick={() => onSelectHashtag && onSelectHashtag(formatted)}
-                    className="text-[12.5px] font-semibold text-[#6F5038] hover:underline mr-1"
+                    className="text-[12.5px] font-bold text-[#6F5038] bg-[#FAF7F5] hover:bg-[#F3EAE3] border border-[#EDE3DA] px-2.5 py-0.5 rounded-lg transition"
                   >
                     {formatted}
                   </button>
@@ -1817,7 +1817,7 @@
 
           {/* Contador de Reacciones con Círculos Superpuestos (Igual que en la App) */}
           {totalReactions > 0 && (
-            <div className="flex items-center mt-2 mb-1">
+            <div className="flex items-center mt-2.5 mb-1">
               <div className="flex items-center mr-2">
                 {post.reactions?.teAbrazo > 0 && (
                   <div
@@ -1852,14 +1852,14 @@
                   </div>
                 )}
               </div>
-              <span className="text-[11.5px] font-semibold text-[#6F5E56] ml-2">
-                {totalReactions}
+              <span className="text-[12px] font-bold text-[#6F5E56] ml-2">
+                {totalReactions} {totalReactions === 1 ? 'reacción' : 'reacciones'}
               </span>
             </div>
           )}
 
           {/* Barra de Acciones: Reaccionar | Dejar unas palabras | Guardar */}
-          <div className="flex items-center justify-between py-2 mt-1">
+          <div className="flex items-center justify-between pt-2.5 pb-1.5 mt-1 border-t border-[#F5EFEA]">
             {/* 1. Botón de Reacción (Clic directo o selector de las 4 reacciones) */}
             <div
               className="relative flex items-center"
@@ -1872,7 +1872,7 @@
                   e.preventDefault();
                   setShowPicker((prev) => !prev);
                 }}
-                className="flex items-center gap-1.5 py-1.5 px-2.5 rounded-xl hover:bg-[#F7F2EE] transition"
+                className="flex items-center gap-2 py-2 px-3.5 rounded-xl hover:bg-[#F7F2EE] transition"
               >
                 {activeReactionConfig ? (
                   <img
@@ -1884,14 +1884,14 @@
                   <img
                     src={APP_REACTIONS_MAP.teAbrazo.image}
                     alt="Te abrazo"
-                    className="w-[22px] h-[22px] object-contain opacity-50"
+                    className="w-[22px] h-[22px] object-contain opacity-55"
                   />
                 )}
                 <span
-                  className="text-[11.5px] font-medium"
+                  className="text-xs font-semibold"
                   style={
                     activeReactionConfig
-                      ? { color: activeReactionConfig.color, fontWeight: 700 }
+                      ? { color: activeReactionConfig.color, fontWeight: 800 }
                       : { color: '#6F5E56' }
                   }
                 >
@@ -1904,10 +1904,10 @@
             <button
               type="button"
               onClick={() => onOpenComments(post)}
-              className="flex items-center gap-1.5 py-1.5 px-2.5 rounded-xl hover:bg-[#F7F2EE] text-[#6F5E56] transition"
+              className="flex items-center gap-2 py-2 px-3.5 rounded-xl hover:bg-[#F7F2EE] text-[#6F5E56] transition"
             >
               <Icon name="chat" size={17} />
-              <span className="text-[11.5px] font-medium">
+              <span className="text-xs font-semibold">
                 Dejar unas palabras {post.commentsCount > 0 ? `(${post.commentsCount})` : ''}
               </span>
             </button>
@@ -1916,19 +1916,19 @@
             <button
               type="button"
               onClick={() => onToggleSave(post)}
-              className={`flex items-center gap-1.5 py-1.5 px-2.5 rounded-xl hover:bg-[#F7F2EE] transition ${
-                isSaved ? 'text-[#6F5038] font-bold' : 'text-[#6F5E56] font-medium'
+              className={`flex items-center gap-2 py-2 px-3.5 rounded-xl hover:bg-[#F7F2EE] transition ${
+                isSaved ? 'text-[#6F5038] font-extrabold' : 'text-[#6F5E56] font-semibold'
               }`}
             >
               <Icon name={isSaved ? 'bookmarkFilled' : 'bookmark'} size={17} />
-              <span className="text-[11.5px]">
+              <span className="text-xs">
                 {isSaved ? 'Guardado' : 'Guardar'}
               </span>
             </button>
           </div>
 
           {/* Separador fino igual que en la App */}
-          <div className="h-[1px] bg-[#EDE3DA] w-full mt-1" />
+          <div className="h-[1px] bg-[#EDE3DA] w-full mt-2" />
         </div>
       );
     }
@@ -2284,12 +2284,86 @@
       const [isLoading, setIsLoading] = useState(true);
       const [liveAvatars, setLiveAvatars] = useState({});
       const [searchQuery, setSearchQuery] = useState('');
+      const [showSuggestions, setShowSuggestions] = useState(false);
       const [activeHashtag, setActiveHashtag] = useState(null);
       const [feedFilter, setFeedFilter] = useState('all'); // 'all' | 'saved'
       const [activeCommentPostId, setActiveCommentPostId] = useState(null);
       const [lightboxState, setLightboxState] = useState({ visible: false, images: [], index: 0 });
 
       const currentUserId = psychologist?.id || 'psico_especialista';
+
+      // Sugerencias de autocompletado en tiempo real (Usuarios, Hashtags y Temas)
+      const autocompleteSuggestions = useMemo(() => {
+        const q = searchQuery.trim().toLowerCase();
+        const usersMap = {};
+        const tagsMap = {};
+        const phrases = [];
+
+        posts.forEach((p) => {
+          const uname = (p.authorUsername || '').trim();
+          if (uname) {
+            const key = uname.toLowerCase();
+            if (!usersMap[key]) {
+              usersMap[key] = {
+                type: 'user',
+                value: `@${uname}`,
+                label: `@${uname}`,
+                sub: 'Usuario de la comunidad',
+                avatar:
+                  liveAvatars[p.authorId] ||
+                  p.authorAvatarUrl ||
+                  `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(uname)}`,
+                count: 0,
+              };
+            }
+            usersMap[key].count += 1;
+          }
+
+          if (Array.isArray(p.hashtags)) {
+            p.hashtags.forEach((rawTag) => {
+              const formatted = rawTag.startsWith('#') ? rawTag.trim() : `#${rawTag.trim()}`;
+              const key = formatted.toLowerCase();
+              if (formatted.length > 1) {
+                if (!tagsMap[key]) {
+                  tagsMap[key] = {
+                    type: 'hashtag',
+                    value: formatted,
+                    label: formatted,
+                    sub: 'Hashtag en tendencia',
+                    count: 0,
+                  };
+                }
+                tagsMap[key].count += 1;
+              }
+            });
+          }
+
+          if (q && p.content && p.content.toLowerCase().includes(q) && phrases.length < 3) {
+            const cleanLine = p.content.split('\n')[0].trim().slice(0, 65);
+            if (cleanLine && !phrases.some((ph) => ph.value.toLowerCase() === cleanLine.toLowerCase())) {
+              phrases.push({
+                type: 'text',
+                value: cleanLine,
+                label: cleanLine,
+                sub: `Publicación de @${uname || 'usuario'}`,
+              });
+            }
+          }
+        });
+
+        const allUsers = Object.values(usersMap).sort((a, b) => b.count - a.count);
+        const allTags = Object.values(tagsMap).sort((a, b) => b.count - a.count);
+
+        if (!q) {
+          return [...allUsers.slice(0, 4), ...allTags.slice(0, 4)];
+        }
+
+        const cleanQ = q.replace(/^[@#]/, '');
+        const matchedUsers = allUsers.filter((u) => u.label.toLowerCase().includes(cleanQ)).slice(0, 4);
+        const matchedTags = allTags.filter((t) => t.label.toLowerCase().includes(cleanQ)).slice(0, 4);
+
+        return [...matchedUsers, ...matchedTags, ...phrases].slice(0, 8);
+      }, [posts, searchQuery, liveAvatars]);
 
       // 1. Suscripción en tiempo real a todas las publicaciones de los usuarios (colección `posts`)
       useEffect(() => {
@@ -2421,10 +2495,11 @@
             if (!tags.includes(activeHashtag.toLowerCase())) return false;
           }
           if (searchQuery.trim()) {
-            const q = searchQuery.trim().toLowerCase();
-            const matchContent = (p.content || '').toLowerCase().includes(q);
-            const matchAuthor = (p.authorUsername || '').toLowerCase().includes(q);
-            const matchTag = (p.hashtags || []).some((t) => t.toLowerCase().includes(q));
+            const rawQ = searchQuery.trim().toLowerCase();
+            const cleanQ = rawQ.replace(/^[@#]/, '');
+            const matchContent = (p.content || '').toLowerCase().includes(rawQ) || (p.content || '').toLowerCase().includes(cleanQ);
+            const matchAuthor = (p.authorUsername || '').toLowerCase().includes(cleanQ);
+            const matchTag = (p.hashtags || []).some((t) => t.toLowerCase().includes(cleanQ));
             return matchContent || matchAuthor || matchTag;
           }
           return true;
@@ -2437,7 +2512,7 @@
       }, [posts, activeCommentPostId]);
 
       return (
-        <div className="w-full max-w-2xl mx-auto flex-1 flex flex-col gap-4">
+        <div className="w-full flex-1 flex flex-col gap-5">
           {/* Visor de imágenes en pantalla completa */}
           {lightboxState.visible && (
             <FeedImageLightbox
@@ -2458,24 +2533,19 @@
             />
           )}
 
-          {/* Cabecera del Feed estilo App Entre Nosotros */}
-          <div className="bg-white rounded-3xl px-5 py-4 border border-[#EDE3DA] shadow-sm space-y-3">
+          {/* Cabecera del Feed a Ancho Completo */}
+          <div className="w-full bg-white rounded-3xl px-6 sm:px-8 py-5 border border-[#EDE3DA] shadow-sm space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <h1 className="text-lg font-extrabold text-[#2E2423] tracking-tight">
-                  Comunidad Entre Nosotros
-                </h1>
-                <p className="text-xs text-[#8C7A70] font-medium">
-                  Publicaciones en tiempo real de los usuarios • Reacciona o deja palabras de apoyo
-                </p>
-              </div>
+              <h1 className="text-xl font-extrabold text-[#2E2423] tracking-tight">
+                Comunidad Entre Nosotros
+              </h1>
 
-              {/* Pestañas Todas / Guardadas */}
-              <div className="inline-flex bg-[#F7F2EE] p-1 rounded-2xl border border-[#EDE3DA] self-start">
+              {/* Pestañas Recientes / Guardados */}
+              <div className="inline-flex bg-[#F7F2EE] p-1 rounded-2xl border border-[#EDE3DA] self-start sm:self-auto">
                 <button
                   type="button"
                   onClick={() => setFeedFilter('all')}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition ${
+                  className={`px-4 py-1.5 rounded-xl text-xs font-extrabold transition ${
                     feedFilter === 'all'
                       ? 'bg-[#2E2423] text-white shadow-xs'
                       : 'text-[#6F5E56] hover:text-[#2E2423]'
@@ -2486,7 +2556,7 @@
                 <button
                   type="button"
                   onClick={() => setFeedFilter('saved')}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition ${
+                  className={`px-4 py-1.5 rounded-xl text-xs font-extrabold transition ${
                     feedFilter === 'saved'
                       ? 'bg-[#2E2423] text-white shadow-xs'
                       : 'text-[#6F5E56] hover:text-[#2E2423]'
@@ -2497,26 +2567,95 @@
               </div>
             </div>
 
-            {/* Buscador y filtro de hashtag activo */}
-            <div className="flex items-center gap-2">
+            {/* Buscador con Autocompletado en Tiempo Real */}
+            <div className="flex items-center gap-2 relative">
               <div className="flex-1 relative">
-                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9A8B82]">
-                  <Icon name="search" size={15} />
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9A8B82]">
+                  <Icon name="search" size={16} />
                 </span>
                 <input
                   type="text"
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Buscar por usuario, palabra o #hashtag..."
-                  className="w-full pl-9 pr-4 py-2 rounded-2xl bg-[#FAF7F5] border border-[#EDE3DA] text-xs font-medium text-[#2E2423] focus:outline-none focus:ring-2 focus:ring-[#8C684B] focus:bg-white"
+                  onFocus={() => setShowSuggestions(true)}
+                  onBlur={() => setTimeout(() => setShowSuggestions(false), 180)}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setShowSuggestions(true);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape') setShowSuggestions(false);
+                  }}
+                  placeholder="Buscar por @usuario, palabra o #hashtag..."
+                  className="w-full pl-10 pr-9 py-2.5 rounded-2xl bg-[#FAF7F5] border border-[#EDE3DA] text-xs sm:text-sm font-medium text-[#2E2423] focus:outline-none focus:ring-2 focus:ring-[#8C684B] focus:bg-white transition"
                 />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery('');
+                      setActiveHashtag(null);
+                    }}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-[#E5D5C8] hover:bg-[#C6A487] text-[#2E2423] text-xs font-extrabold flex items-center justify-center"
+                    title="Limpiar búsqueda"
+                  >
+                    ×
+                  </button>
+                )}
+
+                {/* Menú Desplegable de Autocompletado */}
+                {showSuggestions && autocompleteSuggestions.length > 0 && (
+                  <div className="absolute left-0 right-0 top-[calc(100%+6px)] z-50 bg-white rounded-2xl border border-[#EDE3DA] shadow-[0_14px_34px_rgba(46,36,35,0.14)] overflow-hidden py-1.5">
+                    <div className="px-3.5 py-1 text-[10px] font-extrabold uppercase tracking-wider text-[#9A8B82]">
+                      Sugerencias rápidas
+                    </div>
+                    {autocompleteSuggestions.map((item, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          setSearchQuery(item.value);
+                          setShowSuggestions(false);
+                        }}
+                        className="w-full px-4 py-2 text-left hover:bg-[#FAF7F5] flex items-center justify-between gap-3 transition"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          {item.type === 'user' ? (
+                            <img
+                              src={item.avatar}
+                              alt={item.label}
+                              className="w-7 h-7 rounded-full object-cover border border-[#EDE3DA] flex-shrink-0"
+                            />
+                          ) : (
+                            <span className="w-7 h-7 rounded-xl bg-[#F3EAE3] text-[#6F5038] font-extrabold text-xs flex items-center justify-center flex-shrink-0">
+                              {item.type === 'hashtag' ? '#' : '🔎'}
+                            </span>
+                          )}
+                          <div className="min-w-0">
+                            <div className="text-xs font-extrabold text-[#2E2423] truncate">
+                              {item.label}
+                            </div>
+                            <div className="text-[10.5px] font-medium text-[#9A8B82] truncate">
+                              {item.sub}
+                            </div>
+                          </div>
+                        </div>
+                        {item.count ? (
+                          <span className="px-2 py-0.5 rounded-full bg-[#F7F2EE] text-[#6F5038] text-[10px] font-extrabold flex-shrink-0">
+                            {item.count} {item.count === 1 ? 'post' : 'posts'}
+                          </span>
+                        ) : null}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {activeHashtag && (
                 <button
                   type="button"
                   onClick={() => setActiveHashtag(null)}
-                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-[#6F5038] text-white text-xs font-bold"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-2xl bg-[#6F5038] text-white text-xs font-bold"
                 >
                   <span>{activeHashtag}</span>
                   <span>×</span>
@@ -2525,8 +2664,8 @@
             </div>
           </div>
 
-          {/* Contenedor del Feed de Publicaciones (Idéntico al Feed de la App) */}
-          <div className="bg-white rounded-3xl border border-[#EDE3DA] shadow-sm overflow-hidden">
+          {/* Contenedor del Feed de Publicaciones a Ancho Completo */}
+          <div className="w-full bg-white rounded-3xl border border-[#EDE3DA] shadow-sm overflow-hidden">
             {isLoading ? (
               <div className="py-16 text-center space-y-2">
                 <div className="w-8 h-8 border-2 border-[#6F5038] border-t-transparent rounded-full animate-spin mx-auto" />
