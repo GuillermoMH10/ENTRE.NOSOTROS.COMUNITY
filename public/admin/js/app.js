@@ -4540,23 +4540,33 @@
             )
           )
         ),
-        h('div', { className: 'report-toolbar-right' },
-          h('span', { className: 'report-timestamp' },
-            `Base de Datos Sincronizada: ${new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}`
-          ),
-          h('button', {
-            className: 'btn-print-report',
-            onClick: () => window.print(),
-          },
-            h(Icon, { name: 'printer', size: 14, color: '#FFFFFF' }),
-            'Imprimir / PDF'
-          )
-        )
+        h('div', { className: 'report-toolbar-right' })
       );
     };
 
+    // Helper para formatear ubicaciones o convertirlas en enlace limpio si son URL
+    const renderCleanLocation = (locStr) => {
+      if (!locStr || typeof locStr !== 'string') return '—';
+      const s = locStr.trim();
+      if (!s) return '—';
+      const isUrl = s.startsWith('http://') || s.startsWith('https://');
+      if (isUrl) {
+        return h('a', {
+          href: s,
+          target: '_blank',
+          rel: 'noopener noreferrer',
+          className: 'table-location-link',
+          title: 'Abrir ubicación en mapa',
+        },
+          h(Icon, { name: 'externalLink', size: 12, color: '#0284C7' }),
+          'Ver mapa'
+        );
+      }
+      return s;
+    };
+
     // ========================================================================
-    // DETALLE 1: REPORTE DE USUARIOS (100% DATOS REALES DE FIRESTORE)
+    // DETALLE 1: REPORTE DE USUARIOS
     // ========================================================================
     if (selectedReport === 'usuarios') {
       return h('div', { className: 'reportes-hub report-detail-wrapper' },
@@ -4573,7 +4583,7 @@
             ),
             h('span', { className: 'report-kpi-val' }, userStats.total),
             h('div', { className: 'report-kpi-meta' },
-              `${userStats.active} cuentas activas en Firestore`
+              `${userStats.active} cuentas activas`
             )
           ),
           h('div', { className: 'report-kpi-card' },
@@ -4614,16 +4624,13 @@
           )
         ),
 
-        // Estados de ánimo reales registrados en Firestore (si existen)
+        // Estados de ánimo registrados
         h('div', { className: 'report-section-card' },
           h('div', { className: 'report-section-header' },
             h('div', null,
               h('h3', { className: 'report-section-title' },
                 h(Icon, { name: 'heart', size: 18, color: '#EC4899' }),
-                'Estados de Ánimo Registrados en la Base de Datos'
-              ),
-              h('p', { className: 'report-section-subtitle' },
-                'Datos leídos directamente de los chequeos emocionales de los usuarios en Firestore.'
+                'Estados de Ánimo Registrados'
               )
             )
           ),
@@ -4645,11 +4652,11 @@
                 )
               )
             : h('div', { style: { padding: '24px', textAlign: 'center', color: '#64748B', background: '#F8FAFC', borderRadius: '12px' } },
-                'Aún no hay chequeos de ánimo registrados por los usuarios en la base de datos.'
+                'Aún no hay chequeos de ánimo registrados por los usuarios.'
               )
         ),
 
-        // Publicaciones reales de usuarios en Firestore
+        // Publicaciones de usuarios
         h('div', { className: 'report-section-card' },
           h('div', { className: 'report-section-header' },
             h('div', null,
@@ -4696,20 +4703,20 @@
                 })
               )
             : h('div', { style: { padding: '24px', textAlign: 'center', color: '#64748B', background: '#F8FAFC', borderRadius: '12px' } },
-                'No hay publicaciones en la base de datos aún.'
+                'No hay publicaciones registradas aún.'
               )
         ),
 
-        // Tabla de Datos Real de Usuarios
+        // Tabla de Datos de Usuarios
         h('div', { className: 'report-section-card' },
           h('div', { className: 'report-section-header' },
             h('div', null,
               h('h3', { className: 'report-section-title' },
                 h(Icon, { name: 'users', size: 18, color: '#355971' }),
-                'Tabla de Usuarios Registrados en Base de Datos'
+                'Tabla de Usuarios Registrados'
               ),
               h('p', { className: 'report-section-subtitle' },
-                `Mostrando ${filteredUsers.length} de ${usersList.length} cuentas registradas en Firestore.`
+                `Total: ${filteredUsers.length} cuentas registradas.`
               )
             )
           ),
@@ -4808,7 +4815,7 @@
             ),
             h('span', { className: 'report-kpi-val' }, psychoStats.total),
             h('div', { className: 'report-kpi-meta', style: { color: '#059669' } },
-              'Especialistas registrados'
+              'Especialistas activos'
             )
           ),
           h('div', { className: 'report-kpi-card' },
@@ -4820,7 +4827,7 @@
             ),
             h('span', { className: 'report-kpi-val' }, psychoStats.verified),
             h('div', { className: 'report-kpi-meta', style: { color: '#2563EB' } },
-              'Con cédula profesional capturada'
+              'Cédula profesional validada'
             )
           ),
           h('div', { className: 'report-kpi-card' },
@@ -4832,7 +4839,7 @@
             ),
             h('span', { className: 'report-kpi-val' }, psychoStats.pending),
             h('div', { className: 'report-kpi-meta', style: { color: '#D97706' } },
-              'Perfil o cédula pendiente'
+              'Perfil en validación'
             )
           ),
           h('div', { className: 'report-kpi-card' },
@@ -4844,7 +4851,7 @@
             ),
             h('span', { className: 'report-kpi-val' }, psychoStats.specsCount),
             h('div', { className: 'report-kpi-meta', style: { color: '#7C3AED' } },
-              'Áreas registradas en base de datos'
+              'Áreas terapéuticas'
             )
           )
         ),
@@ -4885,6 +4892,13 @@
                   safePsychos.map((p) => {
                     const photo = getPsychologistPhoto(p);
                     const hasCedula = p.cedula && p.cedula.trim().length > 0;
+                    const cleanCity = (p.ciudad && !p.ciudad.startsWith('http'))
+                      ? p.ciudad
+                      : (p.ubicacion && !p.ubicacion.startsWith('http') ? p.ubicacion : '');
+                    const mapUrl = (p.ubicacion && p.ubicacion.startsWith('http'))
+                      ? p.ubicacion
+                      : ((p.ciudad && p.ciudad.startsWith('http')) ? p.ciudad : '');
+
                     return h('div', { key: p.id, className: 'psycho-carousel-card' },
                       photo
                         ? h('img', {
@@ -4910,8 +4924,23 @@
                       h('div', { className: 'psycho-name' }, p.nombre || 'Especialista'),
                       h('span', { className: 'psycho-spec' }, p.especialidad || 'Psicología General'),
                       h('div', { className: 'psycho-info-meta' },
-                        h('div', null, `🏛️ ${p.universidad || 'Universidad no especificada'}`),
-                        h('div', null, `📍 ${p.ciudad || p.ubicacion || 'Ubicación no especificada'}`),
+                        p.universidad && p.universidad.trim() && p.universidad !== 'Universidad no especificada'
+                          ? h('div', null, `🏛️ ${p.universidad}`)
+                          : null,
+                        cleanCity ? h('div', null, `📍 ${cleanCity}`) : null,
+                        mapUrl
+                          ? h('div', null,
+                              h('a', {
+                                href: mapUrl,
+                                target: '_blank',
+                                rel: 'noopener noreferrer',
+                                className: 'table-location-link',
+                              },
+                                h(Icon, { name: 'externalLink', size: 12, color: '#0284C7' }),
+                                'Ver mapa'
+                              )
+                            )
+                          : null,
                         p.telefono || p.whatsapp ? h('div', null, `📞 ${p.telefono || p.whatsapp}`) : null
                       ),
                       h('div', {
@@ -4926,20 +4955,17 @@
                 )
               )
             : h('div', { style: { padding: '30px', textAlign: 'center', color: '#64748B', background: '#F8FAFC', borderRadius: '12px' } },
-                'No hay psicólogos dados de alta en Firestore aún. Puedes darlos de alta en el módulo de Psicólogos.'
+                'No hay psicólogos dados de alta aún.'
               )
         ),
 
-        // Especialidades registradas en base de datos
+        // Especialidades registradas
         h('div', { className: 'report-section-card' },
           h('div', { className: 'report-section-header' },
             h('div', null,
               h('h3', { className: 'report-section-title' },
                 h(Icon, { name: 'chart', size: 18, color: '#059669' }),
-                'Distribución Real por Especialidad'
-              ),
-              h('p', { className: 'report-section-subtitle' },
-                'Especialidades que actualmente tienen asignadas los psicólogos en Firestore.'
+                'Distribución por Especialidad'
               )
             )
           ),
@@ -4961,7 +4987,7 @@
                 )
               )
             : h('div', { style: { padding: '24px', textAlign: 'center', color: '#64748B', background: '#F8FAFC', borderRadius: '12px' } },
-                'Aún no hay especialidades asignadas en la base de datos.'
+                'Aún no hay especialidades asignadas.'
               )
         ),
 
@@ -4974,7 +5000,7 @@
                 'Directorio Completo de Especialistas Clínicos'
               ),
               h('p', { className: 'report-section-subtitle' },
-                `Mostrando ${filteredPsychos.length} de ${safePsychos.length} especialistas en Firestore.`
+                `Total: ${filteredPsychos.length} especialistas.`
               )
             )
           ),
@@ -5050,7 +5076,7 @@
                           h('span', { style: { fontFamily: 'monospace', fontWeight: 700 } }, p.cedula || 'En trámite')
                         ),
                         h('td', null, p.modalidad || 'Presencial y En línea'),
-                        h('td', null, p.ciudad || p.ubicacion || '—'),
+                        h('td', null, renderCleanLocation(p.ciudad || p.ubicacion)),
                         h('td', null, p.telefono || p.whatsapp || p.correo || '—'),
                         h('td', null,
                           h('span', {
@@ -5096,7 +5122,7 @@
             ),
             h('span', { className: 'report-kpi-val' }, usersList.length),
             h('div', { className: 'report-kpi-meta', style: { color: '#D97706' } },
-              'Cuentas registradas en la app y web'
+              'Miembros registrados'
             )
           ),
           h('div', { className: 'report-kpi-card' },
@@ -5108,7 +5134,7 @@
             ),
             h('span', { className: 'report-kpi-val' }, communityStats.totalPosts),
             h('div', { className: 'report-kpi-meta', style: { color: '#4F46E5' } },
-              'Desahogos y publicaciones en vivo'
+              'Publicaciones compartidas'
             )
           ),
           h('div', { className: 'report-kpi-card' },
@@ -5120,7 +5146,7 @@
             ),
             h('span', { className: 'report-kpi-val' }, communityStats.totalReactions),
             h('div', { className: 'report-kpi-meta', style: { color: '#DB2777' } },
-              'Reacciones acumuladas en posts'
+              'Reacciones otorgadas'
             )
           ),
           h('div', { className: 'report-kpi-card' },
@@ -5132,7 +5158,7 @@
             ),
             h('span', { className: 'report-kpi-val' }, communityStats.totalReports),
             h('div', { className: 'report-kpi-meta', style: { color: '#DC2626' } },
-              'Publicaciones reportadas por la comunidad'
+              'Publicaciones en revisión'
             )
           )
         ),
@@ -5146,7 +5172,7 @@
                 'Reacciones de Apoyo Emocional Registradas'
               ),
               h('p', { className: 'report-section-subtitle' },
-                'Conteo real de las 4 reacciones de empatía otorgadas en las publicaciones de Firestore.'
+                'Conteo de las 4 reacciones de empatía otorgadas en las publicaciones.'
               )
             )
           ),
@@ -5203,7 +5229,7 @@
                 'Hashtags y Temáticas en las Publicaciones'
               ),
               h('p', { className: 'report-section-subtitle' },
-                'Hashtags que los usuarios han incluido en sus posts en la base de datos.'
+                'Hashtags que los usuarios han incluido en sus publicaciones.'
               )
             )
           ),
@@ -5225,7 +5251,7 @@
                 )
               )
             : h('div', { style: { padding: '24px', textAlign: 'center', color: '#64748B', background: '#F8FAFC', borderRadius: '12px' } },
-                'No se han registrado hashtags en las publicaciones de la base de datos.'
+                'No se han registrado hashtags en las publicaciones aún.'
               )
         ),
 
@@ -5238,7 +5264,7 @@
                 'Publicaciones Recientes de la Comunidad'
               ),
               h('p', { className: 'report-section-subtitle' },
-                'Contenido reciente leído en tiempo real desde Firestore.'
+                'Contenido reciente de la comunidad.'
               )
             )
           ),
@@ -5279,7 +5305,7 @@
                 })
               )
             : h('div', { style: { padding: '24px', textAlign: 'center', color: '#64748B', background: '#F8FAFC', borderRadius: '12px' } },
-                'No hay publicaciones registradas en la base de datos aún.'
+                'No hay publicaciones registradas aún.'
               )
         )
       );
