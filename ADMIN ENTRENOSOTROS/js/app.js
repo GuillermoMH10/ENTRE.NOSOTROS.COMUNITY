@@ -153,7 +153,6 @@
     { id: 'psicologos', label: 'Psicólogos', icon: 'stethoscope', desc: 'Validación de especialistas y credenciales clínicas' },
     { id: 'moderacion', label: 'Moderación Contenido', icon: 'shield', desc: 'Filtro y moderación de publicaciones y desahogos' },
     { id: 'reportes', label: 'Reportes', icon: 'flag', desc: 'Atención a incidentes y reportes de la comunidad' },
-    { id: 'estadisticas', label: 'Estadísticas y Análisis', icon: 'chart', desc: 'Análisis de bienestar, interacción y acompañamiento con ANIMA' },
   ];
 
   // Administrador inicial semilla
@@ -168,7 +167,7 @@
       role: 'Super Administrador',
       status: 'active',
       createdAt: '2026-10-19T10:00:00.000Z',
-      permissions: ['principal', 'accesos', 'usuarios', 'psicologos', 'moderacion', 'reportes', 'estadisticas'],
+      permissions: ['principal', 'accesos', 'usuarios', 'psicologos', 'moderacion', 'reportes'],
     },
     {
       id: 'admin_2',
@@ -1012,7 +1011,6 @@
       case 'psicologos': return { bg: '#ECFDF5', border: '#A7F3D0', text: '#047857' }; // Verde esmeralda
       case 'moderacion': return { bg: '#F5F3FF', border: '#DDD6FE', text: '#6D28D9' }; // Morado
       case 'reportes': return { bg: '#FEF2F2', border: '#FECACA', text: '#B91C1C' }; // Rojo
-      case 'estadisticas': return { bg: '#ECFEFF', border: '#A5F3FC', text: '#0E7490' }; // Cyan
       default: return { bg: '#F1F5F9', border: '#CBD5E1', text: '#475569' };
     }
   };
