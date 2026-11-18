@@ -16,6 +16,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { MONTHS_DATA } from '../data/monthsData';
 import { MonthDetailModal } from '../components/Blog/MonthDetailModal';
+import { TopicArticlesModal } from '../components/Blog/TopicArticlesModal';
 import { Psychologist } from '../types/psychologist';
 import { subscribeToPsychologists } from '../services/psychologistsService';
 import { PsychologistDetailModal } from '../components/Psychologists/PsychologistDetailModal';
@@ -73,6 +74,9 @@ export const BlogScreen: React.FC<BlogScreenProps> = ({
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [selectedMonthForDetail, setSelectedMonthForDetail] = useState<number>(currentMonthIndex);
   const [carouselActiveIndex, setCarouselActiveIndex] = useState<number>(currentMonthIndex);
+
+  // Topic Articles state
+  const [selectedTopicForArticles, setSelectedTopicForArticles] = useState<TopicItem | null>(null);
 
   // Psychologists state
   const [psychologists, setPsychologists] = useState<Psychologist[]>([]);
@@ -133,6 +137,19 @@ export const BlogScreen: React.FC<BlogScreenProps> = ({
           visible={true}
           psychologist={selectedPsicoForDetail}
           onClose={() => setSelectedPsicoForDetail(null)}
+          embedded={true}
+        />
+      </View>
+    );
+  }
+
+  if (isDesktop && selectedTopicForArticles) {
+    return (
+      <View style={styles.container}>
+        <TopicArticlesModal
+          visible={true}
+          topic={selectedTopicForArticles}
+          onClose={() => setSelectedTopicForArticles(null)}
           embedded={true}
         />
       </View>
@@ -325,16 +342,26 @@ export const BlogScreen: React.FC<BlogScreenProps> = ({
 
           <View style={styles.topicsGrid}>
             {INTEREST_TOPICS.map((topic) => (
-              <View key={topic.id} style={styles.topicCard}>
+              <TouchableOpacity
+                key={topic.id}
+                style={styles.topicCard}
+                activeOpacity={0.88}
+                onPress={() => setSelectedTopicForArticles(topic)}
+              >
                 <View style={styles.topicImageContainer}>
                   <Image
                     source={{ uri: topic.imagen }}
                     style={styles.topicImage}
                     resizeMode="cover"
                   />
+                  <View style={styles.topicPill}>
+                    <Ionicons name="newspaper-outline" size={10} color="#FFFFFF" />
+                    <Text style={styles.topicPillText}>Artículos</Text>
+                  </View>
                 </View>
                 <Text style={styles.topicTitle}>{topic.titulo}</Text>
-              </View>
+                <Text style={styles.topicActionHint}>Leer guías de psicólogos →</Text>
+              </TouchableOpacity>
             ))}
           </View>
         </View>
@@ -424,6 +451,14 @@ export const BlogScreen: React.FC<BlogScreenProps> = ({
         visible={selectedPsicoForDetail !== null}
         psychologist={selectedPsicoForDetail}
         onClose={() => setSelectedPsicoForDetail(null)}
+      />
+
+      {/* Topic Articles Modal for Mobile */}
+      <TopicArticlesModal
+        visible={!isDesktop && selectedTopicForArticles !== null}
+        topic={selectedTopicForArticles}
+        onClose={() => setSelectedTopicForArticles(null)}
+        embedded={false}
       />
     </View>
   );
@@ -643,6 +678,32 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: colors.surfaceSoft,
     marginBottom: 8,
+    position: 'relative',
+  },
+  topicPill: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: 'rgba(28, 25, 23, 0.74)',
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 10,
+  },
+  topicPillText: {
+    color: '#FFFFFF',
+    fontSize: 9.5,
+    fontWeight: '800',
+  },
+  topicActionHint: {
+    fontSize: 10.5,
+    fontWeight: '700',
+    color: colors.coffeePrimary,
+    textAlign: 'center',
+    marginTop: 2,
+    marginBottom: 2,
   },
   topicImage: {
     width: '100%',
