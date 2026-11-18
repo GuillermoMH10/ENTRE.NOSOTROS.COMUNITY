@@ -4655,10 +4655,7 @@
             h('div', null,
               h('h3', { className: 'report-section-title' },
                 h(Icon, { name: 'messageSquare', size: 18, color: '#4F46E5' }),
-                'Publicaciones Reales de Usuarios'
-              ),
-              h('p', { className: 'report-section-subtitle' },
-                'Contenido publicado por los usuarios almacenado en la colección "posts".'
+                'Publicaciones de Usuarios'
               )
             )
           ),
@@ -4811,7 +4808,7 @@
             ),
             h('span', { className: 'report-kpi-val' }, psychoStats.total),
             h('div', { className: 'report-kpi-meta', style: { color: '#059669' } },
-              'Registrados en la colección "psicologos"'
+              'Especialistas registrados'
             )
           ),
           h('div', { className: 'report-kpi-card' },
@@ -4858,10 +4855,7 @@
             h('div', null,
               h('h3', { className: 'report-section-title' },
                 h(Icon, { name: 'stethoscope', size: 18, color: '#059669' }),
-                'Carrusel de Especialistas Registrados'
-              ),
-              h('p', { className: 'report-section-subtitle' },
-                'Fotografías y datos reales leídos de la colección "psicologos".'
+                'Especialistas Clínicos'
               )
             ),
             safePsychos.length > 1
