@@ -1,3 +1,5 @@
+import { ReactionType } from './post';
+
 export interface TopicArticle {
   id: string;
   temaId: 'depresion' | 'ansiedad' | string;
@@ -12,6 +14,14 @@ export interface TopicArticle {
   psicologoEspecialidad: string;
   psicologoCedula?: string;
   psicologoAvatar?: string;
+  reactions?: {
+    teEscucho: number;
+    teAbrazo: number;
+    noEstasSolo: number;
+    fuerza: number;
+  };
+  userReactions?: Record<string, ReactionType>;
+  savedBy?: string[];
   createdAt?: string;
   timestamp?: number;
 }

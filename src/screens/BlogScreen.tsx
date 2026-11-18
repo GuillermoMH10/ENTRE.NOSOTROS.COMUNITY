@@ -37,17 +37,20 @@ interface TopicItem {
   id: string;
   titulo: string;
   imagen: string;
+  descripcion?: string;
 }
 
 const INTEREST_TOPICS: TopicItem[] = [
   {
     id: 'depresion',
     titulo: 'Depresión',
+    descripcion: 'Tristeza profunda, anhedonia, pérdida de energía y herramientas de acompañamiento.',
     imagen: 'https://i.pinimg.com/1200x/b8/7c/8f/b87c8fe21146f1c89d576d97c2471458.jpg',
   },
   {
     id: 'ansiedad',
     titulo: 'Ansiedad',
+    descripcion: 'Preocupación excesiva, rumiación, ataques de pánico y técnicas de regulación.',
     imagen: 'https://i.pinimg.com/1200x/3e/f6/f4/3ef6f4d666bf0ae7febb0e6750966fc8.jpg',
   },
 ];
@@ -117,6 +120,33 @@ export const BlogScreen: React.FC<BlogScreenProps> = ({
     }
   };
 
+  const handleOpenPsychologistFromArticle = (psicoId: string, fallbackData?: any) => {
+    const found = psychologists.find(
+      (p) =>
+        p.id === psicoId ||
+        (p.nombre && fallbackData?.nombre && p.nombre.toLowerCase().trim() === fallbackData.nombre.toLowerCase().trim())
+    );
+    if (found) {
+      setSelectedPsicoForDetail(found);
+    } else if (fallbackData) {
+      setSelectedPsicoForDetail({
+        id: psicoId || 'psico_detail',
+        nombre: fallbackData.nombre || 'Especialista Clínico',
+        imagen: fallbackData.imagen || 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=400&q=80',
+        especialidad: fallbackData.especialidad || 'Psicología y Acompañamiento',
+        descripcion: fallbackData.descripcion || 'Especialista verificado en Entre Nosotros.',
+        correo: fallbackData.correo || '',
+        telefono: fallbackData.telefono || '',
+        whatsapp: fallbackData.whatsapp || '',
+        modalidad: 'Presencial y En línea',
+        ubicacion: fallbackData.ubicacion || '',
+        ciudad: fallbackData.ciudad || '',
+        verificado: true,
+        activo: true,
+      });
+    }
+  };
+
   if (isDesktop && isDetailModalOpen) {
     return (
       <View style={styles.container}>
@@ -150,6 +180,8 @@ export const BlogScreen: React.FC<BlogScreenProps> = ({
           visible={true}
           topic={selectedTopicForArticles}
           onClose={() => setSelectedTopicForArticles(null)}
+          onOpenPsychologistDetail={handleOpenPsychologistFromArticle}
+          onRequireAuth={onJoinPress}
           embedded={true}
         />
       </View>
@@ -458,6 +490,8 @@ export const BlogScreen: React.FC<BlogScreenProps> = ({
         visible={!isDesktop && selectedTopicForArticles !== null}
         topic={selectedTopicForArticles}
         onClose={() => setSelectedTopicForArticles(null)}
+        onOpenPsychologistDetail={handleOpenPsychologistFromArticle}
+        onRequireAuth={onJoinPress}
         embedded={false}
       />
     </View>
