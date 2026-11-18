@@ -13,7 +13,8 @@
       "backgroundColor": "#FAF7F5"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.entrenosotros.app"
     },
     "android": {
       "package": "com.entrenosotros.app",
