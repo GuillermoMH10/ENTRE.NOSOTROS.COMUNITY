@@ -5,224 +5,224 @@
 # PARTE I: DESCRIPCIÓN DEL PROYECTO
 
 ## 1. ¿Qué es Entre Nosotros?
-**Entre Nosotros** es una plataforma y aplicación móvil/web de bienestar emocional y salud mental diseñada para brindar un entorno seguro, confidencial, empático y libre de juicios. Su objetivo fundamental es conectar a personas que atraviesan momentos difíciles, soledad, ansiedad, tristeza o procesos de crecimiento personal con una comunidad de apoyo mutuo y con profesionales de la psicología clínica colegiados.
+**Entre Nosotros** es una plataforma y aplicación móvil/web de bienestar emocional y salud mental creada para ofrecer un refugio digital seguro, empático, confidencial y libre de juicios. Su misión primordial es acompañar a las personas en momentos de vulnerabilidad, soledad, ansiedad, tristeza, sobrecarga o crecimiento personal, conectándolas con una comunidad respetuosa de apoyo mutuo y con especialistas en psicología clínica debidamente colegiados.
 
-A diferencia de las redes sociales convencionales orientadas a métricas de vanidad o algoritmos que promueven la confrontación, Entre Nosotros prioriza la **vulnerabilidad positiva**, la **validación emocional** y la **construcción de redes de cuidado mutuo**.
+En contraste con las redes sociales convencionales que fomentan métricas de vanidad, comparación o polarización, Entre Nosotros está diseñada bajo una premisa humana: **la validación de lo que sentimos, el respeto a nuestros propios tiempos y la compañía sincera sin presiones.**
 
 ---
 
-## 2. Pilares y Filosofía de la Plataforma
+## 2. Pilares Fundamentales del Ecosistema
 
 ```mermaid
 flowchart TD
     A["Entre Nosotros (Ecosistema de Bienestar)"] --> B["Comunidad y Desahogo Seguro"]
-    A --> C["Acompañamiento Inteligente con ANIMA"]
+    A --> C["Acompañamiento con ANIMA (IA)"]
     A --> D["Psicoeducación y Blog Clínico"]
-    A --> E["Red Profesional de Especialistas"]
+    A --> E["Acompañamiento sin Presiones y Medallas"]
+    A --> F["Red Profesional de Psicólogos"]
 
-    B --> B1["Publicaciones públicas o anónimas"]
-    B --> B2["4 Reacciones empáticas sin toxicidad"]
+    B --> B1["Publicaciones con usuario o 100% anónimas"]
+    B --> B2["4 Reacciones empáticas exclusivas"]
     
-    C --> C1["Escucha activa 24/7"]
-    C --> C2["Técnicas de regulación y respiración"]
+    C --> C1["Escucha activa confidencial 24/7"]
+    C --> C2["Técnicas de respiración y calma"]
 
-    D --> D1["12 Meses de Conciencia y Cuidado"]
-    D --> D2["Artículos validados sobre Depresión y Ansiedad"]
+    D --> D1["Calendario de 12 Meses de Conciencia"]
+    D --> D2["Artículos clínicos sobre Depresión y Ansiedad"]
 
-    E --> E1["Directorio con cédula validada"]
-    E --> E2["Contacto directo para terapia presencial y en línea"]
+    E --> E1["Actividades guiadas al propio ritmo (sin límite de días)"]
+    E --> E2["Conclusión voluntaria para obtener Medalla de Superación"]
+
+    F --> F1["Directorio con cédula profesional validada"]
+    F --> F2["Contacto directo para terapia presencial y en línea"]
 ```
 
-1. **Empatía sin Juicios**: Cada miembro puede expresarse libremente sabiendo que encontrará respeto, anonimato si lo requiere y palabras de aliento.
-2. **Reacciones con Propósito**: No existen "Me gusta" genéricos; las interacciones se basan en 4 respuestas de empatía genuina: *Te Abrazo*, *Te Escucho*, *No Estás Solo* y *Fuerza*.
-3. **ANIMA, Compañero Emocional**: Un asistente conversacional con inteligencia artificial disponible 24/7 para ejercicios de respiración, desahogos guiados y contención primaria.
-4. **Soporte Clínico Real**: Artículos psicoeducativos redactados por psicólogos profesionales y un directorio directo para solicitar terapia formal.
-5. **Autoconocimiento Diario**: Monitoreo de estado de ánimo (*Daily Mood*), test de dimensiones emocionales y desafíos de bienestar de 7 días.
+1. **Vulnerabilidad Positiva y Respeto Absoluto**: Cada usuario puede expresarse de manera transparente. Las normas comunitarias garantizan cero tolerancia a burlas, discriminación o toxicidad.
+2. **Reacciones Empáticas con Significado Real**: Se sustituyeron los "Me gusta" por 4 expresiones de apoyo genuino: *Te Abrazo*, *Te Escucho*, *No Estás Solo* y *Fuerza*.
+3. **ANIMA, Asistente Emocional 24/7**: Inteligencia artificial de contención primaria entrenada para escuchar, guiar ejercicios de relajación y activar protocolos de seguridad ante emergencias.
+4. **Avance al Propio Ritmo (Sin Plazos Obligatorios)**: Las actividades de apoyo emocional no tienen fechas límite ni contadores forzados de días. El usuario decide cuándo realizarlas y en qué momento concluir para recibir su **Medalla de Superación**.
+5. **Vínculo con Especialistas Reales**: Artículos de divulgación clínica redactados por profesionales y acceso directo a psicólogos con cédula profesional verificada.
 
 ---
 
-## 3. Identidad Visual y Experiencia de Usuario
-- **Paleta de Colores**: Diseñada con tonalidades suaves y tranquilizantes en **Blanco y Azul Cielo Pastel** (`#FFFFFF`, `#F0F5F8`, `#E1EAEF`, `#3B708F`), reduciendo la sobreestimulación visual.
-- **Tipografía Limpia**: Textos legibles y espacios amplios adaptados para lectura cómoda en cualquier condición de iluminación.
-- **Multiplataforma**: Funcionalidad completa y sincronizada tanto en teléfonos móviles (iOS / Android mediante Expo) como en navegadores web de escritorio y móviles.
+## 3. Identidad Visual y Sensorial
+- **Paleta de Colores Terapéutica**: Inspirada en la serenidad y la claridad mental, predominan el **Blanco Puro y el Azul Cielo Pastel** (`#FFFFFF`, `#F0F5F8`, `#E1EAEF`, `#3B708F`, `#223E52`), evitando la sobrecarga sensorial.
+- **Tipografía y Proporciones Humanas**: Espacios amplios, botones ergonómicos y tipografía de fácil lectura pensada para momentos de cansancio o sensibilidad visual.
+- **Compatibilidad Total**: Experiencia fluida e idéntica en teléfonos móviles (iOS / Android vía Expo) y en computadoras de escritorio mediante la versión web.
 
 ---
 
 # PARTE II: MANUAL COMPLETO DE USUARIO
 
-Bienvenido a la guía oficial de **Entre Nosotros**. A continuación encontrarás el funcionamiento detallado de cada una de las herramientas, pantallas e interacciones disponibles para ti.
+Bienvenido/a a la guía paso a paso de **Entre Nosotros**. A continuación te explicamos detalladamente cada sección, botón, herramienta y flujo que tienes a tu disposición.
 
 ---
 
 ## ÍNDICE DEL MANUAL
-1. [Acceso, Registro y Gestión de Cuenta](#1-acceso-registro-y-gestión-de-cuenta)
-2. [Estructura y Navegación de la App](#2-estructura-y-navegación-de-la-app)
-3. [Pantalla Principal (Muro de la Comunidad)](#3-pantalla-principal-muro-de-la-comunidad)
-4. [Cómo Crear y Compartir un Desahogo](#4-cómo-crear-y-compartir-un-desahogo)
-5. [ANIMA: Tu Compañero Emocional 24/7](#5-anima-tu-compañero-emocional-247)
-6. [Blog de Salud Mental y Calendario de Conciencia](#6-blog-de-salud-mental-y-calendario-de-conciencia)
-7. [Directorio de Psicólogos y Especialistas](#7-directorio-de-psicólogos-y-especialistas)
-8. [Centro de Apoyo, Test Emocional y Retos de Racha](#8-centro-de-apoyo-test-emocional-y-retos-de-racha)
-9. [Buscador y Exploración de Temas](#9-buscador-y-exploración-de-temas)
-10. [Tu Perfil Personal y Monitoreo Emocional](#10-tu-perfil-personal-y-monitoreo-emocional)
-11. [Reglas de Convivencia y Seguridad Comunitaria](#11-reglas-de-convivencia-y-seguridad-comunitaria)
+1. [Acceso, Registro y Privacidad de la Cuenta](#1-acceso-registro-y-privacidad-de-la-cuenta)
+2. [Estructura de Pantallas y Navegación](#2-estructura-de-pantallas-y-navegación)
+3. [Pantalla Principal (Muro Comunitario)](#3-pantalla-principal-muro-comunitario)
+4. [Cómo Publicar y Compartir un Desahogo](#4-cómo-publicar-y-compartir-un-desahogo)
+5. [ANIMA: Tu Refugio de Escucha y Calma](#5-anima-tu-refugio-de-escucha-y-calma)
+6. [Blog: Calendario de 12 Meses y Artículos Clínicos](#6-blog-calendario-de-12-meses-y-artículos-clínicos)
+7. [Directorio de Especialistas Clínicos](#7-directorio-de-especialistas-clínicos)
+8. [Test Emocional, Actividades al Propio Ritmo y Medallas](#8-test-emocional-actividades-al-propio-ritmo-y-medallas)
+9. [Buscador Inteligente y Exploración por Temas](#9-buscador-inteligente-y-exploración-por-temas)
+10. [Tu Perfil Personal, Registro de Ánimo y Guardados](#10-tu-perfil-personal-registro-de-ánimo-y-guardados)
+11. [Seguridad, Reporte de Contenido y Normas](#11-seguridad-reporte-de-contenido-y-normas)
 
 ---
 
-## 1. Acceso, Registro y Gestión de Cuenta
+## 1. Acceso, Registro y Privacidad de la Cuenta
 
-### Modo Invitado vs. Cuenta Registrada
-- **Modo Invitado**: Al abrir la aplicación sin iniciar sesión, puedes leer libremente las publicaciones del muro, explorar el calendario del blog, consultar los artículos de especialistas y revisar las líneas de ayuda de emergencia.
-- **Cuenta Registrada**: Al registrarte de forma gratuita, desbloqueas:
-  - Crear tus propios desahogos (públicos o 100% anónimos).
-  - Reaccionar con apoyo emocional a otros miembros.
-  - Dejar comentarios en las publicaciones.
-  - Guardar publicaciones y artículos en tus marcadores personales.
-  - Registrar tu estado de ánimo diario y consultar tu gráfica semanal.
-  - Realizar el test psicológico y activar desafíos de racha.
+### Modo Invitado vs. Usuario Registrado
+- **Modo Invitado (Sin Cuenta)**: Al ingresar a la app puedes navegar libremente por el muro, leer las publicaciones comunitarias, explorar los 12 meses del blog, leer artículos de psicólogos y acceder a los números telefónicos de emergencia.
+- **Cuenta Registrada (Gratuita)**: Al registrarte desbloqueas todas las interacciones:
+  - Crear desahogos propios (públicos o totalmente anónimos).
+  - Reaccionar con apoyo a otros miembros.
+  - Dejar comentarios afectuosos en las publicaciones.
+  - Guardar posts y lecturas en tus marcadores personales.
+  - Registrar tu estado de ánimo diario y ver tu progreso semanal.
+  - Realizar el test psicológico y avanzar en actividades para desbloquear medallas.
   - Conversar en privado con ANIMA.
 
-### Cómo Crear una Cuenta
-1. En la parte superior derecha de la pantalla, pulsa el botón **"Unirme"** (o cuando intentes realizar una acción protegida).
-2. Selecciona la pestaña **"Crear Cuenta"**.
-3. Ingresa:
-   - **Nombre de Usuario**: Tu apodo visible (ej. `@esperanza_viva`).
-   - **Correo Electrónico**: Para validación y recuperación de contraseña.
-   - **Contraseña**: Mínimo 6 caracteres.
-4. Consulta y acepta los **Términos y Condiciones** de la plataforma.
-5. Pulsa **"Crear Cuenta"**. Tu sesión se iniciará de forma automática.
+### Registro Paso a Paso
+1. En la esquina superior derecha, pulsa **"Unirme"**.
+2. Ve a la pestaña **"Crear Cuenta"**.
+3. Completa los campos:
+   - **Nombre de Usuario**: Tu apodo visible dentro de la comunidad (ej. `@alma_en_paz`).
+   - **Correo Electrónico**: Para respaldar tu cuenta y recuperar contraseña.
+   - **Contraseña**: De al menos 6 caracteres.
+4. Consulta y acepta los Términos y Condiciones.
+5. Pulsa **"Crear Cuenta"** y tu sesión iniciará automáticamente.
 
 ### Recuperación de Contraseña
-Si olvidaste tu clave de acceso:
+Si olvidas tu contraseña:
 1. En la ventana de inicio de sesión, pulsa **"¿Olvidaste tu contraseña?"**.
-2. Escribe tu correo electrónico registrado.
-3. Se te enviará un enlace seguro para restablecerla de inmediato.
+2. Introduce tu correo y recibirás un enlace seguro para restablecerla al instante.
 
 ---
 
-## 2. Estructura y Navegación de la App
+## 2. Estructura de Pantallas y Navegación
 
-La aplicación cuenta con una navegación intuitiva accesible en todo momento:
+La plataforma cuenta con un sistema de navegación claro y accesible:
 
 ```mermaid
 flowchart LR
-    M1["🏠 Principal (Feed)"] --- M2["🔍 Buscar"]
-    M2 --- M3["✨ ANIMA (IA)"]
-    M3 --- M4["📖 Blog (Temas)"]
-    M4 --- M5["🧭 Más..."]
-    
-    M5 -.-> S1["🩺 Especialistas"]
-    M5 -.-> S2["🆘 Líneas de Ayuda"]
-    M5 -.-> S3["📜 Normas"]
-    M5 -.-> S4["👤 Mi Perfil"]
+    P1["🏠 Principal (Feed)"] --- P2["🔍 Buscar"]
+    P2 --- P3["✨ ANIMA (IA)"]
+    P3 --- P4["📖 Blog (Temas)"]
+    P4 --- P5["🧭 Más..."]
+
+    P5 -.-> M1["🩺 Especialistas"]
+    P5 -.-> M2["🆘 Líneas de Ayuda"]
+    P5 -.-> M3["📜 Reglas"]
+    P5 -.-> M4["👤 Mi Perfil"]
 ```
 
-- **Barra Inferior (Bottom Tab Bar)**:
-  - **Principal**: El muro vivo de la comunidad y tu registro diario de ánimo.
-  - **Buscar**: Explorador de publicaciones, palabras clave y hashtags.
-  - **ANIMA**: Acompañante con inteligencia artificial y ejercicios de relajación.
-  - **Blog**: Calendario temático de 12 meses y artículos clínicos de especialistas.
-  - **Más...**: Menú emergente para acceder a Psicólogos, Ayuda de Crisis, Reglas y Perfil.
-- **Barra Superior (AppHeader)**:
-  - Logotipo oficial de **Entre Nosotros**.
-  - Botón **"+" (Crear Publicación)**: Acceso directo para redactar un desahogo.
-  - **Avatar / Foto de Perfil**: Acceso a tu perfil personal o botón "Unirme".
+- **Barra de Pestañas Inferior (Bottom Tab Bar)**:
+  - **Principal**: Muro general, registro diario de ánimo y frase inspiracional.
+  - **Buscar**: Exploración por palabras clave, hashtags y temas en tendencia.
+  - **ANIMA**: Tu asistente empático con inteligencia artificial.
+  - **Blog**: Calendario anual de bienestar y artículos redactados por psicólogos.
+  - **Más...**: Menú directo hacia Directorio de Psicólogos, Líneas de Ayuda, Reglas y Perfil.
+- **Cabecera Superior (AppHeader)**:
+  - Muestra el logotipo oficial de Entre Nosotros.
+  - Botón **"+" (Crear Publicación)** para compartir un desahogo con un toque.
+  - Avatar personal para acceder rápidamente a tu perfil.
 - **Menú Lateral (Drawer)**:
-  - Deslizable desde la izquierda mediante el icono de menú, ofreciendo atajos a cada módulo de la aplicación.
+  - Desplegable desde la izquierda para navegar cómodamente a cualquier módulo.
 
 ---
 
-## 3. Pantalla Principal (Muro de la Comunidad)
+## 3. Pantalla Principal (Muro Comunitario)
 
-Al ingresar a la app, te encontrarás en el corazón de Entre Nosotros:
+Es el espacio central de interacción y acompañamiento de la plataforma:
 
 ### A. Registro Diario de Estado de Ánimo (*Daily Mood Card*)
-- **¿Qué es?**: Un módulo interactivo ubicado al inicio del muro donde puedes responder a la pregunta: *¿Cómo te sientes hoy?*.
-- **Opciones de Ánimo**:
-  - 🤩 **Increíble**: Llena de energía y gratitud.
-  - 😊 **Bien**: En paz y tranquilidad.
-  - 😐 **Neutral**: Un día ordinario o en calma.
-  - 😔 **Desanimado**: Cansancio emocional o tristeza leve.
-  - 😢 **Mal**: Dolor emocional, agobio o momento difícil.
-- **Respuesta Empática**: Al pulsar una emoción, el sistema guarda tu registro del día y te presenta una reflexión cálida y respetuosa adaptada a cómo te sientes.
-- **Gráfica Semanal**: Cada registro alimenta tu historial visible en tu perfil para que puedas observar tus variaciones de ánimo con el tiempo.
+Al inicio del muro encontrarás la pregunta: *¿Cómo te sientes hoy?*.
+- **Opciones disponibles**:
+  - 🤩 **Increíble**: Plenitud y alta energía.
+  - 😊 **Bien**: Calma, tranquilidad y balance.
+  - 😐 **Neutral**: Un día ordinario, sin emociones intensas.
+  - 😔 **Desanimado**: Desgaste leve, tristeza o falta de motivación.
+  - 😢 **Mal**: Agobio profundo, dolor emocional o crisis.
+- **Respuesta Personalizada**: Tras seleccionar una emoción, la app te presenta una respuesta empática que valida tu sentir y te ofrece contención.
+- **Monitoreo Semanal**: Tu respuesta se almacena para alimentar la gráfica de evolución emocional visible en tu perfil.
 
 ### B. Frase Inspiracional del Día (*Daily Quote Card*)
-Una tarjeta visual con citas motivacionales, reflexiones de autocuidado y recordatorios de que cada emoción es válida y transitoria.
+Una tarjeta visual diaria con mensajes de autores y terapeutas que invita a la reflexión y al autocuidado consciente.
 
-### C. Muro de Desahogos y Publicaciones
-El flujo continuo de historias compartidas por los miembros:
-- **Identidad**: Puedes ver publicaciones con nombre de usuario de quien las escribió o marcadas como **Anónimo** (para proteger la privacidad de temas sensibles).
-- **Publicaciones de Especialistas**: Los psicólogos colegiados aparecen con una insignia distintiva verde o azul de **"Psicólogo Oficial"**, destacando consejos profesionales.
-- **Contenido Multimedia**: Fotografías de paisajes, arte o momentos que complementan los relatos.
-- **Hashtags Interactivos**: Etiquetas temáticas (ej. `#Ansiedad`, `#Duelo`, `#Gratitud`) que puedes pulsar para filtrar historias similares.
+### C. Publicaciones de la Comunidad
+Un flujo continuo de historias y reflexiones compartidas por los usuarios:
+- **Publicaciones con Nombre o Anónimas**: Puedes elegir mostrar tu usuario o publicar de forma anónima para preservar tu intimidad.
+- **Publicaciones con Insignia de Especialista**: Los psicólogos colegiados aparecen señalados con una insignia azul o verde de **"Psicólogo Oficial"**, compartiendo recomendaciones profesionales.
+- **Imágenes**: Fotografías de arte, naturaleza o recuerdos que enriquecen los textos.
+- **Hashtags Interactivos**: Etiquetas como `#Desahogo`, `#Superación` o `#Ansiedad` que puedes pulsar para ver publicaciones relacionadas.
 
-### D. El Sistema de Reacciones de Apoyo
-En lugar de "likes", Entre Nosotros cuenta con **4 reacciones empáticas**:
+### D. Sistema Oficial de las 4 Reacciones de Apoyo
+En Entre Nosotros las reacciones transmiten empatía real:
 
-| Reacción | Icono | Significado Emocional |
+| Reacción | Icono | Propósito Emocional |
 | :--- | :---: | :--- |
-| **Te Abrazo** | 🤗 *(Corazón / Abrazo)* | Para brindar calidez y contención a quien sufre. |
-| **Te Escucho** | 👂 *(Escucha atenta)* | Para validar que su desahogo ha sido leído y comprendido. |
-| **No Estás Solo** | 🤝 *(Manos unidas)* | Para recordar que compartimos las mismas luchas humanas. |
-| **Fuerza** | 💪 *(Rayo / Energía)* | Para enviar ánimo y fortaleza ante los desafíos cotidianos. |
+| **Te Abrazo** | 🤗 *(Corazón / Abrazo)* | Para arropar a quien comparte un dolor o tristeza. |
+| **Te Escucho** | 👂 *(Escucha activa)* | Para hacer saber a la persona que su voz es importante. |
+| **No Estás Solo** | 🤝 *(Manos unidas)* | Para disipar la sensación de aislamiento en momentos duros. |
+| **Fuerza** | 💪 *(Rayo / Energía)* | Para enviar coraje y perseverancia ante los retos. |
 
 - **Cómo reaccionar**:
-  - Pulsa una vez el botón de reaccionar para enviar la reacción por defecto (*Te Abrazo*).
-  - Mantén presionado el botón por medio segundo para que aparezca el selector flotante y elijas cualquiera de las 4 opciones.
-  - Para retirar tu reacción, vuelve a pulsar la reacción activa.
+  - Pulsa una vez para otorgar la reacción rápida (*Te Abrazo*).
+  - Mantén presionado el botón por medio segundo para desplegar el selector y elegir entre las 4 opciones.
+  - Si vuelves a presionar la reacción activa, se retira de la publicación.
 
-### E. Comentarios y Guardado
-- **Dejar unas palabras**: Pulsa el botón de comentario para leer las respuestas de otros usuarios y dejar un mensaje de apoyo sincero.
-- **Guardar**: Pulsa el icono de marcador para guardar el post en tu biblioteca personal privada.
+### E. Comentarios y Marcadores
+- **Dejar unas palabras**: Pulsa el icono de conversación para brindar palabras de ánimo y apoyo sincero.
+- **Guardar**: Pulsa el icono de marcador para añadir el post a tu biblioteca personal privada.
 
 ---
 
-## 4. Cómo Crear y Compartir un Desahogo
+## 4. Cómo Publicar y Compartir un Desahogo
 
-Compartir lo que sientes alivia la carga emocional. Para publicar:
+Compartir lo que cargas dentro reduce el peso del malestar emocional:
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor Usuario
-    participant Modal as Pantalla Crear Post
-    participant DB as Base de Datos
+    participant Editor as Ventana Crear Post
+    participant Servidor as Base de Datos
 
-    Usuario->>Modal: Pulsa "+" en la cabecera
-    Usuario->>Modal: Escribe su pensamiento o desahogo
-    Usuario->>Modal: (Opcional) Activa "Publicar de forma anónima"
-    Usuario->>Modal: (Opcional) Adjunta fotos desde la galería
-    Usuario->>Modal: (Opcional) Selecciona hashtags (#SaludMental, etc.)
-    Usuario->>Modal: Pulsa "Publicar desahogo"
-    Modal->>DB: Guarda el contenido de forma segura
-    DB-->>Usuario: Publicación visible en el feed comunitario
+    Usuario->>Editor: Pulsa "+" en la cabecera
+    Usuario->>Editor: Redacta lo que siente o piensa
+    Usuario->>Editor: (Opcional) Activa "Publicar de forma anónima"
+    Usuario->>Editor: (Opcional) Agrega una fotografía de su galería
+    Usuario->>Editor: (Opcional) Añade hashtags temáticos
+    Usuario->>Editor: Pulsa "Publicar desahogo"
+    Editor->>Servidor: Guarda de forma cifrada y segura
+    Servidor-->>Usuario: Aparece inmediatamente en el muro
 ```
 
-1. **Abrir el editor**: Pulsa el botón **"+"** en la cabecera superior.
-2. **Escribir tu mensaje**: Expresa libremente tus pensamientos, dudas, reflexiones o momentos difíciles.
-3. **Modalidad Anónima**:
-   - Activa el interruptor **"Publicar de forma anónima"** si prefieres que tu nombre de usuario y avatar queden totalmente ocultos. Tu identidad estará 100% protegida.
-4. **Agregar Fotos**:
-   - Pulsa el icono de imagen para adjuntar fotografías de tu galería que ilustren tu estado o mensaje.
-5. **Hashtags Temáticos**:
-   - Agrega etiquetas relevantes para que personas que pasen por lo mismo encuentren tu desahogo.
-6. **Publicar**:
-   - Pulsa el botón principal para compartir. Tu publicación aparecerá de inmediato en el muro comunitario.
+1. **Abrir el editor**: Pulsa el botón **"+"** en la barra superior.
+2. **Redactar**: Expresa con tus propias palabras lo que te ocurre, sin preocuparte por la extensión.
+3. **Modo 100% Anónimo**:
+   - Si se trata de un tema muy delicado, activa el interruptor **"Publicar de forma anónima"**. Tu nombre, foto y enlace de perfil desaparecerán del post; nadie sabrá quién lo escribió.
+4. **Adjuntar Foto**: Pulsa el botón de cámara/galería si deseas incluir una imagen representativa.
+5. **Etiquetas (#)**: Escribe hashtags para que otros miembros con vivencias similares puedan encontrarte.
+6. **Publicar**: Pulsa el botón principal y tu publicación se sumará al muro de la comunidad.
 
 ---
 
-## 5. ANIMA: Tu Compañero Emocional 24/7
+## 5. ANIMA: Tu Refugio de Escucha y Calma
 
-**ANIMA** es la inteligencia artificial de acompañamiento de Entre Nosotros. No busca sustituir la terapia humana, sino ser un refugio de escucha y calma accesible en cualquier momento del día o de la noche.
+**ANIMA** es el asistente emocional interactivo de Entre Nosotros. Diseñado para ofrecer contención primaria, compañía y herramientas prácticas de autorregulación.
 
-### Capacidades de ANIMA
-- **Escucha Incondicional**: Puedes contarle tus preocupaciones, miedos o alegrías en un chat privado y confidencial.
-- **Ejercicios de Respiración y Relajación**: Solicítale guías de respiración (como la técnica 4-7-8) para reducir episodios de ansiedad.
-- **Respuestas Empáticas y Positivas**: Mensajes estructurados para ayudarte a reformular pensamientos rumiantes o negativos.
+### ¿Qué puede hacer ANIMA por ti?
+- **Escucha Atenta y Confidencial**: Conversa sobre lo que sientes a cualquier hora; nunca emitirá juicios ni críticas.
+- **Ejercicios de Respiración Guiada**: Solicita un ejercicio de respiración consciente (como 4-7-8 o respiración cuadrada) para disminuir palpitaciones o angustia.
+- **Reestructuración de Pensamientos**: Te ayuda a ver las situaciones difíciles desde perspectivas más compasivas.
 
-### Atajos de Conversación Rápida
-En la parte inferior de la pantalla de ANIMA encontrarás botones rápidos:
+### Botones Rápidos de Bienestar
+Al ingresar al chat con ANIMA dispones de atajos inmediatos:
 - 🌧️ *Tengo ansiedad*
 - 💬 *Necesito hablar*
 - 🧘‍♂️ *Ejercicio de respiración*
@@ -232,136 +232,173 @@ En la parte inferior de la pantalla de ANIMA encontrarás botones rápidos:
 - 🎯 *Autoestima*
 - 💙 *Manejo de estrés*
 
-### Protocolo de Detección de Crisis
+### Protocolo de Seguridad ante Crisis
 > [!IMPORTANT]
-> Si en la conversación ANIMA detecta señales de riesgo severo o pensamientos autolesivos, activará de forma prioritaria el **Banner de Crisis Emocional**, ofreciéndote un botón de llamada directa y gratuita a las líneas nacionales de atención psicológica especializada (disponibles las 24 horas).
+> Si durante la conversación con ANIMA expresas ideas de autolesión o emergencia extrema, la aplicación desplegará de forma inmediata el **Banner de Crisis Emocional**, ofreciéndote un botón de llamada directa y gratuita a especialistas en prevención del suicidio y atención psicológica 24 horas.
 
 ---
 
-## 6. Blog de Salud Mental y Calendario de Conciencia
+## 6. Blog: Calendario de 12 Meses y Artículos Clínicos
 
-La pestaña **Blog** combina la psicoeducación profesional con una guía anual de bienestar:
+En la pestaña **Blog** confluyen la psicoeducación avalada por profesionales y un mapa anual de autocuidado:
 
 ### A. Calendario de Conciencia y Cuidado (12 Meses)
-Un carrusel interactivo que dedica cada mes del año a un tema de salud mental:
+Un carrusel panorámico que resalta un propósito de salud mental para cada mes del año:
 - **Enero**: *Nuevos Comienzos y Gratitud*
-- **Febrero**: *Amor Propio y Relaciones Sanas*
+- **Febrero**: *Amor Propio y Vínculos Sanos*
 - **Marzo**: *Resiliencia y Gestión Emocional*
-- **Abril**: *Salud Mental en la Infancia y Adolescencia*
+- **Abril**: *Salud Mental en la Infancia y Juventud*
 - **Mayo**: *Mes Mundial de la Salud Mental*
 - **Junio**: *Diversidad, Identidad y Aceptación*
-- **Julio**: *Autocuidado y Descanso Consciente*
+- **Julio**: *Autocuidado y Descanso Reparador*
 - **Agosto**: *Prevención del Burnout y Estrés Laboral*
 - **Septiembre**: *Conciencia y Prevención del Suicidio*
-- **Octubre**: *Psicoeducación y Derribando Estigmas*
+- **Octubre**: *Psicoeducación y Ruptura de Estigmas*
 - **Noviembre**: *Duelo, Pérdida y Acompañamiento*
 - **Diciembre**: *Cierre de Ciclos y Esperanza*
 
-> **Cómo explorarlo**: Desliza horizontalmente por las tarjetas. Al pulsar sobre cualquier mes, se despliega una ventana completa con el lema del mes, herramientas prácticas y lecturas sugeridas.
+> **Interacción**: Al pulsar sobre cualquier mes, se abre una ventana con el lema, discurso terapéutico y consejos prácticos para esa época del año.
 
-### B. Temas que te pueden interesar (Artículos Clínicos de Especialistas)
-En el blog encontrarás dos secciones oficiales:
-1. **Depresión**
-2. **Ansiedad**
-
-#### Cómo interactuar con los temas:
-- Pulsa sobre la tarjeta de **Depresión** o **Ansiedad**.
-- Se abrirá la pantalla completa del tema con su fotografía panorámica oficial.
-- **Artículos de Psicólogos**: Podrás leer artículos, guías y herramientas redactadas exclusivamente por especialistas clínicos verificados.
-- **Ver Perfil del Especialista**: Al pulsar sobre el nombre o foto del psicólogo en el artículo, puedes consultar su cédula, experiencia y solicitar consulta.
-- **Reaccionar y Guardar**: Puedes otorgar reacciones de empatía al artículo o guardarlo en tus marcadores para volver a consultarlo cuando lo necesites.
-- *(Por seguridad y rigor clínico, en estos artículos no hay comentarios abiertos, garantizando una lectura serena).*
+### B. Temas Oficiales: Depresión y Ansiedad
+En el Blog cuentas con dos áreas especializadas: **Depresión** y **Ansiedad**.
+- **Acceso**: Pulsa sobre la tarjeta de Depresión o de Ansiedad.
+- **Cabecera**: Se presenta la fotografía panorámica del tema junto con su título y una breve descripción clínica.
+- **Publicaciones de Especialistas**:
+  - Cada artículo tiene el formato visual de una publicación principal: foto del psicólogo, nombre, especialidad, cédula validada y fecha.
+  - **Consultar al Especialista**: Pulsa en la foto o nombre del psicólogo para abrir su perfil completo y contactarlo.
+  - **Texto Completo y Consejos**: Lectura profunda con cajas de recomendaciones prácticas e imágenes adjuntas.
+- **Reaccionar y Guardar (Sin Comentarios)**:
+  - Puedes otorgar cualquiera de las 4 reacciones de apoyo (*Te Abrazo*, *Te Escucho*, *No Estás Solo*, *Fuerza*) y guardar el artículo en tus marcadores.
+  - Por rigurosidad y serenidad de lectura, estos artículos no tienen comentarios abiertos.
 
 ---
 
-## 7. Directorio de Psicólogos y Especialistas
+## 7. Directorio de Especialistas Clínicos
 
-Entre Nosotros facilita el puente entre la comunidad y la atención profesional:
+Cuando el desahogo mutuo no es suficiente y requieres atención terapéutica formal, Entre Nosotros te conecta directamente con especialistas verificados:
 
-### Cómo buscar un especialista:
-1. Abre el menú **"Más..."** y selecciona **"Especialistas"**.
-2. Filtra por:
-   - **Especialidad**: Depresión, Ansiedad, Terapia de Pareja, Tanatología, etc.
+### Cómo explorar el directorio:
+1. En el menú **"Más..."**, selecciona **"Especialistas"**.
+2. Utiliza los filtros disponibles:
+   - **Especialidad**: Depresión, Ansiedad, Terapia de Pareja, Terapia Infantil, Duelo, etc.
    - **Modalidad**: En línea, Presencial o Ambas.
-   - **Búsqueda por texto**: Nombre, ciudad o clínica.
+   - **Búsqueda por texto**: Por nombre del especialista o ciudad.
 
-### Ficha Detallada del Psicólogo:
-Al pulsar sobre cualquier especialista accederás a:
-- **Nombre y Fotografía oficial**.
-- **Cédula Profesional validada**.
-- **Enfoque Terapéutico y Especialidades**.
-- **Biografía profesional**.
-- **Ubicación**: Dirección y botón de enlace directo para ver en mapa.
-- **Botón de Contacto Directo**: Enlace para enviar un mensaje directo de **WhatsApp** o realizar una llamada telefónica para agendar tu primera cita.
-
----
-
-## 8. Centro de Apoyo, Test Emocional y Retos de Racha
-
-En el módulo **Ayuda y Soporte** (accesible desde el menú *Más...*):
-
-### A. Líneas de Atención Telefónica Inmediata 24/7
-Información oficial de emergencia gratuita y confidencial en México:
-- **Línea de la Vida**: `800 911 2000` (Atención nacional 24 horas en crisis y prevención del suicidio).
-- **SAPTEL**: `55 5259 8121` (Servicio de apoyo psicológico por teléfono).
-- Botones de marcación rápida para llamar con un solo toque desde tu celular.
-
-### B. Test Psicológico Interactivo
-- Una autoevaluación guiada en preguntas con escala sencilla (*Casi nunca*, *A veces*, *Seguido*, *Mucho hoy*).
-- Evalúa dimensiones clave:
-  1. Ánimo y Alegría
-  2. Ansiedad y Calma
-  3. Sueño y Energía
-  4. Red de Apoyo y Relaciones
-- Al concluir, recibes un **diagnóstico empático** con recomendaciones personalizadas.
-
-### C. Reto Emocional de 7 Días (*Streaks*)
-- Basado en los resultados de tu test, puedes activar un **Desafío de Bienestar de 7 Días**.
-- Cada día desbloquearás una pequeña tarea alcanzable (ej. realizar 5 minutos de caminata consciente, escribir 3 agradecimientos, beber agua y desconectarte 15 minutos).
-- Conforme avanzas, mantienes tu contador de racha y desbloqueas insignias conmemorativas.
+### Perfil Completo del Psicólogo:
+Al pulsar sobre un especialista podrás consultar:
+- Fotografía oficial y nombre completo.
+- **Cédula Profesional validada** por las autoridades sanitarias.
+- Universidad de egreso y enfoque terapéutico (Cognitivo-Conductual, Sistémico, Humanista, etc.).
+- Modalidades de atención y ciudad donde atiende.
+- **Ubicación en Mapa**: Enlace directo para abrir la dirección en aplicaciones de mapas.
+- **Contacto Directo**: Botones para enviar mensaje directo por **WhatsApp** o realizar una llamada telefónica para solicitar informes o agendar una sesión.
 
 ---
 
-## 9. Buscador y Exploración de Temas
+## 8. Test Emocional, Actividades al Propio Ritmo y Medallas
+
+En la sección de **Ayuda y Soporte** (accesible desde el menú *Más...*):
+
+```mermaid
+flowchart TD
+    T1["1. Realizar Test Psicológico"] --> T2["2. Diagnóstico de 4 Dimensiones"]
+    T2 --> T3["3. Elegir Tema de Enfoque"]
+    T3 --> T4["4. Actividades Guiadas sin Prisa (a tu propio ritmo)"]
+    T4 --> T5["5. Subir Foto y Reflexión (Pública o Privada)"]
+    T5 --> T6["6. Cuando tú sientas que lo superaste..."]
+    T6 --> T7["7. Pulsa 'Concluir tema y recibir medalla'"]
+    T7 --> T8["🏆 Medalla Oficial Desbloqueada en tu Perfil"]
+```
+
+### A. Test Psicológico de Autoconocimiento
+- Un cuestionario breve y amigable con opciones sencillas (*Casi nunca*, *A veces*, *Seguido*, *Mucho hoy*).
+- Evalúa 4 dimensiones clave:
+  1. **Ánimo y Alegría** (evalúa tristeza o desgano).
+  2. **Ansiedad y Calma** (evalúa rumiación o tensión física).
+  3. **Estrés y Cansancio** (evalúa sobrecarga del entorno).
+  4. **Amor Propio y Confianza** (evalúa relación personal y autoestima).
+- Al concluir, recibes un reporte cálido que te orienta sobre qué área de tu vida se beneficiaría de mayor cuidado.
+
+---
+
+### B. Actividades de Acompañamiento: Totalmente a tu Propio Ritmo (Sin Límite de Días)
+A diferencia de retos rígidos con contadores forzados:
+- **NO existe un límite de días predeterminado**: No son retos de 7 días obligatorios ni tienes que apresurarte.
+- **Tú tienes el control del tiempo**: Avanzas cuando tú lo desees y cuando sientas la necesidad de realizar una pausa de autocuidado.
+- **Dinámicas interactivas y suaves**: Actividades diseñadas para realizar pequeñas acciones placenteras (ej. escribir una carta de perdón a ti mismo, tomar una fotografía del cielo matutino, ordenar un rincón de tu habitación, dar un paseo sin el celular).
+- **Privacidad a tu elección**:
+  - Al completar cada actividad puedes subir una foto y una reflexión.
+  - Eliges si deseas compartirla en el muro de la comunidad para motivar a otros, o guardarla de forma estrictamente privada solo para ti.
+
+---
+
+### C. Conclusión Voluntaria y Reclamación de tu Medalla
+Tú eres quien decide cuándo has alcanzado tu meta personal o cuándo sientes que has superado esa etapa de dificultad:
+1. Cuando sientas que recuperaste tu serenidad, bienestar o ánimo, pulsa el botón:
+   > **"Concluir tema y recibir medalla"**
+2. Inmediatamente el sistema celebrará tu esfuerzo y acreditará de forma permanente tu **Medalla de Superación** en tu perfil personal.
+3. Podrás elegir si deseas publicar tu logro en el muro Principal para que la comunidad te felicite con reacciones de apoyo.
+
+#### Las 4 Medallas Oficiales de Superación:
+
+| Tema | Medalla Oficial | Significado y Mérito |
+| :--- | :--- | :--- |
+| **Depresión** | 🌤️ **Medalla de Luz Interior** | Reconoce tu valentía por reconectar con la energía, la esperanza y el brillo propio paso a paso. |
+| **Ansiedad** | 🌿 **Medalla de Calma Mental** | Reconoce tu perseverancia por aprender a respirar, soltar el control y habitar el momento presente. |
+| **Estrés** | 🌊 **Medalla de Paz y Equilibrio** | Reconoce tu determinación por poner límites saludables, soltar la sobrecarga y regalarte un respiro. |
+| **Amor Propio**| 💙 **Medalla de Amor Propio** | Reconoce tu compromiso por tratarte con compasión, cuidar de ti y celebrar quién eres en autenticidad. |
+
+*(En tu perfil podrás consultar cuántas medallas has obtenido: 0/4, 1/4, 2/4, 3/4 o 4/4).*
+
+---
+
+### D. Líneas de Atención Inmediata en Crisis 24/7
+Información oficial de emergencia en México accesible de forma gratuita las 24 horas:
+- **Línea de la Vida**: `800 911 2000` (Atención nacional ante crisis severa o riesgo de suicidio).
+- **SAPTEL**: `55 5259 8121` (Apoyo y contención psicológica telefónica).
+- Cuentas con botones de marcado rápido para llamar con un solo toque sin costo.
+
+---
+
+## 9. Buscador Inteligente y Exploración por Temas
 
 En la pestaña **Buscar**:
-- **Buscador en Tiempo Real**: Escribe cualquier palabra clave (ej. *"soledad"*, *"trabajo"*, *"esperanza"*) para encontrar reflexiones afines.
-- **Hashtags en Tendencia**: Explora los temas de conversación más activos de la comunidad.
-- **Exploración por Autor**: Localiza publicaciones compartidas por un miembro específico mediante `@nombre_de_usuario`.
+- **Buscador en Vivo**: Escribe palabras como *"miedo"*, *"insomnio"*, *"ruptura"* o *"familia"* para leer historias afines y no sentirte solo/a.
+- **Filtro por Hashtags**: Descubre las etiquetas más populares de la comunidad.
+- **Búsqueda por Usuario**: Localiza a otros miembros escribiendo su identificador con `@`.
 
 ---
 
-## 10. Tu Perfil Personal y Monitoreo Emocional
+## 10. Tu Perfil Personal, Registro de Ánimo y Guardados
 
-Al pulsar en tu avatar:
-- **Información Personal**: Muestra tu nombre de usuario, biografía y fecha de unión a la plataforma.
-- **Personalización de Avatar**: Elige el avatar que mejor exprese tu personalidad entre diversas ilustraciones.
-- **Rastreador Semanal de Estado de Ánimo**: Una visualización de cómo te has sentido en los últimos 7 días.
-- **Pestaña "Mis Publicaciones"**: Historial de todos los desahogos que has compartido, con sus reacciones y comentarios.
-- **Pestaña "Guardados"**: Tu colección privada de publicaciones y artículos que decidiste marcar como favoritos.
-- **Red de Apoyo**: Consulta a quiénes sigues y quiénes te siguen para mantenerte al tanto de sus relatos.
-- **Cerrar Sesión**: Opción segura para salir de tu cuenta en dispositivos compartidos.
+Al pulsar tu avatar en la barra superior o en el menú:
+- **Identidad**: Foto, nombre de usuario y tu biografía personalizada.
+- **Contadores de Comunidad**: Muestra cuántas publicaciones has compartido, cuántas reacciones de apoyo has recibido y tu red de personas seguidas / seguidores.
+- **Vitrina de Medallas**: Espacio donde se exhiben con orgullo tus **Medallas de Superación** (*Luz Interior*, *Calma Mental*, *Paz y Equilibrio*, *Amor Propio*).
+- **Gráfica Semanal de Estados de Ánimo**: Representación visual de cómo han fluctuado tus emociones en los últimos 7 días con base en tus respuestas en el muro principal.
+- **Pestaña "Mis Publicaciones"**: Acceso a tus desahogos activos con la posibilidad de editarlos o eliminarlos.
+- **Pestaña "Guardados"**: Tu archivo personal de lecturas, artículos y desahogos que decidiste guardar.
+- **Cerrar Sesión**: Para salir de tu cuenta de forma segura en cualquier momento.
 
 ---
 
-## 11. Reglas de Convivencia y Seguridad Comunitaria
+## 11. Seguridad, Reporte de Contenido y Normas
 
-Entre Nosotros mantiene tolerancia cero a comportamientos dañinos. Al formar parte de la comunidad, te comprometes a seguir nuestro código de convivencia:
+Para que Entre Nosotros continúe siendo un espacio seguro, todos los miembros respetan el siguiente código de convivencia:
 
 > [!CAUTION]
-> ### Normas de Obligatorio Cumplimiento:
-> 1. **Cero Tolerancia al Odio y Acoso**: Quedan estrictamente prohibidos los insultos, discriminación por género, orientación, origen, religión o condición de salud.
-> 2. **Espacio Libre de Burlas**: La vulnerabilidad es sagrada. Ningún desahogo debe ser objeto de crítica destructiva o burla.
-> 3. **Prohibido Promover Autolesiones**: Cualquier incitación o apología a dañarse a uno mismo será retirada inmediatamente y reportada.
-> 4. **Respeto a la Privacidad**: No compartas datos personales ajenos (teléfonos, direcciones o nombres reales sin consentimiento).
-> 5. **Publicidad No Autorizada**: Está prohibido el spam, venta de productos o promociones comerciales no avaladas.
+> ### Reglas de Oro de Entre Nosotros:
+> 1. **Cero Tolerancia a Burlas e Insultos**: Quien se desahoga abre su corazón. Está estrictamente prohibido juzgar, desestimar el dolor ajeno o proferir comentarios denigrantes.
+> 2. **Prohibición de Contenido de Autolesión**: No se permite publicar instrucciones, imágenes ni apología del suicidio o el daño autoinfligido.
+> 3. **Confidencialidad y Privacidad**: Respeta los desahogos anónimos. No divulgues datos sensibles de otras personas sin su autorización.
+> 4. **No Spam ni Promoción Comercial**: No se permite la venta de productos, esquemas comerciales ni enlaces externos publicitarios.
 
-### Cómo Reportar Contenido
-Si observas una publicación que infrinja estas reglas:
-1. Pulsa el botón de los tres puntos **"..."** en la esquina superior de la publicación.
+### Cómo Reportar una Publicación:
+Si detectas un comentario o publicación que viole estas reglas:
+1. Pulsa el botón de tres puntos **"..."** situado en la parte superior derecha del post.
 2. Selecciona **"Reportar publicación"**.
-3. El contenido entrará en revisión prioritaria por el equipo de moderación.
+3. El contenido será derivado de forma inmediata al equipo de moderación para su evaluación y retiro si corresponde.
 
 ---
 
-*Entre Nosotros — Porque ninguna tormenta emocional se debe atravesar en soledad.*
+*Entre Nosotros — Una comunidad donde cada emoción cuenta, sin presiones y a tu propio ritmo.*
