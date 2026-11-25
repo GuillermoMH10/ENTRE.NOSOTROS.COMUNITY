@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
+  Text,
+  TouchableOpacity,
   StyleSheet,
   SafeAreaView,
   StatusBar,
@@ -9,6 +11,7 @@ import {
   useWindowDimensions,
   Keyboard,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { AppHeader } from '../components/Header/AppHeader';
 import { BottomTabBar, TabId } from '../components/Navigation/BottomTabBar';
 import { DesktopWebLayout } from '../components/Desktop/DesktopWebLayout';
@@ -30,7 +33,9 @@ import { AnimaScreen } from './AnimaScreen';
 import { UserProfileScreen } from './UserProfileScreen';
 import { MonthDetailModal } from '../components/Blog/MonthDetailModal';
 import { PsychologyTestModal } from '../components/PsychologyTest/PsychologyTestModal';
+import { StandDynamicModal } from '../components/Feed/StandDynamicModal';
 import { subscribeToUserTestAndStreak } from '../services/psychologyTestService';
+import { claimGuestStandPosts } from '../services/standDynamicService';
 import { TestResult } from '../types/psychologyTest';
 import { AnimaToastHost } from '../components/Anima/AnimaToast';
 import { Post } from '../types/post';
@@ -57,6 +62,7 @@ export const HomeScreen: React.FC = () => {
   const [isMonthModalOpen, setIsMonthModalOpen] = useState(false);
   const [selectedMonthIndex, setSelectedMonthIndex] = useState<number>(new Date().getMonth());
   const [isStreakModalOpen, setIsStreakModalOpen] = useState(false);
+  const [isStandDynamicOpen, setIsStandDynamicOpen] = useState(false);
   const [homeTestResult, setHomeTestResult] = useState<TestResult | null>(null);
 
   useEffect(() => {
@@ -65,6 +71,15 @@ export const HomeScreen: React.FC = () => {
     });
     return () => unsub();
   }, [user?.id]);
+
+  // Si el usuario inicia sesión o se registra, vincular automáticamente sus posts hechos como invitado en el stand
+  useEffect(() => {
+    if (user?.id && user?.username) {
+      claimGuestStandPosts(user.id, user.username, user.avatarUrl).catch((err) => {
+        console.warn('Error vinculando posts del stand:', err);
+      });
+    }
+  }, [user?.id, user?.username, user?.avatarUrl]);
   const [selectedPostForComments, setSelectedPostForComments] = useState<Post | null>(null);
   const [selectedPostForOptions, setSelectedPostForOptions] = useState<Post | null>(null);
   const [selectedPostForEdit, setSelectedPostForEdit] = useState<Post | null>(null);
@@ -258,10 +273,17 @@ export const HomeScreen: React.FC = () => {
           onLogout={logout}
           viewingUserProfile={selectedUserForProfile}
           onCloseUserProfile={() => setSelectedUserForProfile(null)}
+          onOpenStandDynamic={() => setIsStandDynamicOpen(true)}
         />
 
         {/* Global Modals for Desktop Web */}
         <AuthScreen visible={isAuthOpen} onClose={handleCloseAuth} />
+
+        <StandDynamicModal
+          visible={isStandDynamicOpen}
+          onClose={() => setIsStandDynamicOpen(false)}
+          onNavigateToRegister={handleOpenAuth}
+        />
 
         <CommentsScreen
           visible={!!selectedPostForComments}
@@ -409,9 +431,22 @@ export const HomeScreen: React.FC = () => {
               setIsMonthModalOpen(true);
             }}
             onOpenStreakModal={() => setIsStreakModalOpen(true)}
+            onOpenStandDynamic={() => setIsStandDynamicOpen(true)}
             contentPaddingTop={HEADER_HEIGHT + (Platform.OS === 'android' ? 4 : 2)}
             contentPaddingBottom={TABBAR_HEIGHT + (Platform.OS === 'ios' ? 14 : 4)}
           />
+        )}
+
+        {/* Botón Flotante para la Dinámica del Stand (100 actividades para visitantes) */}
+        {!isKeyboardVisible && (
+          <TouchableOpacity
+            style={styles.floatingStandBtn}
+            onPress={() => setIsStandDynamicOpen(true)}
+            activeOpacity={0.85}
+          >
+            <Ionicons name="sparkles" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
+            <Text style={styles.floatingStandBtnText}>Dinámica Stand</Text>
+          </TouchableOpacity>
         )}
 
         {/* Animated Bottom Tab Bar (Collapses down on scroll down or hidden when keyboard is open) */}
@@ -554,6 +589,13 @@ export const HomeScreen: React.FC = () => {
           }}
           onTestCompleted={(res) => setHomeTestResult(res)}
         />
+
+        {/* Modal de la Dinámica del Stand (100 actividades para visitantes) */}
+        <StandDynamicModal
+          visible={isStandDynamicOpen}
+          onClose={() => setIsStandDynamicOpen(false)}
+          onNavigateToRegister={handleOpenAuth}
+        />
       </View>
     </SafeAreaView>
   );
@@ -586,5 +628,38 @@ const styles = StyleSheet.create({
     right: 0,
     zIndex: 100,
     backgroundColor: colors.white,
+  },
+  floatingStandBtn: {
+    position: 'absolute',
+    bottom: Platform.OS === 'ios' ? TABBAR_HEIGHT + 20 : TABBAR_HEIGHT + 14,
+    right: 16,
+    zIndex: 99,
+    backgroundColor: '#D97706',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 24,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#B45309',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.35,
+        shadowRadius: 6,
+      },
+      android: {
+        elevation: 6,
+      },
+      web: {
+        boxShadow: '0 4px 14px rgba(180, 83, 9, 0.35)',
+        cursor: 'pointer',
+      },
+    }),
+  },
+  floatingStandBtnText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '800',
+    letterSpacing: 0.3,
   },
 });

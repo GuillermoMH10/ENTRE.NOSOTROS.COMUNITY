@@ -69,6 +69,10 @@ export interface Post {
   reported?: boolean;
   reportsCount?: number;
   reportedBy?: string[];
+  isStandDynamic?: boolean;
+  dynamicActivityTitle?: string;
+  guestSessionId?: string;
+  guestName?: string;
   createdAt: string;
   timestamp: number;
 }

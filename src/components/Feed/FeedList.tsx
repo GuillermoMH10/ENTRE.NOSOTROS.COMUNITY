@@ -14,6 +14,7 @@ import { PostCard } from './PostCard';
 import { DailyQuoteCard } from './DailyQuoteCard';
 import { MonthAwarenessPostCard } from './MonthAwarenessPostCard';
 import { ActiveStreakBannerCard } from './ActiveStreakBannerCard';
+import { StandDynamicBannerCard } from './StandDynamicBannerCard';
 import { WeeklyMoodTracker } from '../Profile/WeeklyMoodTracker';
 import { useAuth } from '../../context/AuthContext';
 import { subscribeToPosts, subscribeToUserFollowing } from '../../services/postsService';
@@ -29,6 +30,7 @@ interface FeedListProps {
   onScrollDirectionChange?: (direction: 'up' | 'down') => void;
   onOpenMonthDetail?: (monthIndex: number) => void;
   onOpenStreakModal?: () => void;
+  onOpenStandDynamic?: () => void;
   contentPaddingTop?: number;
   contentPaddingBottom?: number;
 }
@@ -49,6 +51,7 @@ export const FeedList: React.FC<FeedListProps> = ({
   onScrollDirectionChange,
   onOpenMonthDetail,
   onOpenStreakModal,
+  onOpenStandDynamic,
   contentPaddingTop = 56,
   contentPaddingBottom = 64,
 }) => {
@@ -213,6 +216,7 @@ export const FeedList: React.FC<FeedListProps> = ({
       }}
       ListHeaderComponent={
         <View>
+          <StandDynamicBannerCard onOpenDynamic={onOpenStandDynamic} />
           <ActiveStreakBannerCard onOpenStreakModal={onOpenStreakModal} />
         </View>
       }

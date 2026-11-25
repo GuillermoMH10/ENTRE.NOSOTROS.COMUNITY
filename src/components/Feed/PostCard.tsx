@@ -264,6 +264,16 @@ export const PostCard: React.FC<PostCardProps> = ({
         )}
       </View>
 
+      {/* Stand Dynamic Badge if post was created during the event/booth dynamic */}
+      {post.isStandDynamic ? (
+        <View style={styles.standBadgeContainer}>
+          <Ionicons name="sparkles" size={13} color="#D97706" style={{ marginRight: 5 }} />
+          <Text style={styles.standBadgeText} numberOfLines={1}>
+            🎪 Stand Entre Nosotros {post.dynamicActivityTitle ? `· ${post.dynamicActivityTitle}` : ''}
+          </Text>
+        </View>
+      ) : null}
+
       {/* Body: Description Content */}
       {post.content ? (
         <Text style={styles.contentParagraph}>{post.content}</Text>
@@ -563,5 +573,22 @@ const styles = StyleSheet.create({
     backgroundColor: colors.borderLight,
     width: '100%',
     marginTop: 6,
+  },
+  standBadgeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEF3C7',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+    marginBottom: 8,
+  },
+  standBadgeText: {
+    fontSize: 11.5,
+    fontWeight: '700',
+    color: '#92400E',
   },
 });

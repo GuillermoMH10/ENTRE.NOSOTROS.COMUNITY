@@ -16,6 +16,7 @@ import { generateRandomAvatar } from '../utils/avatar';
 import { UserProfile, AuthContextType } from '../types/auth';
 import { syncUserAvatarInPosts } from '../services/postsService';
 import { clearGuestTestResult } from '../services/psychologyTestService';
+import { claimGuestStandPosts } from '../services/standDynamicService';
 
 const STORAGE_KEY = '@entre_nosotros_session_v1';
 
@@ -147,6 +148,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       setUser(loggedUser);
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(loggedUser));
+      // Reclamar posts creados durante la dinámica del stand
+      claimGuestStandPosts(loggedUser.id, loggedUser.username, loggedUser.avatarUrl).catch(() => {});
       return { success: true };
     } catch (error: any) {
       console.error('Error en inicio de sesión:', error);
@@ -230,6 +233,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       setUser(newUserProfile);
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newUserProfile));
+      // Reclamar posts creados como invitado durante la dinámica del stand
+      claimGuestStandPosts(userId, cleanUsername, avatarUrl).catch(() => {});
 
       return { success: true };
     } catch (error: any) {

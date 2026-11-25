@@ -77,6 +77,7 @@ interface DesktopWebLayoutProps {
   isCreatePostOpen?: boolean;
   onCloseCreatePost?: () => void;
   onPostCreated?: () => void;
+  onOpenStandDynamic?: () => void;
 }
 
 export const DesktopWebLayout: React.FC<DesktopWebLayoutProps> = ({
@@ -101,6 +102,7 @@ export const DesktopWebLayout: React.FC<DesktopWebLayoutProps> = ({
   isCreatePostOpen = false,
   onCloseCreatePost,
   onPostCreated,
+  onOpenStandDynamic,
 }) => {
   // Center section can be any of the main tabs or 'psicologos' | 'reglas' | 'ayuda' | 'perfil'
   const [activeSection, setActiveSection] = useState<DesktopNavId>(
@@ -516,6 +518,7 @@ export const DesktopWebLayout: React.FC<DesktopWebLayoutProps> = ({
                     onUserPress={onUserPress}
                     onOpenMonthDetail={onOpenMonthDetail}
                     onOpenStreakModal={() => setActiveSection('racha')}
+                    onOpenStandDynamic={onOpenStandDynamic}
                     contentPaddingTop={6}
                     contentPaddingBottom={40}
                   />
