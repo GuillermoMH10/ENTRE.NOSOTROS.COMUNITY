@@ -437,18 +437,6 @@ export const HomeScreen: React.FC = () => {
           />
         )}
 
-        {/* Botón Flotante para la Dinámica del Stand (Conoce Entre Nosotros) */}
-        {!isKeyboardVisible && (
-          <TouchableOpacity
-            style={styles.floatingStandBtn}
-            onPress={() => setIsStandDynamicOpen(true)}
-            activeOpacity={0.85}
-          >
-            <Ionicons name="sparkles" size={15} color={colors.white} style={{ marginRight: 6 }} />
-            <Text style={styles.floatingStandBtnText}>Conoce Entre Nosotros</Text>
-          </TouchableOpacity>
-        )}
-
         {/* Animated Bottom Tab Bar (Collapses down on scroll down or hidden when keyboard is open) */}
         {!isKeyboardVisible && (
           <Animated.View
@@ -628,38 +616,5 @@ const styles = StyleSheet.create({
     right: 0,
     zIndex: 100,
     backgroundColor: colors.white,
-  },
-  floatingStandBtn: {
-    position: 'absolute',
-    bottom: Platform.OS === 'ios' ? TABBAR_HEIGHT + 20 : TABBAR_HEIGHT + 14,
-    right: 16,
-    zIndex: 99,
-    backgroundColor: colors.coffeePrimary,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 24,
-    ...Platform.select({
-      ios: {
-        shadowColor: colors.primaryDark,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.25,
-        shadowRadius: 6,
-      },
-      android: {
-        elevation: 6,
-      },
-      web: {
-        boxShadow: '0 4px 14px rgba(34, 62, 82, 0.25)',
-        cursor: 'pointer',
-      },
-    }),
-  },
-  floatingStandBtnText: {
-    color: colors.white,
-    fontSize: 13,
-    fontWeight: '700',
-    letterSpacing: 0.3,
   },
 });
