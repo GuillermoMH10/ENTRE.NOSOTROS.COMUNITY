@@ -453,7 +453,7 @@ export const TopicArticlesModal: React.FC<TopicArticlesModalProps> = ({
           /* VISTA 2: BANNER GRANDE COMPLETO + GRID DE CUADRITOS ATRACTIVOS   */
           /* ================================================================ */
           <>
-            {/* BANNER PANORÁMICO TAMAÑO COMPLETO CON DISEÑO MEJORADO */}
+            {/* BANNER PANORÁMICO TAMAÑO COMPLETO */}
             <View style={styles.bannerWrapper}>
               <ImageBackground
                 source={{ uri: topic.imagen }}
@@ -462,20 +462,8 @@ export const TopicArticlesModal: React.FC<TopicArticlesModalProps> = ({
                 resizeMode="cover"
               >
                 <View style={styles.bannerOverlay}>
-                  {/* Caja de contenido translúcida con contraste y tipografía premium */}
-                  <View style={styles.bannerContentBox}>
-                    <View style={styles.bannerBadgeRow}>
-                      <View style={styles.bannerTopicBadge}>
-                        <Ionicons name="sparkles" size={12} color="#38BDF8" />
-                        <Text style={styles.bannerTopicBadgeText}>Tema Especializado</Text>
-                      </View>
-                      <View style={styles.bannerCategoryBadge}>
-                        <Text style={styles.bannerCategoryBadgeText}>Psicología Clínica</Text>
-                      </View>
-                    </View>
-                    <Text style={styles.bannerTitle}>{topic.titulo}</Text>
-                    <Text style={styles.bannerSubtitle}>{topicDescription}</Text>
-                  </View>
+                  <Text style={styles.bannerTitle}>{topic.titulo}</Text>
+                  <Text style={styles.bannerSubtitle}>{topicDescription}</Text>
                 </View>
               </ImageBackground>
             </View>
@@ -765,63 +753,9 @@ const styles = StyleSheet.create({
   },
   bannerOverlay: {
     flex: 1,
-    padding: 16,
+    padding: 20,
     justifyContent: 'flex-end',
-    ...(Platform.OS === 'web'
-      ? {
-          background:
-            'linear-gradient(180deg, rgba(15, 23, 42, 0.05) 0%, rgba(15, 23, 42, 0.35) 45%, rgba(15, 23, 42, 0.92) 90%)',
-        }
-      : {
-          backgroundColor: 'rgba(15, 23, 42, 0.45)',
-        }),
-  },
-  bannerContentBox: {
-    backgroundColor: 'rgba(15, 23, 42, 0.68)',
-    borderRadius: 20,
-    padding: 18,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.18)',
-    ...(Platform.OS === 'web' ? { backdropFilter: 'blur(10px)' } : {}),
-  },
-  bannerBadgeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 8,
-    flexWrap: 'wrap',
-  },
-  bannerTopicBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    backgroundColor: 'rgba(56, 189, 248, 0.2)',
-    borderWidth: 1,
-    borderColor: 'rgba(56, 189, 248, 0.45)',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 20,
-  },
-  bannerTopicBadgeText: {
-    color: '#38BDF8',
-    fontSize: 11,
-    fontWeight: '800',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  bannerCategoryBadge: {
-    backgroundColor: 'rgba(255, 255, 255, 0.14)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.22)',
-    paddingHorizontal: 9,
-    paddingVertical: 4,
-    borderRadius: 20,
-  },
-  bannerCategoryBadgeText: {
-    color: '#F8FAFC',
-    fontSize: 10.5,
-    fontWeight: '700',
-    letterSpacing: 0.3,
+    backgroundColor: 'transparent',
   },
   bannerTitle: {
     fontSize: 28,
@@ -829,18 +763,18 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     marginBottom: 6,
     letterSpacing: -0.5,
-    textShadowColor: 'rgba(0, 0, 0, 0.6)',
+    textShadowColor: 'rgba(0, 0, 0, 0.95)',
     textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 6,
+    textShadowRadius: 8,
   },
   bannerSubtitle: {
-    fontSize: 13.5,
-    color: '#E2E8F0',
+    fontSize: 14,
+    color: '#FFFFFF',
     lineHeight: 20,
-    fontWeight: '500',
-    textShadowColor: 'rgba(0, 0, 0, 0.35)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
+    fontWeight: '600',
+    textShadowColor: 'rgba(0, 0, 0, 0.95)',
+    textShadowOffset: { width: 0, height: 1.5 },
+    textShadowRadius: 6,
   },
 
   /* Cabecera de la sección */
