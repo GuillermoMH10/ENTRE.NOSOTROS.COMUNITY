@@ -113,6 +113,24 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
   );
   const [isPublishingSummary, setIsPublishingSummary] = useState<boolean>(false);
 
+  // Helper para mostrar un encabezado cálido, empático y motivador en lugar de "Trabajando con..."
+  const getTopicHeaderLabel = (topicName: string) => {
+    const lower = (topicName || '').toLowerCase().trim();
+    if (lower.includes('estrés') || lower.includes('estres')) {
+      return 'Superando el Estrés';
+    }
+    if (lower.includes('ansiedad')) {
+      return 'Superando la Ansiedad';
+    }
+    if (lower.includes('depresión') || lower.includes('depresion')) {
+      return 'Superando la Depresión';
+    }
+    if (lower.includes('amor')) {
+      return 'Cultivando Amor Propio';
+    }
+    return `Superando: ${topicName}`;
+  };
+
   useEffect(() => {
     if (visible) {
       const activeUid = user?.id || userId;
@@ -1024,7 +1042,7 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
                 style={{ marginRight: 8 }}
               />
               <Text style={styles.secondaryOutlineBtnText}>
-                Elegir otro tema para seguir trabajando
+                Elegir otro tema para continuar tu proceso
               </Text>
             </TouchableOpacity>
           </View>
@@ -1065,7 +1083,7 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
                   ]}
                   numberOfLines={1}
                 >
-                  Trabajando con {activeTopic.name}
+                  {getTopicHeaderLabel(activeTopic.name)}
                 </Text>
               </View>
 
