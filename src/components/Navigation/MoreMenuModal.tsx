@@ -8,6 +8,7 @@ import {
   Animated,
   Pressable,
   Dimensions,
+  ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
@@ -183,7 +184,12 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
           </View>
 
           {/* Options list */}
-          <View style={styles.optionsList}>
+          <ScrollView
+            style={{ maxHeight: SCREEN_HEIGHT * 0.65 }}
+            contentContainerStyle={styles.optionsList}
+            nestedScrollEnabled={true}
+            showsVerticalScrollIndicator={false}
+          >
             {menuItems.map((item, index) => (
               <TouchableOpacity
                 key={item.id}
@@ -218,7 +224,7 @@ export const MoreMenuModal: React.FC<MoreMenuModalProps> = ({
                 />
               </TouchableOpacity>
             ))}
-          </View>
+          </ScrollView>
         </Animated.View>
       </View>
     </Modal>

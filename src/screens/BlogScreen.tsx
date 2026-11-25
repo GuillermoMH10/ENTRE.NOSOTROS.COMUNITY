@@ -209,12 +209,14 @@ export const BlogScreen: React.FC<BlogScreenProps> = ({
       {/* Main Scroll Content */}
       <ScrollView
         style={styles.scrollArea}
+        nestedScrollEnabled={true}
         contentContainerStyle={[
           styles.scrollContent,
           isDesktop && { width: '100%' },
           {
+            flexGrow: 1,
             paddingTop: contentPaddingTop + 14,
-            paddingBottom: contentPaddingBottom + 20,
+            paddingBottom: contentPaddingBottom + 60,
           },
         ]}
         showsVerticalScrollIndicator={Platform.OS === 'web' ? true : false}
@@ -239,6 +241,7 @@ export const BlogScreen: React.FC<BlogScreenProps> = ({
           <ScrollView
             ref={carouselScrollRef}
             horizontal
+            nestedScrollEnabled={true}
             showsHorizontalScrollIndicator={false}
             contentOffset={{ x: currentMonthIndex * (singleCardWidth + 14), y: 0 }}
             contentContainerStyle={styles.carouselScrollContent}
@@ -428,6 +431,7 @@ export const BlogScreen: React.FC<BlogScreenProps> = ({
           {psychologists.length > 0 ? (
             <ScrollView
               horizontal
+              nestedScrollEnabled={true}
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.psicoScrollContent}
             >

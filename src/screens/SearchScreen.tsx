@@ -215,6 +215,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
         {hasQuery && (
           <ScrollView
             horizontal
+            nestedScrollEnabled={true}
             showsHorizontalScrollIndicator={false}
             style={styles.filtersScrollView}
             contentContainerStyle={styles.filtersRow}
@@ -283,7 +284,8 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
       {/* Main Scrollable Content */}
       <ScrollView
         showsVerticalScrollIndicator={Platform.OS === 'web' ? true : false}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: contentPaddingBottom + 30 }]}
+        nestedScrollEnabled={true}
+        contentContainerStyle={[styles.scrollContent, { flexGrow: 1, paddingBottom: contentPaddingBottom + 60 }]}
         keyboardShouldPersistTaps="handled"
       >
         {/* Loading Indicator */}
@@ -461,6 +463,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
                 </View>
                 <ScrollView
                   horizontal
+                  nestedScrollEnabled={true}
                   showsHorizontalScrollIndicator={false}
                   contentContainerStyle={styles.usersHorizontalRow}
                 >

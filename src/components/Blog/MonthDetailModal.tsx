@@ -69,6 +69,7 @@ export const MonthDetailModal: React.FC<MonthDetailModalProps> = ({
         <View style={styles.selectorContainer}>
           <ScrollView
             horizontal
+            nestedScrollEnabled={true}
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.selectorScrollContent}
           >
@@ -110,7 +111,8 @@ export const MonthDetailModal: React.FC<MonthDetailModalProps> = ({
         {/* Scrollable Month Detailed Content */}
         <ScrollView
           style={styles.scrollContainer}
-          contentContainerStyle={styles.scrollContent}
+          nestedScrollEnabled={true}
+          contentContainerStyle={[styles.scrollContent, { flexGrow: 1, paddingBottom: 70 }]}
           showsVerticalScrollIndicator={Platform.OS === 'web' ? true : false}
         >
           {/* Main Hero Card for the Selected Month with Image Background */}

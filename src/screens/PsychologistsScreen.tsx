@@ -445,6 +445,7 @@ export const PsychologistsScreen: React.FC<PsychologistsScreenProps> = ({
           <View style={styles.topicsFilterWrapper}>
             <ScrollView
               horizontal
+              nestedScrollEnabled={true}
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.topicsScrollContent}
               keyboardShouldPersistTaps="handled"
@@ -515,13 +516,15 @@ export const PsychologistsScreen: React.FC<PsychologistsScreenProps> = ({
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
           numColumns={numColumns}
+          nestedScrollEnabled={true}
           columnWrapperStyle={styles.gridColumnWrapper}
           contentContainerStyle={[
             styles.listContent,
             isDesktop && { width: '100%', alignSelf: 'center' },
             {
+              flexGrow: 1,
               paddingTop: 6,
-              paddingBottom: contentPaddingBottom + 20,
+              paddingBottom: contentPaddingBottom + 60,
             },
           ]}
           showsVerticalScrollIndicator={Platform.OS === 'web' ? true : false}

@@ -191,12 +191,14 @@ export const SupportScreen: React.FC<SupportScreenProps> = ({
 
       <ScrollView
         style={styles.scrollBody}
+        nestedScrollEnabled={true}
         contentContainerStyle={[
           styles.scrollContent,
           isDesktop && { maxWidth: 740, width: '100%', alignSelf: 'center' },
           {
+            flexGrow: 1,
             paddingTop: contentPaddingTop + 8,
-            paddingBottom: contentPaddingBottom + 20,
+            paddingBottom: contentPaddingBottom + 60,
           },
         ]}
         showsVerticalScrollIndicator={Platform.OS === 'web' ? true : false}
@@ -277,6 +279,7 @@ export const SupportScreen: React.FC<SupportScreenProps> = ({
           <View style={styles.carouselSection}>
             <ScrollView
               horizontal
+              nestedScrollEnabled={true}
               pagingEnabled={false}
               snapToInterval={cardWidth + CARD_SPACING}
               snapToAlignment="start"

@@ -38,6 +38,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { showAnimaToast } from '../Anima/AnimaToast';
 import { ImageViewerModal } from '../UI/ImageViewerModal';
+import { BottomTabBar, TabId } from '../Navigation/BottomTabBar';
 
 interface PsychologyTestModalProps {
   visible: boolean;
@@ -51,6 +52,7 @@ interface PsychologyTestModalProps {
   onTestCompleted?: (result: TestResult) => void;
   onRequireAuth?: () => void;
   embedded?: boolean;
+  onTabPress?: (tabId: TabId) => void;
 }
 
 export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
@@ -64,6 +66,7 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
   onTestCompleted,
   onRequireAuth,
   embedded = false,
+  onTabPress,
 }) => {
   const { user } = useAuth();
   const { width: windowWidth } = useWindowDimensions();
@@ -85,6 +88,7 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
   const [isSubmittingDay, setIsSubmittingDay] = useState<boolean>(false);
   const [isSwappingTask, setIsSwappingTask] = useState<boolean>(false);
   const [isConcludingTopic, setIsConcludingTopic] = useState<boolean>(false);
+  const [isConcludeExpanded, setIsConcludeExpanded] = useState<boolean>(false);
   const [isLoadingMoreSteps, setIsLoadingMoreSteps] = useState<boolean>(false);
   const [visibleStepsLimit, setVisibleStepsLimit] = useState<number>(12);
   const [visibleCompletedLimit, setVisibleCompletedLimit] = useState<number>(12);
@@ -447,9 +451,10 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
 
         <ScrollView
           style={{ flex: 1 }}
-          contentContainerStyle={styles.onboardingFullScrollContent}
+          contentContainerStyle={[styles.onboardingFullScrollContent, { flexGrow: 1, paddingBottom: 100 }]}
           showsVerticalScrollIndicator={Platform.OS === 'web'}
-          bounces={false}
+          nestedScrollEnabled={true}
+          bounces={true}
         >
           {!selectedTopicForIntro ? (
             /* ----------------- STEP 1: CENTERED ANIMA INTRO + 2x2 GRID OF 4 TOPICS ----------------- */
@@ -881,6 +886,7 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
             isDesktop && styles.resultScrollContentDesktop,
           ]}
           showsVerticalScrollIndicator={Platform.OS === 'web'}
+          nestedScrollEnabled={true}
         >
           <View style={styles.celebrationHeroCard}>
             <View
@@ -1032,6 +1038,7 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
             isDesktop && styles.resultScrollContentDesktop,
           ]}
           showsVerticalScrollIndicator={Platform.OS === 'web'}
+          nestedScrollEnabled={true}
         >
           {/* 1. TOPIC & ANIMA SUPPORT HEADER CARD (NO EMOJIS, CLEAN & FULL WIDTH) */}
           <View style={styles.cleanHeaderCard}>
@@ -1166,6 +1173,7 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
+                nestedScrollEnabled={true}
                 contentContainerStyle={styles.activitiesStepsStrip}
               >
                 {(streak?.days || []).slice(0, visibleStepsLimit).map((d) => {
@@ -1597,6 +1605,7 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
+                nestedScrollEnabled={true}
                 contentContainerStyle={{ gap: 10, alignItems: 'center' }}
               >
                 {completedActivitiesList
@@ -1678,7 +1687,7 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
             )}
           </View>
 
-          {/* 4. USER DECIDES WHEN TO STOP & CLAIM MEDAL (COMPACT, SMALLER ON MOBILE, NO EMOJIS) */}
+          {/* 4. USER DECIDES WHEN TO STOP (DESPLEGABLE / INTERFAZ LIMPIA) */}
           <View
             style={[
               styles.cleanWhiteCard,
@@ -1689,65 +1698,87 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
               },
             ]}
           >
-            <View style={{ marginBottom: isDesktop ? 10 : 7 }}>
+            {/* Header interactivo: Solo dice "Tú decides cuándo parar" y botón para desplegar */}
+            <TouchableOpacity
+              style={styles.concludeHeaderToggleRow}
+              onPress={() => setIsConcludeExpanded((prev) => !prev)}
+              activeOpacity={0.75}
+            >
               <Text
                 style={[
                   styles.concludeCardTitle,
                   !isDesktop && { fontSize: 12.5 },
                 ]}
               >
-                Tú decides hasta dónde parar
+                Tú decides cuándo parar
               </Text>
-              <Text
-                style={[
-                  styles.concludeCardSub,
-                  !isDesktop && { fontSize: 11, lineHeight: 15.5, marginTop: 2 },
-                ]}
-              >
-                Cuando te sientas mejor en {activeTopic.name}, concluye el tema para recibir tu{' '}
-                <Text style={{ fontWeight: '800', color: activeTopic.accentColor }}>
-                  {targetBadge.name}
+              <View style={[styles.concludeToggleBtnPill, { borderColor: activeTopic.borderColor, backgroundColor: activeTopic.softBg }]}>
+                <Text style={[styles.concludeToggleBtnText, { color: activeTopic.accentColor }]}>
+                  {isConcludeExpanded ? 'Menos' : 'Ver más'}
                 </Text>
-                .
-              </Text>
-            </View>
-
-            <TouchableOpacity
-              style={[
-                styles.concludeMedalBtn,
-                !isDesktop && styles.concludeMedalBtnMobile,
-                {
-                  borderColor: activeTopic.accentColor,
-                  backgroundColor: activeTopic.softBg,
-                },
-              ]}
-              onPress={handleConcludeTopicForMedal}
-              disabled={isConcludingTopic}
-              activeOpacity={0.85}
-            >
-              {isConcludingTopic ? (
-                <ActivityIndicator size="small" color={activeTopic.accentColor} />
-              ) : (
-                <>
-                  <Ionicons
-                    name="medal-outline"
-                    size={isDesktop ? 15 : 13}
-                    color={activeTopic.accentColor}
-                    style={{ marginRight: 6 }}
-                  />
-                  <Text
-                    style={[
-                      styles.concludeMedalBtnText,
-                      !isDesktop && { fontSize: 11.5 },
-                      { color: activeTopic.accentColor },
-                    ]}
-                    numberOfLines={1}
-                  >
-                    Concluir tema y recibir medalla
-                  </Text>
-                </>
-              )}
+                <Ionicons
+                  name={isConcludeExpanded ? 'chevron-up' : 'chevron-down'}
+                  size={14}
+                  color={activeTopic.accentColor}
+                />
+              </View>
             </TouchableOpacity>
+
+            {/* Contenido desplegado únicamente al pulsar */}
+            {isConcludeExpanded && (
+              <View style={styles.concludeExpandedBox}>
+                <Text
+                  style={[
+                    styles.concludeCardSub,
+                    !isDesktop && { fontSize: 11, lineHeight: 15.5, marginTop: 4 },
+                  ]}
+                >
+                  Cuando te sientas mejor en {activeTopic.name}, concluye el tema para recibir tu{' '}
+                  <Text style={{ fontWeight: '800', color: activeTopic.accentColor }}>
+                    {targetBadge.name}
+                  </Text>
+                  .
+                </Text>
+
+                <TouchableOpacity
+                  style={[
+                    styles.concludeMedalBtn,
+                    !isDesktop && styles.concludeMedalBtnMobile,
+                    {
+                      borderColor: activeTopic.accentColor,
+                      backgroundColor: activeTopic.softBg,
+                      marginTop: 8,
+                    },
+                  ]}
+                  onPress={handleConcludeTopicForMedal}
+                  disabled={isConcludingTopic}
+                  activeOpacity={0.85}
+                >
+                  {isConcludingTopic ? (
+                    <ActivityIndicator size="small" color={activeTopic.accentColor} />
+                  ) : (
+                    <>
+                      <Ionicons
+                        name="medal-outline"
+                        size={isDesktop ? 15 : 13}
+                        color={activeTopic.accentColor}
+                        style={{ marginRight: 6 }}
+                      />
+                      <Text
+                        style={[
+                          styles.concludeMedalBtnText,
+                          !isDesktop && { fontSize: 11.5 },
+                          { color: activeTopic.accentColor },
+                        ]}
+                        numberOfLines={1}
+                      >
+                        Concluir tema y recibir medalla
+                      </Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
 
           {/* 5. MEDALS FOR THE 4 TOPICS (BOTTOM, CLEAN & NO EMOJIS) */}
@@ -1845,6 +1876,19 @@ export const PsychologyTestModal: React.FC<PsychologyTestModalProps> = ({
           <View style={{ height: 24 }} />
         </ScrollView>
       )}
+
+      {/* Barra de navegación inferior siempre visible en Actividades */}
+      <BottomTabBar
+        activeTab="racha"
+        onTabPress={(tabId) => {
+          if (tabId === 'racha') return;
+          onClose();
+          if (onTabPress) onTabPress(tabId);
+        }}
+        onOpenStreakModal={() => {
+          // Ya estamos en la ventana de actividades
+        }}
+      />
     </SafeAreaView>
   );
 
@@ -2307,11 +2351,15 @@ const styles = StyleSheet.create({
   resultScrollContent: {
     paddingHorizontal: 10,
     paddingVertical: 8,
+    paddingBottom: 120,
+    flexGrow: 1,
     width: '100%',
   },
   resultScrollContentDesktop: {
     paddingHorizontal: 22,
     paddingVertical: 18,
+    paddingBottom: 120,
+    flexGrow: 1,
     width: '100%',
   },
   cleanHeaderCard: {
@@ -2715,6 +2763,31 @@ const styles = StyleSheet.create({
     fontSize: 14.5,
     fontWeight: '800',
     color: '#0F172A',
+  },
+  concludeHeaderToggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 2,
+  },
+  concludeToggleBtnPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3.5,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  concludeToggleBtnText: {
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  concludeExpandedBox: {
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
   },
   concludeCardSub: {
     fontSize: 12.5,

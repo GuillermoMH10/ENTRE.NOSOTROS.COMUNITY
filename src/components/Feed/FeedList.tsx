@@ -182,6 +182,7 @@ export const FeedList: React.FC<FeedListProps> = ({
   return (
     <FlatList
       data={feedItems}
+      nestedScrollEnabled={true}
       keyExtractor={(item) => (item.type === 'post' ? item.data.id : item.id)}
       renderItem={({ item }) => {
         if (item.type === 'month-awareness') {
@@ -217,7 +218,7 @@ export const FeedList: React.FC<FeedListProps> = ({
       }
       contentContainerStyle={[
         styles.listContent,
-        { paddingTop: contentPaddingTop, paddingBottom: contentPaddingBottom },
+        { flexGrow: 1, paddingTop: contentPaddingTop, paddingBottom: contentPaddingBottom + 20 },
       ]}
       showsVerticalScrollIndicator={Platform.OS === 'web' ? true : false}
       onScroll={handleScroll}

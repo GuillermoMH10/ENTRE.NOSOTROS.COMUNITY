@@ -535,6 +535,7 @@ export const HomeScreen: React.FC = () => {
           initialResult={homeTestResult}
           startMode={homeTestResult ? 'result' : 'questionnaire'}
           onClose={() => setIsStreakModalOpen(false)}
+          onTabPress={handleTabPress}
           onOpenPsychologists={() => {
             setIsStreakModalOpen(false);
             handleOpenPsychologists();

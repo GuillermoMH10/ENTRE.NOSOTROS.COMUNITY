@@ -209,9 +209,11 @@ export const TopicArticlesModal: React.FC<TopicArticlesModalProps> = ({
 
       <ScrollView
         style={styles.scrollView}
+        nestedScrollEnabled={true}
         contentContainerStyle={[
           styles.scrollContent,
           isDesktop && styles.desktopScrollContent,
+          { flexGrow: 1 },
         ]}
         showsVerticalScrollIndicator={Platform.OS === 'web'}
       >
