@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -56,6 +56,7 @@ export const TopicArticlesModal: React.FC<TopicArticlesModalProps> = ({
 
   const [articles, setArticles] = useState<TopicArticle[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [selectedArticle, setSelectedArticle] = useState<TopicArticle | null>(null);
 
   // Reaction picker state
   const [showReactionPicker, setShowReactionPicker] = useState(false);
@@ -66,6 +67,7 @@ export const TopicArticlesModal: React.FC<TopicArticlesModalProps> = ({
     if (!visible || !topic) {
       setArticles([]);
       setIsLoading(true);
+      setSelectedArticle(null);
       return;
     }
 
@@ -77,6 +79,16 @@ export const TopicArticlesModal: React.FC<TopicArticlesModalProps> = ({
 
     return () => unsubscribe();
   }, [visible, topic]);
+
+  // Keep selectedArticle synchronized when articles array updates in real-time
+  useEffect(() => {
+    if (selectedArticle) {
+      const updated = articles.find((a) => a.id === selectedArticle.id);
+      if (updated) {
+        setSelectedArticle(updated);
+      }
+    }
+  }, [articles]);
 
   if (!visible || !topic) return null;
 
@@ -150,8 +162,13 @@ export const TopicArticlesModal: React.FC<TopicArticlesModalProps> = ({
   const topicDescription =
     topic.descripcion ||
     (topic.id === 'depresion'
-      ? 'Tristeza profunda, anhedonia, pérdida de energía y herramientas de acompañamiento.'
-      : 'Preocupación excesiva, rumiación, ataques de pánico y técnicas de regulación.');
+      ? 'Tristeza profunda, anhedonia, pérdida de energía y herramientas de acompañamiento profesional.'
+      : 'Preocupación excesiva, rumiación, ataques de pánico y técnicas clínicas de regulación emocional.');
+
+  // Responsive widths for cuadritos grid
+  const contentWidth = isDesktop ? Math.min(windowWidth - 36, 684) : windowWidth - 28;
+  const isTwoColumns = contentWidth >= 360;
+  const cardWidth = isTwoColumns ? Math.floor((contentWidth - 12) / 2) : contentWidth;
 
   const modalBody = (
     <SafeAreaView style={[styles.safeArea, isDesktop && styles.desktopSafeArea]}>
@@ -159,18 +176,27 @@ export const TopicArticlesModal: React.FC<TopicArticlesModalProps> = ({
       <View style={styles.topHeaderBar}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={onClose}
+          onPress={() => {
+            if (selectedArticle) {
+              setSelectedArticle(null);
+            } else {
+              onClose();
+            }
+          }}
           activeOpacity={0.75}
-          accessibilityLabel="Volver al blog"
+          accessibilityLabel={selectedArticle ? 'Volver a artículos' : 'Volver al blog'}
         >
           <Ionicons name="arrow-back" size={22} color={colors.primaryDark} />
-          <Text style={styles.backButtonText}>Volver al Blog</Text>
+          <Text style={styles.backButtonText}>
+            {selectedArticle ? `Artículos de ${topic.titulo}` : 'Volver al Blog'}
+          </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.closeIconBtn}
           onPress={onClose}
           activeOpacity={0.75}
+          accessibilityLabel="Cerrar"
         >
           <Ionicons name="close" size={22} color={colors.primaryDark} />
         </TouchableOpacity>
@@ -184,187 +210,182 @@ export const TopicArticlesModal: React.FC<TopicArticlesModalProps> = ({
         ]}
         showsVerticalScrollIndicator={Platform.OS === 'web'}
       >
-        {/* PANORAMIC TOPIC BANNER: FOTO COMPLETA + TÍTULO ENCIMA + PEQUEÑA DESCRIPCIÓN DEBAJO (SIN KPIS) */}
-        <View style={styles.bannerWrapper}>
-          <ImageBackground
-            source={{ uri: topic.imagen }}
-            style={styles.bannerImage}
-            imageStyle={styles.bannerImageStyle}
-            resizeMode="cover"
-          >
-            <View style={styles.bannerOverlay}>
-              <Text style={styles.bannerTitle}>{topic.titulo}</Text>
-              <Text style={styles.bannerSubtitle}>{topicDescription}</Text>
-            </View>
-          </ImageBackground>
-        </View>
+        {/* ================================================================ */}
+        {/* VISTA 1: DETALLE DE LECTURA DEL ARTÍCULO COMPLETO                */}
+        {/* ================================================================ */}
+        {selectedArticle ? (
+          <View style={styles.readerContainer}>
+            {/* Sub-barra de regreso a la lista de cuadritos */}
+            <TouchableOpacity
+              style={styles.backToGridBtn}
+              onPress={() => setSelectedArticle(null)}
+              activeOpacity={0.75}
+            >
+              <Ionicons name="chevron-back" size={18} color={colors.primary} />
+              <Text style={styles.backToGridText}>Ver todos los artículos de {topic.titulo}</Text>
+            </TouchableOpacity>
 
-        {/* FEED DE PUBLICACIONES (DISEÑO COMO LA APP PRINCIPAL) */}
-        {isLoading ? (
-          <View style={styles.loadingBox}>
-            <ActivityIndicator size="large" color={colors.primary} />
-            <Text style={styles.loadingText}>Cargando publicaciones...</Text>
-          </View>
-        ) : articles.length > 0 ? (
-          <View style={styles.articlesFeed}>
-            {articles.map((item) => {
-              const totalReactions =
-                (item.reactions?.teAbrazo || 0) +
-                (item.reactions?.teEscucho || 0) +
-                (item.reactions?.noEstasSolo || 0) +
-                (item.reactions?.fuerza || 0);
-
-              const userReaction = currentUserId ? item.userReactions?.[currentUserId] : undefined;
-              const isSaved = currentUserId ? item.savedBy?.includes(currentUserId) : false;
-              const activeReactionConfig = userReaction ? REACTIONS_MAP[userReaction] : null;
-
-              return (
-                <View key={item.id} style={styles.postCard}>
-                  {/* Post Header: Avatar del Psicólogo + Nombre + Especialidad + Fecha (Clickeable para ver su perfil) */}
-                  <View style={styles.postHeader}>
-                    <TouchableOpacity
-                      style={styles.authorClickArea}
-                      activeOpacity={0.75}
-                      onPress={() => {
-                        if (onOpenPsychologistDetail) {
-                          onOpenPsychologistDetail(item.psicologoId, {
-                            id: item.psicologoId,
-                            nombre: item.psicologoNombre,
-                            especialidad: item.psicologoEspecialidad,
-                            imagen: item.psicologoAvatar,
-                            cedula: item.psicologoCedula,
-                          });
-                        }
-                      }}
-                    >
-                      {item.psicologoAvatar ? (
-                        <Image
-                          source={{ uri: item.psicologoAvatar }}
-                          style={styles.authorAvatar}
-                          resizeMode="cover"
-                        />
-                      ) : (
-                        <View style={styles.authorAvatarFallback}>
-                          <Text style={styles.authorAvatarFallbackText}>
-                            {(item.psicologoNombre || 'P').charAt(0).toUpperCase()}
-                          </Text>
-                        </View>
-                      )}
-
-                      <View style={styles.authorInfo}>
-                        <View style={styles.authorNameRow}>
-                          <Text style={styles.authorName} numberOfLines={1}>
-                            {item.psicologoNombre}
-                          </Text>
-                          <View style={styles.verifiedBadge}>
-                            <Ionicons name="checkmark-circle" size={13} color={colors.primary} />
-                            <Text style={styles.verifiedBadgeText}>Psicólogo</Text>
-                          </View>
-                        </View>
-
-                        <Text style={styles.authorSpecialty} numberOfLines={1}>
-                          {item.psicologoEspecialidad}
-                          {item.psicologoCedula ? ` · Cédula: ${item.psicologoCedula}` : ''}
-                        </Text>
-                        <Text style={styles.postTime}>
-                          {formatTimeAgo(item.timestamp, item.createdAt)}
-                        </Text>
-                      </View>
-                    </TouchableOpacity>
-                  </View>
-
-                  {/* Post Body: Título del Artículo */}
-                  {item.titulo ? (
-                    <Text style={styles.articleTitle}>{item.titulo}</Text>
-                  ) : null}
-
-                  {/* Resumen opcional */}
-                  {item.resumen ? (
-                    <View style={styles.summaryCallout}>
-                      <Text style={styles.summaryText}>{item.resumen}</Text>
-                    </View>
-                  ) : null}
-
-                  {/* Contenido redactado */}
-                  <Text style={styles.contentParagraph}>{item.contenido}</Text>
-
-                  {/* Recomendaciones y consejos del especialista (si las hay) */}
-                  {item.recomendaciones ? (
-                    <View style={styles.tipsBox}>
-                      <View style={styles.tipsHeaderRow}>
-                        <Ionicons name="bulb-outline" size={16} color={colors.primary} />
-                        <Text style={styles.tipsHeaderTitle}>
-                          Consejos y Herramientas del Especialista:
-                        </Text>
-                      </View>
-                      <Text style={styles.tipsText}>{item.recomendaciones}</Text>
-                    </View>
-                  ) : null}
-
-                  {/* Imagen si es que subió el especialista */}
-                  {item.imagenUrl && item.imagenUrl !== topic.imagen ? (
-                    <View style={styles.postMediaWrapper}>
-                      <Image
-                        source={{ uri: item.imagenUrl }}
-                        style={styles.postMediaImage}
-                        resizeMode="cover"
-                      />
-                    </View>
-                  ) : null}
-
-                  {/* Reacciones Acumuladas Preview (igual a Principal) */}
-                  {totalReactions > 0 && (
-                    <View style={styles.counterRow}>
-                      <View style={styles.reactionIconsOverlap}>
-                        {item.reactions && item.reactions.teAbrazo > 0 && (
-                          <View style={[styles.miniCircle, { backgroundColor: REACTIONS_MAP.teAbrazo.bgColor }]}>
-                            <Image
-                              source={REACTIONS_MAP.teAbrazo.image}
-                              style={styles.miniReactionImg}
-                              resizeMode="contain"
-                            />
-                          </View>
-                        )}
-                        {item.reactions && item.reactions.teEscucho > 0 && (
-                          <View style={[styles.miniCircle, { backgroundColor: REACTIONS_MAP.teEscucho.bgColor }]}>
-                            <Image
-                              source={REACTIONS_MAP.teEscucho.image}
-                              style={styles.miniReactionImg}
-                              resizeMode="contain"
-                            />
-                          </View>
-                        )}
-                        {item.reactions && item.reactions.noEstasSolo > 0 && (
-                          <View style={[styles.miniCircle, { backgroundColor: REACTIONS_MAP.noEstasSolo.bgColor }]}>
-                            <Image
-                              source={REACTIONS_MAP.noEstasSolo.image}
-                              style={styles.miniReactionImg}
-                              resizeMode="contain"
-                            />
-                          </View>
-                        )}
-                        {item.reactions && item.reactions.fuerza > 0 && (
-                          <View style={[styles.miniCircle, { backgroundColor: REACTIONS_MAP.fuerza.bgColor }]}>
-                            <Image
-                              source={REACTIONS_MAP.fuerza.image}
-                              style={styles.miniReactionImg}
-                              resizeMode="contain"
-                            />
-                          </View>
-                        )}
-                      </View>
-                      <Text style={styles.counterText}>{totalReactions}</Text>
+            <View style={styles.fullArticleCard}>
+              {/* Encabezado del Especialista */}
+              <View style={styles.readerAuthorRow}>
+                <TouchableOpacity
+                  style={styles.authorClickArea}
+                  activeOpacity={0.75}
+                  onPress={() => {
+                    if (onOpenPsychologistDetail) {
+                      onOpenPsychologistDetail(selectedArticle.psicologoId, {
+                        id: selectedArticle.psicologoId,
+                        nombre: selectedArticle.psicologoNombre,
+                        especialidad: selectedArticle.psicologoEspecialidad,
+                        imagen: selectedArticle.psicologoAvatar,
+                        cedula: selectedArticle.psicologoCedula,
+                      });
+                    }
+                  }}
+                >
+                  {selectedArticle.psicologoAvatar ? (
+                    <Image
+                      source={{ uri: selectedArticle.psicologoAvatar }}
+                      style={styles.readerAuthorAvatar}
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <View style={styles.readerAuthorAvatarFallback}>
+                      <Text style={styles.readerAuthorAvatarFallbackText}>
+                        {(selectedArticle.psicologoNombre || 'P').charAt(0).toUpperCase()}
+                      </Text>
                     </View>
                   )}
 
-                  {/* Actions Footer: ÚNICAMENTE REACCIONAR Y GUARDAR (NO COMENTAR) */}
+                  <View style={styles.readerAuthorInfo}>
+                    <View style={styles.authorNameRow}>
+                      <Text style={styles.readerAuthorName} numberOfLines={1}>
+                        {selectedArticle.psicologoNombre}
+                      </Text>
+                      <View style={styles.verifiedBadge}>
+                        <Ionicons name="checkmark-circle" size={13} color={colors.primary} />
+                        <Text style={styles.verifiedBadgeText}>Especialista</Text>
+                      </View>
+                    </View>
+
+                    <Text style={styles.authorSpecialty} numberOfLines={1}>
+                      {selectedArticle.psicologoEspecialidad}
+                      {selectedArticle.psicologoCedula ? ` · Cédula: ${selectedArticle.psicologoCedula}` : ''}
+                    </Text>
+                    <Text style={styles.postTime}>
+                      {formatTimeAgo(selectedArticle.timestamp, selectedArticle.createdAt)}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              </View>
+
+              {/* Título Grande del Artículo */}
+              {selectedArticle.titulo ? (
+                <Text style={styles.fullArticleTitle}>{selectedArticle.titulo}</Text>
+              ) : null}
+
+              {/* Imagen destacada subida por el especialista */}
+              {(selectedArticle.imagenUrl || topic.imagen) ? (
+                <View style={styles.fullArticleMediaWrapper}>
+                  <Image
+                    source={{ uri: selectedArticle.imagenUrl || topic.imagen }}
+                    style={styles.fullArticleMediaImage}
+                    resizeMode="cover"
+                  />
+                </View>
+              ) : null}
+
+              {/* Resumen opcional */}
+              {selectedArticle.resumen ? (
+                <View style={styles.summaryCallout}>
+                  <Text style={styles.summaryText}>{selectedArticle.resumen}</Text>
+                </View>
+              ) : null}
+
+              {/* Contenido redactado */}
+              <Text style={styles.fullContentParagraph}>{selectedArticle.contenido}</Text>
+
+              {/* Consejos y herramientas prácticas */}
+              {selectedArticle.recomendaciones ? (
+                <View style={styles.tipsBox}>
+                  <View style={styles.tipsHeaderRow}>
+                    <Ionicons name="bulb-outline" size={17} color="#15803D" />
+                    <Text style={styles.tipsHeaderTitle}>
+                      Herramientas y Recomendaciones Clínicas:
+                    </Text>
+                  </View>
+                  <Text style={styles.tipsText}>{selectedArticle.recomendaciones}</Text>
+                </View>
+              ) : null}
+
+              {/* Contador de reacciones acumuladas */}
+              {(() => {
+                const totalReactions =
+                  (selectedArticle.reactions?.teAbrazo || 0) +
+                  (selectedArticle.reactions?.teEscucho || 0) +
+                  (selectedArticle.reactions?.noEstasSolo || 0) +
+                  (selectedArticle.reactions?.fuerza || 0);
+
+                if (totalReactions <= 0) return null;
+
+                return (
+                  <View style={styles.counterRow}>
+                    <View style={styles.reactionIconsOverlap}>
+                      {selectedArticle.reactions && selectedArticle.reactions.teAbrazo > 0 && (
+                        <View style={[styles.miniCircle, { backgroundColor: REACTIONS_MAP.teAbrazo.bgColor }]}>
+                          <Image
+                            source={REACTIONS_MAP.teAbrazo.image}
+                            style={styles.miniReactionImg}
+                            resizeMode="contain"
+                          />
+                        </View>
+                      )}
+                      {selectedArticle.reactions && selectedArticle.reactions.teEscucho > 0 && (
+                        <View style={[styles.miniCircle, { backgroundColor: REACTIONS_MAP.teEscucho.bgColor }]}>
+                          <Image
+                            source={REACTIONS_MAP.teEscucho.image}
+                            style={styles.miniReactionImg}
+                            resizeMode="contain"
+                          />
+                        </View>
+                      )}
+                      {selectedArticle.reactions && selectedArticle.reactions.noEstasSolo > 0 && (
+                        <View style={[styles.miniCircle, { backgroundColor: REACTIONS_MAP.noEstasSolo.bgColor }]}>
+                          <Image
+                            source={REACTIONS_MAP.noEstasSolo.image}
+                            style={styles.miniReactionImg}
+                            resizeMode="contain"
+                          />
+                        </View>
+                      )}
+                      {selectedArticle.reactions && selectedArticle.reactions.fuerza > 0 && (
+                        <View style={[styles.miniCircle, { backgroundColor: REACTIONS_MAP.fuerza.bgColor }]}>
+                          <Image
+                            source={REACTIONS_MAP.fuerza.image}
+                            style={styles.miniReactionImg}
+                            resizeMode="contain"
+                          />
+                        </View>
+                      )}
+                    </View>
+                    <Text style={styles.counterText}>{totalReactions} apoyos</Text>
+                  </View>
+                );
+              })()}
+
+              {/* Acciones: ÚNICAMENTE REACCIONAR Y GUARDAR (NO COMENTAR) */}
+              {(() => {
+                const userReaction = currentUserId ? selectedArticle.userReactions?.[currentUserId] : undefined;
+                const isSaved = currentUserId ? selectedArticle.savedBy?.includes(currentUserId) : false;
+                const activeReactionConfig = userReaction ? REACTIONS_MAP[userReaction] : null;
+
+                return (
                   <View style={styles.actionsFooter}>
-                    {/* Botón Reaccionar */}
                     <TouchableOpacity
                       style={styles.actionBtn}
                       activeOpacity={0.7}
-                      onPress={() => handleTapReaction(item)}
-                      onLongPress={(e) => handleOpenReactionPicker(item.id, e.nativeEvent)}
+                      onPress={() => handleTapReaction(selectedArticle)}
+                      onLongPress={(e) => handleOpenReactionPicker(selectedArticle.id, e.nativeEvent)}
                       delayLongPress={220}
                     >
                       {activeReactionConfig ? (
@@ -374,11 +395,7 @@ export const TopicArticlesModal: React.FC<TopicArticlesModalProps> = ({
                           resizeMode="contain"
                         />
                       ) : (
-                        <Ionicons
-                          name="heart-outline"
-                          size={19}
-                          color={colors.primary}
-                        />
+                        <Ionicons name="heart-outline" size={20} color={colors.primary} />
                       )}
                       <Text
                         style={[
@@ -390,15 +407,14 @@ export const TopicArticlesModal: React.FC<TopicArticlesModalProps> = ({
                       </Text>
                     </TouchableOpacity>
 
-                    {/* Botón Guardar */}
                     <TouchableOpacity
                       style={styles.actionBtn}
                       activeOpacity={0.7}
-                      onPress={() => handleToggleSave(item.id)}
+                      onPress={() => handleToggleSave(selectedArticle.id)}
                     >
                       <Ionicons
                         name={isSaved ? 'bookmark' : 'bookmark-outline'}
-                        size={19}
+                        size={20}
                         color={isSaved ? colors.primary : colors.textSecondary}
                       />
                       <Text
@@ -411,23 +427,191 @@ export const TopicArticlesModal: React.FC<TopicArticlesModalProps> = ({
                       </Text>
                     </TouchableOpacity>
                   </View>
-                </View>
-              );
-            })}
+                );
+              })()}
+            </View>
+
+            {/* Botón inferior de regreso */}
+            <TouchableOpacity
+              style={styles.bottomReturnBtn}
+              onPress={() => setSelectedArticle(null)}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="arrow-back" size={16} color={colors.primaryDark} />
+              <Text style={styles.bottomReturnBtnText}>
+                Volver a la lista de artículos de {topic.titulo}
+              </Text>
+            </TouchableOpacity>
           </View>
         ) : (
-          <View style={styles.emptyCard}>
-            <View style={styles.emptyIconCircle}>
-              <Ionicons name="book-outline" size={30} color={colors.primary} />
+          /* ================================================================ */
+          /* VISTA 2: BANNER GRANDE COMPLETO + GRID DE CUADRITOS ATRACTIVOS   */
+          /* ================================================================ */
+          <>
+            {/* BANNER PANORÁMICO TAMAÑO COMPLETO */}
+            <View style={styles.bannerWrapper}>
+              <ImageBackground
+                source={{ uri: topic.imagen }}
+                style={styles.bannerImage}
+                imageStyle={styles.bannerImageStyle}
+                resizeMode="cover"
+              >
+                <View style={styles.bannerOverlay}>
+                  <View style={styles.bannerBadgeRow}>
+                    <View style={styles.bannerTopicBadge}>
+                      <Ionicons name="bookmark" size={13} color="#FFFFFF" />
+                      <Text style={styles.bannerTopicBadgeText}>Tema Especializado</Text>
+                    </View>
+                  </View>
+                  <Text style={styles.bannerTitle}>{topic.titulo}</Text>
+                  <Text style={styles.bannerSubtitle}>{topicDescription}</Text>
+                </View>
+              </ImageBackground>
             </View>
-            <Text style={styles.emptyTitle}>
-              Próximamente publicaciones sobre {topic.titulo}
-            </Text>
-            <Text style={styles.emptySub}>
-              Los especialistas clínicos están redactando artículos y recomendaciones
-              profesionales para este tema.
-            </Text>
-          </View>
+
+            {/* Cabecera de la sección de artículos */}
+            <View style={styles.sectionHeaderRow}>
+              <View style={styles.sectionTitleWithIcon}>
+                <Ionicons name="grid-outline" size={18} color={colors.primary} />
+                <Text style={styles.sectionTitle}>Artículos de Especialistas</Text>
+              </View>
+              {articles.length > 0 && (
+                <View style={styles.countBadge}>
+                  <Text style={styles.countBadgeText}>{articles.length}</Text>
+                </View>
+              )}
+            </View>
+
+            {/* ESTADO DE CARGA */}
+            {isLoading ? (
+              <View style={styles.loadingBox}>
+                <ActivityIndicator size="large" color={colors.primary} />
+                <Text style={styles.loadingText}>Cargando artículos...</Text>
+              </View>
+            ) : articles.length > 0 ? (
+              /* GRID DE CUADRITOS VISUALMENTE ATRACTIVOS */
+              <View style={styles.gridContainer}>
+                {articles.map((item) => {
+                  const cardPhoto = item.imagenUrl || topic.imagen;
+                  const totalReactions =
+                    (item.reactions?.teAbrazo || 0) +
+                    (item.reactions?.teEscucho || 0) +
+                    (item.reactions?.noEstasSolo || 0) +
+                    (item.reactions?.fuerza || 0);
+
+                  return (
+                    <TouchableOpacity
+                      key={item.id}
+                      style={[styles.cuadritoCard, { width: cardWidth }]}
+                      activeOpacity={0.88}
+                      onPress={() => setSelectedArticle(item)}
+                    >
+                      {/* Imagen superior del cuadrito */}
+                      <View style={styles.cuadritoImageWrapper}>
+                        <Image
+                          source={{ uri: cardPhoto }}
+                          style={styles.cuadritoImage}
+                          resizeMode="cover"
+                        />
+                        <View style={styles.cuadritoImageOverlay}>
+                          {totalReactions > 0 ? (
+                            <View style={styles.cuadritoReactionPill}>
+                              <Ionicons name="heart" size={11} color="#E11D48" />
+                              <Text style={styles.cuadritoReactionCount}>{totalReactions}</Text>
+                            </View>
+                          ) : null}
+                          <View style={styles.cuadritoTimePill}>
+                            <Text style={styles.cuadritoTimePillText}>
+                              {formatTimeAgo(item.timestamp, item.createdAt)}
+                            </Text>
+                          </View>
+                        </View>
+                      </View>
+
+                      {/* Contenido interior del cuadrito */}
+                      <View style={styles.cuadritoBody}>
+                        {/* Autor psicólogo */}
+                        <TouchableOpacity
+                          style={styles.cuadritoAuthorRow}
+                          activeOpacity={0.75}
+                          onPress={(e) => {
+                            e.stopPropagation();
+                            if (onOpenPsychologistDetail) {
+                              onOpenPsychologistDetail(item.psicologoId, {
+                                id: item.psicologoId,
+                                nombre: item.psicologoNombre,
+                                especialidad: item.psicologoEspecialidad,
+                                imagen: item.psicologoAvatar,
+                                cedula: item.psicologoCedula,
+                              });
+                            }
+                          }}
+                        >
+                          {item.psicologoAvatar ? (
+                            <Image
+                              source={{ uri: item.psicologoAvatar }}
+                              style={styles.cuadritoAvatar}
+                              resizeMode="cover"
+                            />
+                          ) : (
+                            <View style={styles.cuadritoAvatarFallback}>
+                              <Text style={styles.cuadritoAvatarFallbackText}>
+                                {(item.psicologoNombre || 'P').charAt(0).toUpperCase()}
+                              </Text>
+                            </View>
+                          )}
+                          <View style={styles.cuadritoAuthorTexts}>
+                            <View style={styles.cuadritoAuthorNameRow}>
+                              <Text style={styles.cuadritoAuthorName} numberOfLines={1}>
+                                {item.psicologoNombre}
+                              </Text>
+                              <Ionicons name="checkmark-circle" size={12} color={colors.primary} />
+                            </View>
+                            <Text style={styles.cuadritoAuthorSpec} numberOfLines={1}>
+                              {item.psicologoEspecialidad}
+                            </Text>
+                          </View>
+                        </TouchableOpacity>
+
+                        {/* Título del artículo */}
+                        <Text style={styles.cuadritoTitle} numberOfLines={2}>
+                          {item.titulo || 'Artículo Clínico'}
+                        </Text>
+
+                        {/* Pequeño resumen si existe */}
+                        {item.resumen ? (
+                          <Text style={styles.cuadritoSnippet} numberOfLines={2}>
+                            {item.resumen}
+                          </Text>
+                        ) : null}
+
+                        {/* Footer del cuadrito con botón de lectura */}
+                        <View style={styles.cuadritoFooter}>
+                          <View style={styles.cuadritoReadAction}>
+                            <Text style={styles.cuadritoReadText}>Leer artículo</Text>
+                            <Ionicons name="arrow-forward" size={13} color={colors.primary} />
+                          </View>
+                        </View>
+                      </View>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            ) : (
+              <View style={styles.emptyCard}>
+                <View style={styles.emptyIconCircle}>
+                  <Ionicons name="book-outline" size={32} color={colors.primary} />
+                </View>
+                <Text style={styles.emptyTitle}>
+                  Próximamente publicaciones sobre {topic.titulo}
+                </Text>
+                <Text style={styles.emptySub}>
+                  Los especialistas clínicos están redactando artículos y recomendaciones
+                  profesionales para este tema.
+                </Text>
+              </View>
+            )}
+          </>
         )}
       </ScrollView>
 
@@ -453,7 +637,13 @@ export const TopicArticlesModal: React.FC<TopicArticlesModalProps> = ({
       visible={visible}
       animationType="slide"
       transparent={false}
-      onRequestClose={onClose}
+      onRequestClose={() => {
+        if (selectedArticle) {
+          setSelectedArticle(null);
+        } else {
+          onClose();
+        }
+      }}
     >
       {modalBody}
     </Modal>
@@ -466,7 +656,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F0F5F8', // Azulito claro suave de Entre Nosotros
   },
   desktopSafeArea: {
-    maxWidth: 720,
+    maxWidth: 760,
     width: '100%',
     alignSelf: 'center',
     backgroundColor: '#F0F5F8',
@@ -514,108 +704,328 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingVertical: 18,
   },
-  /* Banner: Foto completa con título encima y descripción debajo (sin KPIs) */
+
+  /* ======================================================================== */
+  /* BANNER PANORÁMICO TAMAÑO COMPLETO CON FOTO Y TEXTO                       */
+  /* ======================================================================== */
   bannerWrapper: {
     width: '100%',
-    borderRadius: 22,
+    borderRadius: 24,
     overflow: 'hidden',
-    marginBottom: 16,
+    marginBottom: 20,
     backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E1EAEF',
+    shadowColor: '#223E52',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  bannerImage: {
+    width: '100%',
+    minHeight: 260, // Tamaño grande completo
+    height: 270,
+  },
+  bannerImageStyle: {
+    borderRadius: 24,
+  },
+  bannerOverlay: {
+    flex: 1,
+    padding: 24,
+    backgroundColor: 'rgba(15, 23, 42, 0.62)',
+    justifyContent: 'flex-end',
+  },
+  bannerBadgeRow: {
+    flexDirection: 'row',
+    marginBottom: 8,
+  },
+  bannerTopicBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: 'rgba(53, 89, 113, 0.85)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
+  },
+  bannerTopicBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  bannerTitle: {
+    fontSize: 28,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    marginBottom: 8,
+    letterSpacing: -0.4,
+    textShadowColor: 'rgba(0, 0, 0, 0.45)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 6,
+  },
+  bannerSubtitle: {
+    fontSize: 14,
+    color: '#F0F5F8',
+    lineHeight: 20,
+    fontWeight: '500',
+    textShadowColor: 'rgba(0, 0, 0, 0.35)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
+  },
+
+  /* Cabecera de la sección */
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 14,
+    paddingHorizontal: 4,
+  },
+  sectionTitleWithIcon: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: colors.primaryDark,
+  },
+  countBadge: {
+    backgroundColor: '#E1EAEF',
+    paddingHorizontal: 9,
+    paddingVertical: 3,
+    borderRadius: 12,
+  },
+  countBadgeText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: colors.primary,
+  },
+
+  /* ======================================================================== */
+  /* GRID DE CUADRITOS ATRACTIVOS                                             */
+  /* ======================================================================== */
+  gridContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    justifyContent: 'flex-start',
+  },
+  cuadritoCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#E1EAEF',
+    overflow: 'hidden',
+    shadowColor: '#223E52',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    elevation: 3,
+    marginBottom: 2,
+  },
+  cuadritoImageWrapper: {
+    width: '100%',
+    height: 135,
+    backgroundColor: '#E1EAEF',
+    position: 'relative',
+  },
+  cuadritoImage: {
+    width: '100%',
+    height: '100%',
+  },
+  cuadritoImageOverlay: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    right: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  cuadritoReactionPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.92)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 14,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  cuadritoReactionCount: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#E11D48',
+  },
+  cuadritoTimePill: {
+    marginLeft: 'auto',
+    backgroundColor: 'rgba(15, 23, 42, 0.65)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 14,
+  },
+  cuadritoTimePillText: {
+    fontSize: 10,
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  cuadritoBody: {
+    padding: 12,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 6,
+  },
+  cuadritoAuthorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 2,
+  },
+  cuadritoAvatar: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: '#E1EAEF',
+  },
+  cuadritoAvatarFallback: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: '#E1EAEF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cuadritoAvatarFallbackText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: colors.primaryDark,
+  },
+  cuadritoAuthorTexts: {
+    flex: 1,
+  },
+  cuadritoAuthorNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  cuadritoAuthorName: {
+    fontSize: 11.5,
+    fontWeight: '800',
+    color: colors.primaryDark,
+    flexShrink: 1,
+  },
+  cuadritoAuthorSpec: {
+    fontSize: 10,
+    color: colors.textSecondary,
+    fontWeight: '500',
+  },
+  cuadritoTitle: {
+    fontSize: 13.5,
+    fontWeight: '800',
+    color: colors.coffeeDeep,
+    lineHeight: 18,
+    minHeight: 36,
+  },
+  cuadritoSnippet: {
+    fontSize: 11.5,
+    color: colors.textSecondary,
+    lineHeight: 16,
+  },
+  cuadritoFooter: {
+    marginTop: 4,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#F0F5F8',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+  },
+  cuadritoReadAction: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  cuadritoReadText: {
+    fontSize: 11.5,
+    fontWeight: '800',
+    color: colors.primary,
+  },
+
+  /* ======================================================================== */
+  /* VISTA DEL LECTOR DE ARTÍCULO COMPLETO                                    */
+  /* ======================================================================== */
+  readerContainer: {
+    width: '100%',
+  },
+  backToGridBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 14,
+    alignSelf: 'flex-start',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#E1EAEF',
+  },
+  backToGridText: {
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: colors.primary,
+  },
+  fullArticleCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    padding: 18,
     borderWidth: 1,
     borderColor: '#E1EAEF',
     shadowColor: '#223E52',
     shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.06,
     shadowRadius: 10,
     elevation: 3,
   },
-  bannerImage: {
-    width: '100%',
-    minHeight: 180,
-  },
-  bannerImageStyle: {
-    borderRadius: 22,
-  },
-  bannerOverlay: {
-    flex: 1,
-    padding: 22,
-    backgroundColor: 'rgba(15, 23, 42, 0.58)',
-    justifyContent: 'flex-end',
-  },
-  bannerTitle: {
-    fontSize: 26,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    marginBottom: 6,
-    letterSpacing: -0.3,
-  },
-  bannerSubtitle: {
-    fontSize: 13.5,
-    color: '#F0F5F8',
-    lineHeight: 19,
-    fontWeight: '500',
-  },
-  loadingBox: {
-    padding: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-  },
-  loadingText: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    fontWeight: '600',
-  },
-  articlesFeed: {
-    gap: 14,
-  },
-  /* Tarjeta de Publicación: Idéntica al estilo de la app Principal */
-  postCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 22,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#E1EAEF',
-    shadowColor: '#223E52',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  postHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 12,
+  readerAuthorRow: {
+    marginBottom: 16,
   },
   authorClickArea: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    flex: 1,
+    gap: 12,
   },
-  authorAvatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+  readerAuthorAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: '#E1EAEF',
     borderWidth: 1.5,
     borderColor: '#E1EAEF',
   },
-  authorAvatarFallback: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+  readerAuthorAvatarFallback: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: '#E1EAEF',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  authorAvatarFallbackText: {
-    fontSize: 17,
+  readerAuthorAvatarFallbackText: {
+    fontSize: 18,
     fontWeight: '800',
     color: colors.primaryDark,
   },
-  authorInfo: {
+  readerAuthorInfo: {
     flex: 1,
   },
   authorNameRow: {
@@ -623,8 +1033,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
   },
-  authorName: {
-    fontSize: 14,
+  readerAuthorName: {
+    fontSize: 15,
     fontWeight: '800',
     color: colors.primaryDark,
   },
@@ -638,56 +1048,68 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   verifiedBadgeText: {
-    fontSize: 10,
+    fontSize: 10.5,
     fontWeight: '800',
     color: colors.primaryDark,
   },
   authorSpecialty: {
-    fontSize: 11.5,
+    fontSize: 12,
     color: colors.textSecondary,
     fontWeight: '600',
-    marginTop: 1,
+    marginTop: 2,
   },
   postTime: {
-    fontSize: 10.5,
+    fontSize: 11,
     color: colors.textMuted,
-    marginTop: 1,
+    marginTop: 2,
   },
-  articleTitle: {
-    fontSize: 16.5,
+  fullArticleTitle: {
+    fontSize: 21,
     fontWeight: '800',
     color: colors.coffeeDeep,
-    lineHeight: 22,
-    marginBottom: 8,
+    lineHeight: 28,
+    marginBottom: 14,
+  },
+  fullArticleMediaWrapper: {
+    width: '100%',
+    height: 240,
+    borderRadius: 16,
+    overflow: 'hidden',
+    backgroundColor: '#E1EAEF',
+    marginBottom: 16,
+  },
+  fullArticleMediaImage: {
+    width: '100%',
+    height: '100%',
   },
   summaryCallout: {
     backgroundColor: '#F0F5F8',
-    borderLeftWidth: 3,
+    borderLeftWidth: 4,
     borderLeftColor: colors.primary,
-    padding: 10,
-    borderRadius: 8,
-    marginBottom: 10,
+    padding: 12,
+    borderRadius: 10,
+    marginBottom: 14,
   },
   summaryText: {
-    fontSize: 12.5,
+    fontSize: 13,
     color: colors.primaryDark,
     fontStyle: 'italic',
-    lineHeight: 18,
+    lineHeight: 19,
   },
-  contentParagraph: {
-    fontSize: 13.5,
+  fullContentParagraph: {
+    fontSize: 14.5,
     color: colors.textPrimary,
-    lineHeight: 21,
-    marginBottom: 12,
+    lineHeight: 23,
+    marginBottom: 16,
   },
   tipsBox: {
     backgroundColor: '#F0FDF4',
     borderWidth: 1,
     borderColor: '#BBF7D0',
-    borderRadius: 14,
-    padding: 12,
-    marginBottom: 12,
-    gap: 5,
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 16,
+    gap: 6,
   },
   tipsHeaderRow: {
     flexDirection: 'row',
@@ -695,32 +1117,41 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   tipsHeaderTitle: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '800',
     color: '#15803D',
   },
   tipsText: {
-    fontSize: 12.5,
+    fontSize: 13,
     color: '#166534',
-    lineHeight: 18,
+    lineHeight: 19,
   },
-  postMediaWrapper: {
-    width: '100%',
-    borderRadius: 14,
-    overflow: 'hidden',
-    backgroundColor: '#E1EAEF',
-    marginBottom: 12,
+  bottomReturnBtn: {
+    marginTop: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E1EAEF',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
   },
-  postMediaImage: {
-    width: '100%',
-    height: 220,
+  bottomReturnBtnText: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: colors.primaryDark,
   },
+
+  /* Acciones y contadores compartidos */
   counterRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingTop: 8,
-    paddingBottom: 6,
+    paddingTop: 10,
+    paddingBottom: 8,
     borderTopWidth: 1,
     borderTopColor: '#F0F5F8',
   },
@@ -729,9 +1160,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   miniCircle: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: -4,
@@ -739,11 +1170,11 @@ const styles = StyleSheet.create({
     borderColor: '#FFFFFF',
   },
   miniReactionImg: {
-    width: 12,
-    height: 12,
+    width: 13,
+    height: 13,
   },
   counterText: {
-    fontSize: 11.5,
+    fontSize: 12,
     color: colors.textSecondary,
     fontWeight: '700',
     marginLeft: 4,
@@ -752,7 +1183,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
-    paddingTop: 8,
+    paddingTop: 10,
     borderTopWidth: 1,
     borderTopColor: '#E1EAEF',
   },
@@ -760,49 +1191,62 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
   },
   actionReactionIcon: {
-    width: 20,
-    height: 20,
+    width: 22,
+    height: 22,
   },
   actionBtnText: {
-    fontSize: 12.5,
+    fontSize: 13,
     fontWeight: '600',
     color: colors.textSecondary,
   },
+
+  /* Empty state */
+  loadingBox: {
+    padding: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+  },
+  loadingText: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    fontWeight: '600',
+  },
   emptyCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 22,
-    padding: 30,
+    borderRadius: 24,
+    padding: 36,
     borderWidth: 1,
     borderColor: '#E1EAEF',
     alignItems: 'center',
     textAlign: 'center',
-    gap: 10,
+    gap: 12,
     marginTop: 8,
   },
   emptyIconCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     backgroundColor: '#E1EAEF',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 4,
   },
   emptyTitle: {
-    fontSize: 15.5,
+    fontSize: 16,
     fontWeight: '800',
     color: colors.primaryDark,
     textAlign: 'center',
   },
   emptySub: {
-    fontSize: 12.5,
+    fontSize: 13,
     color: colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 18,
+    lineHeight: 19,
     maxWidth: 380,
   },
 });
