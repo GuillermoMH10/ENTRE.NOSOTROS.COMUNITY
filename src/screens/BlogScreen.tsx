@@ -17,6 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { MONTHS_DATA } from '../data/monthsData';
 import { MonthDetailModal } from '../components/Blog/MonthDetailModal';
 import { TopicArticlesModal } from '../components/Blog/TopicArticlesModal';
+import { TabId } from '../components/Navigation/BottomTabBar';
 import { Psychologist } from '../types/psychologist';
 import { subscribeToPsychologists } from '../services/psychologistsService';
 import { PsychologistDetailModal } from '../components/Psychologists/PsychologistDetailModal';
@@ -28,6 +29,8 @@ interface BlogScreenProps {
   onJoinPress: () => void;
   onProfilePress: () => void;
   onOpenPsychologists?: () => void;
+  onTabPress?: (tabId: TabId) => void;
+  onOpenStreakModal?: () => void;
   contentPaddingTop?: number;
   contentPaddingBottom?: number;
   hideAppHeader?: boolean;
@@ -60,6 +63,8 @@ export const BlogScreen: React.FC<BlogScreenProps> = ({
   onJoinPress,
   onProfilePress,
   onOpenPsychologists,
+  onTabPress,
+  onOpenStreakModal,
   contentPaddingTop = 0,
   contentPaddingBottom = 80,
   hideAppHeader = false,
@@ -183,6 +188,8 @@ export const BlogScreen: React.FC<BlogScreenProps> = ({
           onOpenPsychologistDetail={handleOpenPsychologistFromArticle}
           onRequireAuth={onJoinPress}
           embedded={true}
+          onTabPress={onTabPress}
+          onOpenStreakModal={onOpenStreakModal}
         />
       </View>
     );
@@ -493,6 +500,8 @@ export const BlogScreen: React.FC<BlogScreenProps> = ({
         onOpenPsychologistDetail={handleOpenPsychologistFromArticle}
         onRequireAuth={onJoinPress}
         embedded={false}
+        onTabPress={onTabPress}
+        onOpenStreakModal={onOpenStreakModal}
       />
     </View>
   );

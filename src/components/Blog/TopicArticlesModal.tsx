@@ -22,6 +22,7 @@ import {
 } from '../../services/blogService';
 import { ReactionType, REACTIONS_MAP } from '../../types/post';
 import { ReactionPicker } from '../Feed/ReactionPicker';
+import { BottomTabBar, TabId } from '../Navigation/BottomTabBar';
 import { useAuth } from '../../context/AuthContext';
 import { colors } from '../../theme/colors';
 
@@ -39,6 +40,8 @@ interface TopicArticlesModalProps {
   onOpenPsychologistDetail?: (psicoId: string, fallbackData?: any) => void;
   onRequireAuth?: () => void;
   embedded?: boolean;
+  onTabPress?: (tabId: TabId) => void;
+  onOpenStreakModal?: () => void;
 }
 
 export const TopicArticlesModal: React.FC<TopicArticlesModalProps> = ({
@@ -48,6 +51,8 @@ export const TopicArticlesModal: React.FC<TopicArticlesModalProps> = ({
   onOpenPsychologistDetail,
   onRequireAuth,
   embedded = false,
+  onTabPress,
+  onOpenStreakModal,
 }) => {
   const { user } = useAuth();
   const { width: windowWidth } = useWindowDimensions();
@@ -448,7 +453,7 @@ export const TopicArticlesModal: React.FC<TopicArticlesModalProps> = ({
           /* VISTA 2: BANNER GRANDE COMPLETO + GRID DE CUADRITOS ATRACTIVOS   */
           /* ================================================================ */
           <>
-            {/* BANNER PANORÁMICO TAMAÑO COMPLETO */}
+            {/* BANNER PANORÁMICO TAMAÑO COMPLETO CON DISEÑO MEJORADO */}
             <View style={styles.bannerWrapper}>
               <ImageBackground
                 source={{ uri: topic.imagen }}
@@ -457,14 +462,20 @@ export const TopicArticlesModal: React.FC<TopicArticlesModalProps> = ({
                 resizeMode="cover"
               >
                 <View style={styles.bannerOverlay}>
-                  <View style={styles.bannerBadgeRow}>
-                    <View style={styles.bannerTopicBadge}>
-                      <Ionicons name="bookmark" size={13} color="#FFFFFF" />
-                      <Text style={styles.bannerTopicBadgeText}>Tema Especializado</Text>
+                  {/* Caja de contenido translúcida con contraste y tipografía premium */}
+                  <View style={styles.bannerContentBox}>
+                    <View style={styles.bannerBadgeRow}>
+                      <View style={styles.bannerTopicBadge}>
+                        <Ionicons name="sparkles" size={12} color="#38BDF8" />
+                        <Text style={styles.bannerTopicBadgeText}>Tema Especializado</Text>
+                      </View>
+                      <View style={styles.bannerCategoryBadge}>
+                        <Text style={styles.bannerCategoryBadgeText}>Psicología Clínica</Text>
+                      </View>
                     </View>
+                    <Text style={styles.bannerTitle}>{topic.titulo}</Text>
+                    <Text style={styles.bannerSubtitle}>{topicDescription}</Text>
                   </View>
-                  <Text style={styles.bannerTitle}>{topic.titulo}</Text>
-                  <Text style={styles.bannerSubtitle}>{topicDescription}</Text>
                 </View>
               </ImageBackground>
             </View>
@@ -615,6 +626,27 @@ export const TopicArticlesModal: React.FC<TopicArticlesModalProps> = ({
         )}
       </ScrollView>
 
+      {/* Barra de navegación inferior siempre visible */}
+      <BottomTabBar
+        activeTab="blog"
+        onTabPress={(tabId) => {
+          if (tabId === 'blog') {
+            if (selectedArticle) {
+              setSelectedArticle(null);
+            } else {
+              onClose();
+            }
+          } else {
+            onClose();
+            if (onTabPress) onTabPress(tabId);
+          }
+        }}
+        onOpenStreakModal={() => {
+          onClose();
+          if (onOpenStreakModal) onOpenStreakModal();
+        }}
+      />
+
       {/* Floating Reaction Picker */}
       <ReactionPicker
         visible={showReactionPicker}
@@ -698,11 +730,12 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 14,
-    paddingBottom: 60,
+    paddingBottom: 95,
   },
   desktopScrollContent: {
     paddingHorizontal: 18,
     paddingVertical: 18,
+    paddingBottom: 95,
   },
 
   /* ======================================================================== */
@@ -724,51 +757,85 @@ const styles = StyleSheet.create({
   },
   bannerImage: {
     width: '100%',
-    minHeight: 260, // Tamaño grande completo
-    height: 270,
+    minHeight: 280, // Tamaño grande completo
+    height: 290,
   },
   bannerImageStyle: {
     borderRadius: 24,
   },
   bannerOverlay: {
     flex: 1,
-    padding: 24,
-    backgroundColor: 'rgba(15, 23, 42, 0.62)',
+    padding: 16,
     justifyContent: 'flex-end',
+    ...(Platform.OS === 'web'
+      ? {
+          background:
+            'linear-gradient(180deg, rgba(15, 23, 42, 0.05) 0%, rgba(15, 23, 42, 0.35) 45%, rgba(15, 23, 42, 0.92) 90%)',
+        }
+      : {
+          backgroundColor: 'rgba(15, 23, 42, 0.45)',
+        }),
+  },
+  bannerContentBox: {
+    backgroundColor: 'rgba(15, 23, 42, 0.68)',
+    borderRadius: 20,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.18)',
+    ...(Platform.OS === 'web' ? { backdropFilter: 'blur(10px)' } : {}),
   },
   bannerBadgeRow: {
     flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
     marginBottom: 8,
+    flexWrap: 'wrap',
   },
   bannerTopicBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: 'rgba(53, 89, 113, 0.85)',
+    backgroundColor: 'rgba(56, 189, 248, 0.2)',
+    borderWidth: 1,
+    borderColor: 'rgba(56, 189, 248, 0.45)',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 20,
   },
   bannerTopicBadgeText: {
-    color: '#FFFFFF',
+    color: '#38BDF8',
     fontSize: 11,
     fontWeight: '800',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
+  bannerCategoryBadge: {
+    backgroundColor: 'rgba(255, 255, 255, 0.14)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.22)',
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 20,
+  },
+  bannerCategoryBadgeText: {
+    color: '#F8FAFC',
+    fontSize: 10.5,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+  },
   bannerTitle: {
     fontSize: 28,
     fontWeight: '900',
     color: '#FFFFFF',
-    marginBottom: 8,
-    letterSpacing: -0.4,
-    textShadowColor: 'rgba(0, 0, 0, 0.45)',
+    marginBottom: 6,
+    letterSpacing: -0.5,
+    textShadowColor: 'rgba(0, 0, 0, 0.6)',
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 6,
   },
   bannerSubtitle: {
-    fontSize: 14,
-    color: '#F0F5F8',
+    fontSize: 13.5,
+    color: '#E2E8F0',
     lineHeight: 20,
     fontWeight: '500',
     textShadowColor: 'rgba(0, 0, 0, 0.35)',

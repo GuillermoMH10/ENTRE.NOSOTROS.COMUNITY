@@ -363,6 +363,8 @@ export const HomeScreen: React.FC = () => {
             onJoinPress={handleOpenAuth}
             onProfilePress={handleOpenProfile}
             onOpenPsychologists={handleOpenPsychologists}
+            onTabPress={handleTabPress}
+            onOpenStreakModal={() => setIsStreakModalOpen(true)}
             contentPaddingTop={0}
             contentPaddingBottom={TABBAR_HEIGHT + (Platform.OS === 'ios' ? 14 : 4)}
           />
