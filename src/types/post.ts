@@ -71,6 +71,8 @@ export interface Post {
   reportedBy?: string[];
   isStandDynamic?: boolean;
   dynamicActivityTitle?: string;
+  dynamicActivityPrompt?: string;
+  dynamicActivityCategory?: string;
   guestSessionId?: string;
   guestName?: string;
   createdAt: string;

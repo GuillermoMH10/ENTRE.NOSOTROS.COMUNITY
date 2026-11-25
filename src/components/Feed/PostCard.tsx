@@ -264,13 +264,23 @@ export const PostCard: React.FC<PostCardProps> = ({
         )}
       </View>
 
-      {/* Stand Dynamic Badge if post was created during the event/booth dynamic */}
-      {post.isStandDynamic ? (
-        <View style={styles.standBadgeContainer}>
-          <Ionicons name="sparkles" size={13} color="#D97706" style={{ marginRight: 5 }} />
-          <Text style={styles.standBadgeText} numberOfLines={1}>
-            🎪 Stand Entre Nosotros {post.dynamicActivityTitle ? `· ${post.dynamicActivityTitle}` : ''}
-          </Text>
+      {/* Stand Dynamic Activity Card if post was created during Conoce Entre Nosotros */}
+      {post.isStandDynamic && post.dynamicActivityTitle ? (
+        <View style={styles.standActivityBox}>
+          <View style={styles.standActivityHeader}>
+            <Text style={styles.standActivityOrigin}>Conoce Entre Nosotros</Text>
+            {post.dynamicActivityCategory ? (
+              <View style={styles.standCategoryPill}>
+                <Text style={styles.standCategoryText}>
+                  {post.dynamicActivityCategory === 'Foto' ? 'Foto' : 'Consejo'}
+                </Text>
+              </View>
+            ) : null}
+          </View>
+          <Text style={styles.standActivityTitle}>{post.dynamicActivityTitle}</Text>
+          {post.dynamicActivityPrompt ? (
+            <Text style={styles.standActivityPrompt}>{post.dynamicActivityPrompt}</Text>
+          ) : null}
         </View>
       ) : null}
 
@@ -574,21 +584,49 @@ const styles = StyleSheet.create({
     width: '100%',
     marginTop: 6,
   },
-  standBadgeContainer: {
+  standActivityBox: {
+    backgroundColor: colors.surfaceSoft,
+    borderWidth: 1,
+    borderColor: colors.borderMedium,
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 10,
+  },
+  standActivityHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FEF3C7',
-    alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#FDE68A',
-    marginBottom: 8,
+    justifyContent: 'space-between',
+    marginBottom: 4,
   },
-  standBadgeText: {
-    fontSize: 11.5,
+  standActivityOrigin: {
+    fontSize: 11,
     fontWeight: '700',
-    color: '#92400E',
+    color: colors.primary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+  },
+  standCategoryPill: {
+    backgroundColor: colors.surface,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: colors.borderMedium,
+  },
+  standCategoryText: {
+    fontSize: 10.5,
+    fontWeight: '700',
+    color: colors.coffeeDark,
+  },
+  standActivityTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.coffeeDeep,
+    marginBottom: 3,
+  },
+  standActivityPrompt: {
+    fontSize: 12.5,
+    color: colors.textSecondary,
+    lineHeight: 17,
   },
 });

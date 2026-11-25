@@ -123,6 +123,8 @@ export async function submitStandDynamicPost({
       hashtags: ['#DinámicaStand', '#EntreNosotros', '#ConoceEntreNosotros'],
       isStandDynamic: true,
       dynamicActivityTitle: activity.title,
+      dynamicActivityPrompt: activity.prompt,
+      dynamicActivityCategory: activity.category,
       guestSessionId: sessionId,
       guestName: cleanName,
       reactions: {

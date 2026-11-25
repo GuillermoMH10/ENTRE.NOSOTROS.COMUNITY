@@ -437,15 +437,15 @@ export const HomeScreen: React.FC = () => {
           />
         )}
 
-        {/* Botón Flotante para la Dinámica del Stand (100 actividades para visitantes) */}
+        {/* Botón Flotante para la Dinámica del Stand (Conoce Entre Nosotros) */}
         {!isKeyboardVisible && (
           <TouchableOpacity
             style={styles.floatingStandBtn}
             onPress={() => setIsStandDynamicOpen(true)}
             activeOpacity={0.85}
           >
-            <Ionicons name="sparkles" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
-            <Text style={styles.floatingStandBtnText}>Dinámica Stand</Text>
+            <Ionicons name="sparkles" size={15} color={colors.white} style={{ marginRight: 6 }} />
+            <Text style={styles.floatingStandBtnText}>Conoce Entre Nosotros</Text>
           </TouchableOpacity>
         )}
 
@@ -634,7 +634,7 @@ const styles = StyleSheet.create({
     bottom: Platform.OS === 'ios' ? TABBAR_HEIGHT + 20 : TABBAR_HEIGHT + 14,
     right: 16,
     zIndex: 99,
-    backgroundColor: '#D97706',
+    backgroundColor: colors.coffeePrimary,
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 10,
@@ -642,24 +642,24 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     ...Platform.select({
       ios: {
-        shadowColor: '#B45309',
+        shadowColor: colors.primaryDark,
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.35,
+        shadowOpacity: 0.25,
         shadowRadius: 6,
       },
       android: {
         elevation: 6,
       },
       web: {
-        boxShadow: '0 4px 14px rgba(180, 83, 9, 0.35)',
+        boxShadow: '0 4px 14px rgba(34, 62, 82, 0.25)',
         cursor: 'pointer',
       },
     }),
   },
   floatingStandBtnText: {
-    color: '#FFFFFF',
+    color: colors.white,
     fontSize: 13,
-    fontWeight: '800',
+    fontWeight: '700',
     letterSpacing: 0.3,
   },
 });
