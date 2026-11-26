@@ -198,7 +198,12 @@ export const CreatePostScreen: React.FC<CreatePostScreenProps> = ({
 
       <ScrollView
         style={styles.scrollContainer}
-        contentContainerStyle={[styles.scrollContent, embedded && styles.scrollContentEmbedded]}
+        nestedScrollEnabled={true}
+        contentContainerStyle={[
+          styles.scrollContent,
+          embedded && styles.scrollContentEmbedded,
+          { flexGrow: 1, paddingBottom: 60 },
+        ]}
         showsVerticalScrollIndicator={Platform.OS === 'web'}
         keyboardShouldPersistTaps="handled"
       >

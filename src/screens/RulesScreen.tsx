@@ -107,11 +107,13 @@ export const RulesScreen: React.FC<RulesScreenProps> = ({
 
       <ScrollView
         style={styles.scrollArea}
+        nestedScrollEnabled={true}
         contentContainerStyle={[
           styles.scrollContent,
           {
+            flexGrow: 1,
             paddingTop: contentPaddingTop + 8,
-            paddingBottom: contentPaddingBottom + 20,
+            paddingBottom: contentPaddingBottom + 30,
           },
         ]}
         showsVerticalScrollIndicator={Platform.OS === 'web' ? true : false}

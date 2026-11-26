@@ -237,7 +237,8 @@ export const StandDynamicModal: React.FC<StandDynamicModalProps> = ({
 
           <ScrollView
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.scrollBody}
+            nestedScrollEnabled={true}
+            contentContainerStyle={[styles.scrollBody, { flexGrow: 1, paddingBottom: 40 }]}
             keyboardShouldPersistTaps="handled"
           >
             {/* ANIMA Mascot at the very top */}
