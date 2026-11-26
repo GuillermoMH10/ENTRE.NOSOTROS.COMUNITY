@@ -6,10 +6,14 @@ web-build/
 .git/
 
 # Non-mobile admin & auxiliary panels
+ADMIN*
 ADMIN ENTRENOSOTROS/
+ADMIN\ ENTRENOSOTROS/
 PruebasSistema/
 public/
 scripts/
+web/
+*.html
 
 # Documentation & temporary files
 *.md
